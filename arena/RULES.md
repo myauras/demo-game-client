@@ -11,10 +11,11 @@
 1. Before the match, the player chooses exactly one predicted champion.
 2. The match cannot start until a champion is selected.
 3. After starting, all five fighters battle automatically.
-4. The last fighter remaining is the champion.
-5. At the end, show a result dialog naming both the selected fighter and the actual champion.
-6. If the prediction is correct, prominently show the prize won. If it is incorrect, clearly show that no prize was won.
-7. The result dialog may offer a new match, which returns to champion selection.
+4. The battle contains no items, pickups, power-ups, buffs, shields, bombs, or other collectible effects.
+5. The last fighter remaining is the champion.
+6. At the end, show a result dialog naming both the selected fighter and the actual champion.
+7. If the prediction is correct, prominently show the prize won. If it is incorrect, clearly show that no prize was won.
+8. The result dialog may offer a new match, which returns to champion selection.
 
 The wager and prize are simulated game values only and must not be presented as real-money gambling or a real financial payout.
 
@@ -36,6 +37,7 @@ The OP.GG links are fighter reference links. Fighter names are fixed in the prod
 - Keep champion selection and essential live ranking visible without shrinking the arena unnecessarily.
 - Do not include participant editing.
 - Do not include a rules configuration module.
+- Do not include items or item-related visuals, controls, state, generation, collision effects, or rendering code.
 - Do not include a battlefield reset control.
 - Do not include a keyboard-shortcut panel or keyboard-control instructions.
 - Do not display `自動戰鬥` explanatory copy.
@@ -49,6 +51,7 @@ The OP.GG links are fighter reference links. Fighter names are fixed in the prod
 - A selected champion is visibly highlighted before starting.
 - The start button is disabled until a selection exists.
 - The automated battle produces one winner.
+- No item-related code or UI is shipped.
 - A correct prediction shows a prize amount; an incorrect prediction shows no prize.
 - Starting a new match clears the previous selection and result.
 - The layout works on desktop and mobile viewports.

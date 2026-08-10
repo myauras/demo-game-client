@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DEFAULT_FIGHTERS, DEFAULT_RULES, type FighterConfig } from "../lib/arena";
+import { DEFAULT_FIGHTERS, type FighterConfig } from "../lib/arena";
 import {
   createEngine,
   drawArena,
@@ -105,7 +105,7 @@ export default function ArenaGame() {
       const dt = clamp((time - lastFrameRef.current) / 1000, 0, 0.033);
       lastFrameRef.current = time;
       if (statusRef.current === "running") {
-        const champion = stepEngine(engineRef.current, DEFAULT_RULES, dt, () => undefined);
+        const champion = stepEngine(engineRef.current, dt);
         if (champion) finishMatch(champion);
       }
       const paintedWinner = statusRef.current === "finished"

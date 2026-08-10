@@ -51,6 +51,8 @@ test("ships selection, automated resolution, and prize settlement without remove
   assert.match(engine, /MIN_RADIUS = 120/);
   assert.match(engine, /SHRINK_DELAY = 0/);
   assert.match(engine, /SHRINK_SPEED = 5\.5/);
+  assert.doesNotMatch(engine, /ArenaRules|ItemKind|ArenaItem|ITEM_STYLE|engine\.items|itemTimer|drawItem|explodeBomb|powerUntil|shieldUntil|hasteUntil|giantUntil|baseRadius|onSound/);
+  assert.doesNotMatch(arena, /ArenaRules|ItemKind|DEFAULT_RULES|weight|profileUrl/);
   assert.doesNotMatch(component, /規則模組|參賽者|重置戰場|快捷操作|自動戰鬥|ROUND|ACTIVE/);
   assert.doesNotMatch(packageJson, /react-loading-skeleton/);
 });
@@ -69,6 +71,7 @@ test("documents monorepo routing and Arena product rules", async () => {
   assert.match(rules, /https:\/\/op\.gg\/lol\/champions\/zed\/build\/mid/);
   assert.match(rules, /pre-match champion prediction/);
   assert.match(rules, /prize won/);
+  assert.match(rules, /battle contains no items/);
 });
 
 test("includes project-specific social and icon artwork", async () => {
