@@ -174,7 +174,7 @@ button:focus-visible {
 .prediction-panel {
   display: grid;
   min-height: 0;
-  grid-template-columns: 112px minmax(0, 1fr);
+  grid-template-columns: 142px minmax(0, 1fr);
   gap: 8px;
   padding: 8px;
   border: 1px solid rgba(194, 118, 70, 0.36);
@@ -185,6 +185,55 @@ button:focus-visible {
     inset 0 1px rgba(245, 193, 120, 0.04),
     0 20px 65px rgba(0, 0, 0, 0.32);
   backdrop-filter: blur(14px);
+}
+
+.selected-skill-preview {
+  display: grid;
+  min-height: 46px;
+  grid-column: 1 / -1;
+  grid-template-columns: 36px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  padding: 5px 8px;
+  overflow: hidden;
+  border: 1px solid rgba(177, 118, 83, 0.34);
+  background:
+    linear-gradient(105deg, rgba(255, 255, 255, 0.055), transparent 38%),
+    rgba(13, 8, 8, 0.76);
+}
+
+.selected-skill-preview > img {
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(246, 225, 202, 0.48);
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.38);
+}
+
+.selected-skill-preview > div {
+  min-width: 0;
+}
+
+.selected-skill-preview strong {
+  display: block;
+  overflow: hidden;
+  color: #f5dfbd;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selected-skill-preview p {
+  display: -webkit-box;
+  margin: 3px 0 0;
+  overflow: hidden;
+  color: #bca391;
+  font-size: 9px;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .fighter-options {
@@ -295,16 +344,18 @@ button:focus-visible {
   margin: 0;
   align-items: center;
   justify-content: space-between;
-  gap: 5px;
-  padding: 2px;
-  color: #9a7e6b;
-  font-size: 8px;
+  gap: 10px;
+  padding: 3px 4px;
+  color: #bca18d;
+  font-size: 10px;
+  font-weight: 700;
 }
 
 .entry-summary span {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  white-space: nowrap;
 }
 
 .entry-summary span:last-child {
@@ -313,7 +364,7 @@ button:focus-visible {
 
 .entry-summary strong {
   color: #e2c18d;
-  font: 800 10px/1 ui-monospace, monospace;
+  font: 900 13px/1 ui-monospace, monospace;
 }
 
 .start-button,

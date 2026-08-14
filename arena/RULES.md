@@ -73,6 +73,7 @@ Fighter color palettes are fixed: Zed is black (`#111318`), Jinx is RGB `0, 173,
 - Janna is movement-locked only during the 0.5-second channel and resumes normal movement immediately after launching the tornado. Existing collision knockback can still move her without interrupting the channel.
 - While both remain active, draw one very thin, low-opacity white energy line from Janna's current position to her tornado. The line follows Janna as she moves and fades out together with the tornado.
 - Janna's casting ring and tornado use her white color family with pearl-gray shadows. The tornado uses simplified white neon spiral strokes with a gray eye so it resembles a vortex while matching the Arena visual style rather than looking realistic.
+- Janna's tornado visual uses layered pearl-white spiral ribbons, graphite under-strokes, broken outer wind arcs, and small orbiting wind motes. It keeps a clearly visible dark eye and restrained opacity so the effect reads as a dimensional vortex without becoming a flat white disc.
 - The tornado knocks back each non-Janna fighter it touches with an impulse of 400 world pixels per second, then stuns that fighter for 1 second after knockback. It never knocks back or stuns Janna herself.
 - Whenever Lee Sin's skill cooldown is ready, he may select any random living opponent on the battlefield without a distance restriction and channel in place for 0.5 seconds.
 - After channeling, Lee Sin tracks the selected opponent and dashes toward that fighter at 420 world pixels per second until their bodies collide.
@@ -86,6 +87,7 @@ Fighter color palettes are fixed: Zed is black (`#111318`), Jinx is RGB `0, 173,
 - The slash expands to its 180-world-pixel hit radius over 0.12 seconds. Throughout the visible effect, collision is evaluated against the slash's current rendered position and current rendered radius; each target can be hit at most once per slash.
 - Darius's hit test uses the exact current visual slash radius with no additional fighter-radius padding. A target is hit only when its center is inside the visible slash radius, so the rendered effect size and gameplay radius always match.
 - The circular slash is an original Arena-style metallic-gray crescent sweep with a white neon outer edge and fast-expanding circular motion. It remains centered on Darius and follows him while visible, using the reference image only for the broad curved-slash idea.
+- Darius's slash visual uses a dark-metal under-sweep, a brighter steel blade edge, an inner counter-sweep, and short metallic fragments near the leading edge. Every decorative layer stays inside the same current slash radius used for collision.
 - When exactly one living Zed is on the battlefield, that Zed stops and channels for 1 second, then creates one additional Zed beside himself through a black-fog fade-in.
 - Both Zeds belong to the same participant. While two are alive, neither can channel the skill. If either one dies, the remaining Zed may channel for 1 second and create a replacement.
 - Zed's shared 12-second skill cooldown does not count down while both Zeds are alive. It starts only when the first Zed body dies; after that cooldown reaches zero, the surviving Zed may begin the 1-second replacement channel.
@@ -97,6 +99,7 @@ Fighter color palettes are fixed: Zed is black (`#111318`), Jinx is RGB `0, 173,
 
 ## Interface constraints
 
+- The production website is published as a static export through GitHub Pages at the repository project path. All framework assets, fighter portraits, skill icons, the arena map, favicon, and social image must honor the configured public base path instead of assuming the domain root.
 - Render the complete Arena interface on a fixed `1179 x 1977` portrait design surface. Center that surface and scale it uniformly to the largest size that fits inside the current browser viewport; never crop, stretch, scroll, or reflow the game based on screen size.
 - Render `/arena-map-v1.png` as the battlefield background. It is an original, fully top-down hand-painted dark-fantasy carnival arena with a flat, unobstructed rust-red combat floor and detailed scenery confined to the non-playable perimeter.
 - The background artwork contains no fixed glowing boundary and no purple portal circles. Draw only the engine's live shrinking boundary over the background, so the visible ring always matches the actual playable radius. That boundary is a thin cyan rune ring with a dark contrast under-stroke, moving dash marks, and small angular glyphs; it never becomes a thick solid orange ring.
@@ -110,6 +113,8 @@ Fighter color palettes are fixed: Zed is black (`#111318`), Jinx is RGB `0, 173,
 - Keep every skill immediately identifiable by its caster palette: Zed uses black and graphite smoke, Jinx uses her cyan-blue hair color, Darius uses metallic gray, Lee Sin uses red, and Janna uses white with pearl-gray structure. Avoid large neutral-white additive blooms that obscure portraits or the battlefield.
 - Use the provided `/icons/<fighter>/icon.webp` portraits for fighter selection, the selected-fighter indicator, battlefield bodies, and the settled champion portrait. Preserve each fighter's existing color as the surrounding glow and border identity. Battlefield portraits are plain circles without an extra head, facing, or direction marker protruding from them.
 - Every fighter selection card includes a separate skill-info button using the provided `/icons/<fighter>/skill.png` image. Activating it opens a compact, dismissible dialog with that fighter's portrait, skill icon, skill name, and one short plain-language description without changing the champion prediction. The visible description omits numerical gameplay values such as timing, angles, range, knockback, stun, and cooldown.
+- While a fighter is selected before the match, show that fighter's skill icon, skill name, and concise description in a compact preview above the five fighter choices. The preview updates immediately whenever the selected fighter changes.
+- Make the simulated entry and odds labels visibly larger than the fighter-card captions, with their values emphasized in a larger bold monospace style.
 - Show only each fighter's name around the battlefield marker. Do not render damage percentages beneath fighters or in the victory overlay.
 - Once a winner is settled, keep the captured champion snapshot fixed throughout the victory presentation; never replace it by searching the remaining actor list again.
 - Normalize the settled champion through the fixed roster before rendering the victory presentation, so a winning Zed clone always displays Zed's black palette and can never appear as white Janna.
@@ -144,11 +149,13 @@ Fighter color palettes are fixed: Zed is black (`#111318`), Jinx is RGB `0, 173,
 - Darius keeps moving during an uninterruptible 1.5-second channel, then releases a metallic-gray circular slash that knocks fighters within 180 world pixels away with force 550, applies a 1-second post-knockback stun, and enters a 6-second cooldown.
 - Darius continuously checks the moving slash's current visual radius for its full visible lifetime, while preventing repeat hits on the same target during one slash.
 - Darius's visual slash radius and hit-test radius come from the same calculation, with no hidden extra range beyond the effect.
+- Janna's vortex remains readable through layered spiral ribbons and a dark center without overexposure, and Darius's metallic blade layers and fragments never extend past the live collision radius.
 - A lone Zed channels for 1 second and creates a black-fog clone; after one body dies, a shared 12-second cooldown begins before replacement channeling is allowed. Zed remains in the match until all of his living bodies are eliminated. Two living Zeds do not collide, never select each other, and aggressively coordinate staggered charges from fixed staging points against one shared opponent without rapid movement reversals or stop-start jitter.
 - Out-of-bounds fighters rapidly shake and fade before winner settlement, while a non-final Zed dissolves into black fog.
 - The initial arena radius is 294 world pixels so all five fighters have more opening space.
 - Fighter markers and the victory overlay do not display damage percentages, and the settled winner never visually switches to another fighter.
 - All five provided fighter portraits render in selection, battle, and result contexts; battlefield portraits have no protruding direction marker, and all five provided skill icons open the matching accessible skill-information dialog with a concise, non-numeric description.
+- Changing the pre-match fighter selection immediately updates the visible skill preview above the roster, and the simulated entry and odds text remain clearly legible at the fixed portrait resolution.
 - A Zed victory, including a surviving clone, always uses the canonical black Zed name and palette in both the battlefield victory overlay and result dialog.
 - `回到下注` clears the current match and returns to an unselected champion-prediction state.
 - A correct prediction shows a prize amount; an incorrect prediction shows no prize.
@@ -159,3 +166,4 @@ Fighter color palettes are fixed: Zed is black (`#111318`), Jinx is RGB `0, 173,
 - The title-free compact bottom controls leave the enlarged circular arena as the dominant element on screen.
 - The generated battlefield asset exists at `/arena-map-v1.png`, fills the canvas with a centered cover crop, contains no static ring UI, and remains visible beneath the engine-rendered shrinking boundary.
 - All compact UI panels use the battlefield's dark-fantasy carnival palette instead of the previous blue sci-fi grid treatment.
+- A GitHub Pages production build completes as a full static export, produces `dist/client/index.html`, and keeps all public assets under the `/demo-game-client` project base path.

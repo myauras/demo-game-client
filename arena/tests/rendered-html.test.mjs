@@ -54,7 +54,7 @@ test("ships selection, automated resolution, and prize settlement without remove
   assert.match(globalsCss, /html,[\s\S]*body[\s\S]*overflow: hidden/);
   assert.doesNotMatch(component, /arena-header|prediction-heading|YOUR PICK|CHAMPION PICK/);
   assert.doesNotMatch(globalsCss, /\.arena-header|\.prediction-heading/);
-  assert.match(globalsCss, /\.prediction-panel[\s\S]*grid-template-columns: 112px minmax\(0, 1fr\)/);
+  assert.match(globalsCss, /\.prediction-panel[\s\S]*grid-template-columns: 142px minmax\(0, 1fr\)/);
   assert.match(globalsCss, /\.fighter-option[\s\S]*min-height: 50px/);
   assert.match(component, /獲得模擬獎金/);
   assert.match(component, /回到下注/);
@@ -62,10 +62,17 @@ test("ships selection, automated resolution, and prize settlement without remove
   assert.match(component, /className="skill-info-button"/);
   assert.match(component, /aria-haspopup="dialog"/);
   assert.match(component, /skillFighter\.skillDescription/);
+  assert.match(component, /className="selected-skill-preview"/);
+  assert.match(component, /selectedFighter\.skillIcon/);
+  assert.match(component, /selectedFighter\.skillName/);
+  assert.match(component, /selectedFighter\.skillDescription/);
   assert.match(component, /event\.key === "Escape"/);
   assert.match(component, /settlement\.champion\.icon/);
   assert.match(globalsCss, /\.skill-backdrop/);
   assert.match(globalsCss, /\.skill-dialog-icon/);
+  assert.match(globalsCss, /\.selected-skill-preview[\s\S]*grid-template-columns: 36px minmax\(0, 1fr\)/);
+  assert.match(globalsCss, /\.entry-summary[\s\S]*font-size: 10px/);
+  assert.match(globalsCss, /\.entry-summary strong[\s\S]*900 13px\/1/);
   assert.match(globalsCss, /--rust: #8f4330/);
   assert.match(globalsCss, /--bronze: #b17645/);
   assert.match(globalsCss, /--violet: #8c5f9f/);
@@ -101,7 +108,7 @@ test("ships selection, automated resolution, and prize settlement without remove
   assert.match(engine, /SHRINK_DELAY = 0/);
   assert.match(engine, /SHRINK_SPEED = 5\.5/);
   assert.doesNotMatch(engine, /縮圈倒數|最小決勝圈|能量環收縮|boundaryLabel/);
-  assert.match(engine, /ARENA_BACKGROUND_SRC = "\/arena-map-v1\.png"/);
+  assert.match(engine, /ARENA_BACKGROUND_SRC = assetPath\("\/arena-map-v1\.png"\)/);
   assert.match(engine, /function getArenaBackgroundImage/);
   assert.match(engine, /function drawImageCover/);
   assert.match(engine, /drawImageCover\(ctx, arenaBackground, WORLD_W, WORLD_H\)/);
@@ -221,7 +228,9 @@ test("ships selection, automated resolution, and prize settlement without remove
   assert.match(engine, /const outsideScreen = tornado\.x < 0/);
   assert.match(engine, /tornado\.enteredScreen && outsideScreen/);
   assert.match(engine, /const opacity = fadeOut/);
-  assert.match(engine, /for \(let arm = 0; arm < 4; arm \+= 1\)/);
+  assert.match(engine, /for \(let arm = 0; arm < 5; arm \+= 1\)/);
+  assert.match(engine, /for \(let index = 0; index < 10; index \+= 1\)/);
+  assert.match(engine, /const outerRadius = radius \* \(0\.94 - index \* 0\.012\)/);
   assert.doesNotMatch(engine, /JANNA_CAST_CLEAR_RADIUS|nearbyOpponent|interruptJannaCast/);
   assert.match(engine, /const castingJannaTornado = actor\.id === "janna" && engine\.jannaCastTimer > 0/);
   assert.doesNotMatch(engine, /castingJannaTornado[\s\S]{0,100}engine\.tornadoes\.length > 0/);
@@ -342,8 +351,8 @@ test("ships selection, automated resolution, and prize settlement without remove
   assert.match(engine, /ctx\.drawImage\(icon, -radius, -radius, radius \* 2, radius \* 2\)/);
   assert.doesNotMatch(engine, /roundedRect\(ctx, radius \* 0\.08, -radius \* 0\.42/);
   for (const fighterId of ["zed", "jinx", "darius", "lee-sin", "janna"]) {
-    assert.match(arena, new RegExp(`icon: "/icons/${fighterId}/icon\\.webp"`));
-    assert.match(arena, new RegExp(`skillIcon: "/icons/${fighterId}/skill\\.png"`));
+    assert.match(arena, new RegExp(`icon: assetPath\\("/icons/${fighterId}/icon\\.webp"\\)`));
+    assert.match(arena, new RegExp(`skillIcon: assetPath\\("/icons/${fighterId}/skill\\.png"\\)`));
   }
   assert.match(arena, /color: "#111318"/);
   assert.match(arena, /color: "#00ade9"/);
@@ -393,6 +402,9 @@ test("documents monorepo routing and Arena product rules", async () => {
   assert.match(rules, /flies straight without tracking/);
   assert.match(rules, /RGB `0, 173, 233` blue color family/);
   assert.match(rules, /white color family with pearl-gray shadows/);
+  assert.match(rules, /layered pearl-white spiral ribbons/);
+  assert.match(rules, /dark-metal under-sweep/);
+  assert.match(rules, /skill icon, skill name, and concise description in a compact preview above/);
   assert.match(rules, /without a distance restriction and channel in place for 0\.5 seconds/);
   assert.match(rules, /dashes toward that fighter at 420 world pixels per second/);
   assert.match(rules, /knockback velocity to 600 world pixels per second/);

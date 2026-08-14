@@ -242,6 +242,22 @@ export default function ArenaGame() {
         </div>
 
         <aside className="prediction-panel" aria-label="冠軍預測">
+          {selectedFighter && status === "idle" && (
+            <div
+              className="selected-skill-preview"
+              aria-live="polite"
+              style={{
+                borderColor: `${selectedFighter.color}70`,
+                boxShadow: `inset 3px 0 ${selectedFighter.color}, 0 0 20px ${selectedFighter.color}16`,
+              }}
+            >
+              <img src={selectedFighter.skillIcon} alt="" />
+              <div>
+                <strong>{selectedFighter.skillName}</strong>
+                <p>{selectedFighter.skillDescription}</p>
+              </div>
+            </div>
+          )}
           <div className="fighter-options">
             {DEFAULT_FIGHTERS.map((fighter) => {
               const row = ranking.find((entry) => entry.id === fighter.id);
@@ -281,7 +297,7 @@ export default function ArenaGame() {
           </div>
 
           <div className="entry-summary">
-            <span>模擬投入 <strong>NT$ {ENTRY_AMOUNT}</strong></span>
+            <span>模擬投注 <strong>NT$ {ENTRY_AMOUNT}</strong></span>
             <span>賠率 <strong>{DECIMAL_ODDS.toFixed(2)}x</strong></span>
           </div>
 
