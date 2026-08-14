@@ -205,6 +205,11 @@ const ARENA_RUNE_PRIMARY = "#54dbe2";
 const ARENA_RUNE_LIGHT = "#c6f5ee";
 const ARENA_RUNE_DARK = "#102c31";
 const ARENA_BACKGROUND_SRC = assetPath("/arena-map-v1.png");
+const JANNA_TORNADO_LAYER_SRC = assetPath("/effects/janna-tornado-layer-v1.png");
+const DARIUS_SLASH_SHEET_SRC = assetPath("/effects/darius-slash-gray-v1.png");
+const DARIUS_SLASH_SHEET_COLUMNS = 6;
+const DARIUS_SLASH_SHEET_ROWS = 3;
+const DARIUS_SLASH_FRAME_COUNT = DARIUS_SLASH_SHEET_COLUMNS * DARIUS_SLASH_SHEET_ROWS;
 const AI_PURSUIT_CHANCE = 0.4;
 const AI_EDGE_RETURN_RATIO = 0.72;
 const AI_EDGE_PADDING = 14;
@@ -1237,6 +1242,7 @@ function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: num
 }
 
 const fighterIconCache = new Map<string, HTMLImageElement>();
+const effectImageCache = new Map<string, HTMLImageElement>();
 let arenaBackgroundImage: HTMLImageElement | null = null;
 
 function getFighterIcon(src: string) {
@@ -1257,6 +1263,17 @@ function getArenaBackgroundImage() {
   arenaBackgroundImage.decoding = "async";
   arenaBackgroundImage.src = ARENA_BACKGROUND_SRC;
   return arenaBackgroundImage;
+}
+
+function getEffectImage(src: string) {
+  if (typeof Image === "undefined") return null;
+  const cached = effectImageCache.get(src);
+  if (cached) return cached;
+  const image = new Image();
+  image.decoding = "async";
+  image.src = src;
+  effectImageCache.set(src, image);
+  return image;
 }
 
 function drawImageCover(
@@ -1700,195 +1717,128 @@ function drawLeeSinDashTrail(ctx: CanvasRenderingContext2D, trail: LeeSinDashTra
 
 function drawDariusSlashEffect(ctx: CanvasRenderingContext2D, effect: DariusSlashEffect) {
   const progress = clamp(effect.age / DARIUS_SLASH_EFFECT_DURATION, 0, 1);
-  const fade = 1 - progress;
   const radius = dariusSlashVisualRadius(effect.age);
-  const rotation = -0.3 + progress * 1.55;
+  const frameIndex = Math.min(
+    DARIUS_SLASH_FRAME_COUNT - 1,
+    Math.floor(progress * DARIUS_SLASH_FRAME_COUNT),
+  );
+  const frameColumn = frameIndex % DARIUS_SLASH_SHEET_COLUMNS;
+  const frameRow = Math.floor(frameIndex / DARIUS_SLASH_SHEET_COLUMNS);
+  const sheet = getEffectImage(DARIUS_SLASH_SHEET_SRC);
+  const fade = progress < 0.84 ? 1 : 1 - (progress - 0.84) / 0.16;
+  const spinProgress = clamp(progress / 0.64, 0, 1);
+  const rotation = -Math.PI * 0.7 + spinProgress * Math.PI * 2.5;
+  const slashLayers = [
+    { angleOffset: 0, scale: 1, alpha: 0.78 },
+    { angleOffset: Math.PI / 6, scale: 0.96, alpha: 0.5 },
+  ];
+
   ctx.save();
   ctx.translate(effect.x, effect.y);
-  ctx.rotate(rotation);
   ctx.globalCompositeOperation = "source-over";
-  ctx.lineCap = "round";
 
-  const dust = ctx.createRadialGradient(0, 0, radius * 0.08, 0, 0, radius * 0.78);
-  dust.addColorStop(0, "rgba(63,68,76,.24)");
-  dust.addColorStop(0.58, "rgba(133,139,148,.09)");
-  dust.addColorStop(1, "rgba(63,68,76,0)");
-  ctx.globalAlpha = fade * 0.72;
-  ctx.fillStyle = dust;
+  // The authored frame can touch the skill edge, but never render beyond the live hit radius.
   ctx.beginPath();
-  ctx.arc(0, 0, radius * 0.78, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.arc(0, 0, radius, 0, Math.PI * 2);
+  ctx.clip();
 
-  ctx.globalAlpha = Math.pow(fade, 0.72) * 0.42;
-  ctx.strokeStyle = DARIUS_SKILL_DARK;
-  ctx.shadowColor = DARIUS_SKILL_DARK;
-  ctx.shadowBlur = 5;
-  ctx.lineWidth = 14 * fade + 5;
-  ctx.beginPath();
-  ctx.arc(0, 0, radius - 10, -Math.PI * 0.95, Math.PI * 0.8);
-  ctx.stroke();
-
-  ctx.globalAlpha = fade * 0.36;
-  ctx.strokeStyle = DARIUS_SKILL_PRIMARY;
-  ctx.shadowBlur = 0;
-  ctx.lineWidth = 4.5;
-  ctx.beginPath();
-  ctx.arc(0, 0, radius * 0.7, Math.PI * 0.92, Math.PI * 2.02);
-  ctx.stroke();
-
-  const sweep = ctx.createLinearGradient(-radius, 0, radius, 0);
-  sweep.addColorStop(0, DARIUS_SKILL_DARK);
-  sweep.addColorStop(0.42, DARIUS_SKILL_PRIMARY);
-  sweep.addColorStop(0.72, DARIUS_SKILL_LIGHT);
-  sweep.addColorStop(1, DARIUS_SKILL_LIGHT);
-  ctx.globalAlpha = Math.pow(fade, 0.58) * 0.9;
-  ctx.strokeStyle = sweep;
-  ctx.shadowColor = DARIUS_SKILL_PRIMARY;
-  ctx.shadowBlur = 7;
-  ctx.lineWidth = 9 * fade + 3;
-  ctx.beginPath();
-  ctx.arc(0, 0, radius - 8, -Math.PI * 0.92, Math.PI * 0.78);
-  ctx.stroke();
-
-  ctx.globalCompositeOperation = "lighter";
-  ctx.globalAlpha = fade * 0.58;
-  ctx.strokeStyle = DARIUS_SKILL_LIGHT;
-  ctx.shadowColor = DARIUS_SKILL_LIGHT;
-  ctx.shadowBlur = 4;
-  ctx.lineWidth = 1.8;
-  ctx.beginPath();
-  ctx.arc(0, 0, radius - 4, -Math.PI * 0.84, Math.PI * 0.68);
-  ctx.stroke();
-
-  ctx.globalCompositeOperation = "source-over";
-  ctx.globalAlpha = fade * 0.52;
-  const blade = ctx.createLinearGradient(-radius * 0.4, radius * 0.6, radius * 0.72, radius * 0.42);
-  blade.addColorStop(0, DARIUS_SKILL_DARK);
-  blade.addColorStop(0.62, DARIUS_SKILL_PRIMARY);
-  blade.addColorStop(1, DARIUS_SKILL_LIGHT);
-  ctx.fillStyle = blade;
-  ctx.beginPath();
-  ctx.moveTo(radius * 0.76, radius * 0.48);
-  ctx.quadraticCurveTo(radius * 0.18, radius * 0.16, -radius * 0.42, radius * 0.58);
-  ctx.quadraticCurveTo(radius * 0.08, radius * 0.4, radius * 0.76, radius * 0.48);
-  ctx.fill();
-
-  for (let index = 0; index < 7; index += 1) {
-    const shardAngle = Math.PI * (0.69 - index * 0.045);
-    const innerRadius = radius * (0.72 - index * 0.022);
-    const outerRadius = radius * (0.94 - index * 0.012);
-    ctx.globalCompositeOperation = index < 3 ? "lighter" : "source-over";
-    ctx.globalAlpha = fade * (0.56 - index * 0.045);
-    ctx.strokeStyle = index % 2 === 0 ? DARIUS_SKILL_LIGHT : DARIUS_SKILL_PRIMARY;
-    ctx.lineWidth = index < 2 ? 2 : 1.2;
+  if (sheet?.complete && sheet.naturalWidth > 0) {
+    const sourceWidth = sheet.naturalWidth / DARIUS_SLASH_SHEET_COLUMNS;
+    const sourceHeight = sheet.naturalHeight / DARIUS_SLASH_SHEET_ROWS;
+    for (const layer of slashLayers) {
+      const layerRadius = radius * layer.scale;
+      ctx.save();
+      ctx.rotate(rotation + layer.angleOffset);
+      ctx.globalAlpha = fade * layer.alpha;
+      ctx.drawImage(
+        sheet,
+        frameColumn * sourceWidth,
+        frameRow * sourceHeight,
+        sourceWidth,
+        sourceHeight,
+        -layerRadius,
+        -layerRadius,
+        layerRadius * 2,
+        layerRadius * 2,
+      );
+      ctx.restore();
+    }
+  } else {
+    ctx.rotate(rotation);
+    ctx.globalAlpha = fade * 0.3;
+    ctx.strokeStyle = DARIUS_SKILL_DARK;
+    ctx.lineWidth = Math.max(7, radius * 0.08);
     ctx.beginPath();
-    ctx.moveTo(Math.cos(shardAngle) * innerRadius, Math.sin(shardAngle) * innerRadius);
-    ctx.lineTo(Math.cos(shardAngle + 0.035) * outerRadius, Math.sin(shardAngle + 0.035) * outerRadius);
+    ctx.arc(0, 0, radius * 0.88, -Math.PI * 0.88, Math.PI * 0.7);
+    ctx.stroke();
+    ctx.globalAlpha = fade * 0.78;
+    ctx.strokeStyle = DARIUS_SKILL_PRIMARY;
+    ctx.shadowColor = DARIUS_SKILL_LIGHT;
+    ctx.shadowBlur = 5;
+    ctx.lineWidth = Math.max(4, radius * 0.055);
+    ctx.beginPath();
+    ctx.arc(0, 0, radius * 0.88, -Math.PI * 0.88, Math.PI * 0.7);
     ctx.stroke();
   }
   ctx.restore();
 }
 
-function drawJannaTornado(ctx: CanvasRenderingContext2D, tornado: Tornado, elapsed: number) {
+function drawJannaTornado(ctx: CanvasRenderingContext2D, tornado: Tornado) {
   const fadeOut = tornado.fadeOut === null
     ? 1
     : clamp(tornado.fadeOut / JANNA_TORNADO_FADE_OUT_DURATION, 0, 1);
-  const opacity = fadeOut;
-  const rotation = elapsed * 4.4 + tornado.id * 0.8;
   const tornadoRadius = jannaTornadoRadius(tornado.age);
+  const sprite = getEffectImage(JANNA_TORNADO_LAYER_SRC);
+  const layers = [
+    { scale: 1.18, speed: 4.6, phase: 0.18, alpha: 0.22, offset: 0.012 },
+    { scale: 1.08, speed: 5.1, phase: 1.46, alpha: 0.2, offset: 0.019 },
+    { scale: 0.98, speed: 5.7, phase: 2.34, alpha: 0.19, offset: 0.026 },
+    { scale: 0.88, speed: 6.35, phase: -0.74, alpha: 0.18, offset: 0.033 },
+    { scale: 0.78, speed: 7.05, phase: 1.16, alpha: 0.17, offset: 0.04 },
+    { scale: 0.69, speed: 7.8, phase: 2.82, alpha: 0.16, offset: 0.047 },
+    { scale: 0.6, speed: 8.6, phase: -1.52, alpha: 0.15, offset: 0.054 },
+    { scale: 0.52, speed: 9.45, phase: 0.92, alpha: 0.14, offset: 0.061 },
+    { scale: 0.45, speed: 10.35, phase: -2.38, alpha: 0.13, offset: 0.068 },
+    { scale: 0.38, speed: 11.3, phase: 2.06, alpha: 0.12, offset: 0.075 },
+    { scale: 0.31, speed: 12.3, phase: -0.36, alpha: 0.11, offset: 0.082 },
+    { scale: 0.25, speed: 13.4, phase: 3.04, alpha: 0.1, offset: 0.09 },
+  ];
+
   ctx.save();
   ctx.translate(tornado.x, tornado.y);
-  ctx.rotate(rotation);
   ctx.globalCompositeOperation = "source-over";
-  ctx.globalAlpha = opacity * 0.76;
-  ctx.shadowColor = JANNA_SKILL_PRIMARY;
-  ctx.shadowBlur = 4;
 
-  const halo = ctx.createRadialGradient(0, 0, 3, 0, 0, tornadoRadius + 5);
-  halo.addColorStop(0, "rgba(38,42,50,.68)");
-  halo.addColorStop(0.3, "rgba(115,123,136,.26)");
-  halo.addColorStop(0.68, "rgba(247,249,255,.09)");
-  halo.addColorStop(1, "rgba(247,249,255,0)");
-  ctx.fillStyle = halo;
+  // Every layer stays inside the same circle used by collision detection.
   ctx.beginPath();
-  ctx.arc(0, 0, tornadoRadius + 5, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.arc(0, 0, tornadoRadius, 0, Math.PI * 2);
+  ctx.clip();
 
-  const traceSpiral = (arm: number) => {
-    const start = (arm / 5) * Math.PI * 2;
-    ctx.beginPath();
-    for (let point = 0; point <= 28; point += 1) {
-      const pointProgress = point / 28;
-      const radius = 4 + pointProgress * (tornadoRadius - 5);
-      const angle = start + pointProgress * Math.PI * 1.72;
-      const ripple = Math.sin(pointProgress * Math.PI * 3 + arm) * 0.9;
-      const x = Math.cos(angle) * (radius + ripple);
-      const y = Math.sin(angle) * (radius + ripple) * 0.9;
-      if (point === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
+  if (sprite?.complete && sprite.naturalWidth > 0) {
+    for (const layer of layers) {
+      const breath = 1 + Math.sin(tornado.age * 2.4 + layer.phase) * 0.026;
+      const diameter = tornadoRadius * 2 * layer.scale * breath;
+      const offsetAngle = tornado.age * 0.72 + layer.phase * 1.7;
+      const offsetDistance = tornadoRadius * layer.offset;
+      ctx.save();
+      ctx.translate(
+        Math.cos(offsetAngle) * offsetDistance,
+        Math.sin(offsetAngle) * offsetDistance,
+      );
+      ctx.rotate(tornado.age * layer.speed + layer.phase + tornado.id * 0.31);
+      ctx.globalAlpha = fadeOut * layer.alpha;
+      ctx.drawImage(sprite, -diameter / 2, -diameter / 2, diameter, diameter);
+      ctx.restore();
     }
-  };
-
-  for (let arm = 0; arm < 5; arm += 1) {
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.globalAlpha = opacity * 0.3;
-    ctx.strokeStyle = JANNA_SKILL_DARK;
-    ctx.lineWidth = arm % 2 === 0 ? 5.2 : 4;
-    traceSpiral(arm);
-    ctx.stroke();
-
-    ctx.globalAlpha = opacity * (arm % 2 === 0 ? 0.72 : 0.56);
-    ctx.strokeStyle = arm % 2 === 0 ? JANNA_SKILL_LIGHT : JANNA_SKILL_PRIMARY;
-    ctx.lineWidth = arm % 2 === 0 ? 2.1 : 1.4;
-    traceSpiral(arm);
-    ctx.stroke();
-  }
-
-  ctx.save();
-  ctx.rotate(-rotation * 1.7);
-  ctx.globalAlpha = opacity * 0.34;
-  ctx.strokeStyle = JANNA_SKILL_LIGHT;
-  ctx.lineWidth = 1.1;
-  ctx.setLineDash([Math.max(5, tornadoRadius * 0.18), Math.max(7, tornadoRadius * 0.16)]);
-  for (let ring = 0; ring < 2; ring += 1) {
+  } else {
+    ctx.globalAlpha = fadeOut * 0.72;
+    ctx.strokeStyle = JANNA_SKILL_PRIMARY;
+    ctx.shadowColor = JANNA_SKILL_DARK;
+    ctx.shadowBlur = 4;
+    ctx.lineWidth = Math.max(3, tornadoRadius * 0.12);
     ctx.beginPath();
-    ctx.arc(0, 0, tornadoRadius * (0.62 + ring * 0.27), ring * 0.8, Math.PI * (1.25 + ring * 0.45));
+    ctx.arc(0, 0, tornadoRadius * 0.72, tornado.age, tornado.age + Math.PI * 1.52);
     ctx.stroke();
   }
-  ctx.restore();
-
-  for (let index = 0; index < 10; index += 1) {
-    const moteAngle = (index / 10) * Math.PI * 2 - rotation * 0.45;
-    const moteRadius = tornadoRadius * (0.58 + (index % 3) * 0.11);
-    const tangent = moteAngle + Math.PI / 2;
-    const length = 3 + (index % 2) * 2.5;
-    ctx.globalAlpha = opacity * (0.25 + (index % 3) * 0.08);
-    ctx.strokeStyle = index % 2 === 0 ? JANNA_SKILL_LIGHT : JANNA_SKILL_PRIMARY;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(Math.cos(moteAngle) * moteRadius, Math.sin(moteAngle) * moteRadius);
-    ctx.lineTo(
-      Math.cos(moteAngle) * moteRadius + Math.cos(tangent) * length,
-      Math.sin(moteAngle) * moteRadius + Math.sin(tangent) * length,
-    );
-    ctx.stroke();
-  }
-
-  const eye = ctx.createRadialGradient(0, 0, 0, 0, 0, 8);
-  eye.addColorStop(0, "rgba(28,31,38,.96)");
-  eye.addColorStop(0.58, "rgba(83,89,100,.86)");
-  eye.addColorStop(1, "rgba(247,249,255,.12)");
-  ctx.globalAlpha = opacity;
-  ctx.shadowBlur = 2;
-  ctx.fillStyle = eye;
-  ctx.beginPath();
-  ctx.arc(0, 0, 8, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.globalAlpha = opacity * 0.74;
-  ctx.strokeStyle = JANNA_SKILL_LIGHT;
-  ctx.lineWidth = 1.2;
-  ctx.stroke();
   ctx.restore();
 }
 
@@ -1978,6 +1928,8 @@ export function drawArena(
   winner: Actor | null,
 ) {
   ctx.clearRect(0, 0, WORLD_W, WORLD_H);
+  getEffectImage(JANNA_TORNADO_LAYER_SRC);
+  getEffectImage(DARIUS_SLASH_SHEET_SRC);
   const arenaBackground = getArenaBackgroundImage();
   if (arenaBackground?.complete && arenaBackground.naturalWidth > 0) {
     drawImageCover(ctx, arenaBackground, WORLD_W, WORLD_H);
@@ -2001,7 +1953,7 @@ export function drawArena(
   const janna = engine.actors.find((actor) => actor.id === "janna" && actor.alive);
   for (const tornado of engine.tornadoes) {
     if (janna) drawJannaTornadoLink(ctx, janna, tornado, engine.elapsed);
-    drawJannaTornado(ctx, tornado, engine.elapsed);
+    drawJannaTornado(ctx, tornado);
   }
   for (const rocket of engine.rockets) drawJinxRocket(ctx, rocket);
   for (const trail of engine.leeSinDashTrails) drawLeeSinDashTrail(ctx, trail);

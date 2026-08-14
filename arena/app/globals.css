@@ -191,7 +191,7 @@ button:focus-visible {
   display: grid;
   min-height: 46px;
   grid-column: 1 / -1;
-  grid-template-columns: 36px minmax(0, 1fr);
+  grid-template-columns: 76px minmax(0, 1fr);
   align-items: center;
   gap: 9px;
   padding: 5px 8px;
@@ -202,16 +202,30 @@ button:focus-visible {
     rgba(13, 8, 8, 0.76);
 }
 
-.selected-skill-preview > img {
-  width: 36px;
-  height: 36px;
+.selected-skill-icons {
+  display: grid;
+  grid-template-columns: repeat(2, 34px);
+  align-items: center;
+  gap: 6px;
+}
+
+.selected-skill-icons img {
+  width: 34px;
+  height: 34px;
   border: 1px solid rgba(246, 225, 202, 0.48);
-  border-radius: 8px;
   object-fit: cover;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.38);
 }
 
-.selected-skill-preview > div {
+.selected-skill-fighter-icon {
+  border-radius: 50%;
+}
+
+.selected-skill-ability-icon {
+  border-radius: 8px;
+}
+
+.selected-skill-preview > div:last-child {
   min-width: 0;
 }
 

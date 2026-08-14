@@ -63,6 +63,8 @@ test("ships selection, automated resolution, and prize settlement without remove
   assert.match(component, /aria-haspopup="dialog"/);
   assert.match(component, /skillFighter\.skillDescription/);
   assert.match(component, /className="selected-skill-preview"/);
+  assert.match(component, /className="selected-skill-fighter-icon"[\s\S]{0,120}src=\{selectedFighter\.icon\}/);
+  assert.match(component, /className="selected-skill-ability-icon"[\s\S]{0,120}src=\{selectedFighter\.skillIcon\}/);
   assert.match(component, /selectedFighter\.skillIcon/);
   assert.match(component, /selectedFighter\.skillName/);
   assert.match(component, /selectedFighter\.skillDescription/);
@@ -70,7 +72,8 @@ test("ships selection, automated resolution, and prize settlement without remove
   assert.match(component, /settlement\.champion\.icon/);
   assert.match(globalsCss, /\.skill-backdrop/);
   assert.match(globalsCss, /\.skill-dialog-icon/);
-  assert.match(globalsCss, /\.selected-skill-preview[\s\S]*grid-template-columns: 36px minmax\(0, 1fr\)/);
+  assert.match(globalsCss, /\.selected-skill-preview[\s\S]*grid-template-columns: 76px minmax\(0, 1fr\)/);
+  assert.match(globalsCss, /\.selected-skill-icons[\s\S]*grid-template-columns: repeat\(2, 34px\)/);
   assert.match(globalsCss, /\.entry-summary[\s\S]*font-size: 10px/);
   assert.match(globalsCss, /\.entry-summary strong[\s\S]*900 13px\/1/);
   assert.match(globalsCss, /--rust: #8f4330/);
@@ -227,10 +230,20 @@ test("ships selection, automated resolution, and prize settlement without remove
   assert.doesNotMatch(engine, /const travel = Math\.min\(distance, JANNA_TORNADO_SPEED \* dt\)/);
   assert.match(engine, /const outsideScreen = tornado\.x < 0/);
   assert.match(engine, /tornado\.enteredScreen && outsideScreen/);
-  assert.match(engine, /const opacity = fadeOut/);
-  assert.match(engine, /for \(let arm = 0; arm < 5; arm \+= 1\)/);
-  assert.match(engine, /for \(let index = 0; index < 10; index \+= 1\)/);
-  assert.match(engine, /const outerRadius = radius \* \(0\.94 - index \* 0\.012\)/);
+  assert.match(engine, /JANNA_TORNADO_LAYER_SRC = assetPath\("\/effects\/janna-tornado-layer-v1\.png"\)/);
+  assert.match(engine, /const sprite = getEffectImage\(JANNA_TORNADO_LAYER_SRC\)/);
+  assert.match(engine, /const layers = \[[\s\S]{0,1500}scale: 0\.25/);
+  assert.match(engine, /scale: 1\.18, speed: 4\.6[\s\S]{0,80}offset: 0\.012/);
+  assert.match(engine, /scale: 0\.38, speed: 11\.3/);
+  assert.match(engine, /for \(const layer of layers\)/);
+  assert.match(engine, /const diameter = tornadoRadius \* 2 \* layer\.scale \* breath/);
+  assert.match(engine, /const offsetAngle = tornado\.age \* 0\.72 \+ layer\.phase \* 1\.7/);
+  assert.match(engine, /const offsetDistance = tornadoRadius \* layer\.offset/);
+  assert.match(engine, /ctx\.rotate\(tornado\.age \* layer\.speed \+ layer\.phase/);
+  assert.match(engine, /ctx\.drawImage\(sprite, -diameter \/ 2, -diameter \/ 2, diameter, diameter\)/);
+  assert.doesNotMatch(engine, /eyeRadius|const eye =|getJannaWindParticleSprite|tornadoParticleNoise/);
+  assert.match(engine, /ctx\.globalCompositeOperation = "source-over"/);
+  assert.match(engine, /ctx\.arc\(0, 0, tornadoRadius, 0, Math\.PI \* 2\);[\s\S]{0,40}ctx\.clip\(\)/);
   assert.doesNotMatch(engine, /JANNA_CAST_CLEAR_RADIUS|nearbyOpponent|interruptJannaCast/);
   assert.match(engine, /const castingJannaTornado = actor\.id === "janna" && engine\.jannaCastTimer > 0/);
   assert.doesNotMatch(engine, /castingJannaTornado[\s\S]{0,100}engine\.tornadoes\.length > 0/);
@@ -305,6 +318,17 @@ test("ships selection, automated resolution, and prize settlement without remove
   assert.match(engine, /actor\.id === "darius" && engine\.dariusCastTimer > 0/);
   assert.doesNotMatch(engine, /interruptDarius|dariusCastTimer = 0;[\s\S]{0,120}hitFlash/);
   assert.match(engine, /drawDariusSlashEffect/);
+  assert.match(engine, /DARIUS_SLASH_SHEET_SRC = assetPath\("\/effects\/darius-slash-gray-v1\.png"\)/);
+  assert.match(engine, /DARIUS_SLASH_SHEET_COLUMNS = 6/);
+  assert.match(engine, /DARIUS_SLASH_SHEET_ROWS = 3/);
+  assert.match(engine, /const frameIndex = Math\.min/);
+  assert.match(engine, /const spinProgress = clamp\(progress \/ 0\.64, 0, 1\)/);
+  assert.match(engine, /const rotation = -Math\.PI \* 0\.7 \+ spinProgress \* Math\.PI \* 2\.5/);
+  assert.match(engine, /angleOffset: Math\.PI \/ 6, scale: 0\.96, alpha: 0\.5/);
+  assert.match(engine, /for \(const layer of slashLayers\)/);
+  assert.match(engine, /ctx\.arc\(0, 0, radius, 0, Math\.PI \* 2\);[\s\S]{0,40}ctx\.clip\(\)/);
+  assert.match(engine, /frameColumn \* sourceWidth/);
+  assert.match(engine, /-layerRadius,[\s\S]{0,100}layerRadius \* 2/);
   assert.match(engine, /ZED_CAST_DURATION = 1/);
   assert.match(engine, /ZED_SKILL_COOLDOWN = 12/);
   assert.match(engine, /ZED_COORDINATION_NEAR_STAGE_DISTANCE = 58/);
@@ -463,6 +487,8 @@ test("includes project-specific social and icon artwork", async () => {
     access(new URL("../public/og-v2.png", import.meta.url)),
     access(new URL("../public/favicon.png", import.meta.url)),
     access(new URL("../public/arena-map-v1.png", import.meta.url)),
+    access(new URL("../public/effects/janna-tornado-layer-v1.png", import.meta.url)),
+    access(new URL("../public/effects/darius-slash-gray-v1.png", import.meta.url)),
     ...fighterArtwork,
   ]);
   await assert.rejects(access(new URL("../app/_sites-preview", import.meta.url)));

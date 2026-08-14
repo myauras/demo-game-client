@@ -251,7 +251,18 @@ export default function ArenaGame() {
                 boxShadow: `inset 3px 0 ${selectedFighter.color}, 0 0 20px ${selectedFighter.color}16`,
               }}
             >
-              <img src={selectedFighter.skillIcon} alt="" />
+              <div className="selected-skill-icons">
+                <img
+                  className="selected-skill-fighter-icon"
+                  src={selectedFighter.icon}
+                  alt={`${selectedFighter.name} 角色圖示`}
+                />
+                <img
+                  className="selected-skill-ability-icon"
+                  src={selectedFighter.skillIcon}
+                  alt=""
+                />
+              </div>
               <div>
                 <strong>{selectedFighter.skillName}</strong>
                 <p>{selectedFighter.skillDescription}</p>
