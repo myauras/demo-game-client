@@ -134,7 +134,7 @@ test("ships selection, automated resolution, and prize settlement without remove
   assert.match(engine, /JINX_VOLLEY_SIZE = 10/);
   assert.match(engine, /JINX_VOLLEY_INTERVAL = 0\.1/);
   assert.match(engine, /JINX_ROCKET_COOLDOWN = 7/);
-  assert.match(engine, /JINX_ROCKET_SPREAD_RADIANS = Math\.PI \/ 6/);
+  assert.match(engine, /JINX_ROCKET_SPREAD_RADIANS = Math\.PI \* 2 \/ 15/);
   assert.match(engine, /JINX_ROCKET_KNOCKBACK = 250/);
   assert.match(engine, /JINX_ROCKET_KNOCKBACK_DURATION = 0\.12/);
   assert.match(engine, /JINX_ROCKET_STUN_DURATION = 0\.3/);
@@ -376,7 +376,7 @@ test("documents monorepo routing and Arena product rules", async () => {
   assert.match(rules, /Jinx fires a ten-rocket volley/);
   assert.match(rules, /keeps that same fighter locked for the entire volley/);
   assert.match(rules, /firing direction follows that fighter's movement between shots/);
-  assert.match(rules, /total 30-degree cone/);
+  assert.match(rules, /total 24-degree cone/);
   assert.match(rules, /Jinx cannot move while the volley is being cast/);
   assert.match(rules, /collision hit against Jinx interrupts the cast/);
   assert.match(rules, /Janna stops normal movement and channels for 0\.5 seconds/);
@@ -389,7 +389,7 @@ test("documents monorepo routing and Arena product rules", async () => {
   assert.match(rules, /very thin, low-opacity white energy line from Janna's current position to her tornado/);
   assert.match(rules, /impulse of 400 world pixels per second/);
   assert.match(rules, /knockback impulse of 250 world pixels per second/);
-  assert.match(rules, /total 30-degree cone/);
+  assert.match(rules, /total 24-degree cone/);
   assert.match(rules, /flies straight without tracking/);
   assert.match(rules, /RGB `0, 173, 233` blue color family/);
   assert.match(rules, /white color family with pearl-gray shadows/);
