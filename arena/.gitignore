@@ -54,3 +54,6 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+
+# local source drop; the app ships the copied files under public/icons
+/icons/

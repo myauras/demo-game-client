@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_FIGHTERS, type FighterConfig } from "../lib/arena";
 import {
   createEngine,
@@ -16,7 +16,11 @@ import {
 } from "../lib/engine";
 
 const ENTRY_AMOUNT = 100;
-const WIN_PRIZE = 500;
+const WIN_PROBABILITY = 1 / DEFAULT_FIGHTERS.length;
+const DECIMAL_ODDS = 1 / WIN_PROBABILITY;
+const WIN_PRIZE = ENTRY_AMOUNT * DECIMAL_ODDS;
+const DESIGN_WIDTH = 1179;
+const DESIGN_HEIGHT = 1977;
 
 type Settlement = {
   champion: Actor;
@@ -39,6 +43,20 @@ function rankingRows(engine: EngineState): RankingRow[] {
   }));
 }
 
+function normalizeChampion(champion: Actor): Actor {
+  const fighter = DEFAULT_FIGHTERS.find(
+    (entry) => entry.id === champion.teamId || entry.id === champion.id,
+  );
+  if (!fighter) return { ...champion };
+  return {
+    ...champion,
+    ...fighter,
+    id: fighter.id,
+    teamId: fighter.id,
+    isClone: false,
+  };
+}
+
 export default function ArenaGame() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<EngineState>(createEngine(DEFAULT_FIGHTERS));
@@ -46,6 +64,7 @@ export default function ArenaGame() {
   const selectedIdRef = useRef<string | null>(null);
   const lastFrameRef = useRef(0);
   const winnerRecordedRef = useRef(false);
+  const settlementTimerRef = useRef<number | null>(null);
 
   const [status, setStatus] = useState<GameStatus>("idle");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -53,12 +72,44 @@ export default function ArenaGame() {
   const [ranking, setRanking] = useState<RankingRow[]>(() => rankingRows(engineRef.current));
   const [winner, setWinner] = useState<Actor | null>(null);
   const [settlement, setSettlement] = useState<Settlement | null>(null);
+  const [skillFighterId, setSkillFighterId] = useState<string | null>(null);
+  const [viewportScale, setViewportScale] = useState(1);
 
   const selectedFighter = useMemo(
     () => DEFAULT_FIGHTERS.find((fighter) => fighter.id === selectedId) ?? null,
     [selectedId],
   );
+  const skillFighter = useMemo(
+    () => DEFAULT_FIGHTERS.find((fighter) => fighter.id === skillFighterId) ?? null,
+    [skillFighterId],
+  );
   const locked = status === "countdown" || status === "running";
+
+  useEffect(() => {
+    if (!skillFighter) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSkillFighterId(null);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [skillFighter]);
+
+  useLayoutEffect(() => {
+    const fitDesignToViewport = () => {
+      const viewport = window.visualViewport;
+      const availableWidth = viewport?.width ?? window.innerWidth;
+      const availableHeight = viewport?.height ?? window.innerHeight;
+      setViewportScale(Math.min(availableWidth / DESIGN_WIDTH, availableHeight / DESIGN_HEIGHT));
+    };
+
+    fitDesignToViewport();
+    window.addEventListener("resize", fitDesignToViewport);
+    window.visualViewport?.addEventListener("resize", fitDesignToViewport);
+    return () => {
+      window.removeEventListener("resize", fitDesignToViewport);
+      window.visualViewport?.removeEventListener("resize", fitDesignToViewport);
+    };
+  }, []);
 
   useEffect(() => {
     statusRef.current = status;
@@ -71,12 +122,17 @@ export default function ArenaGame() {
   const finishMatch = useCallback((champion: Actor) => {
     if (winnerRecordedRef.current) return;
     winnerRecordedRef.current = true;
+    const settledChampion = normalizeChampion(champion);
     const pick = DEFAULT_FIGHTERS.find((fighter) => fighter.id === selectedIdRef.current);
-    setWinner({ ...champion });
+    setWinner(settledChampion);
     setStatus("finished");
     if (pick) {
-      window.setTimeout(() => {
-        setSettlement({ champion: { ...champion }, pick, won: pick.id === champion.id });
+      settlementTimerRef.current = window.setTimeout(() => {
+        setSettlement({
+          champion: { ...settledChampion },
+          pick,
+          won: pick.id === settledChampion.id,
+        });
       }, 650);
     }
   }, []);
@@ -108,10 +164,7 @@ export default function ArenaGame() {
         const champion = stepEngine(engineRef.current, dt);
         if (champion) finishMatch(champion);
       }
-      const paintedWinner = statusRef.current === "finished"
-        ? engineRef.current.actors.find((actor) => actor.alive) ?? winner
-        : winner;
-      drawArena(ctx, engineRef.current, statusRef.current, countdown, paintedWinner);
+      drawArena(ctx, engineRef.current, statusRef.current, countdown, winner);
       rankingTimer += dt;
       if (rankingTimer > 0.12) {
         rankingTimer = 0;
@@ -137,8 +190,14 @@ export default function ArenaGame() {
     return () => window.clearTimeout(timer);
   }, [countdown, status]);
 
+  useEffect(() => () => {
+    if (settlementTimerRef.current !== null) window.clearTimeout(settlementTimerRef.current);
+  }, []);
+
   const startMatch = () => {
     if (!selectedId || locked) return;
+    if (settlementTimerRef.current !== null) window.clearTimeout(settlementTimerRef.current);
+    settlementTimerRef.current = null;
     winnerRecordedRef.current = false;
     engineRef.current = createEngine(DEFAULT_FIGHTERS);
     setRanking(rankingRows(engineRef.current));
@@ -150,6 +209,8 @@ export default function ArenaGame() {
   };
 
   const newMatch = () => {
+    if (settlementTimerRef.current !== null) window.clearTimeout(settlementTimerRef.current);
+    settlementTimerRef.current = null;
     engineRef.current = createEngine(DEFAULT_FIGHTERS);
     setRanking(rankingRows(engineRef.current));
     setSelectedId(null);
@@ -162,67 +223,66 @@ export default function ArenaGame() {
   };
 
   return (
-    <main className="arena-app">
-      <header className="arena-header">
-        <div className="brand-lockup" aria-label="Arena 冠軍預測亂鬥">
-          <span className="brand-mark">A</span>
-          <div>
-            <p>CHAMPION PICK</p>
-            <h1>ARENA</h1>
-          </div>
-        </div>
-        <div className="prize-display">
-          <span>本局模擬獎金</span>
-          <strong>NT$ {WIN_PRIZE.toLocaleString("zh-TW")}</strong>
-        </div>
-      </header>
-
+    <div className="arena-viewport">
+      <div
+        className="arena-design-surface"
+        data-design-resolution={`${DESIGN_WIDTH}x${DESIGN_HEIGHT}`}
+        style={{ transform: `translate(-50%, -50%) scale(${viewportScale})` }}
+      >
+        <main className="arena-app">
       <section className="match-shell">
         <div className="stage-frame">
           <canvas ref={canvasRef} className="battle-canvas" aria-label="Arena 亂鬥場地" />
           {selectedFighter && status === "idle" && (
             <div className="pick-indicator">
-              <span style={{ background: selectedFighter.color }} />
+              <img src={selectedFighter.icon} alt="" />
               冠軍預測：<strong>{selectedFighter.name}</strong>
             </div>
           )}
         </div>
 
         <aside className="prediction-panel" aria-label="冠軍預測">
-          <div className="prediction-heading">
-            <span>YOUR PICK</span>
-            <h2>選擇冠軍</h2>
-            <p>選一位你看好的英雄，再開始這場亂鬥。</p>
-          </div>
-
           <div className="fighter-options">
-            {DEFAULT_FIGHTERS.map((fighter, index) => {
+            {DEFAULT_FIGHTERS.map((fighter) => {
               const row = ranking.find((entry) => entry.id === fighter.id);
               const selected = selectedId === fighter.id;
               return (
-                <button
-                  className={`fighter-option ${selected ? "selected" : ""} ${row && !row.alive ? "eliminated" : ""}`}
-                  type="button"
-                  key={fighter.id}
-                  onClick={() => setSelectedId(fighter.id)}
-                  disabled={locked || status === "finished"}
-                  aria-pressed={selected}
-                >
-                  <span className="fighter-rank">{String(index + 1).padStart(2, "0")}</span>
-                  <span className="fighter-dot" style={{ background: fighter.color, boxShadow: `0 0 18px ${fighter.color}88` }} />
-                  <span className="fighter-copy">
-                    <strong>{fighter.name}</strong>
-                    <small>{row && status !== "idle" ? (row.alive ? `${Math.round(row.damage)}% DAMAGE` : "OUT") : "5.00× ODDS"}</small>
-                  </span>
-                  <span className="pick-check" aria-hidden="true">{selected ? "✓" : ""}</span>
-                </button>
+                <div className="fighter-card" key={fighter.id}>
+                  <button
+                    className={`fighter-option ${selected ? "selected" : ""} ${row && !row.alive ? "eliminated" : ""}`}
+                    type="button"
+                    onClick={() => setSelectedId(fighter.id)}
+                    disabled={locked || status === "finished"}
+                    aria-pressed={selected}
+                  >
+                    <img
+                      className="fighter-avatar"
+                      src={fighter.icon}
+                      alt=""
+                      style={{ borderColor: fighter.color, boxShadow: `0 0 18px ${fighter.color}66` }}
+                    />
+                    <span className="fighter-copy">
+                      <strong>{fighter.name}</strong>
+                    </span>
+                  </button>
+                  <button
+                    className="skill-info-button"
+                    type="button"
+                    onClick={() => setSkillFighterId(fighter.id)}
+                    aria-label={`查看 ${fighter.name} 技能`}
+                    aria-haspopup="dialog"
+                    title={`查看 ${fighter.name} 技能`}
+                  >
+                    <img src={fighter.skillIcon} alt="" />
+                  </button>
+                </div>
               );
             })}
           </div>
 
           <div className="entry-summary">
             <span>模擬投入 <strong>NT$ {ENTRY_AMOUNT}</strong></span>
-            <span>預測成功 <strong>NT$ {WIN_PRIZE}</strong></span>
+            <span>賠率 <strong>{DECIMAL_ODDS.toFixed(2)}x</strong></span>
           </div>
 
           <button
@@ -233,14 +293,69 @@ export default function ArenaGame() {
           >
             {status === "countdown" ? "準備開戰" : status === "running" ? "戰鬥進行中" : "開始亂鬥"}
           </button>
-          {!selectedFighter && status === "idle" && <p className="selection-hint">請先選擇一位冠軍</p>}
+          {status !== "idle" && (
+            <button className="back-to-bet-button" type="button" onClick={newMatch}>
+              回到下注
+            </button>
+          )}
         </aside>
       </section>
+
+      {skillFighter && (
+        <div
+          className="skill-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setSkillFighterId(null);
+          }}
+        >
+          <section
+            className="skill-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="skill-dialog-title"
+            aria-describedby="skill-dialog-description"
+            style={{
+              borderColor: `${skillFighter.color}99`,
+              boxShadow: `0 30px 90px #000b, 0 0 44px ${skillFighter.color}22`,
+            }}
+          >
+            <button
+              className="skill-dialog-close"
+              type="button"
+              onClick={() => setSkillFighterId(null)}
+              aria-label="關閉技能資訊"
+              autoFocus
+            >
+              ×
+            </button>
+            <div className="skill-fighter-heading">
+              <img className="skill-fighter-avatar" src={skillFighter.icon} alt="" />
+              <div>
+                <span>FIGHTER SKILL</span>
+                <strong>{skillFighter.name}</strong>
+              </div>
+            </div>
+            <img
+              className="skill-dialog-icon"
+              src={skillFighter.skillIcon}
+              alt={`${skillFighter.name} ${skillFighter.skillName} 技能圖示`}
+            />
+            <h2 id="skill-dialog-title">{skillFighter.skillName}</h2>
+            <p id="skill-dialog-description">{skillFighter.skillDescription}</p>
+            <button className="skill-dialog-action" type="button" onClick={() => setSkillFighterId(null)}>
+              關閉
+            </button>
+          </section>
+        </div>
+      )}
 
       {settlement && (
         <div className="result-backdrop" role="presentation">
           <section className={`result-dialog ${settlement.won ? "won" : "lost"}`} role="dialog" aria-modal="true" aria-labelledby="result-title">
-            <div className="result-emblem" aria-hidden="true">{settlement.won ? "★" : "◆"}</div>
+            <div className="result-emblem" aria-hidden="true">
+              <img src={settlement.champion.icon} alt="" />
+            </div>
             <p className="result-kicker">{settlement.won ? "PREDICTION WON" : "MATCH COMPLETE"}</p>
             <h2 id="result-title">{settlement.champion.name} 成為冠軍</h2>
             <p className="result-copy">
@@ -250,7 +365,7 @@ export default function ArenaGame() {
               <span>{settlement.won ? "獲得模擬獎金" : "本局獎金"}</span>
               <strong>NT$ {settlement.won ? WIN_PRIZE.toLocaleString("zh-TW") : "0"}</strong>
             </div>
-            <button type="button" className="play-again-button" onClick={newMatch}>再玩一場</button>
+            <button type="button" className="play-again-button" onClick={newMatch}>回到下注</button>
           </section>
         </div>
       )}
@@ -262,6 +377,8 @@ export default function ArenaGame() {
             ? "比賽進行中"
             : ""}
       </div>
-    </main>
+        </main>
+      </div>
+    </div>
   );
 }
