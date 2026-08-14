@@ -131,10 +131,10 @@ test("ships selection, automated resolution, and prize settlement without remove
   assert.doesNotMatch(engine, /MOVE_ACCEL|MAX_MOVE_SPEED|DASH_MIN|DASH_VARIANCE|KNOCKBACK_BASE|KNOCKBACK_DAMAGE/);
   assert.match(engine, /launchJinxRocket/);
   assert.match(engine, /hitJinxRocket/);
-  assert.match(engine, /JINX_VOLLEY_SIZE = 8/);
+  assert.match(engine, /JINX_VOLLEY_SIZE = 10/);
   assert.match(engine, /JINX_VOLLEY_INTERVAL = 0\.1/);
   assert.match(engine, /JINX_ROCKET_COOLDOWN = 7/);
-  assert.match(engine, /JINX_ROCKET_SPREAD_RADIANS = Math\.PI \/ 9/);
+  assert.match(engine, /JINX_ROCKET_SPREAD_RADIANS = Math\.PI \/ 6/);
   assert.match(engine, /JINX_ROCKET_KNOCKBACK = 250/);
   assert.match(engine, /JINX_ROCKET_KNOCKBACK_DURATION = 0\.12/);
   assert.match(engine, /JINX_ROCKET_STUN_DURATION = 0\.3/);
@@ -145,6 +145,9 @@ test("ships selection, automated resolution, and prize settlement without remove
   assert.match(engine, /engine\.jinxVolleyTargetId = target\.id/);
   assert.match(engine, /engine\.jinxVolleyTargetX = target\.x/);
   assert.match(engine, /engine\.jinxVolleyTargetY = target\.y/);
+  assert.match(engine, /actor\.id === engine\.jinxVolleyTargetId/);
+  assert.match(engine, /engine\.jinxVolleyTargetX = volleyTarget\.x/);
+  assert.match(engine, /engine\.jinxVolleyTargetY = volleyTarget\.y/);
   assert.match(engine, /engine\.jinxVolleyTargetX,[\s\S]{0,80}engine\.jinxVolleyTargetY/);
   assert.doesNotMatch(engine, /rocket\.targetId/);
   assert.match(engine, /const spreadOffset = \(Math\.random\(\) - 0\.5\) \* JINX_ROCKET_SPREAD_RADIANS/);
@@ -370,9 +373,10 @@ test("documents monorepo routing and Arena product rules", async () => {
   assert.match(rules, /fair decimal odds of `5\.00x`/);
   assert.match(rules, /do not draw shrink countdown, energy-ring shrink, minimum-ring, percentage/);
   assert.match(rules, /battle contains no items/);
-  assert.match(rules, /Jinx fires an eight-rocket volley/);
-  assert.match(rules, /snapshots that fighter's current position as the fixed aim point for all eight rockets/);
-  assert.match(rules, /target and aim point do not change during the volley/);
+  assert.match(rules, /Jinx fires a ten-rocket volley/);
+  assert.match(rules, /keeps that same fighter locked for the entire volley/);
+  assert.match(rules, /firing direction follows that fighter's movement between shots/);
+  assert.match(rules, /total 30-degree cone/);
   assert.match(rules, /Jinx cannot move while the volley is being cast/);
   assert.match(rules, /collision hit against Jinx interrupts the cast/);
   assert.match(rules, /Janna stops normal movement and channels for 0\.5 seconds/);
@@ -385,7 +389,7 @@ test("documents monorepo routing and Arena product rules", async () => {
   assert.match(rules, /very thin, low-opacity white energy line from Janna's current position to her tornado/);
   assert.match(rules, /impulse of 400 world pixels per second/);
   assert.match(rules, /knockback impulse of 250 world pixels per second/);
-  assert.match(rules, /total 20-degree cone/);
+  assert.match(rules, /total 30-degree cone/);
   assert.match(rules, /flies straight without tracking/);
   assert.match(rules, /RGB `0, 173, 233` blue color family/);
   assert.match(rules, /white color family with pearl-gray shadows/);

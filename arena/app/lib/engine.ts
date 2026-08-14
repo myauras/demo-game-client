@@ -135,9 +135,9 @@ const COLLISION_STUN_DURATION = 0.5;
 const JINX_ROCKET_INITIAL_DELAY = 2.2;
 const JINX_ROCKET_COOLDOWN = 7;
 const JINX_ROCKET_SPEED = 650;
-const JINX_VOLLEY_SIZE = 8;
+const JINX_VOLLEY_SIZE = 10;
 const JINX_VOLLEY_INTERVAL = 0.1;
-const JINX_ROCKET_SPREAD_RADIANS = Math.PI / 9;
+const JINX_ROCKET_SPREAD_RADIANS = Math.PI / 6;
 const JINX_ROCKET_KNOCKBACK = 250;
 const JINX_ROCKET_KNOCKBACK_DURATION = 0.12;
 const JINX_ROCKET_STUN_DURATION = 0.3;
@@ -548,6 +548,13 @@ function stepJinxRocketSkill(engine: EngineState, dt: number) {
     if (engine.jinxVolleyRemaining > 0) {
       engine.jinxVolleyTimer -= dt;
       if (engine.jinxVolleyTimer <= 0) {
+        const volleyTarget = engine.actors.find(
+          (actor) => actor.id === engine.jinxVolleyTargetId,
+        );
+        if (volleyTarget) {
+          engine.jinxVolleyTargetX = volleyTarget.x;
+          engine.jinxVolleyTargetY = volleyTarget.y;
+        }
         if (
           engine.jinxVolleyTargetId !== null
           && engine.jinxVolleyTargetX !== null
