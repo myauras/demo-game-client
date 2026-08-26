@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>烽火連環船｜Demo</title>
+<style>
+  /* ── 拋棄式資產：版面與樣式（示意圖 Part 2-A 配置）── */
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent;
+      user-select: none; -webkit-user-select: none; }
+  html, body { height: 100%; }
+  body { background: #17150f; font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+         display: flex; align-items: center; justify-content: center; color: #e8e2d4; }
+  button { font-family: inherit; border: 0; cursor: pointer; }
+  button:disabled { cursor: default; }
+
+  #phone { width: 375px; height: 812px; background: #0d1b2e; display: flex; flex-direction: column;
+           overflow: hidden; position: relative; border-radius: 24px;
+           box-shadow: 0 0 0 6px #23201c, 0 24px 60px rgba(0,0,0,.6); }
+  @media (max-width: 420px), (max-height: 860px) {
+    #phone { width: 100vw; height: 100dvh; border-radius: 0; box-shadow: none; }
+  }
+
+  /* 頂欄 */
+  #top { height: 46px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 12px;
+         background: rgba(0,0,0,.25); }
+  #avatar { width: 26px; height: 26px; border-radius: 50%; background: #2a4568; flex: none; }
+  #balance-box { font-size: 11px; color: #8a9cb5; }
+  #balance { font-size: 15px; color: #ffb547; font-weight: 700; margin-left: 4px; font-variant-numeric: tabular-nums; }
+  #wind-badge { margin-left: auto; font-size: 11px; padding: 4px 10px; border-radius: 10px;
+                background: #1b3555; color: #8a9cb5; }
+  #wind-badge.gentle    { background: #1b3555; color: #9fc3ee; }
+  #wind-badge.standard  { background: #123; color: #c9a227; }
+  #wind-badge.east_wind { background: #3a1408; color: #ff8a3d; }
+  #btn-settings { width: 30px; height: 30px; border-radius: 6px; background: #1b3555; color: #8a9cb5; font-size: 15px; }
+
+  /* 倍率區（第一視覺，佔寬 74%） */
+  #mult-zone { flex: none; text-align: center; padding: 10px 0 6px; }
+  #mult { font-size: 46px; font-weight: 800; color: #ffb547; line-height: 1.1;
+          font-variant-numeric: tabular-nums; letter-spacing: 1px;
+          width: 74%; margin: 0 auto; }
+  #mult.win { color: #c9a227; } #mult.lose { color: #5b6b82; } #mult.hot { color: #e8531f; }
+  #mult-sub { font-size: 12px; color: #8a9cb5; margin-top: 2px; min-height: 16px; }
+
+  /* 江面演出區（不放可點擊元素；T06 升級演出） */
+  #river { flex: 1; min-height: 170px; margin: 6px 10px; border-radius: 8px; position: relative;
+           background: linear-gradient(#0d1b2e 0%, #12233c 70%, #1b3555 100%); overflow: hidden;
+           transition: background .8s; }
+  #river.wind-gentle    { background: linear-gradient(#14263f 0%, #1a3050 70%, #234066 100%); }
+  #river.wind-standard  { background: linear-gradient(#0d1b2e 0%, #12233c 70%, #1b3555 100%); }
+  #river.wind-east_wind { background: linear-gradient(#20100a 0%, #2a0f08 70%, #3a1408 100%); }
+  #ships { position: absolute; left: 10px; right: 10px; bottom: 46px; display: flex; gap: 4px; }
+  .ship { flex: 1; height: 40px; border-radius: 3px; background: #2a4568; transition: background .3s, box-shadow .3s;
+          position: relative; }
+  .ship.cur    { background: #ffb547; box-shadow: 0 0 12px 2px rgba(255,181,71,.55); }
+  .ship.burned { background: #e8531f; }
+  .ship.ext    { background: #22334c; outline: 1px dashed #5b6b82; }
+  #chain { position: absolute; left: 10px; right: 10px; bottom: 40px; border-bottom: 2px dashed #c9a227; opacity: .6; }
+  #boat { position: absolute; left: 14px; bottom: 12px; width: 0; height: 0;
+          border-top: 9px solid transparent; border-bottom: 9px solid transparent; border-left: 20px solid #c9a227; }
+  #river-msg { position: absolute; top: 10px; left: 0; right: 0; text-align: center;
+               font-size: 12px; color: #8a9cb5; pointer-events: none; }
+
+  /* 階梯捲動條 */
+  #ladder { flex: none; height: 50px; margin: 0 10px; background: rgba(0,0,0,.25); border-radius: 6px;
+            overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+  #ladder::-webkit-scrollbar { display: none; }
+  #ladder-scroll { display: flex; gap: 4px; padding: 8px; width: max-content; }
+  .lcell { width: 52px; height: 34px; border-radius: 4px; background: #1b3555; color: #8a9cb5;
+           font-size: 12px; display: flex; align-items: center; justify-content: center;
+           font-variant-numeric: tabular-nums; flex: none; }
+  .lcell.past { background: #6e2f14; color: #ffb547; }
+  .lcell.cur  { background: #e8531f; color: #fff; font-weight: 700; }
+
+  /* 注額列 */
+  #bet-row { flex: none; height: 46px; margin: 6px 10px 0; display: flex; gap: 6px; align-items: center; }
+  #bet-row button, #bet-amount { height: 34px; border-radius: 6px; background: #1b3555; color: #c8d4e4; font-size: 14px; }
+  #bet-minus, #bet-plus { width: 40px; font-size: 18px; }
+  #bet-amount { flex: 1; display: flex; align-items: center; justify-content: center; font-weight: 700;
+                color: #ffb547; font-variant-numeric: tabular-nums; }
+  #bet-half, #bet-max { width: 48px; font-size: 12px; }
+  #bet-row button:disabled { opacity: .35; }
+
+  /* 自動收兵列 */
+  #auto-row { flex: none; height: 34px; margin: 6px 10px 0; display: flex; align-items: center; gap: 8px;
+              font-size: 12px; color: #8a9cb5; }
+  #auto-toggle { width: 34px; height: 20px; border-radius: 10px; background: #1b3555; position: relative; flex: none; }
+  #auto-toggle::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px;
+                        border-radius: 50%; background: #5b6b82; transition: all .2s; }
+  #auto-toggle.on { background: #c9a227; }
+  #auto-toggle.on::after { left: 16px; background: #fff; }
+  #auto-node { width: 44px; height: 26px; border-radius: 4px; border: 0; background: #1b3555; color: #ffb547;
+               text-align: center; font-size: 13px; }
+  #auto-row.disabled { opacity: .4; pointer-events: none; }
+
+  /* 雙按鈕（拇指熱區，高 60px） */
+  #actions { flex: none; height: 62px; margin: 8px 10px 0; display: flex; gap: 8px; }
+  #actions button { flex: 1; border-radius: 8px; color: #fff; font-size: 18px; font-weight: 700; letter-spacing: 6px;
+                    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+  #actions button small { font-size: 10px; font-weight: 400; letter-spacing: 0; opacity: .85; }
+  #btn-ignite { background: #e8531f; }
+  #btn-continue { background: #e8531f; display: none; }
+  #btn-cash { background: #c9a227; display: none; }
+  #actions button:disabled { filter: grayscale(.7) brightness(.6); }
+
+  /* 決策倒數條 */
+  #timer-wrap { flex: none; height: 6px; margin: 8px 10px 0; border-radius: 3px; background: rgba(0,0,0,.3);
+                overflow: hidden; visibility: hidden; }
+  #timer-bar { height: 100%; width: 100%; background: #e8531f; border-radius: 3px; }
+
+  /* 底欄：獎池 + 跑馬燈 */
+  #foot { flex: none; height: 30px; margin: 8px 10px 12px; display: flex; align-items: center; gap: 8px;
+          background: rgba(0,0,0,.3); border-radius: 6px; padding: 0 10px; font-size: 11px; overflow: hidden; }
+  #foot .jp-label { color: #c9a227; flex: none; }
+  #jackpot { color: #ffb547; font-weight: 700; font-variant-numeric: tabular-nums; flex: none; }
+  #ticker { color: #5b6b82; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* 設定面板 */
+  #settings-panel { position: absolute; top: 50px; right: 10px; width: 240px; background: #12233c;
+                    border: 1px solid #2a4568; border-radius: 10px; padding: 14px; z-index: 20;
+                    font-size: 12px; color: #c8d4e4; display: none; }
+  #settings-panel.open { display: block; }
+  #settings-panel h4 { font-size: 12px; color: #8a9cb5; margin: 10px 0 6px; font-weight: 600; }
+  #settings-panel h4:first-child { margin-top: 0; }
+  #settings-panel label { display: flex; align-items: center; gap: 6px; padding: 4px 0; cursor: pointer; }
+  #btn-reset-wallet { margin-top: 10px; width: 100%; height: 30px; border-radius: 6px; background: #1b3555; color: #8a9cb5; font-size: 12px; }
+
+  /* Toast */
+  #toast { position: absolute; left: 50%; top: 120px; transform: translateX(-50%); max-width: 86%;
+           background: rgba(0,0,0,.85); color: #ffb547; font-size: 12px; padding: 10px 16px;
+           border-radius: 8px; z-index: 30; display: none; text-align: center; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div id="phone">
+  <header id="top">
+    <div id="avatar"></div>
+    <div id="balance-box">餘額<b id="balance">--</b></div>
+    <div id="wind-badge">待點火</div>
+    <button id="btn-settings">⚙</button>
+  </header>
+
+  <section id="mult-zone">
+    <div id="mult">--</div>
+    <div id="mult-sub">設定注額後點火出擊</div>
+  </section>
+
+  <section id="river">
+    <div id="river-msg"></div>
+    <div id="chain"></div>
+    <div id="ships"></div>
+    <div id="boat"></div>
+  </section>
+
+  <section id="ladder"><div id="ladder-scroll"></div></section>
+
+  <section id="bet-row">
+    <button id="bet-minus">−</button>
+    <div id="bet-amount">100</div>
+    <button id="bet-plus">＋</button>
+    <button id="bet-half">1/2</button>
+    <button id="bet-max">MAX</button>
+  </section>
+
+  <section id="auto-row">
+    <div id="auto-toggle"></div>
+    <span>自動收兵：燒到第</span>
+    <input id="auto-node" type="number" min="1" max="12" value="8">
+    <span>節</span>
+  </section>
+
+  <section id="actions">
+    <button id="btn-ignite">點 火 出 擊<small id="ignite-sub"></small></button>
+    <button id="btn-continue">續 燒<small id="cont-sub"></small></button>
+    <button id="btn-cash">收 兵<small id="cash-sub"></small></button>
+  </section>
+
+  <div id="timer-wrap"><div id="timer-bar"></div></div>
+
+  <footer id="foot">
+    <span class="jp-label">獎池</span><b id="jackpot">--</b>
+    <span id="ticker">全服播報跑馬燈（T09 接資料）</span>
+  </footer>
+
+  <div id="settings-panel">
+    <h4>逾時（3 秒未操作）</h4>
+    <label><input type="radio" name="timeout" value="continue" checked>自動續燒（預設）</label>
+    <label><input type="radio" name="timeout" value="cash_out">自動收兵</label>
+    <h4>演出</h4>
+    <label><input type="checkbox" id="opt-compress" checked>連續遊玩時演出加速（40%）</label>
+    <button id="btn-reset-wallet">重置錢包（Demo 專用）</button>
+  </div>
+
+  <div id="toast"></div>
+</div>
+
+<!-- 普通 script 串接（file:// 雙擊直開）。順序固定：tables → mock-server → game -->
+<script src="js/tables.js"></script>
+<script src="js/mock-server.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
