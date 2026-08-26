@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 
 type Outcome = 'spin' | 'ringout' | 'burst' | 'perfect' | 'lose';
 type Phase = 'lobby' | 'intro' | 'countdown' | 'launch' | 'chase' | 'impact' | 'suspense' | 'final' | 'outcome' | 'result';
@@ -19,6 +20,7 @@ const phaseCopy: Partial<Record<Phase, string>> = {
 };
 
 export default function Home() {
+  const assetBase = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
   const [balance, setBalance] = useState(10000);
   const [bet, setBet] = useState(10);
   const [betInput, setBetInput] = useState('10');
@@ -74,7 +76,13 @@ export default function Home() {
   const enemyStability = phase === 'suspense' ? 61 : ['final', 'outcome'].includes(phase) ? (outcome === 'lose' ? 32 : 6) : 100;
 
   return (
-    <main className={`game-shell phase-${phase} outcome-${outcome}`}>
+    <main
+      className={`game-shell phase-${phase} outcome-${outcome}`}
+      style={{
+        '--player-top-image': `url("${assetBase}/tops/player-red.png")`,
+        '--enemy-top-image': `url("${assetBase}/tops/enemy-blue.png")`,
+      } as CSSProperties}
+    >
       <header className="topbar">
         <div className="brand-mark"><span>B</span></div>
         <div className="brand-title">戰鬥陀螺</div>

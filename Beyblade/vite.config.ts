@@ -11,6 +11,8 @@ const { d1, r2 } = hostingConfig;
 
 // macOS Seatbelt blocks FSEvents, so Codex previews need polling for HMR.
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === 'seatbelt';
+const isGitHubPages = process.env.GITHUB_PAGES === 'true';
+const githubPagesBasePath = process.env.GITHUB_PAGES_BASE_PATH ?? '';
 
 const localBindingConfig = {
   main: 'vinext/server/app-router-entry',
@@ -45,6 +47,7 @@ export default defineConfig(async () => {
   const { cloudflare } = await import('@cloudflare/vite-plugin');
 
   return {
+    base: isGitHubPages ? `${githubPagesBasePath}/` : undefined,
     css: { postcss: { plugins: [tailwindcss()] } },
     server: isCodexSeatbeltSandbox
       ? { watch: { useFsEvents: false, usePolling: true } }
