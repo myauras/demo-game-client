@@ -207,9 +207,9 @@ const JANNA_SKILL_DARK = "#737b88";
 const LEE_SIN_SKILL_PRIMARY = "#8f1418";
 const LEE_SIN_SKILL_LIGHT = "#e24e47";
 const LEE_SIN_SKILL_DARK = "#360204";
-const DARIUS_SKILL_PRIMARY = "#981b24";
-const DARIUS_SKILL_LIGHT = "#e4565d";
-const DARIUS_SKILL_DARK = "#35060a";
+const DARIUS_SKILL_PRIMARY = "#e2182b";
+const DARIUS_SKILL_LIGHT = "#ff5a4f";
+const DARIUS_SKILL_DARK = "#050102";
 const ARENA_RUNE_PRIMARY = "#54dbe2";
 const ARENA_RUNE_LIGHT = "#c6f5ee";
 const ARENA_RUNE_DARK = "#102c31";
@@ -219,7 +219,8 @@ const DARIUS_SLASH_SHEET_SRC = assetPath("/effects/darius-slash-gray-v1.png");
 const DARIUS_SLASH_SHEET_COLUMNS = 6;
 const DARIUS_SLASH_SHEET_ROWS = 3;
 const DARIUS_SLASH_FRAME_COUNT = DARIUS_SLASH_SHEET_COLUMNS * DARIUS_SLASH_SHEET_ROWS;
-const DARIUS_SLASH_TINT_FILTER = "sepia(1) saturate(6) hue-rotate(312deg) brightness(0.64) contrast(1.3)";
+const DARIUS_SLASH_BLACK_FILTER = "brightness(0.08) contrast(2.3)";
+const DARIUS_SLASH_RED_FILTER = "sepia(1) saturate(10) hue-rotate(310deg) brightness(1.08) contrast(1.45)";
 const AI_PURSUIT_CHANCE = 0.4;
 const AI_EDGE_RETURN_RATIO = 0.72;
 const AI_EDGE_PADDING = 14;
@@ -1405,6 +1406,16 @@ function drawActor(
           : castEffect === "zed"
             ? ZED_SKILL_LIGHT
             : JINX_SKILL_LIGHT;
+    if (castEffect === "darius") {
+      ctx.globalAlpha = 0.92;
+      ctx.shadowBlur = 0;
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = DARIUS_SKILL_DARK;
+      ctx.beginPath();
+      ctx.arc(0, 0, radius + 10, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 0.84;
+    }
     ctx.shadowColor = primary;
     ctx.shadowBlur = 6;
     ctx.lineWidth = 1.8;
@@ -1770,8 +1781,8 @@ function drawDariusSlashEffect(ctx: CanvasRenderingContext2D, effect: DariusSlas
   const spinProgress = clamp(progress / 0.64, 0, 1);
   const rotation = -Math.PI * 0.7 + spinProgress * Math.PI * 2.5;
   const slashLayers = [
-    { angleOffset: 0, scale: 1, alpha: 0.78 },
-    { angleOffset: Math.PI / 6, scale: 0.96, alpha: 0.5 },
+    { angleOffset: 0, scale: 1, alpha: 0.96, filter: DARIUS_SLASH_BLACK_FILTER },
+    { angleOffset: Math.PI / 24, scale: 0.92, alpha: 0.9, filter: DARIUS_SLASH_RED_FILTER },
   ];
 
   ctx.save();
@@ -1791,7 +1802,7 @@ function drawDariusSlashEffect(ctx: CanvasRenderingContext2D, effect: DariusSlas
       ctx.save();
       ctx.rotate(rotation + layer.angleOffset);
       ctx.globalAlpha = fade * layer.alpha;
-      ctx.filter = DARIUS_SLASH_TINT_FILTER;
+      ctx.filter = layer.filter;
       ctx.drawImage(
         sheet,
         frameColumn * sourceWidth,
