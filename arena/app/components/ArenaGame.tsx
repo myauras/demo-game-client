@@ -4,6 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { DEFAULT_FIGHTERS, type FighterConfig } from "../lib/arena";
 import {
   createEngine,
+  drainSkillCastEvents,
   drawArena,
   rankActors,
   stepEngine,
@@ -21,11 +22,20 @@ const DECIMAL_ODDS = 1 / WIN_PROBABILITY;
 const WIN_PRIZE = ENTRY_AMOUNT * DECIMAL_ODDS;
 const DESIGN_WIDTH = 1179;
 const DESIGN_HEIGHT = 1977;
+const SKILL_CAST_VISIBLE_DURATION_MS = 1500;
+const SKILL_CAST_EXIT_DURATION_MS = 420;
+const MAX_SKILL_CAST_NOTICES = 4;
 
 type Settlement = {
   champion: Actor;
   pick: FighterConfig;
   won: boolean;
+};
+
+type SkillCastNotice = {
+  id: number;
+  fighterId: string;
+  leaving: boolean;
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -65,6 +75,7 @@ export default function ArenaGame() {
   const lastFrameRef = useRef(0);
   const winnerRecordedRef = useRef(false);
   const settlementTimerRef = useRef<number | null>(null);
+  const skillCastNoticeTimersRef = useRef<number[]>([]);
 
   const [status, setStatus] = useState<GameStatus>("idle");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -73,6 +84,7 @@ export default function ArenaGame() {
   const [winner, setWinner] = useState<Actor | null>(null);
   const [settlement, setSettlement] = useState<Settlement | null>(null);
   const [skillFighterId, setSkillFighterId] = useState<string | null>(null);
+  const [skillCastNotices, setSkillCastNotices] = useState<SkillCastNotice[]>([]);
   const [viewportScale, setViewportScale] = useState(1);
 
   const selectedFighter = useMemo(
@@ -84,6 +96,30 @@ export default function ArenaGame() {
     [skillFighterId],
   );
   const locked = status === "countdown" || status === "running";
+
+  const announceSkillCast = useCallback((id: number, fighterId: string) => {
+    if (!DEFAULT_FIGHTERS.some((fighter) => fighter.id === fighterId)) return;
+    setSkillCastNotices((current) => [
+      { id, fighterId, leaving: false },
+      ...current,
+    ].slice(0, MAX_SKILL_CAST_NOTICES));
+
+    const fadeTimer = window.setTimeout(() => {
+      setSkillCastNotices((current) => current.map((notice) => (
+        notice.id === id ? { ...notice, leaving: true } : notice
+      )));
+    }, SKILL_CAST_VISIBLE_DURATION_MS);
+    const removeTimer = window.setTimeout(() => {
+      setSkillCastNotices((current) => current.filter((notice) => notice.id !== id));
+    }, SKILL_CAST_VISIBLE_DURATION_MS + SKILL_CAST_EXIT_DURATION_MS);
+    skillCastNoticeTimersRef.current.push(fadeTimer, removeTimer);
+  }, []);
+
+  const clearSkillCastNotices = () => {
+    for (const timer of skillCastNoticeTimersRef.current) window.clearTimeout(timer);
+    skillCastNoticeTimersRef.current = [];
+    setSkillCastNotices([]);
+  };
 
   useEffect(() => {
     if (!skillFighter) return;
@@ -162,6 +198,9 @@ export default function ArenaGame() {
       lastFrameRef.current = time;
       if (statusRef.current === "running") {
         const champion = stepEngine(engineRef.current, dt);
+        for (const event of drainSkillCastEvents(engineRef.current)) {
+          announceSkillCast(event.id, event.fighterId);
+        }
         if (champion) finishMatch(champion);
       }
       drawArena(ctx, engineRef.current, statusRef.current, countdown, winner);
@@ -178,7 +217,7 @@ export default function ArenaGame() {
       cancelAnimationFrame(frameId);
       window.removeEventListener("resize", resize);
     };
-  }, [countdown, finishMatch, winner]);
+  }, [announceSkillCast, countdown, finishMatch, winner]);
 
   useEffect(() => {
     if (status !== "countdown") return;
@@ -192,12 +231,14 @@ export default function ArenaGame() {
 
   useEffect(() => () => {
     if (settlementTimerRef.current !== null) window.clearTimeout(settlementTimerRef.current);
+    for (const timer of skillCastNoticeTimersRef.current) window.clearTimeout(timer);
   }, []);
 
   const startMatch = () => {
     if (!selectedId || locked) return;
     if (settlementTimerRef.current !== null) window.clearTimeout(settlementTimerRef.current);
     settlementTimerRef.current = null;
+    clearSkillCastNotices();
     winnerRecordedRef.current = false;
     engineRef.current = createEngine(DEFAULT_FIGHTERS);
     setRanking(rankingRows(engineRef.current));
@@ -211,6 +252,7 @@ export default function ArenaGame() {
   const newMatch = () => {
     if (settlementTimerRef.current !== null) window.clearTimeout(settlementTimerRef.current);
     settlementTimerRef.current = null;
+    clearSkillCastNotices();
     engineRef.current = createEngine(DEFAULT_FIGHTERS);
     setRanking(rankingRows(engineRef.current));
     setSelectedId(null);
@@ -233,6 +275,29 @@ export default function ArenaGame() {
       <section className="match-shell">
         <div className="stage-frame">
           <canvas ref={canvasRef} className="battle-canvas" aria-label="Arena 亂鬥場地" />
+          <div className="skill-cast-feed" role="log" aria-live="polite" aria-label="技能施放通知">
+            {skillCastNotices.map((notice, index) => {
+              const fighter = DEFAULT_FIGHTERS.find((entry) => entry.id === notice.fighterId);
+              if (!fighter) return null;
+              return (
+                <div
+                  className={`skill-cast-banner ${notice.leaving ? "leaving" : ""}`}
+                  data-stack-index={Math.min(index, 3)}
+                  key={notice.id}
+                  aria-label={`${fighter.name} 施放 ${fighter.skillName}`}
+                >
+                  <span
+                    className="skill-cast-accent"
+                    aria-hidden="true"
+                    style={{ backgroundColor: fighter.color, boxShadow: `0 0 12px ${fighter.color}` }}
+                  />
+                  <img className="skill-cast-portrait" src={fighter.icon} alt="" />
+                  <img className="skill-cast-skill-icon" src={fighter.skillIcon} alt="" />
+                  <strong>{fighter.skillName}</strong>
+                </div>
+              );
+            })}
+          </div>
           {selectedFighter && status === "idle" && (
             <div className="pick-indicator">
               <img src={selectedFighter.icon} alt="" />

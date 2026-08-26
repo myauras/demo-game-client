@@ -68,12 +68,25 @@ test("ships selection, automated resolution, and prize settlement without remove
   assert.match(component, /selectedFighter\.skillIcon/);
   assert.match(component, /selectedFighter\.skillName/);
   assert.match(component, /selectedFighter\.skillDescription/);
+  assert.match(component, /SKILL_CAST_VISIBLE_DURATION_MS = 1500/);
+  assert.match(component, /className="skill-cast-feed"/);
+  assert.match(component, /className=\{`skill-cast-banner/);
+  assert.match(component, /fighter\.icon/);
+  assert.match(component, /fighter\.skillIcon/);
+  assert.match(component, /fighter\.skillName/);
+  assert.match(component, /data-stack-index=\{Math\.min\(index, 3\)\}/);
   assert.match(component, /event\.key === "Escape"/);
   assert.match(component, /settlement\.champion\.icon/);
   assert.match(globalsCss, /\.skill-backdrop/);
   assert.match(globalsCss, /\.skill-dialog-icon/);
   assert.match(globalsCss, /\.selected-skill-preview[\s\S]*grid-template-columns: 76px minmax\(0, 1fr\)/);
   assert.match(globalsCss, /\.selected-skill-icons[\s\S]*grid-template-columns: repeat\(2, 34px\)/);
+  assert.match(globalsCss, /\.skill-cast-feed[\s\S]*top: 11px;[\s\S]*right: 10px;/);
+  assert.match(globalsCss, /\.skill-cast-banner\[data-stack-index="1"\][\s\S]*transform: scale\(0\.86\)/);
+  assert.match(globalsCss, /@keyframes skill-banner-in/);
+  assert.match(globalsCss, /@keyframes skill-banner-out/);
+  assert.match(globalsCss, /@keyframes skill-banner-out[\s\S]*translate: 30px 0/);
+  assert.doesNotMatch(globalsCss, /@keyframes skill-banner-out[\s\S]{0,220}scale\(/);
   assert.match(globalsCss, /\.entry-summary[\s\S]*font-size: 10px/);
   assert.match(globalsCss, /\.entry-summary strong[\s\S]*900 13px\/1/);
   assert.match(globalsCss, /--rust: #8f4330/);
@@ -104,6 +117,14 @@ test("ships selection, automated resolution, and prize settlement without remove
   }
 
   assert.match(engine, /stepEngine/);
+  assert.match(engine, /skillCastEvents: SkillCastEvent\[\]/);
+  assert.match(engine, /export function drainSkillCastEvents/);
+  assert.match(engine, /SKILL_CAST_STAGGER_INTERVAL = 1/);
+  assert.match(engine, /skillCastGateTimer = Math\.max\(0, engine\.skillCastGateTimer - dt\)/);
+  assert.match(engine, /engine\.skillCastGateTimer = SKILL_CAST_STAGGER_INTERVAL/);
+  for (const fighterId of ["zed", "jinx", "darius", "lee-sin", "janna"]) {
+    assert.match(engine, new RegExp(`queueSkillCast\\(engine, "${fighterId}"\\)`));
+  }
   assert.match(engine, /WORLD_W = 680/);
   assert.match(engine, /arenaRadius/);
   assert.match(engine, /BASE_RADIUS = 294/);
@@ -181,10 +202,10 @@ test("ships selection, automated resolution, and prize settlement without remove
   assert.match(engine, /globalCompositeOperation = "lighter"/);
   assert.match(engine, /ZED_SKILL_PRIMARY = "#111318"/);
   assert.match(engine, /JINX_SKILL_PRIMARY = "#00ade9"/);
-  assert.match(engine, /DARIUS_SKILL_PRIMARY = "#858b94"/);
+  assert.match(engine, /DARIUS_SKILL_PRIMARY = "#981b24"/);
   assert.match(engine, /LEE_SIN_SKILL_PRIMARY = "#8f1418"/);
   assert.match(engine, /JANNA_SKILL_PRIMARY = "#f7f9ff"/);
-  assert.match(engine, /ctx\.globalCompositeOperation = castEffect === "zed" \? "source-over" : "lighter"/);
+  assert.match(engine, /castEffect === "zed" \|\| castEffect === "darius"/);
   assert.match(engine, /ctx\.globalAlpha = castEffect === "janna" \? 0\.52/);
   assert.match(engine, /for \(let index = 0; index < 6; index \+= 1\)/);
   assert.match(engine, /MAX_KNOCKBACK_SPEED = 760/);
@@ -259,7 +280,7 @@ test("ships selection, automated resolution, and prize settlement without remove
   assert.match(engine, /JINX_SKILL_PRIMARY = "#00ade9"/);
   assert.match(engine, /JANNA_SKILL_PRIMARY = "#f7f9ff"/);
   assert.match(engine, /LEE_SIN_SKILL_PRIMARY = "#8f1418"/);
-  assert.match(engine, /DARIUS_SKILL_PRIMARY = "#858b94"/);
+  assert.match(engine, /DARIUS_SKILL_PRIMARY = "#981b24"/);
   assert.match(engine, /LEE_SIN_CAST_DURATION = 0\.5/);
   assert.match(engine, /LEE_SIN_DASH_SPEED = 420/);
   assert.match(engine, /LEE_SIN_KNOCKBACK = 600/);
@@ -321,6 +342,8 @@ test("ships selection, automated resolution, and prize settlement without remove
   assert.match(engine, /DARIUS_SLASH_SHEET_SRC = assetPath\("\/effects\/darius-slash-gray-v1\.png"\)/);
   assert.match(engine, /DARIUS_SLASH_SHEET_COLUMNS = 6/);
   assert.match(engine, /DARIUS_SLASH_SHEET_ROWS = 3/);
+  assert.match(engine, /DARIUS_SLASH_TINT_FILTER = "sepia\(1\) saturate\(6\) hue-rotate\(312deg\) brightness\(0\.64\) contrast\(1\.3\)"/);
+  assert.match(engine, /ctx\.filter = DARIUS_SLASH_TINT_FILTER/);
   assert.match(engine, /const frameIndex = Math\.min/);
   assert.match(engine, /const spinProgress = clamp\(progress \/ 0\.64, 0, 1\)/);
   assert.match(engine, /const rotation = -Math\.PI \* 0\.7 \+ spinProgress \* Math\.PI \* 2\.5/);
@@ -427,8 +450,13 @@ test("documents monorepo routing and Arena product rules", async () => {
   assert.match(rules, /RGB `0, 173, 233` blue color family/);
   assert.match(rules, /white color family with pearl-gray shadows/);
   assert.match(rules, /layered pearl-white spiral ribbons/);
-  assert.match(rules, /dark-metal under-sweep/);
+  assert.match(rules, /near-black red under-sweep/);
+  assert.match(rules, /Darius's `毀滅風暴` uses dark crimson/);
   assert.match(rules, /skill icon, skill name, and concise description in a compact preview above/);
+  assert.match(rules, /notification banner at the battlefield's upper-right corner/);
+  assert.match(rules, /remains fully visible for 1\.5 seconds/);
+  assert.match(rules, /no other fighter may begin a new skill for 1 second/);
+  assert.match(rules, /slides directly to the right without shrinking during its exit/);
   assert.match(rules, /without a distance restriction and channel in place for 0\.5 seconds/);
   assert.match(rules, /dashes toward that fighter at 420 world pixels per second/);
   assert.match(rules, /knockback velocity to 600 world pixels per second/);

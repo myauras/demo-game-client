@@ -31,6 +31,9 @@ export type Actor = FighterConfig & {
 
 export type EngineState = {
   actors: Actor[];
+  skillCastEvents: SkillCastEvent[];
+  skillCastEventSequence: number;
+  skillCastGateTimer: number;
   rockets: RocketProjectile[];
   explosions: ExplosionEffect[];
   rocketSequence: number;
@@ -63,6 +66,11 @@ export type EngineState = {
   zedCoordinationStageAngle: number | null;
   elapsed: number;
   arenaRadius: number;
+};
+
+export type SkillCastEvent = {
+  id: number;
+  fighterId: string;
 };
 
 export type RocketProjectile = {
@@ -178,6 +186,7 @@ const DARIUS_SLASH_HIT_DELAY = 0.12;
 const DARIUS_SLASH_EFFECT_DURATION = 0.48;
 const ZED_CAST_DURATION = 1;
 const ZED_SKILL_COOLDOWN = 12;
+const SKILL_CAST_STAGGER_INTERVAL = 1;
 const ZED_SPAWN_FADE_DURATION = 0.72;
 const ZED_COORDINATION_NEAR_STAGE_DISTANCE = 58;
 const ZED_COORDINATION_FAR_STAGE_DISTANCE = 72;
@@ -198,9 +207,9 @@ const JANNA_SKILL_DARK = "#737b88";
 const LEE_SIN_SKILL_PRIMARY = "#8f1418";
 const LEE_SIN_SKILL_LIGHT = "#e24e47";
 const LEE_SIN_SKILL_DARK = "#360204";
-const DARIUS_SKILL_PRIMARY = "#858b94";
-const DARIUS_SKILL_LIGHT = "#bcc2ca";
-const DARIUS_SKILL_DARK = "#3f444c";
+const DARIUS_SKILL_PRIMARY = "#981b24";
+const DARIUS_SKILL_LIGHT = "#e4565d";
+const DARIUS_SKILL_DARK = "#35060a";
 const ARENA_RUNE_PRIMARY = "#54dbe2";
 const ARENA_RUNE_LIGHT = "#c6f5ee";
 const ARENA_RUNE_DARK = "#102c31";
@@ -210,6 +219,7 @@ const DARIUS_SLASH_SHEET_SRC = assetPath("/effects/darius-slash-gray-v1.png");
 const DARIUS_SLASH_SHEET_COLUMNS = 6;
 const DARIUS_SLASH_SHEET_ROWS = 3;
 const DARIUS_SLASH_FRAME_COUNT = DARIUS_SLASH_SHEET_COLUMNS * DARIUS_SLASH_SHEET_ROWS;
+const DARIUS_SLASH_TINT_FILTER = "sepia(1) saturate(6) hue-rotate(312deg) brightness(0.64) contrast(1.3)";
 const AI_PURSUIT_CHANCE = 0.4;
 const AI_EDGE_RETURN_RATIO = 0.72;
 const AI_EDGE_PADDING = 14;
@@ -438,6 +448,9 @@ export function createEngine(fighters: FighterConfig[]): EngineState {
         deathStyle: null,
       };
     }),
+    skillCastEvents: [],
+    skillCastEventSequence: 0,
+    skillCastGateTimer: 0,
     rockets: [],
     explosions: [],
     rocketSequence: 0,
@@ -471,6 +484,19 @@ export function createEngine(fighters: FighterConfig[]): EngineState {
     elapsed: 0,
     arenaRadius: BASE_RADIUS,
   };
+}
+
+export function drainSkillCastEvents(engine: EngineState): SkillCastEvent[] {
+  return engine.skillCastEvents.splice(0);
+}
+
+function queueSkillCast(engine: EngineState, fighterId: string) {
+  engine.skillCastEventSequence += 1;
+  engine.skillCastGateTimer = SKILL_CAST_STAGGER_INTERVAL;
+  engine.skillCastEvents.push({
+    id: engine.skillCastEventSequence,
+    fighterId,
+  });
 }
 
 export function rankActors(actors: Actor[]): Actor[] {
@@ -586,6 +612,7 @@ function stepJinxRocketSkill(engine: EngineState, dt: number) {
       engine.jinxRocketCooldown -= dt;
       if (
         engine.jinxRocketCooldown <= 0
+        && engine.skillCastGateTimer <= 0
         && jinx.knockbackTimer <= 0
         && jinx.stunTimer <= 0
       ) {
@@ -599,6 +626,7 @@ function stepJinxRocketSkill(engine: EngineState, dt: number) {
           engine.jinxVolleyTargetY = target.y;
           engine.jinxVolleyRemaining = JINX_VOLLEY_SIZE;
           engine.jinxVolleyTimer = 0;
+          queueSkillCast(engine, "jinx");
         }
       }
     }
@@ -708,11 +736,13 @@ function stepJannaSkill(engine: EngineState, dt: number) {
       engine.jannaSkillCooldown -= dt;
       if (
         engine.jannaSkillCooldown <= 0
+        && engine.skillCastGateTimer <= 0
         && engine.tornadoes.length === 0
         && janna.knockbackTimer <= 0
         && janna.stunTimer <= 0
       ) {
         engine.jannaCastTimer = JANNA_CAST_DURATION;
+        queueSkillCast(engine, "janna");
       }
     }
   } else {
@@ -851,6 +881,7 @@ function stepLeeSinSkill(engine: EngineState, dt: number) {
   engine.leeSinSkillCooldown -= dt;
   if (
     engine.leeSinSkillCooldown > 0
+    || engine.skillCastGateTimer > 0
     || leeSin.knockbackTimer > 0
     || leeSin.stunTimer > 0
   ) return;
@@ -862,6 +893,7 @@ function stepLeeSinSkill(engine: EngineState, dt: number) {
   if (!selectedTarget) return;
   engine.leeSinTargetId = selectedTarget.id;
   engine.leeSinCastTimer = LEE_SIN_CAST_DURATION;
+  queueSkillCast(engine, "lee-sin");
   leeSin.heading = Math.atan2(selectedTarget.y - leeSin.y, selectedTarget.x - leeSin.x);
 }
 
@@ -925,8 +957,9 @@ function stepDariusSkill(engine: EngineState, dt: number) {
   }
 
   engine.dariusSkillCooldown -= dt;
-  if (engine.dariusSkillCooldown <= 0) {
+  if (engine.dariusSkillCooldown <= 0 && engine.skillCastGateTimer <= 0) {
     engine.dariusCastTimer = DARIUS_CAST_DURATION;
+    queueSkillCast(engine, "darius");
   }
 }
 
@@ -1000,9 +1033,14 @@ function stepZedSkill(engine: EngineState, dt: number) {
     return;
   }
 
-  if (zed.knockbackTimer <= 0 && zed.stunTimer <= 0) {
+  if (
+    engine.skillCastGateTimer <= 0
+    && zed.knockbackTimer <= 0
+    && zed.stunTimer <= 0
+  ) {
     engine.zedCasterId = zed.id;
     engine.zedCastTimer = ZED_CAST_DURATION;
+    queueSkillCast(engine, "zed");
   }
 }
 
@@ -1031,6 +1069,7 @@ function championFromActor(actor: Actor): Actor {
 
 export function stepEngine(engine: EngineState, dt: number) {
   engine.elapsed += dt;
+  engine.skillCastGateTimer = Math.max(0, engine.skillCastGateTimer - dt);
   // Close from the first live frame at half speed until two 60 px arena grid
   // bands remain.
   const shrinkElapsed = Math.max(0, engine.elapsed - SHRINK_DELAY);
@@ -1344,7 +1383,9 @@ function drawActor(
     ctx.translate(actor.x, actor.y);
     ctx.rotate(elapsed * 5.5);
     ctx.scale(pulse, pulse);
-    ctx.globalCompositeOperation = castEffect === "zed" ? "source-over" : "lighter";
+    ctx.globalCompositeOperation = castEffect === "zed" || castEffect === "darius"
+      ? "source-over"
+      : "lighter";
     ctx.globalAlpha = castEffect === "janna" ? 0.52 : castEffect === "darius" ? 0.64 : 0.72;
     const primary = castEffect === "zed"
       ? ZED_SKILL_PRIMARY
@@ -1750,6 +1791,7 @@ function drawDariusSlashEffect(ctx: CanvasRenderingContext2D, effect: DariusSlas
       ctx.save();
       ctx.rotate(rotation + layer.angleOffset);
       ctx.globalAlpha = fade * layer.alpha;
+      ctx.filter = DARIUS_SLASH_TINT_FILTER;
       ctx.drawImage(
         sheet,
         frameColumn * sourceWidth,
