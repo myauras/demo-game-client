@@ -277,7 +277,9 @@ var MockServer = (function () {
     getBalance: function () { return S.balance; },
     getJackpot: function () { return S.jackpot; },
 
-    // ── Demo / T08 專用 ──
+    // ── Demo / T08 / T09 專用 ──
+    /** 模擬他池注水（跑馬燈/獎池氛圍用；讓顯示值與池的真值一致） */
+    _ambientJackpot: function (n) { S.jackpot += Math.max(0, Math.floor(n) || 0); return S.jackpot; },
     _dump: function () { return JSON.stringify(S); },
     _load: function (json) { if (json) S = JSON.parse(json); },
     _reset: function () { S = freshState(); },
