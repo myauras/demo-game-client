@@ -1,0 +1,49 @@
+{
+  "_framework-BY0tUNfb.js": {
+    "file": "demo-game-client/Beyblade/_next/static/chunks/framework-BY0tUNfb.js",
+    "name": "framework",
+    "imports": [
+      "_rolldown-runtime-BpAffLSP.js"
+    ]
+  },
+  "_rolldown-runtime-BpAffLSP.js": {
+    "file": "demo-game-client/Beyblade/_next/static/chunks/rolldown-runtime-BpAffLSP.js",
+    "name": "rolldown-runtime"
+  },
+  "app/page.tsx": {
+    "file": "demo-game-client/Beyblade/_next/static/chunks/page-DJxpyR_f.js",
+    "name": "page",
+    "src": "app/page.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_rolldown-runtime-BpAffLSP.js",
+      "_framework-BY0tUNfb.js"
+    ]
+  },
+  "node_modules/.pnpm/vinext@1.0.0-beta.3_@vitejs_680ed2bd7d9573b4f606a6c88a9676d1/node_modules/vinext/dist/shims/layout-segment-context.js": {
+    "file": "demo-game-client/Beyblade/_next/static/chunks/layout-segment-context-7qSHT3VR.js",
+    "name": "layout-segment-context",
+    "src": "node_modules/.pnpm/vinext@1.0.0-beta.3_@vitejs_680ed2bd7d9573b4f606a6c88a9676d1/node_modules/vinext/dist/shims/layout-segment-context.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_rolldown-runtime-BpAffLSP.js",
+      "virtual:vinext-app-browser-entry",
+      "_framework-BY0tUNfb.js"
+    ]
+  },
+  "virtual:vinext-app-browser-entry": {
+    "file": "demo-game-client/Beyblade/_next/static/chunks/index-CUt0wD4i.js",
+    "name": "index",
+    "src": "virtual:vinext-app-browser-entry",
+    "isEntry": true,
+    "imports": [
+      "_rolldown-runtime-BpAffLSP.js",
+      "_framework-BY0tUNfb.js"
+    ],
+    "dynamicImports": [
+      "node_modules/.pnpm/vinext@1.0.0-beta.3_@vitejs_680ed2bd7d9573b4f606a6c88a9676d1/node_modules/vinext/dist/shims/layout-segment-context.js",
+      "virtual:vinext-app-browser-entry",
+      "app/page.tsx"
+    ]
+  }
+}
