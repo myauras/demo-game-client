@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>烽火連環船｜RTP 模擬驗證</title>
+<style>
+  body { font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+         background: #f4f2ee; color: #23201c; max-width: 960px; margin: 0 auto; padding: 32px 24px 80px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: #7c766c; font-size: 12.5px; margin-bottom: 24px; }
+  .panel { background: #fff; border: 1px solid #e3ded4; border-radius: 6px; padding: 18px; margin-bottom: 18px; }
+  label { font-size: 13px; margin-right: 6px; color: #55503f; }
+  select, input[type=number] { font-size: 14px; padding: 6px 8px; border: 1px solid #c9c2b6; border-radius: 4px; background:#fff; }
+  input[type=number] { width: 64px; }
+  button { font-size: 14px; padding: 8px 18px; border: 0; border-radius: 4px; background: #e8531f; color: #fff; cursor: pointer; }
+  button:disabled { background: #c9c2b6; cursor: default; }
+  button.sec { background: #c9a227; }
+  .ctrl-row { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+  #bar-wrap { height: 8px; background: #efece6; border-radius: 4px; margin-top: 14px; overflow: hidden; display: none; }
+  #bar { height: 100%; width: 0; background: #e8531f; transition: width .15s; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 10px; }
+  th, td { border: 1px solid #e3ded4; padding: 6px 10px; text-align: right; }
+  th { background: #efece6; font-weight: 600; }
+  td:first-child, th:first-child { text-align: left; }
+  .ok { color: #1c7c40; font-weight: 700; }
+  .bad { color: #d93a1e; font-weight: 700; }
+  h2 { font-size: 15px; margin: 24px 0 6px; }
+  .note { font-size: 12px; color: #7c766c; line-height: 1.7; }
+  textarea { width: 100%; height: 130px; font-family: Consolas, monospace; font-size: 12px;
+             border: 1px solid #c9c2b6; border-radius: 4px; padding: 8px; box-sizing: border-box; }
+</style>
+</head>
+<body>
+
+<h1>RTP 模擬驗證</h1>
+<div class="sub">直接呼叫 mock-server.js（與遊戲本體同一套 RNG 與結算路徑）／ RTP 口徑：不含獎池彩金之基準回報</div>
+
+<div class="panel">
+  <div class="ctrl-row">
+    <span><label>局數</label>
+      <select id="rounds">
+        <option value="100000">10 萬</option>
+        <option value="500000">50 萬</option>
+        <option value="1000000" selected>100 萬</option>
+        <option value="3000000">300 萬</option>
+        <option value="10000000">1000 萬</option>
+      </select></span>
+    <span><label>收兵策略</label>
+      <select id="strategy">
+        <option value="never">永不收（燒到底）</option>
+        <option value="fixed" selected>固定第 N 節收</option>
+        <option value="random">隨機節點收</option>
+        <option value="auto">自動收兵（走離線結算路徑）</option>
+      </select></span>
+    <span id="node-wrap"><label>N =</label><input type="number" id="node" min="1" max="12" value="4"></span>
+    <button id="run">開始模擬</button>
+    <button id="export" class="sec" disabled>匯出 HTML 報告</button>
+  </div>
+  <div id="bar-wrap"><div id="bar"></div></div>
+</div>
+
+<div class="panel">
+  <h2 style="margin-top:0">恆定 EV 解析驗證（不必模擬即可證明）</h2>
+  <div class="note">每節「倍率 × 累積存活率」應恰等於 0.96 —— 這是階梯表由 S<sub>n</sub> = 0.96 / M<sub>n</sub> 反推的直接結果。</div>
+  <div id="analytic"></div>
+</div>
+
+<div id="results"></div>
+
+<div class="panel" id="summary-panel" style="display:none">
+  <h2 style="margin-top:0">文字摘要（可複製）</h2>
+  <textarea id="summary" readonly></textarea>
+</div>
+
+<script src="js/tables.js"></script>
+<script src="js/mock-server.js"></script>
+<script src="js/sim-engine.js"></script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var lastReport = null;
+
+  // 解析驗證常駐顯示
+  (function () {
+    var a = SimEngine.analyticCheck();
+    $("analytic").innerHTML = a.pass
+      ? '<p class="ok">通過：三套 × 12 節共 36 個節點 EV 全部 = 0.9600000000</p>'
+      : '<p class="bad">異常：' + a.issues.join("、") + "</p>";
+  })();
+
+  $("strategy").addEventListener("change", function () {
+    $("node-wrap").style.display = (this.value === "fixed" || this.value === "auto") ? "" : "none";
+  });
+
+  function fmt(x, d) { return x.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }); }
+
+  function judge(w) {
+    // 通過準則：|實測 − 96| ≤ max(0.1pp, 3σ)。高波動策略下 0.1pp 在統計上不可達，取 3σ 為準。
+    var diff = Math.abs(w.rtp - 96);
+    var tol = Math.max(0.1, w.rtp3sigma);
+    return { pass: diff <= tol, diff: diff, tol: tol };
+  }
+
+  function render(sum, opts) {
+    var stratLabel = { never: "永不收", fixed: "固定第 " + opts.node + " 節收", random: "隨機節點收", auto: "自動收兵第 " + opts.node + " 節" }[opts.strategy];
+    var html = '<div class="panel"><h2 style="margin-top:0">結果：' + stratLabel + '（' + fmt(sum.overall.rounds, 0) + ' 局）</h2>';
+    html += "<table><tr><th>風向</th><th>局數</th><th>實測 RTP</th><th>±3σ</th><th>偏差</th><th>判定</th><th>通關率 實測/理論</th></tr>";
+    SimEngine.WINDS.forEach(function (k) {
+      var w = sum.winds[k], j = judge(w);
+      html += "<tr><td>" + w.label + "</td><td>" + fmt(w.rounds, 0) + "</td><td>" + fmt(w.rtp, 3) + "%</td><td>±" + fmt(w.rtp3sigma, 3) + "pp</td><td>" +
+        fmt(j.diff, 3) + "pp</td><td class='" + (j.pass ? "ok'>通過" : "bad'>不通過") + "</td><td>" +
+        fmt(w.clearRate, 2) + "% / " + fmt(w.clearRateExpected, 2) + "%</td></tr>";
+    });
+    var oj = Math.abs(sum.overall.rtp - 96);
+    html += "<tr><th>合計</th><th>" + fmt(sum.overall.rounds, 0) + "</th><th>" + fmt(sum.overall.rtp, 3) + "%</th><th>—</th><th>" + fmt(oj, 3) + "pp</th><th></th><th></th></tr></table>";
+
+    html += "<h2>各節熄滅分佈（實測% / 理論%）</h2><table><tr><th>風向</th>";
+    for (var n = 1; n <= 12; n++) html += "<th>" + n + "</th>";
+    html += "<th>通關</th></tr>";
+    SimEngine.WINDS.forEach(function (k) {
+      var w = sum.winds[k];
+      html += "<tr><td>" + w.label + "</td>";
+      for (var i = 0; i < 13; i++)
+        html += "<td>" + fmt(w.extDistActual[i], 2) + "<br><span style='color:#8a8377'>" + fmt(w.extDistExpected[i], 2) + "</span></td>";
+      html += "</tr>";
+    });
+    html += "</table><div class='note' style='margin-top:8px'>判定準則：|實測−96| ≤ max(0.1pp, 3σ)。σ 隨策略波動度與該風向樣本數而變；高倍率策略要壓到 0.1pp 需上億局，屬統計本質而非實作誤差。</div></div>";
+    $("results").insertAdjacentHTML("afterbegin", html);
+
+    // 文字摘要
+    var lines = ["[" + stratLabel + "] " + fmt(sum.overall.rounds, 0) + " 局，合計 RTP " + fmt(sum.overall.rtp, 3) + "%"];
+    SimEngine.WINDS.forEach(function (k) {
+      var w = sum.winds[k], j = judge(w);
+      lines.push(w.label + ": RTP " + fmt(w.rtp, 3) + "% (±3σ " + fmt(w.rtp3sigma, 3) + "pp) " + (j.pass ? "PASS" : "FAIL") +
+        " | 通關 " + fmt(w.clearRate, 2) + "%/" + fmt(w.clearRateExpected, 2) + "% | n=" + fmt(w.rounds, 0));
+    });
+    $("summary").value = lines.join("\n") + "\n\n" + $("summary").value;
+    $("summary-panel").style.display = "";
+    lastReport = { sum: sum, opts: opts, stratLabel: stratLabel };
+    $("export").disabled = false;
+  }
+
+  $("run").addEventListener("click", function () {
+    var opts = {
+      rounds: parseInt($("rounds").value, 10),
+      strategy: $("strategy").value,
+      node: parseInt($("node").value, 10) || 4,
+      betAmount: 100
+    };
+    var run = SimEngine.createRun(opts);
+    $("run").disabled = true;
+    $("bar-wrap").style.display = "";
+    (function tick() {
+      var t0 = performance.now();
+      var finished = false;
+      while (performance.now() - t0 < 40) { if (run.step(20000)) { finished = true; break; } }
+      $("bar").style.width = (run.progress() * 100).toFixed(1) + "%";
+      if (!finished) return setTimeout(tick, 0);
+      render(SimEngine.summarize(run.stats), opts);
+      $("run").disabled = false;
+      $("bar-wrap").style.display = "none";
+      $("bar").style.width = "0";
+    })();
+  });
+
+  // 匯出獨立 HTML 報告（回報檔案一律 HTML）
+  $("export").addEventListener("click", function () {
+    if (!lastReport) return;
+    var doc = "<!DOCTYPE html><html lang='zh-Hant'><head><meta charset='utf-8'><title>RTP 模擬報告</title>" +
+      "<style>" + document.querySelector("style").textContent + "</style></head><body>" +
+      "<h1>烽火連環船｜RTP 模擬報告</h1><div class='sub'>" + new Date().toLocaleString() + "／" + lastReport.stratLabel + "</div>" +
+      $("results").firstElementChild.outerHTML + "</body></html>";
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([doc], { type: "text/html" }));
+    a.download = "RTP模擬報告.html";
+    a.click();
+  });
+})();
+</script>
+</body>
+</html>
