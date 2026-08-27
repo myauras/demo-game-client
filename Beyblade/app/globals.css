@@ -72,3 +72,103 @@ button,select { font:inherit; } button { cursor:pointer; } button:disabled { cur
 @media(max-width:760px){.brand-title{font-size:15px}.faceoff-top{width:105px;height:105px}.faceoff-top:before{border-width:10px;box-shadow:inset 0 0 0 8px #262932,inset 0 0 20px #000}.faceoff-top:after{border-width:4px}.faceoff-impact{width:28px;height:28px}.faceoff-impact i{width:90px;height:3px}.enemy-launcher{left:50%;right:auto;top:8%;scale:1}.enemy-hand{left:50%;right:auto;top:-70px;width:120px;height:190px}}
 @media(max-height:700px) and (min-width:761px){.lobby{margin-top:22px}.versus-card{min-height:360px}.mini-top{width:146px;height:102px}.result-panel{margin-top:20px;padding-top:24px}.multiplier{margin:8px 0}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
+
+/* Portrait-first mobile game shell */
+html,body { min-height:100%; background:#030409; }
+body { display:flex; justify-content:center; overflow-x:hidden; }
+.game-shell { width:100%; max-width:430px; min-height:100svh; padding:12px 14px 92px; margin:0 auto; box-shadow:0 0 90px rgba(0,0,0,.95),0 0 0 1px rgba(255,255,255,.07); }
+.game-shell.phase-lobby,.game-shell.phase-result { overflow-y:auto; }
+.topbar { height:54px; gap:10px; }
+.brand-mark { width:36px; height:36px; flex:0 0 36px; }
+.brand-mark span { font-size:21px; }
+.brand-title { font-size:15px; letter-spacing:.05em; white-space:nowrap; }
+.balance-pill { gap:7px; padding:7px 9px; }
+.balance-pill span { display:none; }
+.balance-pill strong { font-size:15px; }
+
+.lobby { width:100%; margin:18px auto 0; display:flex; flex-direction:column; gap:13px; }
+.versus-card { order:0; width:100%; min-height:285px; grid-template-columns:1fr 1fr; clip-path:polygon(3% 0,100% 0,97% 100%,0 100%); }
+.fighter { min-width:0; padding:18px 3px 10px; }
+.fighter small { top:17px; max-width:88%; padding:7px 9px 7px 13px; overflow:hidden; font-size:9px; letter-spacing:.04em; text-overflow:ellipsis; }
+.player-fighter small { left:6px; }
+.enemy-fighter small { right:6px; }
+.mini-top { width:158px; height:132px; }
+.vs-badge { font-size:31px; }
+.control-deck { order:1; width:100%; padding:15px; }
+.deck-heading { margin-bottom:10px; }
+.bet-grid { gap:6px; }
+.bet-grid button { height:49px; }
+.bet-grid button b { font-size:17px; }
+.custom-bet { gap:8px; margin-top:8px; padding:7px 8px 7px 11px; }
+.custom-bet span { font-size:10px; }
+.custom-bet input { height:39px; font-size:19px; }
+.battle-button { min-height:57px; margin-top:10px; }
+.battle-button span { font-size:18px; }
+
+.faceoff { inset:54px 0 0; grid-template-columns:1fr; grid-template-rows:1fr 86px 1fr; }
+.faceoff-side { overflow:hidden; }
+.red-side { clip-path:polygon(0 0,100% 0,100% 84%,0 100%); }
+.purple-side { clip-path:polygon(0 16%,100% 0,100% 100%,0 100%); }
+.faceoff-top { width:180px; height:158px; }
+.red-faceoff-top { animation:portrait-faceoff-red 1.25s ease-in-out infinite,topspin .23s linear infinite; }
+.purple-faceoff-top { animation:portrait-faceoff-purple 1.25s ease-in-out infinite,topspin .21s linear infinite reverse; }
+.faceoff-center { display:grid; place-items:center; }
+.faceoff-center b { font-size:58px; }
+.faceoff-center .countdown { font-size:112px; }
+.faceoff-label { top:17px; padding:7px 9px; font-size:9px; }
+.player-faceoff-label { left:12px; }
+.enemy-faceoff-label { top:auto; right:12px; bottom:17px; }
+.faceoff-impact { width:32px; height:32px; }
+.faceoff-impact i { width:108px; height:3px; }
+
+.launch-view,.battle-view { inset:54px 0 0; }
+.launch-view { background:radial-gradient(ellipse at 50% 56%,#323746,#090a10 68%); }
+.launch-view:after { left:-34%; right:-34%; bottom:-8%; height:48%; border-width:18px; }
+.launcher { bottom:15%; width:188px; height:78px; }
+.launcher-core { width:105px; height:92px; top:-13px; }
+.grip { right:25px; top:55px; width:40px; height:98px; }
+.hand { width:118px; height:188px; }
+.left-hand { left:calc(50% - 168px); }
+.right-hand { right:calc(50% - 168px); }
+.enemy-launcher { top:9%; bottom:auto; width:188px; height:78px; }
+.enemy-hand { top:-64px; width:118px; height:188px; }
+.launch-view strong { top:50%; width:100%; font-size:64px; text-align:center; white-space:nowrap; }
+
+.battle-view { background:radial-gradient(circle at 50% 55%,#2a3140,#0a0c12 66%); }
+.battle-hud { top:18px; width:calc(50% - 22px); font-size:8px; letter-spacing:.06em; }
+.battle-hud b { display:block; margin:4px 0 0; font-size:13px; }
+.player-hud { left:12px; }
+.enemy-hud { right:12px; }
+.battle-hud i { margin-top:5px; }
+.phase-label { top:13%; max-width:88%; padding:7px 13px; font-size:16px; white-space:nowrap; }
+.arena-wrap { top:55%; width:145%; max-width:none; }
+.arena { border-width:18px; }
+.battle-top { width:92px; height:80px; margin:-40px -46px; }
+.outcome-call { padding:0 14px; }
+.outcome-call small { font-size:10px; }
+.outcome-call strong { font-size:52px; }
+
+.result-panel { width:calc(100% - 12px); margin:22px auto 0; padding:25px 20px 21px; }
+.result-panel h2 { font-size:30px; }
+.result-panel h2.emphasis { font-size:43px; }
+.multiplier { margin:12px 0; }
+.multiplier strong { font-size:35px; }
+.test-panel { position:absolute; left:12px; right:12px; bottom:10px; justify-content:center; }
+.test-panel label { display:none; }
+.test-panel select { min-width:0; flex:1; }
+
+@keyframes portrait-faceoff-red { 0%,100%{translate:0 -20%;scale:.9} 48%{translate:0 58%;scale:1.12} 55%{translate:0 35%;scale:1} }
+@keyframes portrait-faceoff-purple { 0%,100%{translate:0 20%;scale:.9} 48%{translate:0 -58%;scale:1.12} 55%{translate:0 -35%;scale:1} }
+
+@media(min-width:431px){ body { padding:18px 0; } .game-shell { min-height:calc(100svh - 36px); border-radius:22px; overflow:hidden; } }
+@media(max-height:720px){
+  .game-shell { padding-bottom:78px; }
+  .lobby { margin-top:10px; gap:9px; }
+  .versus-card { min-height:225px; }
+  .mini-top { width:132px; height:106px; }
+  .control-deck { padding:11px 13px; }
+  .bet-grid button { height:43px; }
+  .custom-bet input { height:34px; }
+  .battle-button { min-height:50px; }
+  .result-panel { margin-top:13px; padding-top:20px; }
+}

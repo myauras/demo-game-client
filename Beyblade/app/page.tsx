@@ -30,9 +30,11 @@ export default function Home() {
   const [outcome, setOutcome] = useState<Outcome>('spin');
   const [notice, setNotice] = useState('');
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const shell = useRef<HTMLElement>(null);
 
   const clearTimers = () => { timers.current.forEach(clearTimeout); timers.current = []; };
   useEffect(() => clearTimers, []);
+  useEffect(() => { if (shell.current) shell.current.scrollTop = 0; }, [phase]);
 
   const pickOutcome = (): Outcome => {
     if (forced !== 'auto') return forced;
@@ -77,6 +79,7 @@ export default function Home() {
 
   return (
     <main
+      ref={shell}
       className={`game-shell phase-${phase} outcome-${outcome}`}
       style={{
         '--player-top-image': `url("${assetBase}/tops/player-red.png")`,
