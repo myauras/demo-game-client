@@ -74,10 +74,10 @@ button,select { font:inherit; } button { cursor:pointer; } button:disabled { cur
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
 
 /* Portrait-first mobile game shell */
-html,body { min-height:100%; background:#030409; }
-body { display:flex; justify-content:center; overflow-x:hidden; }
-.game-shell { width:100%; max-width:430px; min-height:100svh; padding:12px 14px 92px; margin:0 auto; box-shadow:0 0 90px rgba(0,0,0,.95),0 0 0 1px rgba(255,255,255,.07); }
-.game-shell.phase-lobby,.game-shell.phase-result { overflow-y:auto; }
+html,body { width:100%; height:100%; min-height:100%; background:#030409; overflow:hidden; }
+body { display:flex; justify-content:center; }
+.game-shell { width:100%; max-width:430px; height:100svh; min-height:0; max-height:100svh; padding:12px 14px 92px; margin:0 auto; overflow:hidden; box-shadow:0 0 90px rgba(0,0,0,.95),0 0 0 1px rgba(255,255,255,.07); }
+.game-shell.phase-lobby,.game-shell.phase-result { overflow:hidden; }
 .topbar { height:54px; gap:10px; }
 .brand-mark { width:36px; height:36px; flex:0 0 36px; }
 .brand-mark span { font-size:21px; }
@@ -153,14 +153,14 @@ body { display:flex; justify-content:center; overflow-x:hidden; }
 .result-panel h2.emphasis { font-size:43px; }
 .multiplier { margin:12px 0; }
 .multiplier strong { font-size:35px; }
-.test-panel { position:absolute; left:12px; right:12px; bottom:10px; justify-content:center; }
+.test-panel { position:absolute; left:12px; right:12px; bottom:max(10px,env(safe-area-inset-bottom)); justify-content:center; }
 .test-panel label { display:none; }
 .test-panel select { min-width:0; flex:1; }
 
 @keyframes portrait-faceoff-red { 0%,100%{translate:0 -20%;scale:.9} 48%{translate:0 58%;scale:1.12} 55%{translate:0 35%;scale:1} }
 @keyframes portrait-faceoff-purple { 0%,100%{translate:0 20%;scale:.9} 48%{translate:0 -58%;scale:1.12} 55%{translate:0 -35%;scale:1} }
 
-@media(min-width:431px){ body { padding:18px 0; } .game-shell { min-height:calc(100svh - 36px); border-radius:22px; overflow:hidden; } }
+@media(min-width:431px){ body { padding:18px 0; } .game-shell { height:calc(100svh - 36px); min-height:0; max-height:calc(100svh - 36px); border-radius:22px; overflow:hidden; } }
 @media(max-height:720px){
   .game-shell { padding-bottom:78px; }
   .lobby { margin-top:10px; gap:9px; }
@@ -171,4 +171,28 @@ body { display:flex; justify-content:center; overflow-x:hidden; }
   .custom-bet input { height:34px; }
   .battle-button { min-height:50px; }
   .result-panel { margin-top:13px; padding-top:20px; }
+}
+@media(max-height:620px){
+  .game-shell { padding:8px 11px 62px; }
+  .topbar { height:46px; }
+  .brand-mark { width:31px; height:31px; flex-basis:31px; }
+  .brand-mark span { font-size:18px; }
+  .lobby { margin-top:7px; gap:7px; }
+  .versus-card { min-height:166px; }
+  .mini-top { width:105px; height:82px; }
+  .fighter small { top:8px; font-size:8px; }
+  .control-deck { padding:9px 11px; }
+  .deck-heading { margin-bottom:6px; }
+  .bet-grid button { height:36px; }
+  .bet-grid button b { font-size:15px; }
+  .custom-bet { margin-top:6px; padding-block:5px; }
+  .custom-bet input { height:30px; font-size:17px; }
+  .battle-button { min-height:44px; margin-top:7px; }
+  .test-panel { bottom:6px; height:40px; padding-block:5px; }
+  .faceoff,.launch-view,.battle-view { top:46px; }
+  .result-panel { margin-top:8px; padding:16px 18px 14px; }
+  .result-panel h2 { font-size:27px; }
+  .result-panel h2.emphasis { font-size:37px; }
+  .multiplier { margin:7px 0; }
+  .result-ledger { padding:7px 0; }
 }
