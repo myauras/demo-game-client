@@ -176,6 +176,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 .speed-lines { opacity: 0; position: absolute; inset: 58px -30px auto; height: 34px; border-left: 3px solid var(--cyan); border-right: 3px solid var(--red); }
 .boosting .speed-lines { opacity: .8; animation: speed .18s linear infinite; }
 .boosting .player-kart { animation: shake .09s linear infinite; }
+.race-scene.boosting:not(.final-duel) .player-kart .racer-image,
+.race-scene.boosting:not(.final-duel) .target-kart .racer-image { animation: overtakeDriveBob .16s ease-in-out infinite alternate; }
 .race-scene.passing-left:not(.final-duel).boosting:not(.normal-crash) .player-kart { animation: overtakePlayerRight 1.6s cubic-bezier(.2,.65,.3,1) forwards; }
 .race-scene.passing-right:not(.final-duel).boosting:not(.normal-crash) .player-kart { animation: overtakePlayerLeft 1.6s cubic-bezier(.2,.65,.3,1) forwards; }
 
@@ -262,6 +264,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 @keyframes roadsideRush { from { background-position-y: -112px; } to { background-position-y: 0; } }
 @keyframes kartDrive { from { transform: translateX(-50%) translateY(-2px); } to { transform: translateX(-50%) translateY(2px); } }
 @keyframes targetCruise { from { transform: translateX(-50%) translateY(-2px) scale(.78); } to { transform: translateX(-50%) translateY(2px) scale(.79); } }
+@keyframes overtakeDriveBob { from { transform: translateY(-3px); } to { transform: translateY(3px); } }
 /* General overtake V2: the rear car probes first; the lead car follows to block. */
 @keyframes overtakePlayerRight { 0% { transform: translateX(-50%) translateY(18px) scale(.98); } 12%,24% { transform: translateX(-24%) translateY(18px) scale(.98); } 34%,48% { transform: translateX(-76%) translateY(18px) scale(.98); } 58%,72% { transform: translateX(-24%) translateY(18px) scale(.97); } 82% { transform: translateX(-18%) translateY(-4px) scale(.95); } 100% { transform: translateX(-50%) translateY(-48px) scale(.9); } }
 @keyframes overtakePlayerLeft { 0% { transform: translateX(-50%) translateY(18px) scale(.98); } 12%,24% { transform: translateX(-76%) translateY(18px) scale(.98); } 34%,48% { transform: translateX(-24%) translateY(18px) scale(.98); } 58%,72% { transform: translateX(-76%) translateY(18px) scale(.97); } 82% { transform: translateX(-82%) translateY(-4px) scale(.95); } 100% { transform: translateX(-50%) translateY(-48px) scale(.9); } }
