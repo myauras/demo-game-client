@@ -1,0 +1,49 @@
+{
+  "_framework-Dl8QqzDV.js": {
+    "file": "demo-game-client/racing-game/_next/static/chunks/framework-Dl8QqzDV.js",
+    "name": "framework",
+    "imports": [
+      "_rolldown-runtime-CG-FgvWe.js"
+    ]
+  },
+  "_rolldown-runtime-CG-FgvWe.js": {
+    "file": "demo-game-client/racing-game/_next/static/chunks/rolldown-runtime-CG-FgvWe.js",
+    "name": "rolldown-runtime"
+  },
+  "app/page.tsx": {
+    "file": "demo-game-client/racing-game/_next/static/chunks/page-I4x_58ih.js",
+    "name": "page",
+    "src": "app/page.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_rolldown-runtime-CG-FgvWe.js",
+      "_framework-Dl8QqzDV.js"
+    ]
+  },
+  "node_modules/.pnpm/vinext@1.0.0-beta.2_@vitejs_93f6fd6c708956198cb05a5cfe3fd3ab/node_modules/vinext/dist/shims/layout-segment-context.js": {
+    "file": "demo-game-client/racing-game/_next/static/chunks/layout-segment-context-DkjRSRul.js",
+    "name": "layout-segment-context",
+    "src": "node_modules/.pnpm/vinext@1.0.0-beta.2_@vitejs_93f6fd6c708956198cb05a5cfe3fd3ab/node_modules/vinext/dist/shims/layout-segment-context.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_rolldown-runtime-CG-FgvWe.js",
+      "virtual:vinext-app-browser-entry",
+      "_framework-Dl8QqzDV.js"
+    ]
+  },
+  "virtual:vinext-app-browser-entry": {
+    "file": "demo-game-client/racing-game/_next/static/chunks/index-C4pOGEh9.js",
+    "name": "index",
+    "src": "virtual:vinext-app-browser-entry",
+    "isEntry": true,
+    "imports": [
+      "_rolldown-runtime-CG-FgvWe.js",
+      "_framework-Dl8QqzDV.js"
+    ],
+    "dynamicImports": [
+      "virtual:vinext-app-browser-entry",
+      "app/page.tsx",
+      "node_modules/.pnpm/vinext@1.0.0-beta.2_@vitejs_93f6fd6c708956198cb05a5cfe3fd3ab/node_modules/vinext/dist/shims/layout-segment-context.js"
+    ]
+  }
+}
