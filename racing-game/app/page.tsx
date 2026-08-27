@@ -18,7 +18,17 @@ const rankMultipliers: Record<number, number> = {
 };
 
 const rivalColors = ["#ff3b5f", "#9a6cff", "#22d3ee", "#3cff9b", "#ff8a34", "#e6f0ff", "#ffd02f"];
+const rivalHues: Record<string, number> = {
+  "#ff3b5f": 18,
+  "#9a6cff": 65,
+  "#22d3ee": 145,
+  "#3cff9b": 205,
+  "#ff8a34": 315,
+  "#e6f0ff": 110,
+  "#ffd02f": 280,
+};
 const targetRtp = 0.95;
+const assetBase = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 const credit = (value: number) => Math.floor(value).toLocaleString("zh-TW");
 const multiplierLabel = (value: number) => Number.isInteger(value) ? `${value}` : value.toFixed(1);
@@ -201,10 +211,14 @@ export default function Home() {
                       <div
                         key={entry.id}
                         className={`standing-row ${entry.isPlayer ? "player" : ""}`}
-                        style={{ "--rank": entry.rank, "--car-color": entry.color } as React.CSSProperties}
+                        style={{
+                          "--rank": entry.rank,
+                          "--car-color": entry.color,
+                          "--car-hue": entry.isPlayer ? "0deg" : `${rivalHues[entry.color]}deg`,
+                        } as React.CSSProperties}
                       >
                         <strong>{entry.rank}</strong>
-                        <span className="standing-car" aria-hidden="true"><i /></span>
+                        <img className="standing-car" src={`${assetBase}/neon-racer.png`} alt="" aria-hidden="true" />
                         <small>第{entry.rank}名</small>
                       </div>
                     ))}
@@ -238,27 +252,24 @@ export default function Home() {
                 {state === "racing" && place > 1 && (
                   <div
                     className={`target-kart ${normalCrash ? "crashing" : isPassing ? `being-passed pass-${passDirection}` : ""}`}
-                    style={{ "--kart-color": activeRivalColor } as React.CSSProperties}
+                    style={{ "--kart-color": activeRivalColor, "--car-hue": `${rivalHues[activeRivalColor]}deg` } as React.CSSProperties}
                     aria-label={`前方第 ${nextPlace} 名車輛`}
                   >
                     <span className="target-label"><i />第{nextPlace}名</span>
-                    <span className="target-driver" aria-hidden="true" />
-                    <span className="target-body"><i /><b /></span>
+                    <img className="racer-image" src={`${assetBase}/neon-racer.png`} alt="" aria-hidden="true" />
                   </div>
                 )}
 
-                <div className="duel-champion" style={{ "--kart-color": rivalOrder[0] } as React.CSSProperties} aria-label="第 1 名車輛">
+                <div className="duel-champion" style={{ "--kart-color": rivalOrder[0], "--car-hue": `${rivalHues[rivalOrder[0]]}deg` } as React.CSSProperties} aria-label="第 1 名車輛">
                   <span className="target-label"><i />第1名</span>
-                  <span className="target-driver" aria-hidden="true" />
-                  <span className="target-body"><i /><b /></span>
+                  <img className="racer-image" src={`${assetBase}/neon-racer.png`} alt="" aria-hidden="true" />
                 </div>
 
                 <div className="impact-burst" aria-hidden="true"><span /><i /><b /></div>
 
                 <div className="player-kart">
                   <span className="speed-lines" />
-                  <div className="player-avatar" aria-hidden="true" />
-                  <div className="kart-body"><span /><i /></div>
+                  <img className="racer-image" src={`${assetBase}/neon-racer.png`} alt="我方車輛" />
                 </div>
               </div>
             </div>
