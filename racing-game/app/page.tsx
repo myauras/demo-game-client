@@ -199,7 +199,7 @@ export default function Home() {
 
         <div className="content-grid">
           <section
-            className={`race-scene ${isPassing ? "boosting" : ""} ${normalCrash ? "normal-crash" : ""} ${state === "duel" ? `final-duel duel-${duelPhase}` : ""}`}
+            className={`race-scene ${isPassing ? "boosting" : ""} ${normalCrash ? "normal-crash" : ""} ${isPassing && state === "racing" && !normalCrash ? `passing-${passDirection}` : ""} ${state === "duel" ? `final-duel duel-${duelPhase}` : ""}`}
             style={{ "--race-background": `url(${assetBase}/race-background.png)` } as React.CSSProperties}
           >
             <div className="city-glow" />
