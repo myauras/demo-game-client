@@ -114,7 +114,7 @@ export default function Home() {
         setChampionAlert(true);
         window.setTimeout(() => setChampionAlert(false), 1900);
       }
-    }, 760);
+    }, 1250);
   };
 
   const challengeChampion = () => {
