@@ -100,7 +100,7 @@ export default function Home() {
         setNormalCrash(false);
         setIsPassing(false);
         setState("lost");
-      }, 900);
+      }, 1450);
       return;
     }
 
@@ -113,7 +113,7 @@ export default function Home() {
         setChampionAlert(true);
         window.setTimeout(() => setChampionAlert(false), 1900);
       }
-    }, 1250);
+    }, 1600);
   };
 
   const challengeChampion = () => {
