@@ -88,22 +88,24 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 .content-grid { height: calc(100% - 62px); display: grid; grid-template-rows: minmax(0, 1fr) auto; min-height: 0; }
 
 .race-scene {
+  --race-background: none;
   height: auto;
   min-height: 0;
   position: relative;
   overflow: hidden;
   border-bottom: 1px solid var(--line);
   background:
-    linear-gradient(180deg, transparent 55%, rgba(0, 0, 0, .5)),
-    radial-gradient(ellipse at 50% 34%, rgba(35, 90, 139, .55), transparent 24%),
-    linear-gradient(#070b15 0 37%, #0d1524 38% 44%, #090d13 45%);
+    linear-gradient(180deg, rgba(2,7,13,.08), transparent 46%, rgba(0,0,0,.24)),
+    var(--race-background) center center / cover no-repeat,
+    #060a12;
   perspective: 1100px;
 }
 .race-scene::before { content: ""; position: absolute; inset: 0; z-index: 12; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 1px, transparent 1px 4px); mix-blend-mode: screen; }
-.race-scene::after { content: ""; position: absolute; z-index: 4; left: 0; right: 0; top: 42%; height: 2px; background: linear-gradient(90deg, transparent, var(--cyan), #fff, var(--red), transparent); box-shadow: 0 0 22px rgba(32, 224, 255, .85); opacity: .7; }
+.race-scene::after { display: none; content: ""; }
 .city-glow { position: absolute; left: 20%; right: 20%; top: 24%; height: 120px; background: radial-gradient(ellipse, rgba(26, 164, 238, .25), transparent 70%); filter: blur(18px); }
 .cityline { position: absolute; left: -3%; right: -3%; bottom: 55%; opacity: .75; }
 .cityline::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, #0f1825 0 25px, transparent 25px 36px, #111d2c 36px 70px, transparent 70px 81px); clip-path: polygon(0 76%, 4% 76%, 4% 30%, 7% 30%, 7% 67%, 11% 67%, 11% 10%, 14% 10%, 14% 62%, 20% 62%, 20% 42%, 23% 42%, 23% 80%, 29% 80%, 29% 21%, 33% 21%, 33% 56%, 38% 56%, 38% 0, 42% 0, 42% 70%, 48% 70%, 48% 35%, 52% 35%, 52% 66%, 58% 66%, 58% 16%, 63% 16%, 63% 59%, 69% 59%, 69% 32%, 73% 32%, 73% 76%, 79% 76%, 79% 8%, 83% 8%, 83% 54%, 89% 54%, 89% 25%, 93% 25%, 93% 68%, 100% 68%, 100% 100%, 0 100%); }
+.cityline, .city-glow { display: none; }
 .cityline-back { height: 165px; filter: blur(1px); opacity: .45; }
 .cityline-front { height: 116px; bottom: 52%; }
 .cityline-front::after { content: ""; position: absolute; left: 4%; right: 4%; top: 32%; height: 50%; background-image: radial-gradient(circle, rgba(32,224,255,.65) 0 1px, transparent 2px), radial-gradient(circle, rgba(255,49,88,.45) 0 1px, transparent 2px); background-size: 39px 17px, 53px 23px; }
@@ -133,19 +135,19 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 .champion-alert span { display: block; margin-bottom: 5px; color: var(--gold); font: 900 9px monospace; letter-spacing: 2.5px; }
 .champion-alert strong { color: #fff; font-size: 21px; font-style: italic; letter-spacing: .4px; text-shadow: 0 0 18px rgba(255,255,255,.22); }
 
-.track-wrap { position: absolute; z-index: 5; inset: 31% 0 0; perspective: 850px; overflow: hidden; }
+.track-wrap { position: absolute; z-index: 5; inset: 34% 0 0; perspective: 850px; overflow: visible; }
 .track-wrap::before, .track-wrap::after { content: ""; position: absolute; z-index: 1; top: 0; bottom: 0; width: 17%; background: repeating-linear-gradient(to bottom, transparent 0 58px, rgba(32,224,255,.4) 59px 61px, transparent 62px 112px); animation: roadsideRush .42s linear infinite; opacity: .55; }
 .track-wrap::before { left: 1%; transform: skewX(8deg); }
 .track-wrap::after { right: 1%; transform: skewX(-8deg); background-image: repeating-linear-gradient(to bottom, transparent 0 58px, rgba(255,49,88,.4) 59px 61px, transparent 62px 112px); }
-.track { position: absolute; z-index: 2; width: 96%; height: 142%; left: 2%; bottom: -19%; overflow: hidden; clip-path: polygon(39% 0,61% 0,100% 100%,0 100%); background: linear-gradient(90deg,#101722 0 6%,#1de0ff 6% 6.45%,#1a202a 6.5% 93.5%,#ff3158 93.55% 94%,#101722 94%); transform: rotateX(12deg); transform-origin: bottom; box-shadow: 0 -20px 70px rgba(0,0,0,.7); }
-.track::before { content: ""; position: absolute; inset: 0 7%; background: linear-gradient(90deg, rgba(32,224,255,.04), transparent 22% 78%, rgba(255,49,88,.04)); }
-.track::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,.06), transparent 24%, rgba(0,0,0,.32)); pointer-events: none; }
-.road-stream { position: absolute; z-index: 1; inset: -100px 7% 0; background: repeating-linear-gradient(to bottom, transparent 0 34px, rgba(255,255,255,.045) 35px 37px, transparent 38px 72px); animation: roadRush .31s linear infinite; }
-.lane { position: absolute; z-index: 2; top: -90px; bottom: 0; width: 3px; left: 36%; background: repeating-linear-gradient(to bottom, rgba(161,180,204,.65) 0 24px, transparent 24px 64px); animation: roadRush .31s linear infinite; }
+.track { position: absolute; z-index: 2; width: 100%; height: 100%; left: 0; bottom: 0; overflow: visible; background: transparent; transform: none; }
+.track::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 100%,rgba(32,224,255,.06),transparent 58%); }
+.track::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg,transparent,rgba(0,0,0,.12)); }
+.road-stream { display: none; }
+.lane { display: none; }
 .lane-two { left: 64%; }
-.finish-line { position: absolute; z-index: 3; top: -16%; left: 8%; right: 8%; height: 24px; background: repeating-linear-gradient(90deg, #dce7f4 0 18px, #111722 18px 36px); opacity: .9; }
+.finish-line { position: absolute; z-index: 3; top: -5%; left: 12%; right: 12%; height: 18px; background: repeating-linear-gradient(90deg, #dce7f4 0 14px, #111722 14px 28px); opacity: 0; }
 
-.target-kart { --kart-color: #ff3158; --car-hue: 0deg; position: absolute; z-index: 7; left: 50%; top: 13%; width: 82px; height: 104px; transform: translateX(-50%) scale(.78); animation: targetCruise .2s ease-in-out infinite alternate; }
+.target-kart { --kart-color: #ff3158; --car-hue: 0deg; position: absolute; z-index: 7; left: 50%; top: 5%; width: 82px; height: 104px; transform: translateX(-50%) scale(.78); animation: targetCruise .2s ease-in-out infinite alternate; }
 .target-label { position: absolute; left: 50%; bottom: calc(100% + 12px); transform: translateX(-50%); width: max-content; padding: 6px 9px; border-left: 2px solid var(--kart-color); background: rgba(5,9,15,.9); color: #dfe9f7; font-size: 9px; font-weight: 900; letter-spacing: .8px; }
 .target-label i { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--kart-color); box-shadow: 0 0 8px var(--kart-color); margin-right: 6px; }
 .target-driver { position: absolute; z-index: 2; left: 34px; top: 4px; width: 34px; height: 28px; display: grid; place-items: center; background: #0a0e15; border: 2px solid var(--kart-color); color: var(--kart-color); font: 800 9px monospace; clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%); }
@@ -160,9 +162,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 .target-kart.being-passed.pass-right { animation: targetPassedRight .76s cubic-bezier(.2,.65,.3,1) forwards; }
 
 .duel-champion { --kart-color: #ff3158; --car-hue: 0deg; display: none; position: absolute; left: 58%; bottom: 24%; width: 86px; height: 108px; z-index: 6; }
-.final-duel .duel-champion { display: block; }
-.final-duel .player-kart { left: 42%; bottom: 27%; }
-.final-duel .finish-line { top: 9%; z-index: 5; opacity: 1; box-shadow: 0 0 18px rgba(255,255,255,.2); }
+.final-duel .duel-champion { display: block; width: 104px; height: 130px; }
+.final-duel .player-kart { left: 42%; bottom: 24%; width: 104px; height: 130px; }
+.final-duel .finish-line { top: 2%; z-index: 5; opacity: 1; box-shadow: 0 0 18px rgba(255,255,255,.2); }
 
 .player-kart { --car-hue: 0deg; position: absolute; left: 50%; bottom: 7%; width: 116px; height: 142px; transform: translateX(-50%); z-index: 8; animation: kartDrive .16s ease-in-out infinite alternate; }
 .racer-image { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; mix-blend-mode: screen; filter: hue-rotate(var(--car-hue)) saturate(1.2) drop-shadow(0 14px 9px rgba(0,0,0,.68)); }
@@ -173,6 +175,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 .speed-lines { opacity: 0; position: absolute; inset: 58px -30px auto; height: 34px; border-left: 3px solid var(--cyan); border-right: 3px solid var(--red); }
 .boosting .speed-lines { opacity: .8; animation: speed .18s linear infinite; }
 .boosting .player-kart { animation: shake .09s linear infinite; }
+.race-scene:not(.final-duel).boosting:not(.normal-crash) .player-kart { animation: overtakePlayer .76s cubic-bezier(.2,.65,.3,1) forwards; }
 
 .impact-burst { display: none; position: absolute; z-index: 12; left: 50%; bottom: 44%; width: 34px; height: 34px; border-radius: 50%; transform: translate(-50%,50%); background: #fff; box-shadow: 0 0 18px 9px #fff, 0 0 34px 19px #ffd43b, 0 0 58px 34px #ff432d; }
 .impact-burst::before, .impact-burst::after { content: ""; position: absolute; left: 50%; top: 50%; width: 170px; height: 6px; background: linear-gradient(90deg,transparent,#fff 44% 56%,transparent); transform: translate(-50%,-50%) rotate(22deg); }
@@ -255,8 +258,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 @keyframes roadsideRush { from { background-position-y: -112px; } to { background-position-y: 0; } }
 @keyframes kartDrive { from { transform: translateX(-50%) translateY(-2px); } to { transform: translateX(-50%) translateY(2px); } }
 @keyframes targetCruise { from { transform: translateX(-50%) translateY(-2px) scale(.78); } to { transform: translateX(-50%) translateY(2px) scale(.79); } }
-@keyframes targetPassedLeft { 0% { transform: translateX(-50%) scale(.78); opacity: 1; } 54% { transform: translateX(-165px) translateY(118px) scale(1.03); opacity: 1; } 100% { transform: translateX(-270px) translateY(380px) scale(1.5); opacity: 0; } }
-@keyframes targetPassedRight { 0% { transform: translateX(-50%) scale(.78); opacity: 1; } 54% { transform: translateX(65px) translateY(118px) scale(1.03); opacity: 1; } 100% { transform: translateX(170px) translateY(380px) scale(1.5); opacity: 0; } }
+@keyframes overtakePlayer { 0% { transform: translateX(-50%) translateY(0) scale(1); } 34% { transform: translateX(-28%) translateY(-7px) scale(.98); } 58% { transform: translateX(-68%) translateY(-14px) scale(.96); } 100% { transform: translateX(-50%) translateY(-58px) scale(.9); } }
+@keyframes targetPassedLeft { 0% { transform: translateX(-50%) scale(.78); opacity: 1; } 32% { transform: translateX(-132px) translateY(48px) scale(.94); opacity: 1; } 56% { transform: translateX(-108px) translateY(34px) scale(.97); opacity: 1; } 74% { transform: translateX(-68px) translateY(92px) scale(1.08); opacity: 1; } 100% { transform: translateX(-158px) translateY(290px) scale(1.32); opacity: 0; } }
+@keyframes targetPassedRight { 0% { transform: translateX(-50%) scale(.78); opacity: 1; } 32% { transform: translateX(50px) translateY(48px) scale(.94); opacity: 1; } 56% { transform: translateX(26px) translateY(34px) scale(.97); opacity: 1; } 74% { transform: translateX(-10px) translateY(92px) scale(1.08); opacity: 1; } 100% { transform: translateX(76px) translateY(290px) scale(1.32); opacity: 0; } }
 @keyframes duelPlayerRace { from { transform: translateX(-50%) translateY(-3px); } to { transform: translateX(-50%) translateY(3px); } }
 @keyframes duelRivalRace { from { transform: translateY(3px); } to { transform: translateY(-3px); } }
 @keyframes playerFinish { 0% { transform: translateX(-50%) translateY(0) scale(1); } 35% { transform: translateX(-45%) translateY(-68px) scale(.94); } 100% { transform: translateX(-48%) translateY(-370px) scale(.62); } }
@@ -265,8 +269,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 @keyframes collisionRival { 0% { transform: translateY(0) rotate(0); } 58% { transform: translate(-45%,-105px) rotate(-8deg); } 100% { transform: translate(-45%,-105px) rotate(-18deg) scale(.86); } }
 @keyframes explosionCore { 0%,48% { opacity: 0; transform: translate(-50%,50%) scale(.1); } 62% { opacity: 1; transform: translate(-50%,50%) scale(1); } 100% { opacity: 0; transform: translate(-50%,50%) scale(2.4); } }
 @keyframes rivalFinish { 0% { transform: translate(-45%,-105px) rotate(-18deg) scale(.86); } 22% { transform: translate(-20%,-90px) rotate(0) scale(.9); } 100% { transform: translate(-10%,-370px) rotate(0) scale(.58); } }
-@keyframes normalCrashPlayer { 0% { transform: translateX(-50%) translateY(0) rotate(0); } 58% { transform: translateX(-50%) translateY(-145px) rotate(-5deg); } 100% { transform: translateX(-38%) translateY(-145px) rotate(22deg) scale(.82); opacity: .16; } }
-@keyframes normalCrashTarget { 0% { transform: translateX(-50%) translateY(0) scale(.78) rotate(0); } 58% { transform: translateX(-50%) translateY(235px) scale(1.04) rotate(5deg); } 100% { transform: translateX(-65%) translateY(235px) scale(.9) rotate(-22deg); opacity: .2; } }
+@keyframes normalCrashPlayer { 0% { transform: translateX(-50%) translateY(0) rotate(0); } 34% { transform: translateX(-112%) translateY(-14px) rotate(-2deg); } 66% { transform: translateX(-36%) translateY(-66px) rotate(5deg); } 100% { transform: translateX(-28%) translateY(-76px) rotate(22deg) scale(.82); opacity: .16; } }
+@keyframes normalCrashTarget { 0% { transform: translateX(-50%) translateY(0) scale(.78) rotate(0); } 34% { transform: translateX(28px) translateY(52px) scale(.94) rotate(2deg); } 66% { transform: translateX(-58px) translateY(86px) scale(1.02) rotate(-5deg); } 100% { transform: translateX(-68px) translateY(96px) scale(.9) rotate(-22deg); opacity: .2; } }
 @keyframes championAlert { 0% { opacity: 0; transform: translateX(-50%) scale(.45); } 14% { opacity: 1; transform: translateX(-50%) scale(1.04); } 24%,68% { opacity: 1; transform: translateX(-50%) scale(1); } 100% { opacity: 0; transform: translateX(-50%) scale(.08); } }
 
 @media (max-width: 430px) {
@@ -277,7 +281,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 }
 
 @media (max-width: 420px) {
-  .track-wrap { inset: 28% 0 0; }
+  .track-wrap { inset: 34% 0 0; }
   .player-kart { transform-origin: bottom center; }
   .control-panel { padding: 16px 14px 22px; }
 }

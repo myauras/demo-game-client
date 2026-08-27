@@ -198,7 +198,10 @@ export default function Home() {
         </header>
 
         <div className="content-grid">
-          <section className={`race-scene ${isPassing ? "boosting" : ""} ${normalCrash ? "normal-crash" : ""} ${state === "duel" ? `final-duel duel-${duelPhase}` : ""}`}>
+          <section
+            className={`race-scene ${isPassing ? "boosting" : ""} ${normalCrash ? "normal-crash" : ""} ${state === "duel" ? `final-duel duel-${duelPhase}` : ""}`}
+            style={{ "--race-background": `url(${assetBase}/race-background.png)` } as React.CSSProperties}
+          >
             <div className="city-glow" />
             <div className="cityline cityline-back" />
             <div className="cityline cityline-front" />
@@ -289,10 +292,6 @@ export default function Home() {
           <aside className="control-panel">
             {state === "setup" ? (
               <div className="setup-panel">
-                <div className="panel-heading compact-heading">
-                  <span className="eyebrow">投注控制</span>
-                  <h1>投注設定</h1>
-                </div>
                 <div className="bet-card">
                   <div><span>投注金額</span><small>餘額 {credit(balance)}</small></div>
                   <div className="bet-input-row">
