@@ -196,3 +196,37 @@ body { display:flex; justify-content:center; }
   .multiplier { margin:7px 0; }
   .result-ledger { padding:7px 0; }
 }
+
+/* Calm showcase, clean VS entrance, and elastic battle collisions */
+.phase-lobby .mini-top { animation:none!important; transform:none!important; }
+.phase-lobby .mini-top:before,.phase-lobby .mini-top:after { content:""; display:block; position:absolute; width:auto; height:auto; pointer-events:none; border:0; border-radius:50%; transform:none; }
+.phase-lobby .mini-top:before { z-index:-2; inset:24% 8% 8%; background:radial-gradient(ellipse,rgba(255,245,195,.95) 0 4%,rgba(255,85,30,.82) 14%,rgba(255,20,0,.42) 38%,transparent 72%); filter:blur(13px); box-shadow:0 0 28px #ff3018,0 0 58px rgba(255,48,18,.68); animation:energy-glow 1.35s ease-in-out infinite; }
+.phase-lobby .mini-top:after { z-index:3; inset:17% 18% 24%; background:radial-gradient(ellipse at 50% 62%,rgba(255,246,180,.36),rgba(255,78,24,.2) 26%,transparent 65%); filter:blur(5px); mix-blend-mode:screen; animation:flame-light 1.05s ease-in-out infinite alternate; }
+.phase-lobby .mini-top.purple:before { background:radial-gradient(ellipse,rgba(225,250,255,.98) 0 4%,rgba(37,179,255,.86) 14%,rgba(0,91,255,.46) 39%,transparent 72%); box-shadow:0 0 28px #169cff,0 0 58px rgba(0,105,255,.72); }
+.phase-lobby .mini-top.purple:after { background:radial-gradient(ellipse at 50% 62%,rgba(220,251,255,.4),rgba(32,165,255,.23) 28%,transparent 66%); }
+
+.phase-intro .red-faceoff-top { animation:vs-enter-left .82s cubic-bezier(.16,.82,.3,1) both!important; }
+.phase-intro .purple-faceoff-top { animation:vs-enter-right .82s cubic-bezier(.16,.82,.3,1) both!important; }
+.phase-countdown .faceoff-top { animation:none!important; translate:0 0; scale:1; rotate:0deg; }
+.phase-intro .faceoff-impact,.phase-countdown .faceoff-impact { display:none; }
+
+.phase-impact .player-top { left:50%; top:50%; animation:player-double-clash 1.62s cubic-bezier(.22,.7,.28,1) both,topspin .22s linear infinite!important; }
+.phase-impact .enemy-top { left:50%; top:50%; animation:enemy-double-clash 1.62s cubic-bezier(.22,.7,.28,1) both,topspin .2s linear infinite reverse!important; }
+.phase-impact .impact-flash { animation:double-flash 1.62s ease-out both!important; }
+.phase-impact .shockwave { animation:double-wave 1.62s ease-out both!important; }
+.phase-impact .collision-sparks i { animation:spark-double-burst 1.62s ease-out both!important; }
+.phase-final .player-top { left:50%; top:50%; animation:player-final-clash 1.05s cubic-bezier(.2,.75,.24,1) both,topspin .18s linear infinite!important; }
+.phase-final .enemy-top { left:50%; top:50%; animation:enemy-final-clash 1.05s cubic-bezier(.2,.75,.24,1) both,topspin .17s linear infinite reverse!important; }
+.debris { display:none!important; }
+
+@keyframes energy-glow { 0%,100%{opacity:.68;scale:.9} 50%{opacity:1;scale:1.08} }
+@keyframes flame-light { from{opacity:.42;scale:.94} to{opacity:.92;scale:1.06} }
+@keyframes vs-enter-left { from{opacity:0;translate:-135% 0;scale:.86} 70%{opacity:1;translate:8% 0;scale:1.04} to{opacity:1;translate:0 0;scale:1} }
+@keyframes vs-enter-right { from{opacity:0;translate:135% 0;scale:.86} 70%{opacity:1;translate:-8% 0;scale:1.04} to{opacity:1;translate:0 0;scale:1} }
+@keyframes player-double-clash { 0%{transform:translate(-145px,22px) scale(.96)} 23%{transform:translate(-47px,0) scale(1.04)} 29%{transform:translate(-39px,0) scale(1.08)} 42%{transform:translate(-122px,32px) scale(.98) rotate(-7deg)} 60%{transform:translate(-150px,-18px) scale(.96)} 76%{transform:translate(-47px,0) scale(1.04)} 82%{transform:translate(-39px,0) scale(1.08)} 100%{transform:translate(-104px,24px) scale(.98) rotate(-5deg)} }
+@keyframes enemy-double-clash { 0%{transform:translate(145px,-22px) scale(.96)} 23%{transform:translate(47px,0) scale(1.04)} 29%{transform:translate(39px,0) scale(1.08)} 42%{transform:translate(122px,-32px) scale(.98) rotate(7deg)} 60%{transform:translate(150px,18px) scale(.96)} 76%{transform:translate(47px,0) scale(1.04)} 82%{transform:translate(39px,0) scale(1.08)} 100%{transform:translate(104px,-24px) scale(.98) rotate(5deg)} }
+@keyframes player-final-clash { 0%{transform:translate(-155px,30px) scale(.95)} 43%{transform:translate(-40px,0) scale(1.12)} 55%{transform:translate(-34px,0) scale(1.15)} 100%{transform:translate(-118px,45px) scale(.92) rotate(-10deg)} }
+@keyframes enemy-final-clash { 0%{transform:translate(155px,-30px) scale(.95)} 43%{transform:translate(40px,0) scale(1.12)} 55%{transform:translate(34px,0) scale(1.15)} 100%{transform:translate(118px,-45px) scale(.92) rotate(10deg)} }
+@keyframes double-flash { 0%,20%,36%,72%,88%,100%{opacity:0;transform:translate(-50%,-50%) scale(1)} 27%,79%{opacity:1;box-shadow:0 0 24px #fff,0 0 72px var(--gold);transform:translate(-50%,-50%) scale(8)} 33%,85%{opacity:0;transform:translate(-50%,-50%) scale(16)} }
+@keyframes double-wave { 0%,21%,38%,73%,90%,100%{opacity:0;transform:translate(-50%,-50%) scale(.3);border-width:8px} 27%,79%{opacity:1;transform:translate(-50%,-50%) scale(1)} 36%,88%{opacity:0;transform:translate(-50%,-50%) scale(9);border-width:1px} }
+@keyframes spark-double-burst { 0%,21%,38%,73%,90%,100%{opacity:0;transform:rotate(var(--spark-angle)) scaleX(.05)} 25%,77%{opacity:1} 36%,88%{opacity:0;transform:rotate(var(--spark-angle)) translateX(118px) scaleX(var(--spark-l))} }
