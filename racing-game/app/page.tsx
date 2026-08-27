@@ -100,7 +100,7 @@ export default function Home() {
         setNormalCrash(false);
         setIsPassing(false);
         setState("lost");
-      }, 1450);
+      }, 1180);
       return;
     }
 
