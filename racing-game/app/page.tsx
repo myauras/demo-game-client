@@ -91,6 +91,7 @@ export default function Home() {
   const overtake = () => {
     if (state !== "racing" || isPassing || place <= 2) return;
     setIsPassing(true);
+    setPassDirection(Math.random() < 0.5 ? "left" : "right");
     const successRate = place === 8 ? targetRtp / nextMultiplier : multiplier / nextMultiplier;
 
     if (!testRun && Math.random() >= successRate) {
@@ -102,8 +103,6 @@ export default function Home() {
       }, 900);
       return;
     }
-
-    setPassDirection(Math.random() < 0.5 ? "left" : "right");
 
     window.setTimeout(() => {
       setPlace(nextPlace);
@@ -199,7 +198,7 @@ export default function Home() {
 
         <div className="content-grid">
           <section
-            className={`race-scene ${isPassing ? "boosting" : ""} ${normalCrash ? "normal-crash" : ""} ${isPassing && state === "racing" && !normalCrash ? `passing-${passDirection}` : ""} ${state === "duel" ? `final-duel duel-${duelPhase}` : ""}`}
+            className={`race-scene ${isPassing ? "boosting" : ""} ${normalCrash ? "normal-crash" : ""} ${isPassing && state === "racing" ? `passing-${passDirection}` : ""} ${state === "duel" ? `final-duel duel-${duelPhase}` : ""}`}
             style={{ "--race-background": `url(${assetBase}/race-background.png)` } as React.CSSProperties}
           >
             <div className="city-glow" />
