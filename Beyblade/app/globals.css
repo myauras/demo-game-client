@@ -254,6 +254,7 @@ body { display:flex; justify-content:center; }
 .phase-outcome.outcome-spin .enemy-top { left:56%; top:50%; animation:loser-tip-over 1.5s ease-out forwards!important; }
 .phase-outcome.outcome-spin .enemy-top .top-core { animation:loser-spin-down 1.35s cubic-bezier(.12,.72,.2,1) forwards!important; filter:brightness(.7) saturate(.58) drop-shadow(0 10px 8px rgba(0,0,0,.95)); }
 .phase-outcome.outcome-ringout .enemy-top { animation:ringout-strong 1.45s cubic-bezier(.14,.76,.2,1) forwards!important; }
+.phase-outcome.outcome-ringout .arena { overflow:visible; }
 .phase-outcome.outcome-ringout .enemy-top .top-core { animation-duration:.075s; filter:brightness(1.5) drop-shadow(0 0 18px #66baff); }
 .phase-outcome.outcome-ringout .finish-effect:before { width:72%; height:28%; border-top-width:20px; filter:blur(5px) drop-shadow(0 0 22px #7c3dff); }
 .phase-outcome.outcome-ringout .finish-effect:after { content:""; position:absolute; left:52%; top:50%; width:125px; height:125px; border-radius:50%; background:radial-gradient(circle,#fff 0 5%,#93d8ff 8%,#8f59ff 18%,rgba(89,52,255,.45) 35%,transparent 68%); transform:translate(-50%,-50%); animation:ringout-blast 1.1s ease-out both; }

@@ -6,15 +6,32 @@ import type { CSSProperties } from 'react';
 type Outcome = 'spin' | 'ringout' | 'burst' | 'perfect' | 'lose';
 type Phase = 'lobby' | 'intro' | 'countdown' | 'launch' | 'chase' | 'impact' | 'suspense' | 'final' | 'outcome' | 'result';
 type MotionStops = { p1x:number; p1y:number; e1x:number; e1y:number; p2x:number; p2y:number; e2x:number; e2y:number };
+type Stability = { player:number; enemy:number };
 
 const initialMotion: MotionStops = { p1x:-108,p1y:52,e1x:108,e1y:-52,p2x:-98,p2y:-56,e2x:98,e2y:56 };
 const randomBetween = (min:number,max:number) => Math.round(min + Math.random() * (max - min));
+const randomDifferent = (min:number,max:number,previous:number) => {
+  let value = randomBetween(min,max);
+  if (value === previous) value = value < max ? value + 1 : value - 1;
+  return value;
+};
 const createMotionStops = (): MotionStops => ({
   p1x:-randomBetween(88,126), p1y:randomBetween(34,70),
   e1x:randomBetween(88,126), e1y:-randomBetween(34,70),
   p2x:-randomBetween(82,120), p2y:-randomBetween(32,72),
   e2x:randomBetween(82,120), e2y:randomBetween(32,72),
 });
+const createHitStability = (hit:number): Stability => {
+  const ranges = [[78,94],[56,75],[34,53]];
+  const [min,max] = ranges[hit - 1];
+  const player = randomBetween(min,max);
+  let enemy = randomBetween(min,max);
+  if (Math.abs(player - enemy) < 3) enemy = enemy + 4 <= max ? enemy + 4 : enemy - 4;
+  return { player,enemy };
+};
+const createFinalStability = (result:Outcome,previous:Stability): Stability => result === 'lose'
+  ? { player:randomDifferent(0,7,previous.player),enemy:randomDifferent(18,46,previous.enemy) }
+  : { player:randomDifferent(14,42,previous.player),enemy:randomDifferent(0,7,previous.enemy) };
 
 const bets = [10, 50, 100, 200];
 const outcomeInfo: Record<Outcome, { label: string; kicker: string; multiplier: number }> = {
@@ -40,6 +57,7 @@ export default function Home() {
   const [outcome, setOutcome] = useState<Outcome>('spin');
   const [notice, setNotice] = useState('');
   const [motionStops, setMotionStops] = useState<MotionStops>(initialMotion);
+  const [stability, setStability] = useState<Stability>({ player:100,enemy:100 });
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const shell = useRef<HTMLElement>(null);
 
@@ -61,11 +79,12 @@ export default function Home() {
     if (balance < bet) { setNotice('點數不足，請選擇較低投入'); return; }
     clearTimers(); setNotice('');
     const selected = pickOutcome();
-    setOutcome(selected); setMotionStops(createMotionStops()); setBalance(value => value - bet); setCount(3); setPhase('intro');
+    setOutcome(selected); setMotionStops(createMotionStops()); setStability({ player:100,enemy:100 }); setBalance(value => value - bet); setCount(3); setPhase('intro');
     const cue = (delay: number, action: () => void) => timers.current.push(setTimeout(action, delay));
     cue(850, () => setPhase('countdown')); cue(1300, () => setCount(2)); cue(1750, () => setCount(1));
     cue(2200, () => setPhase('launch')); cue(3000, () => setPhase('chase')); cue(4550, () => setPhase('impact'));
-    cue(9550, () => setPhase('outcome'));
+    cue(5150, () => setStability(createHitStability(1))); cue(6650, () => setStability(createHitStability(2))); cue(8550, () => setStability(createHitStability(3)));
+    cue(9550, () => { setStability(previous => createFinalStability(selected,previous)); setPhase('outcome'); });
     cue(11250, () => { setBalance(value => value + Math.round(bet * outcomeInfo[selected].multiplier)); setPhase('result'); });
   };
 
@@ -85,8 +104,6 @@ export default function Home() {
   };
   const payout = Math.round(bet * outcomeInfo[outcome].multiplier);
   const battlePhase = !['lobby', 'intro', 'countdown', 'launch', 'result'].includes(phase);
-  const playerStability = phase === 'suspense' ? 78 : ['final', 'outcome'].includes(phase) ? (outcome === 'lose' ? 5 : 18) : 100;
-  const enemyStability = phase === 'suspense' ? 61 : ['final', 'outcome'].includes(phase) ? (outcome === 'lose' ? 32 : 6) : 100;
 
   return (
     <main
@@ -134,8 +151,8 @@ export default function Home() {
       {phase === 'launch' && <section className="launch-view"><div className="speed-lines" /><div className="launcher"><div className="launcher-core" /><div className="grip" /></div><div className="hand left-hand" /><div className="hand right-hand" /><div className="launcher enemy-launcher"><div className="launcher-core enemy-launcher-core" /><div className="grip enemy-grip" /></div><div className="hand enemy-hand" /><strong>發射！</strong></section>}
 
       {battlePhase && <section className="battle-view">
-        <div className="battle-hud player-hud"><span>我方戰鬥陀螺</span><b>{playerStability}%</b><i><em style={{ width: `${playerStability}%` }} /></i></div>
-        <div className="battle-hud enemy-hud"><span>敵方戰鬥陀螺</span><b>{enemyStability}%</b><i><em style={{ width: `${enemyStability}%` }} /></i></div>
+        <div className="battle-hud player-hud"><span>我方戰鬥陀螺</span><b>{stability.player}%</b><i><em style={{ width: `${stability.player}%` }} /></i></div>
+        <div className="battle-hud enemy-hud"><span>敵方戰鬥陀螺</span><b>{stability.enemy}%</b><i><em style={{ width: `${stability.enemy}%` }} /></i></div>
         <div className="arena-wrap"><div className="arena"><div className="arena-grid" /><div className="arena-ring ring-a" /><div className="arena-ring ring-b" /><div className="trail player-trail" /><div className="trail enemy-trail" /><div className="battle-top player-top"><span className="top-core" /></div><div className="battle-top enemy-top"><span className="top-core" /></div><div className="impact-flash" /><div className="shockwave" /><div className="collision-sparks">{Array.from({ length: 12 }, (_, n) => <i key={n} />)}</div><div className="finish-effect" /><div className="debris">{Array.from({ length: 10 }, (_, n) => <i key={n} />)}</div></div></div>
         {phaseCopy[phase] && <div className="phase-label">{phaseCopy[phase]}</div>}
         {phase === 'outcome' && <div className="outcome-call"><small>{outcomeInfo[outcome].kicker}</small><strong>{outcomeInfo[outcome].label}</strong></div>}
