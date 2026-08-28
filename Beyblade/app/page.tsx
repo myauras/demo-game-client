@@ -54,8 +54,8 @@ export default function Home() {
     const cue = (delay: number, action: () => void) => timers.current.push(setTimeout(action, delay));
     cue(850, () => setPhase('countdown')); cue(1300, () => setCount(2)); cue(1750, () => setCount(1));
     cue(2200, () => setPhase('launch')); cue(3000, () => setPhase('chase')); cue(4550, () => setPhase('impact'));
-    cue(6200, () => setPhase('suspense')); cue(7350, () => setPhase('final')); cue(8500, () => setPhase('outcome'));
-    cue(9800, () => { setBalance(value => value + Math.round(bet * outcomeInfo[selected].multiplier)); setPhase('result'); });
+    cue(7800, () => setPhase('suspense')); cue(9300, () => setPhase('outcome'));
+    cue(10600, () => { setBalance(value => value + Math.round(bet * outcomeInfo[selected].multiplier)); setPhase('result'); });
   };
 
   const changeBet = () => { clearTimers(); setPhase('lobby'); };
