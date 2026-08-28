@@ -562,10 +562,14 @@ export default function ArenaGame() {
       {settlement && (
         <div className="result-backdrop" role="presentation">
           <section className={`result-dialog ${settlement.won ? "won" : "lost"}`} role="dialog" aria-modal="true" aria-labelledby="result-title">
+            <div className="result-status" role="status" aria-label={settlement.won ? "下注勝利" : "下注失敗"}>
+              <span className="result-status-mark" aria-hidden="true">{settlement.won ? "✓" : "×"}</span>
+              <strong>{settlement.won ? "勝利" : "失敗"}</strong>
+            </div>
+            <p className="result-kicker">{settlement.won ? "BET WON" : "BET LOST"}</p>
             <div className="result-emblem" aria-hidden="true">
               <img src={settlement.champion.icon} alt="" />
             </div>
-            <p className="result-kicker">{settlement.won ? "BET WON" : "MATCH COMPLETE"}</p>
             <h2 id="result-title">{settlement.champion.name} 成為冠軍</h2>
             <p className="result-copy">
               <strong>{settlement.bet.name}</strong> · {settlement.won ? "下注結果命中。" : "本局未命中。"}
@@ -581,7 +585,7 @@ export default function ArenaGame() {
               </div>
             </div>
             <div className="prize-card">
-              <span>{settlement.won ? "獲得模擬獎金" : "本局獎金"}</span>
+              <span>{settlement.won ? "獲得模擬獎金" : "未獲得獎金"}</span>
               <strong>NT$ {settlement.prize.toLocaleString("zh-TW")}</strong>
             </div>
             <button type="button" className="play-again-button" onClick={newMatch}>回到下注</button>

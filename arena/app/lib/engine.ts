@@ -186,6 +186,7 @@ const DARIUS_SLASH_HIT_DELAY = 0.12;
 const DARIUS_SLASH_EFFECT_DURATION = 0.48;
 const ZED_CAST_DURATION = 1;
 const ZED_SKILL_COOLDOWN = 12;
+const ZED_CLONE_OPACITY = 0.72;
 const SKILL_CAST_STAGGER_INTERVAL = 1;
 const ZED_SPAWN_FADE_DURATION = 0.72;
 const ZED_COORDINATION_NEAR_STAGE_DISTANCE = 58;
@@ -1007,16 +1008,18 @@ function spawnZedClone(engine: EngineState, caster: Actor) {
 }
 
 function stepZedSkill(engine: EngineState, dt: number) {
-  const livingZeds = engine.actors.filter(
-    (actor) => actor.alive && actor.teamId === "zed",
+  const zed = engine.actors.find(
+    (actor) => actor.id === "zed" && actor.alive && !actor.isClone,
   );
-  if (livingZeds.length !== 1) {
+  const livingClone = engine.actors.some(
+    (actor) => actor.alive && actor.teamId === "zed" && actor.isClone,
+  );
+  if (!zed || livingClone) {
     engine.zedCastTimer = 0;
     engine.zedCasterId = null;
     return;
   }
 
-  const zed = livingZeds[0];
   if (engine.zedSkillCooldown > 0) {
     engine.zedSkillCooldown = Math.max(0, engine.zedSkillCooldown - dt);
     return;
@@ -1045,11 +1048,12 @@ function stepZedSkill(engine: EngineState, dt: number) {
   }
 }
 
-function eliminateActor(engine: EngineState, actor: Actor) {
-  const hasLivingZedPartner = actor.teamId === "zed" && engine.actors.some(
-    (candidate) => candidate.alive && candidate.teamId === "zed" && candidate.id !== actor.id,
-  );
-  if (hasLivingZedPartner) engine.zedSkillCooldown = ZED_SKILL_COOLDOWN;
+function beginActorDeath(
+  engine: EngineState,
+  actor: Actor,
+  deathStyle: "normal" | "zed-smoke",
+) {
+  if (!actor.alive) return;
   actor.alive = false;
   actor.outAt = engine.elapsed;
   actor.vx = 0;
@@ -1057,11 +1061,37 @@ function eliminateActor(engine: EngineState, actor: Actor) {
   actor.knockbackTimer = 0;
   actor.stunTimer = 0;
   actor.impactFlash = 0;
-  actor.deathStyle = hasLivingZedPartner ? "zed-smoke" : "normal";
-  actor.deathDuration = hasLivingZedPartner
+  actor.deathStyle = deathStyle;
+  actor.deathDuration = deathStyle === "zed-smoke"
     ? ZED_SMOKE_DEATH_DURATION
     : NORMAL_DEATH_DURATION;
   actor.deathTimer = actor.deathDuration;
+}
+
+function eliminateActor(engine: EngineState, actor: Actor) {
+  if (!actor.alive) return;
+
+  const isZedOriginal = actor.teamId === "zed" && !actor.isClone;
+  if (isZedOriginal) {
+    beginActorDeath(engine, actor, "normal");
+    engine.zedCastTimer = 0;
+    engine.zedCasterId = null;
+    engine.zedSkillCooldown = 0;
+    for (const clone of engine.actors) {
+      if (clone.alive && clone.teamId === "zed" && clone.isClone) {
+        beginActorDeath(engine, clone, "zed-smoke");
+      }
+    }
+    return;
+  }
+
+  if (actor.teamId === "zed" && actor.isClone) {
+    beginActorDeath(engine, actor, "zed-smoke");
+    engine.zedSkillCooldown = ZED_SKILL_COOLDOWN;
+    return;
+  }
+
+  beginActorDeath(engine, actor, "normal");
 }
 
 function championFromActor(actor: Actor): Actor {
@@ -1354,6 +1384,8 @@ function drawActor(
   castEffect: "zed" | "jinx" | "janna" | "lee-sin" | "darius" | null,
   elapsed: number,
 ) {
+  ctx.save();
+  ctx.globalAlpha *= actor.isClone ? ZED_CLONE_OPACITY : 1;
   const radius = actor.radius;
   const knockbackSpeed = Math.hypot(actor.vx, actor.vy);
   if (actor.impactFlash > 0 && knockbackSpeed > 80) {
@@ -1456,7 +1488,7 @@ function drawActor(
   ctx.arc(0, 0, radius, 0, Math.PI * 2);
   ctx.fill();
   ctx.shadowBlur = 0;
-  const icon = getFighterIcon(actor.icon);
+  const icon = getFighterIcon(actor.isClone ? actor.skillIcon : actor.icon);
   if (icon?.complete && icon.naturalWidth > 0) {
     ctx.save();
     ctx.beginPath();
@@ -1505,6 +1537,7 @@ function drawActor(
     ctx.stroke();
     ctx.restore();
   }
+  ctx.restore();
 }
 
 function drawZedSmoke(

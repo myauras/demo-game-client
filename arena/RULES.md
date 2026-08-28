@@ -102,13 +102,13 @@ Fighter color palettes are fixed: Zed is black (`#111318`), Jinx is RGB `0, 173,
 - Darius's hit test uses the exact current visual slash radius with no additional fighter-radius padding. A target is hit only when its center is inside the visible slash radius, so the rendered effect size and gameplay radius always match.
 - The circular slash is an original Arena-style black-and-red crescent sweep with a vivid-red blade and fast-expanding circular motion. It remains centered on Darius and follows him while visible, using the reference image only for the broad curved-slash idea.
 - Darius's slash visual draws a large near-black under-sweep first, then a smaller, offset, high-saturation red blade above it. Both colors remain visibly separate instead of blending into one dark-red tint, and every layer stays inside the same current slash radius used for collision.
-- When exactly one living Zed is on the battlefield, that Zed stops and channels for 1 second, then creates one additional Zed beside himself through a black-fog fade-in.
-- Both Zeds belong to the same participant. While two are alive, neither can channel the skill. If either one dies, the remaining Zed may channel for 1 second and create a replacement.
-- Zed's shared 12-second skill cooldown does not count down while both Zeds are alive. It starts only when the first Zed body dies; after that cooldown reaches zero, the surviving Zed may begin the 1-second replacement channel.
+- When the original living Zed has no living clone, he stops and channels for 1 second, then creates one additional Zed beside himself through a black-fog fade-in. On the battlefield, the clone uses Zed's provided `skill.png` artwork inside the same circular portrait mask and remains semi-transparent, so it is immediately distinct from the original; selection, skill, banner, and settlement portraits keep their canonical artwork.
+- Both Zeds belong to the same participant. While the clone is alive, neither body can channel the skill. Only the original Zed can create a replacement; the clone can never take over the summoning role.
+- Zed's 12-second skill cooldown does not count down while the clone is alive. It starts only when the clone dies; after that cooldown reaches zero, the surviving original Zed may begin the 1-second replacement channel.
 - Zed and his living clone do not physically collide, push, damage, or knock each other back; their bodies may pass through each other. Because AI pursuit excludes actors with the same team ID, neither Zed deliberately targets or chases the other.
 - While both Zeds are alive, they keep one shared opponent target instead of roaming independently. At the start of each coordination cycle they snapshot two nearby staging positions on the arena-center side of that target, then charge together from nearly the same outward-facing direction. Those staging positions remain fixed until the charge starts, so a moving target cannot make either Zed rapidly switch between moving and stopping. Coordination destinations are clamped inside the safe arena edge, and a Zed holds at that safe point instead of alternating every frame between chasing an outside target and steering inward. A Zed that reaches its staging position first holds still instead of overshooting and repeatedly reversing direction while waiting for the other Zed. The slightly staggered staging distance lets the second collision follow the first before the target can recover and walk back toward the arena center.
-- Zed is eliminated only after every living Zed belonging to that participant has died. A surviving clone still counts as Zed for wager selection and victory settlement.
-- If a Zed dies while another Zed remains alive, the defeated body dissolves through growing black fog. Only the final living Zed uses the standard out-of-bounds death animation.
+- Zed remains in the match only while the original body is alive. If the clone dies first, it dissolves through growing black fog and the original may replace it only after the cooldown.
+- If the original Zed dies, he uses the standard out-of-bounds shake-and-fade animation. Every living clone simultaneously dissolves into black fog, and the Zed participant is eliminated immediately rather than letting a clone continue alone.
 - Every fighter eliminated by leaving the arena rapidly shakes first and then fades out. This animation finishes before the match declares its winner.
 
 ## Interface constraints
@@ -145,6 +145,7 @@ Fighter color palettes are fixed: Zed is black (`#111318`), Jinx is RGB `0, 173,
 - Do not display round labels such as `ROUND 01`.
 - Do not display active-count labels such as `5/5 ACTIVE`.
 - Avoid configuration, history, and help modals that distract from completing a wager, watching the match, and reading the result.
+- Make the settlement outcome immediately obvious with a large Chinese `勝利` or `失敗` status badge near the top of the result dialog. Victory uses bright gold with a restrained cyan accent; defeat uses a high-contrast red-and-near-black treatment. The status must be more visually prominent than the champion and wager details.
 
 ## Acceptance criteria
 
@@ -170,8 +171,8 @@ Fighter color palettes are fixed: Zed is black (`#111318`), Jinx is RGB `0, 173,
 - Darius continuously checks the moving slash's current visual radius for its full visible lifetime, while preventing repeat hits on the same target during one slash.
 - Darius's visual slash radius and hit-test radius come from the same calculation, with no hidden extra range beyond the effect.
 - Janna's vortex remains readable through layered spiral ribbons and a dark center without overexposure, and Darius's separated black and vivid-red blade layers never extend past the live collision radius.
-- A lone Zed channels for 1 second and creates a black-fog clone; after one body dies, a shared 12-second cooldown begins before replacement channeling is allowed. Zed remains in the match until all of his living bodies are eliminated. Two living Zeds do not collide, never select each other, and aggressively coordinate staggered charges from fixed staging points against one shared opponent without rapid movement reversals or stop-start jitter.
-- Out-of-bounds fighters rapidly shake and fade before winner settlement, while a non-final Zed dissolves into black fog.
+- The original Zed channels for 1 second and creates one semi-transparent clone through black fog. The clone's battlefield portrait uses Zed's `skill.png` cropped by the same circular mask as every fighter marker. If the clone dies, only the original may replace it after a 12-second cooldown. If the original dies, he uses the normal death animation and every living clone simultaneously dissolves into black fog, eliminating Zed. Two living Zeds do not collide, never select each other, and aggressively coordinate staggered charges from fixed staging points against one shared opponent without rapid movement reversals or stop-start jitter.
+- Out-of-bounds fighters rapidly shake and fade before winner settlement, while a defeated Zed clone dissolves into black fog.
 - The initial arena radius is 294 world pixels so all five fighters have more opening space.
 - Fighter markers and the victory overlay do not display damage percentages, and the settled winner never visually switches to another fighter.
 - All five provided fighter portraits render in selection, battle, and result contexts; battlefield portraits have no protruding direction marker, and all five provided skill icons open the matching accessible skill-information dialog with a concise, non-numeric description.
@@ -180,6 +181,7 @@ Fighter color palettes are fixed: Zed is black (`#111318`), Jinx is RGB `0, 173,
 - A Zed victory, including a surviving clone, always uses the canonical black Zed name and palette in both the battlefield victory overlay and result dialog.
 - `回到下注` clears the current match and returns to the active wager type with no fighters selected.
 - A correct wager shows a prize amount; an incorrect wager shows no prize.
+- The result dialog prominently displays either `勝利` or `失敗` with distinct high-contrast colors and symbols, so the wager outcome is recognizable before reading the detailed settlement text.
 - The controls visibly label the five wagers only as `冠軍`, `前二`, `前二組`, `前三組`, and `前二順位`, with no parenthesized secondary text. Their larger second line shows `賠率 5.00x`, `賠率 2.50x`, `賠率 10.00x`, `賠率 3.33x`, or `賠率 20.00x`.
 - The pre-match summary shows only `投注 NT$ 100` and the current simulated balance, which starts at `NT$ 1,000`; it does not show `命中獎金`. Each match deducts one stake, a winning settlement credits its gross prize once, and returning to wager selection preserves the balance.
 - The result dialog captures and keeps the final ordered top three, then shows the wager name, player selections, actual top three, and settled simulated prize.

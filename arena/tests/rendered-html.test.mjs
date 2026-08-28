@@ -73,6 +73,10 @@ test("ships wager selection, automated resolution, and prize settlement without 
   assert.match(globalsCss, /\.selection-order/);
   assert.match(globalsCss, /\.fighter-option[\s\S]*min-height: 50px/);
   assert.match(component, /獲得模擬獎金/);
+  assert.match(component, /settlement\.won \? "勝利" : "失敗"/);
+  assert.match(component, /settlement\.won \? "✓" : "×"/);
+  assert.match(component, /settlement\.won \? "BET WON" : "BET LOST"/);
+  assert.match(component, /settlement\.won \? "獲得模擬獎金" : "未獲得獎金"/);
   assert.match(component, /回到下注/);
   assert.match(component, /className="fighter-avatar"/);
   assert.match(component, /className="skill-info-button"/);
@@ -106,6 +110,9 @@ test("ships wager selection, automated resolution, and prize settlement without 
   assert.match(globalsCss, /\.entry-summary[\s\S]*grid-template-columns: max-content max-content/);
   assert.match(globalsCss, /\.bet-method span[\s\S]*900 10px\/1\.05/);
   assert.match(globalsCss, /\.entry-summary strong[\s\S]*900 13px\/1/);
+  assert.match(globalsCss, /\.result-status[\s\S]*font-size: 27px/);
+  assert.match(globalsCss, /\.won \.result-status[\s\S]*color: #ffd86f/);
+  assert.match(globalsCss, /\.lost \.prize-card[\s\S]*color: #ef7469/);
   for (const [id, name] of [
     ["win", "獨贏"],
     ["place", "位置"],
@@ -398,6 +405,7 @@ test("ships wager selection, automated resolution, and prize settlement without 
   assert.match(engine, /-layerRadius,[\s\S]{0,100}layerRadius \* 2/);
   assert.match(engine, /ZED_CAST_DURATION = 1/);
   assert.match(engine, /ZED_SKILL_COOLDOWN = 12/);
+  assert.match(engine, /ZED_CLONE_OPACITY = 0\.72/);
   assert.match(engine, /ZED_COORDINATION_NEAR_STAGE_DISTANCE = 58/);
   assert.match(engine, /ZED_COORDINATION_FAR_STAGE_DISTANCE = 72/);
   assert.match(engine, /ZED_COORDINATION_CHARGE_DURATION = 1\.2/);
@@ -427,12 +435,22 @@ test("ships wager selection, automated resolution, and prize settlement without 
   assert.match(engine, /function stepZedSkill/);
   assert.match(engine, /function spawnZedClone/);
   assert.match(engine, /id: `zed-shadow-\$\{engine\.zedCloneSequence\}`/);
-  assert.match(engine, /livingZeds\.length !== 1/);
+  assert.match(engine, /actor\.id === "zed" && actor\.alive && !actor\.isClone/);
+  assert.match(engine, /actor\.alive && actor\.teamId === "zed" && actor\.isClone/);
+  assert.match(engine, /if \(!zed \|\| livingClone\)/);
   assert.match(engine, /engine\.zedSkillCooldown = Math\.max\(0, engine\.zedSkillCooldown - dt\)/);
   assert.match(engine, /teamId: "zed"/);
+  assert.match(engine, /function beginActorDeath/);
   assert.match(engine, /function eliminateActor/);
-  assert.match(engine, /hasLivingZedPartner \? "zed-smoke" : "normal"/);
-  assert.match(engine, /if \(hasLivingZedPartner\) engine\.zedSkillCooldown = ZED_SKILL_COOLDOWN/);
+  assert.match(engine, /const isZedOriginal = actor\.teamId === "zed" && !actor\.isClone/);
+  assert.match(engine, /beginActorDeath\(engine, actor, "normal"\)/);
+  assert.match(engine, /clone\.alive && clone\.teamId === "zed" && clone\.isClone/);
+  assert.match(engine, /beginActorDeath\(engine, clone, "zed-smoke"\)/);
+  assert.match(engine, /actor\.teamId === "zed" && actor\.isClone/);
+  assert.match(engine, /engine\.zedSkillCooldown = ZED_SKILL_COOLDOWN/);
+  assert.match(engine, /ctx\.globalAlpha \*= actor\.isClone \? ZED_CLONE_OPACITY : 1/);
+  assert.match(engine, /getFighterIcon\(actor\.isClone \? actor\.skillIcon : actor\.icon\)/);
+  assert.match(engine, /ctx\.arc\(0, 0, radius - 2, 0, Math\.PI \* 2\);\s+ctx\.clip\(\);\s+ctx\.drawImage\(icon, -radius, -radius, radius \* 2, radius \* 2\)/);
   assert.match(engine, /function drawZedSmoke/);
   assert.match(engine, /function drawActorDeath/);
   assert.match(engine, /const shake = Math\.sin\(elapsed \* 120\)/);
@@ -528,9 +546,12 @@ test("documents monorepo routing and Arena product rules", async () => {
   assert.match(rules, /expands to its 180-world-pixel hit radius over 0\.12 seconds/);
   assert.match(rules, /collision is evaluated against the slash's current rendered position and current rendered radius/);
   assert.match(rules, /remains centered on Darius and follows him while visible/);
-  assert.match(rules, /exactly one living Zed/);
-  assert.match(rules, /Zed is eliminated only after every living Zed/);
-  assert.match(rules, /shared 12-second skill cooldown does not count down while both Zeds are alive/);
+  assert.match(rules, /original living Zed has no living clone/);
+  assert.match(rules, /clone uses Zed's provided `skill\.png` artwork inside the same circular portrait mask/);
+  assert.match(rules, /Only the original Zed can create a replacement/);
+  assert.match(rules, /starts only when the clone dies/);
+  assert.match(rules, /original Zed dies, he uses the standard out-of-bounds shake-and-fade animation/);
+  assert.match(rules, /living clone simultaneously dissolves into black fog/);
   assert.match(rules, /do not physically collide, push, damage, or knock each other back/);
   assert.match(rules, /neither Zed deliberately targets or chases the other/);
   assert.match(rules, /keep one shared opponent target instead of roaming independently/);
@@ -539,7 +560,6 @@ test("documents monorepo routing and Arena product rules", async () => {
   assert.match(rules, /without rapid movement reversals or stop-start jitter/);
   assert.match(rules, /second collision follow the first before the target can recover/);
   assert.match(rules, /holds still instead of overshooting/);
-  assert.match(rules, /starts only when the first Zed body dies/);
   assert.match(rules, /rapidly shakes first and then fades out/);
   assert.match(rules, /black-fog fade-in/);
   assert.match(rules, /fixed `1179 x 1977` portrait design surface/);

@@ -810,6 +810,17 @@ button:focus-visible {
   text-align: center;
 }
 
+.result-dialog::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 5px;
+  background: linear-gradient(90deg, transparent, #ff4a3d 18%, #270000 50%, #ff4a3d 82%, transparent);
+  box-shadow: 0 0 24px rgba(255, 59, 48, 0.5);
+  content: "";
+}
+
 .result-dialog.won {
   border-color: rgba(255, 209, 102, 0.48);
   background:
@@ -817,11 +828,62 @@ button:focus-visible {
     linear-gradient(150deg, #2d2012, #110c08 68%);
 }
 
+.result-dialog.won::before {
+  background: linear-gradient(90deg, transparent, #5cdfff 18%, #ffd166 50%, #5cdfff 82%, transparent);
+  box-shadow: 0 0 25px rgba(255, 209, 102, 0.48);
+}
+
+.result-status {
+  display: inline-flex;
+  min-width: 164px;
+  margin: 0 auto 7px;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  padding: 9px 20px;
+  border: 1px solid rgba(255, 79, 66, 0.78);
+  background:
+    linear-gradient(115deg, rgba(95, 6, 3, 0.9), rgba(22, 3, 3, 0.92));
+  box-shadow:
+    0 0 0 3px rgba(255, 74, 61, 0.08),
+    0 0 28px rgba(255, 55, 44, 0.24);
+  color: #ff685c;
+}
+
+.result-status-mark {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font: 900 20px/1 system-ui, sans-serif;
+  box-shadow: 0 0 12px currentColor;
+}
+
+.result-status strong {
+  font-family: Georgia, "Noto Serif TC", serif;
+  font-size: 27px;
+  line-height: 1;
+  letter-spacing: 0.2em;
+  text-indent: 0.2em;
+  text-shadow: 0 0 18px currentColor;
+}
+
+.won .result-status {
+  border-color: rgba(255, 209, 102, 0.82);
+  background: linear-gradient(115deg, rgba(94, 63, 10, 0.78), rgba(18, 13, 5, 0.92));
+  box-shadow:
+    0 0 0 3px rgba(255, 209, 102, 0.08),
+    0 0 30px rgba(255, 209, 102, 0.24);
+  color: #ffd86f;
+}
+
 .result-emblem {
   display: grid;
   width: 64px;
   height: 64px;
-  margin: 0 auto 17px;
+  margin: 13px auto 17px;
   place-items: center;
   border: 1px solid rgba(72, 208, 216, 0.42);
   border-radius: 50%;
@@ -846,14 +908,14 @@ button:focus-visible {
 }
 
 .result-kicker {
-  margin: 0 0 7px;
-  color: #a27661;
-  font: 800 8px/1 ui-monospace, monospace;
-  letter-spacing: 0.2em;
+  margin: 0;
+  color: #d45348;
+  font: 900 9px/1 ui-monospace, monospace;
+  letter-spacing: 0.24em;
 }
 
 .won .result-kicker {
-  color: #b99b57;
+  color: #d4b85f;
 }
 
 .result-dialog h2 {
@@ -934,6 +996,20 @@ button:focus-visible {
 .won .prize-card strong {
   color: var(--gold);
   text-shadow: 0 0 22px rgba(255, 209, 102, 0.2);
+}
+
+.lost .prize-card {
+  border-color: rgba(255, 74, 61, 0.28);
+  background: rgba(91, 8, 5, 0.16);
+}
+
+.lost .prize-card span,
+.lost .prize-card strong {
+  color: #ef7469;
+}
+
+.lost .prize-card strong {
+  text-shadow: 0 0 18px rgba(255, 74, 61, 0.18);
 }
 
 .play-again-button {
