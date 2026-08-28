@@ -11,7 +11,7 @@
     "name": "rolldown-runtime"
   },
   "app/components/ArenaGame.tsx": {
-    "file": "assets/ArenaGame-3TC0To3Y.js",
+    "file": "assets/ArenaGame-daLzy6fW.js",
     "name": "ArenaGame",
     "src": "app/components/ArenaGame.tsx",
     "isDynamicEntry": true,
@@ -21,7 +21,7 @@
     ]
   },
   "node_modules/vinext/dist/shims/layout-segment-context.js": {
-    "file": "assets/layout-segment-context-DhsFqY2_.js",
+    "file": "assets/layout-segment-context-DFjGf2Tr.js",
     "name": "layout-segment-context",
     "src": "node_modules/vinext/dist/shims/layout-segment-context.js",
     "isDynamicEntry": true,
@@ -32,7 +32,7 @@
     ]
   },
   "virtual:vinext-app-browser-entry": {
-    "file": "assets/index-Rm2QgCzD.js",
+    "file": "assets/index-DZyT_Yn_.js",
     "name": "index",
     "src": "virtual:vinext-app-browser-entry",
     "isEntry": true,
