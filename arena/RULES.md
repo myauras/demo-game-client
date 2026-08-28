@@ -8,18 +8,31 @@
 
 ## Required game flow
 
-1. Before the match, the player chooses exactly one predicted champion.
-2. The match cannot start until a champion is selected.
+1. Before the match, the player chooses one simulated wager type and completes its required fighter selections.
+2. The match cannot start until the selected wager has the exact required number of fighter choices.
 3. After starting, all five fighters battle automatically.
 4. The battle contains no items, pickups, power-ups, buffs, shields, bombs, or other collectible effects.
 5. The last fighter remaining is the champion.
-6. At the end, show a result dialog naming both the selected fighter and the actual champion.
-7. If the prediction is correct, prominently show the prize won. If it is incorrect, clearly show that no prize was won.
-8. The result dialog may offer a new match, which returns to champion selection.
+6. At the end, preserve the complete finish order and settle the selected wager against it.
+7. Show a result dialog naming the wager, the player's selections, the actual top three, and the champion.
+8. If the wager is correct, prominently show the prize won. If it is incorrect, clearly show that no prize was won.
+9. The result dialog may offer a new match, which returns to wager selection with no fighters selected.
 
 The wager and prize are simulated game values only and must not be presented as real-money gambling or a real financial payout.
 
-With five fixed fighter choices, the prediction panel treats each selection as a one-in-five chance and displays fair decimal odds of `5.00x`. A simulated `NT$ 100` entry therefore returns a gross simulated prize of `NT$ 500` when the prediction is correct.
+Each local session starts with a simulated balance of `NT$ 1,000`. Starting a match deducts the fixed `NT$ 100` stake once. A correct wager credits the gross simulated prize to the balance, while an incorrect wager leaves the deducted stake spent. Returning to wager selection or starting a new match preserves the current session balance.
+
+## Simulated wager types
+
+The interface offers five single-match wager types using familiar Hong Kong and historical Macau horse-racing names. All odds assume five equally likely fighters, use gross fair decimal returns before any house edge, and are fixed for this prototype:
+
+- `獨贏` (`5.00x`): select one fighter to finish first. A simulated `NT$ 100` entry returns `NT$ 500` when correct.
+- `位置` (`2.50x`): select one fighter to finish in the top two. With only five fighters, Arena always uses two paid positions.
+- `連贏` (`10.00x`): select the two fighters that finish first and second in either order.
+- `位置Q` (`3.33x`): select two fighters that both finish in the top three, in any order. The exact fair multiplier is `10 / 3`, while the interface displays two decimal places.
+- `二重彩` (`20.00x`): select first and second in the exact finishing order. With five equally likely fighters, there are `5 × 4 = 20` ordered outcomes.
+
+Changing the wager type before a match clears the current fighter choices. Each fighter card is selected directly: the ordered two-fighter wager displays `1` and `2`, while unordered combination bets display a check mark. If a multi-pick wager is already full, selecting another fighter replaces the most recently selected fighter. Clicking a selected fighter removes it and compacts any remaining order.
 
 ## Fighters
 
@@ -94,7 +107,7 @@ Fighter color palettes are fixed: Zed is black (`#111318`), Jinx is RGB `0, 173,
 - Zed's shared 12-second skill cooldown does not count down while both Zeds are alive. It starts only when the first Zed body dies; after that cooldown reaches zero, the surviving Zed may begin the 1-second replacement channel.
 - Zed and his living clone do not physically collide, push, damage, or knock each other back; their bodies may pass through each other. Because AI pursuit excludes actors with the same team ID, neither Zed deliberately targets or chases the other.
 - While both Zeds are alive, they keep one shared opponent target instead of roaming independently. At the start of each coordination cycle they snapshot two nearby staging positions on the arena-center side of that target, then charge together from nearly the same outward-facing direction. Those staging positions remain fixed until the charge starts, so a moving target cannot make either Zed rapidly switch between moving and stopping. Coordination destinations are clamped inside the safe arena edge, and a Zed holds at that safe point instead of alternating every frame between chasing an outside target and steering inward. A Zed that reaches its staging position first holds still instead of overshooting and repeatedly reversing direction while waiting for the other Zed. The slightly staggered staging distance lets the second collision follow the first before the target can recover and walk back toward the arena center.
-- Zed is eliminated only after every living Zed belonging to that participant has died. A surviving clone still counts as Zed for champion prediction and victory settlement.
+- Zed is eliminated only after every living Zed belonging to that participant has died. A surviving clone still counts as Zed for wager selection and victory settlement.
 - If a Zed dies while another Zed remains alive, the defeated body dissolves through growing black fog. Only the final living Zed uses the standard out-of-bounds death animation.
 - Every fighter eliminated by leaving the arena rapidly shakes first and then fades out. This animation finishes before the match declares its winner.
 
@@ -102,18 +115,20 @@ Fighter color palettes are fixed: Zed is black (`#111318`), Jinx is RGB `0, 173,
 
 - The production website is published as a static export through GitHub Pages at the repository project path. All framework assets, fighter portraits, skill icons, the arena map, favicon, and social image must honor the configured public base path instead of assuming the domain root.
 - Render the complete Arena interface on a fixed `1179 x 1977` portrait design surface. Center that surface and scale it uniformly to the largest size that fits inside the current browser viewport; never crop, stretch, scroll, or reflow the game based on screen size.
-- Render `/arena-map-v1.png` as the battlefield background. It is an original, fully top-down hand-painted dark-fantasy carnival arena with a flat, unobstructed rust-red combat floor and detailed scenery confined to the non-playable perimeter.
+- Render `/arena-map-v1.webp` as the battlefield background and preload it from the document head because the canvas discovers it only after client code starts. The optimized image keeps the original `1536 × 1024` dimensions, remains below `300 KB`, and replaces the multi-megabyte PNG. It is an original, fully top-down hand-painted dark-fantasy carnival arena with a flat, unobstructed rust-red combat floor and detailed scenery confined to the non-playable perimeter.
 - The background artwork contains no fixed glowing boundary and no purple portal circles. Draw only the engine's live shrinking boundary over the background, so the visible ring always matches the actual playable radius. That boundary is a thin cyan rune ring with a dark contrast under-stroke, moving dash marks, and small angular glyphs; it never becomes a thick solid orange ring.
 - Style the surrounding controls, fighter cards, skill dialog, and result dialog with the same charcoal, rust-red, aged-bronze, warm-gold, restrained cyan, and faint violet palette as the battlefield while preserving clear text contrast and each fighter's own identity color.
 - Make the arena the dominant visual area and use the available viewport efficiently.
 - Do not show the Arena brand/title header or a `YOUR PICK`/selection heading. Keep the fighter choices, simulated entry, prize value, and match actions in a compact bottom control area so the battle view receives as much space as possible.
+- Place the selected fighter's compact skill preview above the wager-type selector. Each wager button uses only its descriptive first line, such as `冠軍` or `前三組`, with no parenthesized horse-racing name, and a second line such as `賠率 5.00x`. Make the odds line larger than the first-line label.
+- Beside the fixed `投注 NT$ 100` value, show the current simulated `餘額`, starting at `NT$ 1,000`. Do not show a separate projected or hit-prize field in the pre-match controls.
 - Use a tightly framed battle world with minimal empty space around the circular arena so the arena itself, fighters, and skills appear substantially larger.
-- Keep champion selection and essential live ranking visible without shrinking the arena unnecessarily.
+- Keep the wager method, selected fighters, and essential live ranking visible without shrinking the arena unnecessarily.
 - Keep the arena's visual shrinking behavior, but do not draw shrink countdown, energy-ring shrink, minimum-ring, percentage, or other boundary-status text over the battlefield.
 - Do not draw idle copy such as `戰鬥模擬待命中` over the battlefield.
 - Keep every skill immediately identifiable: Zed uses black and graphite smoke, Jinx uses her cyan-blue hair color, Darius's `毀滅風暴` uses clearly separated near-black and vivid-red layers while his body remains gray, Lee Sin uses a darker maroon red, and Janna uses white with pearl-gray structure. Avoid large neutral-white additive blooms that obscure portraits or the battlefield.
-- Use the provided `/icons/<fighter>/icon.webp` portraits for fighter selection, the selected-fighter indicator, battlefield bodies, and the settled champion portrait. Preserve each fighter's existing color as the surrounding glow and border identity. Battlefield portraits are plain circles without an extra head, facing, or direction marker protruding from them.
-- Every fighter selection card includes a separate skill-info button using the provided `/icons/<fighter>/skill.png` image. Activating it opens a compact, dismissible dialog with that fighter's portrait, skill icon, skill name, and one short plain-language description without changing the champion prediction. The visible description omits numerical gameplay values such as timing, angles, range, knockback, stun, and cooldown.
+- Use the provided `/icons/<fighter>/icon.webp` portraits for fighter selection, the selected-wager indicator, battlefield bodies, and the settled champion portrait. Preserve each fighter's existing color as the surrounding glow and border identity. Battlefield portraits are plain circles without an extra head, facing, or direction marker protruding from them.
+- Every fighter selection card includes a separate skill-info button using the provided `/icons/<fighter>/skill.png` image. Activating it opens a compact, dismissible dialog with that fighter's portrait, skill icon, skill name, and one short plain-language description without changing the wager selection. The visible description omits numerical gameplay values such as timing, angles, range, knockback, stun, and cooldown.
 - While a fighter is selected before the match, show that fighter's skill icon, skill name, and concise description in a compact preview above the five fighter choices. The preview updates immediately whenever the selected fighter changes.
 - Whenever a fighter begins casting a skill, add a compact notification banner at the battlefield's upper-right corner containing only that fighter's portrait, skill icon, and skill name. The newest cast enters at the top; older notices move downward and become progressively smaller. Each notice remains fully visible for 1.5 seconds, then fades and slides directly to the right without shrinking during its exit.
 - Make the simulated entry and odds labels visibly larger than the fighter-card captions, with their values emphasized in a larger bold monospace style.
@@ -124,18 +139,20 @@ Fighter color palettes are fixed: Zed is black (`#111318`), Jinx is RGB `0, 173,
 - Do not include a rules configuration module.
 - Do not include items or item-related visuals, controls, state, generation, collision effects, or rendering code.
 - Do not include a battlefield reset control.
-- During a countdown or match, provide a `回到下注` action that resets the current game and returns to champion selection; this replaces a battlefield-only reset control.
+- During a countdown or match, provide a `回到下注` action that resets the current game and returns to wager selection; this replaces a battlefield-only reset control.
 - Do not include a keyboard-shortcut panel or keyboard-control instructions.
 - Do not display `自動戰鬥` explanatory copy.
 - Do not display round labels such as `ROUND 01`.
 - Do not display active-count labels such as `5/5 ACTIVE`.
-- Avoid configuration, history, and help modals that distract from selecting a champion, watching the match, and reading the result.
+- Avoid configuration, history, and help modals that distract from completing a wager, watching the match, and reading the result.
 
 ## Acceptance criteria
 
 - The roster contains exactly Zed, Jinx, Darius, Lee Sin, and Janna.
-- A selected champion is visibly highlighted before starting.
-- The start button is disabled until a selection exists.
+- The selected wager type and every selected fighter are visibly highlighted before starting.
+- The start button is disabled until the active wager has exactly the required number of fighter selections.
+- The wager selector offers exactly `獨贏`, `位置`, `連贏`, `位置Q`, and `二重彩` with an inline one-line instruction for the active type.
+- `獨贏`, `位置`, `連贏`, `位置Q`, and `二重彩` settle respectively against first place, either top-two place, unordered top two, any unordered pair within the top three, and the exact ordered top two.
 - The automated battle produces one winner.
 - Every fighter's normal movement is fixed at 150 world pixels per second, every standard collision knockback starts at exactly 400 world pixels per second, and the post-knockback collision stun lasts 0.5 seconds.
 - Consecutive skill starts are separated by at least 1 second; fighters whose cooldowns finish together wait their turn instead of casting simultaneously.
@@ -158,16 +175,18 @@ Fighter color palettes are fixed: Zed is black (`#111318`), Jinx is RGB `0, 173,
 - The initial arena radius is 294 world pixels so all five fighters have more opening space.
 - Fighter markers and the victory overlay do not display damage percentages, and the settled winner never visually switches to another fighter.
 - All five provided fighter portraits render in selection, battle, and result contexts; battlefield portraits have no protruding direction marker, and all five provided skill icons open the matching accessible skill-information dialog with a concise, non-numeric description.
-- Changing the pre-match fighter selection immediately updates the visible skill preview above the roster, and the simulated entry and odds text remain clearly legible at the fixed portrait resolution.
+- Changing the pre-match fighter selection immediately updates the visible skill preview above the wager selector, and the wager buttons show their descriptive label plus two-decimal odds.
 - Every skill cast produces exactly one upper-right battlefield banner with the caster portrait, matching skill icon, and skill name but no description. A later cast enters above the existing stack and pushes prior notices downward at a smaller scale. Each notice starts fading 1.5 seconds after it appears, keeps its current stack scale during exit, and slides directly to the right.
 - A Zed victory, including a surviving clone, always uses the canonical black Zed name and palette in both the battlefield victory overlay and result dialog.
-- `回到下注` clears the current match and returns to an unselected champion-prediction state.
-- A correct prediction shows a prize amount; an incorrect prediction shows no prize.
-- The prediction controls show `5.00x` odds derived from the fixed one-in-five chance, and the simulated `NT$ 100` entry produces a gross `NT$ 500` prize on a correct prediction.
+- `回到下注` clears the current match and returns to the active wager type with no fighters selected.
+- A correct wager shows a prize amount; an incorrect wager shows no prize.
+- The controls visibly label the five wagers only as `冠軍`, `前二`, `前二組`, `前三組`, and `前二順位`, with no parenthesized secondary text. Their larger second line shows `賠率 5.00x`, `賠率 2.50x`, `賠率 10.00x`, `賠率 3.33x`, or `賠率 20.00x`.
+- The pre-match summary shows only `投注 NT$ 100` and the current simulated balance, which starts at `NT$ 1,000`; it does not show `命中獎金`. Each match deducts one stake, a winning settlement credits its gross prize once, and returning to wager selection preserves the balance.
+- The result dialog captures and keeps the final ordered top three, then shows the wager name, player selections, actual top three, and settled simulated prize.
 - Starting a new match clears the previous selection and result.
 - The layout works on desktop and mobile viewports.
 - Desktop and mobile use the same fixed `1179 x 1977` composition, uniformly scaled so the entire interface remains visible.
 - The title-free compact bottom controls leave the enlarged circular arena as the dominant element on screen.
-- The generated battlefield asset exists at `/arena-map-v1.png`, fills the canvas with a centered cover crop, contains no static ring UI, and remains visible beneath the engine-rendered shrinking boundary.
+- The optimized battlefield asset exists only at `/arena-map-v1.webp`, remains below `300 KB`, is preloaded, fills the canvas with a centered cover crop, contains no static ring UI, and remains visible beneath the engine-rendered shrinking boundary.
 - All compact UI panels use the battlefield's dark-fantasy carnival palette instead of the previous blue sci-fi grid treatment.
 - A GitHub Pages production build completes as a full static export, produces `dist/client/index.html`, and keeps all public assets under the `/demo-game-client` project base path.

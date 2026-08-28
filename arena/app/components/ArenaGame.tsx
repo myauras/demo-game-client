@@ -3,6 +3,15 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_FIGHTERS, type FighterConfig } from "../lib/arena";
 import {
+  BET_DEFINITIONS,
+  getBetDefinition,
+  isBetComplete,
+  isWinningBet,
+  simulatedPrize,
+  type BetDefinition,
+  type BetType,
+} from "../lib/bets";
+import {
   createEngine,
   drainSkillCastEvents,
   drawArena,
@@ -17,9 +26,7 @@ import {
 } from "../lib/engine";
 
 const ENTRY_AMOUNT = 100;
-const WIN_PROBABILITY = 1 / DEFAULT_FIGHTERS.length;
-const DECIMAL_ODDS = 1 / WIN_PROBABILITY;
-const WIN_PRIZE = ENTRY_AMOUNT * DECIMAL_ODDS;
+const INITIAL_BALANCE = 1000;
 const DESIGN_WIDTH = 1179;
 const DESIGN_HEIGHT = 1977;
 const SKILL_CAST_VISIBLE_DURATION_MS = 1500;
@@ -28,8 +35,11 @@ const MAX_SKILL_CAST_NOTICES = 4;
 
 type Settlement = {
   champion: Actor;
-  pick: FighterConfig;
+  bet: BetDefinition;
+  picks: FighterConfig[];
+  finishOrder: FighterConfig[];
   won: boolean;
+  prize: number;
 };
 
 type SkillCastNotice = {
@@ -67,22 +77,39 @@ function normalizeChampion(champion: Actor): Actor {
   };
 }
 
+function canonicalFinishOrder(actors: Actor[]) {
+  return rankActors(actors)
+    .map((actor) => DEFAULT_FIGHTERS.find((fighter) => fighter.id === actor.id))
+    .filter((fighter): fighter is FighterConfig => Boolean(fighter));
+}
+
+function formatSelection(fighters: FighterConfig[], ordered: boolean) {
+  if (ordered) {
+    return fighters.map((fighter, index) => `${index + 1}. ${fighter.name}`).join("　");
+  }
+  return fighters.map((fighter) => fighter.name).join(" ＋ ");
+}
+
 export default function ArenaGame() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<EngineState>(createEngine(DEFAULT_FIGHTERS));
   const statusRef = useRef<GameStatus>("idle");
-  const selectedIdRef = useRef<string | null>(null);
+  const selectedIdsRef = useRef<string[]>([]);
+  const betTypeRef = useRef<BetType>("win");
   const lastFrameRef = useRef(0);
   const winnerRecordedRef = useRef(false);
   const settlementTimerRef = useRef<number | null>(null);
   const skillCastNoticeTimersRef = useRef<number[]>([]);
 
   const [status, setStatus] = useState<GameStatus>("idle");
+  const [betType, setBetType] = useState<BetType>("win");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(3);
-  const [ranking, setRanking] = useState<RankingRow[]>(() => rankingRows(engineRef.current));
+  const [ranking, setRanking] = useState<RankingRow[]>(() => rankingRows(createEngine(DEFAULT_FIGHTERS)));
   const [winner, setWinner] = useState<Actor | null>(null);
   const [settlement, setSettlement] = useState<Settlement | null>(null);
+  const [balance, setBalance] = useState(INITIAL_BALANCE);
   const [skillFighterId, setSkillFighterId] = useState<string | null>(null);
   const [skillCastNotices, setSkillCastNotices] = useState<SkillCastNotice[]>([]);
   const [viewportScale, setViewportScale] = useState(1);
@@ -91,6 +118,15 @@ export default function ArenaGame() {
     () => DEFAULT_FIGHTERS.find((fighter) => fighter.id === selectedId) ?? null,
     [selectedId],
   );
+  const selectedFighters = useMemo(
+    () => selectedIds
+      .map((fighterId) => DEFAULT_FIGHTERS.find((fighter) => fighter.id === fighterId))
+      .filter((fighter): fighter is FighterConfig => Boolean(fighter)),
+    [selectedIds],
+  );
+  const activeBet = useMemo(() => getBetDefinition(betType), [betType]);
+  const betReady = isBetComplete(betType, selectedIds);
+  const canAffordEntry = balance >= ENTRY_AMOUNT;
   const skillFighter = useMemo(
     () => DEFAULT_FIGHTERS.find((fighter) => fighter.id === skillFighterId) ?? null,
     [skillFighterId],
@@ -152,22 +188,40 @@ export default function ArenaGame() {
   }, [status]);
 
   useEffect(() => {
-    selectedIdRef.current = selectedId;
-  }, [selectedId]);
+    selectedIdsRef.current = selectedIds;
+  }, [selectedIds]);
+
+  useEffect(() => {
+    betTypeRef.current = betType;
+  }, [betType]);
 
   const finishMatch = useCallback((champion: Actor) => {
     if (winnerRecordedRef.current) return;
     winnerRecordedRef.current = true;
     const settledChampion = normalizeChampion(champion);
-    const pick = DEFAULT_FIGHTERS.find((fighter) => fighter.id === selectedIdRef.current);
+    const bet = getBetDefinition(betTypeRef.current);
+    const finishOrder = canonicalFinishOrder(engineRef.current.actors);
+    const picks = selectedIdsRef.current
+      .map((fighterId) => DEFAULT_FIGHTERS.find((fighter) => fighter.id === fighterId))
+      .filter((fighter): fighter is FighterConfig => Boolean(fighter));
+    const won = isWinningBet(
+      bet.id,
+      picks.map((fighter) => fighter.id),
+      finishOrder.map((fighter) => fighter.id),
+    );
+    const prize = won ? simulatedPrize(ENTRY_AMOUNT, bet.id) : 0;
+    if (prize > 0) setBalance((current) => current + prize);
     setWinner(settledChampion);
     setStatus("finished");
-    if (pick) {
+    if (picks.length === bet.pickCount) {
       settlementTimerRef.current = window.setTimeout(() => {
         setSettlement({
           champion: { ...settledChampion },
-          pick,
-          won: pick.id === settledChampion.id,
+          bet,
+          picks,
+          finishOrder,
+          won,
+          prize,
         });
       }, 650);
     }
@@ -221,11 +275,10 @@ export default function ArenaGame() {
 
   useEffect(() => {
     if (status !== "countdown") return;
-    if (countdown <= 0) {
-      setStatus("running");
-      return;
-    }
-    const timer = window.setTimeout(() => setCountdown((value) => value - 1), 620);
+    const timer = window.setTimeout(() => {
+      if (countdown <= 0) setStatus("running");
+      else setCountdown((value) => value - 1);
+    }, countdown <= 0 ? 0 : 620);
     return () => window.clearTimeout(timer);
   }, [countdown, status]);
 
@@ -234,8 +287,33 @@ export default function ArenaGame() {
     for (const timer of skillCastNoticeTimersRef.current) window.clearTimeout(timer);
   }, []);
 
+  const chooseBetType = (nextType: BetType) => {
+    if (locked || status === "finished" || nextType === betType) return;
+    setBetType(nextType);
+    setSelectedIds([]);
+    setSelectedId(null);
+  };
+
+  const toggleFighterSelection = (fighterId: string) => {
+    if (locked || status === "finished") return;
+    const existingIndex = selectedIds.indexOf(fighterId);
+    if (existingIndex >= 0) {
+      const next = selectedIds.filter((id) => id !== fighterId);
+      setSelectedIds(next);
+      setSelectedId(next.at(-1) ?? null);
+      return;
+    }
+    const next = activeBet.pickCount === 1
+      ? [fighterId]
+      : selectedIds.length < activeBet.pickCount
+        ? [...selectedIds, fighterId]
+        : [...selectedIds.slice(0, -1), fighterId];
+    setSelectedIds(next);
+    setSelectedId(fighterId);
+  };
+
   const startMatch = () => {
-    if (!selectedId || locked) return;
+    if (!betReady || !canAffordEntry || locked) return;
     if (settlementTimerRef.current !== null) window.clearTimeout(settlementTimerRef.current);
     settlementTimerRef.current = null;
     clearSkillCastNotices();
@@ -244,6 +322,7 @@ export default function ArenaGame() {
     setRanking(rankingRows(engineRef.current));
     setWinner(null);
     setSettlement(null);
+    setBalance((current) => current - ENTRY_AMOUNT);
     setCountdown(3);
     setStatus("countdown");
     lastFrameRef.current = 0;
@@ -255,6 +334,7 @@ export default function ArenaGame() {
     clearSkillCastNotices();
     engineRef.current = createEngine(DEFAULT_FIGHTERS);
     setRanking(rankingRows(engineRef.current));
+    setSelectedIds([]);
     setSelectedId(null);
     setWinner(null);
     setSettlement(null);
@@ -298,15 +378,15 @@ export default function ArenaGame() {
               );
             })}
           </div>
-          {selectedFighter && status === "idle" && (
+          {selectedFighters.length > 0 && status === "idle" && (
             <div className="pick-indicator">
-              <img src={selectedFighter.icon} alt="" />
-              冠軍預測：<strong>{selectedFighter.name}</strong>
+              <span>{activeBet.name}</span>
+              <strong>{formatSelection(selectedFighters, activeBet.ordered)}</strong>
             </div>
           )}
         </div>
 
-        <aside className="prediction-panel" aria-label="冠軍預測">
+        <aside className="prediction-panel" aria-label="模擬下注選擇">
           {selectedFighter && status === "idle" && (
             <div
               className="selected-skill-preview"
@@ -334,19 +414,50 @@ export default function ArenaGame() {
               </div>
             </div>
           )}
+
+          <div className="bet-methods" role="tablist" aria-label="下注玩法">
+            {BET_DEFINITIONS.map((bet) => (
+              <button
+                className={`bet-method ${bet.id === betType ? "active" : ""}`}
+                type="button"
+                role="tab"
+                aria-selected={bet.id === betType}
+                aria-label={`${bet.displayName}，${bet.name}，賠率 ${bet.decimalOdds.toFixed(2)} 倍`}
+                key={bet.id}
+                onClick={() => chooseBetType(bet.id)}
+                disabled={locked || status === "finished"}
+              >
+                <strong>{bet.displayName}</strong>
+                <span>賠率 {bet.decimalOdds.toFixed(2)}x</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="bet-guide" aria-live="polite">
+            <span>{activeBet.instruction}</span>
+            <strong>{selectedIds.length} / {activeBet.pickCount}</strong>
+          </div>
+
           <div className="fighter-options">
             {DEFAULT_FIGHTERS.map((fighter) => {
               const row = ranking.find((entry) => entry.id === fighter.id);
-              const selected = selectedId === fighter.id;
+              const selectionIndex = selectedIds.indexOf(fighter.id);
+              const selected = selectionIndex >= 0;
               return (
                 <div className="fighter-card" key={fighter.id}>
                   <button
                     className={`fighter-option ${selected ? "selected" : ""} ${row && !row.alive ? "eliminated" : ""}`}
                     type="button"
-                    onClick={() => setSelectedId(fighter.id)}
+                    onClick={() => toggleFighterSelection(fighter.id)}
                     disabled={locked || status === "finished"}
                     aria-pressed={selected}
+                    aria-label={`${fighter.name}${selected ? `，已選為第 ${selectionIndex + 1} 位` : ""}`}
                   >
+                    {selected && (
+                      <span className={`selection-order ${activeBet.ordered ? "ordered" : "unordered"}`}>
+                        {activeBet.ordered ? selectionIndex + 1 : "✓"}
+                      </span>
+                    )}
                     <img
                       className="fighter-avatar"
                       src={fighter.icon}
@@ -373,17 +484,23 @@ export default function ArenaGame() {
           </div>
 
           <div className="entry-summary">
-            <span>模擬投注 <strong>NT$ {ENTRY_AMOUNT}</strong></span>
-            <span>賠率 <strong>{DECIMAL_ODDS.toFixed(2)}x</strong></span>
+            <span>投注 <strong>NT$ {ENTRY_AMOUNT}</strong></span>
+            <span>餘額 <strong>NT$ {balance.toLocaleString("zh-TW")}</strong></span>
           </div>
 
           <button
             className="start-button"
             type="button"
             onClick={startMatch}
-            disabled={!selectedFighter || locked || status === "finished"}
+            disabled={!betReady || !canAffordEntry || locked || status === "finished"}
           >
-            {status === "countdown" ? "準備開戰" : status === "running" ? "戰鬥進行中" : "開始亂鬥"}
+            {status === "countdown"
+              ? "準備開戰"
+              : status === "running"
+                ? "戰鬥進行中"
+                : !canAffordEntry
+                  ? "餘額不足"
+                  : "開始亂鬥"}
           </button>
           {status !== "idle" && (
             <button className="back-to-bet-button" type="button" onClick={newMatch}>
@@ -448,14 +565,24 @@ export default function ArenaGame() {
             <div className="result-emblem" aria-hidden="true">
               <img src={settlement.champion.icon} alt="" />
             </div>
-            <p className="result-kicker">{settlement.won ? "PREDICTION WON" : "MATCH COMPLETE"}</p>
+            <p className="result-kicker">{settlement.won ? "BET WON" : "MATCH COMPLETE"}</p>
             <h2 id="result-title">{settlement.champion.name} 成為冠軍</h2>
             <p className="result-copy">
-              你選擇了 <strong>{settlement.pick.name}</strong>，{settlement.won ? "預測完全命中。" : "這次沒有預測成功。"}
+              <strong>{settlement.bet.name}</strong> · {settlement.won ? "下注結果命中。" : "本局未命中。"}
             </p>
+            <div className="result-bet-summary">
+              <div>
+                <span>你的選擇</span>
+                <strong>{formatSelection(settlement.picks, settlement.bet.ordered)}</strong>
+              </div>
+              <div>
+                <span>本局前三</span>
+                <strong>{formatSelection(settlement.finishOrder.slice(0, 3), true)}</strong>
+              </div>
+            </div>
             <div className="prize-card">
               <span>{settlement.won ? "獲得模擬獎金" : "本局獎金"}</span>
-              <strong>NT$ {settlement.won ? WIN_PRIZE.toLocaleString("zh-TW") : "0"}</strong>
+              <strong>NT$ {settlement.prize.toLocaleString("zh-TW")}</strong>
             </div>
             <button type="button" className="play-again-button" onClick={newMatch}>回到下注</button>
           </section>
@@ -464,7 +591,7 @@ export default function ArenaGame() {
 
       <div className="sr-only" aria-live="polite">
         {settlement
-          ? `${settlement.champion.name} 獲勝，${settlement.won ? `獲得模擬獎金 ${WIN_PRIZE} 元` : "預測未命中"}`
+          ? `${settlement.champion.name} 獲勝，${settlement.bet.name}${settlement.won ? `命中，獲得模擬獎金 ${settlement.prize} 元` : "未命中"}`
           : status === "running"
             ? "比賽進行中"
             : ""}

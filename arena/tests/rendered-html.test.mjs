@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { access, readFile } from "node:fs/promises";
+import { access, readFile, stat } from "node:fs/promises";
 import test from "node:test";
 
 async function render() {
@@ -13,13 +13,23 @@ async function render() {
   );
 }
 
-test("server-renders the champion prediction experience", async () => {
+test("server-renders the five-way wager experience", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
   const html = await response.text();
-  assert.match(html, /<title>Arena — 冠軍預測亂鬥<\/title>/i);
+  assert.match(html, /<title>Arena — 五人亂鬥競猜<\/title>/i);
   assert.match(html, /開始亂鬥/);
+  assert.match(html, /冠軍/);
+  assert.match(html, /前二順位/);
+  assert.match(html, /賠率/);
+  assert.match(html, /投注/);
+  assert.match(html, /餘額/);
+  assert.doesNotMatch(html, /模擬投注|公平賠率|命中獎金/);
+  assert.doesNotMatch(html, /冠軍\(獨贏\)|前二\(位置\)|前二組\(連贏\)|前三組\(位置Q\)|前二順位\(二重彩\)/);
+  for (const bet of ["獨贏", "位置", "連贏", "位置Q", "二重彩"]) {
+    assert.match(html, new RegExp(bet));
+  }
   for (const fighter of ["Zed", "Jinx", "Darius", "Lee Sin", "Janna"]) {
     assert.match(html, new RegExp(fighter));
   }
@@ -27,23 +37,27 @@ test("server-renders the champion prediction experience", async () => {
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Your site is taking shape/i);
 });
 
-test("ships selection, automated resolution, and prize settlement without removed controls", async () => {
-  const [component, arena, engine, globalsCss, packageJson] = await Promise.all([
+test("ships wager selection, automated resolution, and prize settlement without removed controls", async () => {
+  const [component, bets, arena, engine, layout, globalsCss, packageJson] = await Promise.all([
     readFile(new URL("../app/components/ArenaGame.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/lib/bets.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/lib/arena.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/lib/engine.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
   ]);
 
-  assert.match(component, /selectedId/);
-  assert.match(component, /WIN_PROBABILITY = 1 \/ DEFAULT_FIGHTERS\.length/);
-  assert.match(component, /DECIMAL_ODDS = 1 \/ WIN_PROBABILITY/);
-  assert.match(component, /WIN_PRIZE = ENTRY_AMOUNT \* DECIMAL_ODDS/);
-  assert.match(component, /賠率 <strong>\{DECIMAL_ODDS\.toFixed\(2\)\}x<\/strong>/);
-  assert.doesNotMatch(component, /<span>預測成功 <strong>NT\$ \{WIN_PRIZE\}<\/strong><\/span>/);
+  assert.match(component, /selectedIds/);
+  assert.match(component, /BET_DEFINITIONS\.map/);
+  assert.match(component, /bet\.decimalOdds\.toFixed\(2\)/);
+  assert.match(component, /INITIAL_BALANCE = 1000/);
+  assert.match(component, /useState\(INITIAL_BALANCE\)/);
+  assert.match(component, /setBalance\(\(current\) => current - ENTRY_AMOUNT\)/);
+  assert.match(component, /setBalance\(\(current\) => current \+ prize\)/);
+  assert.match(component, /isWinningBet/);
   assert.match(component, /setSettlement/);
-  assert.match(component, /disabled={!selectedFighter/);
+  assert.match(component, /disabled={!betReady \|\| !canAffordEntry/);
   assert.match(component, /DESIGN_WIDTH = 1179/);
   assert.match(component, /DESIGN_HEIGHT = 1977/);
   assert.match(component, /Math\.min\(availableWidth \/ DESIGN_WIDTH, availableHeight \/ DESIGN_HEIGHT\)/);
@@ -54,7 +68,9 @@ test("ships selection, automated resolution, and prize settlement without remove
   assert.match(globalsCss, /html,[\s\S]*body[\s\S]*overflow: hidden/);
   assert.doesNotMatch(component, /arena-header|prediction-heading|YOUR PICK|CHAMPION PICK/);
   assert.doesNotMatch(globalsCss, /\.arena-header|\.prediction-heading/);
-  assert.match(globalsCss, /\.prediction-panel[\s\S]*grid-template-columns: 142px minmax\(0, 1fr\)/);
+  assert.match(globalsCss, /\.prediction-panel[\s\S]*grid-template-columns: minmax\(0, 1fr\) 118px/);
+  assert.match(globalsCss, /\.bet-methods[\s\S]*grid-template-columns: repeat\(5, minmax\(0, 1fr\)\)/);
+  assert.match(globalsCss, /\.selection-order/);
   assert.match(globalsCss, /\.fighter-option[\s\S]*min-height: 50px/);
   assert.match(component, /獲得模擬獎金/);
   assert.match(component, /回到下注/);
@@ -87,8 +103,28 @@ test("ships selection, automated resolution, and prize settlement without remove
   assert.match(globalsCss, /@keyframes skill-banner-out/);
   assert.match(globalsCss, /@keyframes skill-banner-out[\s\S]*translate: 30px 0/);
   assert.doesNotMatch(globalsCss, /@keyframes skill-banner-out[\s\S]{0,220}scale\(/);
-  assert.match(globalsCss, /\.entry-summary[\s\S]*font-size: 10px/);
+  assert.match(globalsCss, /\.entry-summary[\s\S]*grid-template-columns: max-content max-content/);
+  assert.match(globalsCss, /\.bet-method span[\s\S]*900 10px\/1\.05/);
   assert.match(globalsCss, /\.entry-summary strong[\s\S]*900 13px\/1/);
+  for (const [id, name] of [
+    ["win", "獨贏"],
+    ["place", "位置"],
+    ["quinella", "連贏"],
+    ["quinella-place", "位置Q"],
+    ["exacta", "二重彩"],
+  ]) {
+    assert.match(bets, new RegExp(`id: "${id}"[\\s\\S]{0,100}name: "${name}"`));
+  }
+  for (const label of ["冠軍", "前二", "前二組", "前三組", "前二順位"]) {
+    assert.match(bets, new RegExp(`displayName: "${label}"`));
+  }
+  assert.match(bets, /if \(type === "win"\) return selections\[0\] === finishOrder\[0\]/);
+  assert.match(bets, /if \(type === "place"\) return finishOrder\.slice\(0, 2\)\.includes/);
+  assert.match(bets, /if \(type === "quinella"\)/);
+  assert.match(bets, /if \(type === "quinella-place"\)/);
+  assert.match(bets, /id: "exacta"[\s\S]{0,180}pickCount: 2[\s\S]{0,100}probability: 1 \/ 20[\s\S]{0,80}decimalOdds: 20/);
+  assert.match(bets, /type === "exacta"/);
+  assert.match(bets, /fighterId === finishOrder\[index\]/);
   assert.match(globalsCss, /--rust: #8f4330/);
   assert.match(globalsCss, /--bronze: #b17645/);
   assert.match(globalsCss, /--violet: #8c5f9f/);
@@ -132,7 +168,10 @@ test("ships selection, automated resolution, and prize settlement without remove
   assert.match(engine, /SHRINK_DELAY = 0/);
   assert.match(engine, /SHRINK_SPEED = 5\.5/);
   assert.doesNotMatch(engine, /縮圈倒數|最小決勝圈|能量環收縮|boundaryLabel/);
-  assert.match(engine, /ARENA_BACKGROUND_SRC = assetPath\("\/arena-map-v1\.png"\)/);
+  assert.match(engine, /ARENA_BACKGROUND_SRC = assetPath\("\/arena-map-v1\.webp"\)/);
+  assert.match(layout, /rel="preload"[\s\S]{0,180}href=\{assetPath\("\/arena-map-v1\.webp"\)\}/);
+  assert.match(layout, /type="image\/webp"/);
+  assert.match(layout, /fetchPriority="high"/);
   assert.match(engine, /function getArenaBackgroundImage/);
   assert.match(engine, /function drawImageCover/);
   assert.match(engine, /drawImageCover\(ctx, arenaBackground, WORLD_W, WORLD_H\)/);
@@ -431,7 +470,16 @@ test("documents monorepo routing and Arena product rules", async () => {
   assert.match(rules, /https:\/\/op\.gg\/lol\/champions\/zed\/build\/mid/);
   assert.match(rules, /pre-match champion prediction/);
   assert.match(rules, /prize won/);
-  assert.match(rules, /fair decimal odds of `5\.00x`/);
+  assert.match(rules, /five single-match wager types/);
+  assert.match(rules, /`獨贏` \(`5\.00x`\)/);
+  assert.match(rules, /`位置` \(`2\.50x`\)/);
+  assert.match(rules, /`連贏` \(`10\.00x`\)/);
+  assert.match(rules, /`位置Q` \(`3\.33x`\)/);
+  assert.match(rules, /`二重彩` \(`20\.00x`\)/);
+  assert.match(rules, /simulated balance of `NT\$ 1,000`/);
+  assert.match(rules, /only as `冠軍`, `前二`, `前二組`, `前三組`, and `前二順位`/);
+  assert.match(rules, /no parenthesized secondary text/);
+  assert.match(rules, /does not show `命中獎金`/);
   assert.match(rules, /do not draw shrink countdown, energy-ring shrink, minimum-ring, percentage/);
   assert.match(rules, /battle contains no items/);
   assert.match(rules, /Jinx fires a ten-rocket volley/);
@@ -503,7 +551,8 @@ test("documents monorepo routing and Arena product rules", async () => {
   assert.match(rules, /plain circles without an extra head, facing, or direction marker/);
   assert.match(rules, /visible description omits numerical gameplay values/);
   assert.match(rules, /matching accessible skill-information dialog/);
-  assert.match(rules, /Render `\/arena-map-v1\.png` as the battlefield background/);
+  assert.match(rules, /Render `\/arena-map-v1\.webp` as the battlefield background/);
+  assert.match(rules, /remains below `300 KB`/);
   assert.match(rules, /background artwork contains no fixed glowing boundary and no purple portal circles/);
   assert.match(rules, /charcoal, rust-red, aged-bronze, warm-gold/);
   assert.match(rules, /thin cyan rune ring with a dark contrast under-stroke/);
@@ -512,6 +561,9 @@ test("documents monorepo routing and Arena product rules", async () => {
 });
 
 test("includes project-specific social and icon artwork", async () => {
+  const backgroundPath = new URL("../public/arena-map-v1.webp", import.meta.url);
+  const backgroundInfo = await stat(backgroundPath);
+  assert.ok(backgroundInfo.size < 300_000, `arena background is ${backgroundInfo.size} bytes`);
   const fighterArtwork = ["zed", "jinx", "darius", "lee-sin", "janna"].flatMap((fighterId) => [
     access(new URL(`../public/icons/${fighterId}/icon.webp`, import.meta.url)),
     access(new URL(`../public/icons/${fighterId}/skill.png`, import.meta.url)),
@@ -519,10 +571,11 @@ test("includes project-specific social and icon artwork", async () => {
   await Promise.all([
     access(new URL("../public/og-v2.png", import.meta.url)),
     access(new URL("../public/favicon.png", import.meta.url)),
-    access(new URL("../public/arena-map-v1.png", import.meta.url)),
+    access(backgroundPath),
     access(new URL("../public/effects/janna-tornado-layer-v1.png", import.meta.url)),
     access(new URL("../public/effects/darius-slash-gray-v1.png", import.meta.url)),
     ...fighterArtwork,
   ]);
+  await assert.rejects(access(new URL("../public/arena-map-v1.png", import.meta.url)));
   await assert.rejects(access(new URL("../app/_sites-preview", import.meta.url)));
 });
