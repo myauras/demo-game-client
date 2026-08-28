@@ -10,9 +10,9 @@ type Stability = { player:number; enemy:number };
 
 const initialMotion: MotionStops = { p1x:-108,p1y:52,e1x:108,e1y:-52,p2x:-98,p2y:-56,e2x:98,e2y:56 };
 const randomBetween = (min:number,max:number) => Math.round(min + Math.random() * (max - min));
-const randomDifferent = (min:number,max:number,previous:number) => {
+const randomDifferent = (min:number,max:number,...previousValues:number[]) => {
   let value = randomBetween(min,max);
-  if (value === previous) value = value < max ? value + 1 : value - 1;
+  while (previousValues.includes(value)) value = value < max ? value + 1 : min;
   return value;
 };
 const createMotionStops = (): MotionStops => ({
@@ -29,9 +29,9 @@ const createHitStability = (hit:number): Stability => {
   if (Math.abs(player - enemy) < 3) enemy = enemy + 4 <= max ? enemy + 4 : enemy - 4;
   return { player,enemy };
 };
-const createFinalStability = (result:Outcome,previous:Stability): Stability => result === 'lose'
-  ? { player:randomDifferent(0,7,previous.player),enemy:randomDifferent(18,46,previous.enemy) }
-  : { player:randomDifferent(14,42,previous.player),enemy:randomDifferent(0,7,previous.enemy) };
+const createFinalStability = (result:Outcome,previous:Stability,lastFinal:Stability | null): Stability => result === 'lose'
+  ? { player:randomDifferent(0,7,previous.player,lastFinal?.player ?? -1),enemy:randomDifferent(18,46,previous.enemy,lastFinal?.enemy ?? -1) }
+  : { player:randomDifferent(14,42,previous.player,lastFinal?.player ?? -1),enemy:randomDifferent(0,7,previous.enemy,lastFinal?.enemy ?? -1) };
 
 const bets = [10, 50, 100, 200];
 const outcomeInfo: Record<Outcome, { label: string; kicker: string; multiplier: number }> = {
@@ -59,6 +59,7 @@ export default function Home() {
   const [motionStops, setMotionStops] = useState<MotionStops>(initialMotion);
   const [stability, setStability] = useState<Stability>({ player:100,enemy:100 });
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const lastFinalStability = useRef<Stability | null>(null);
   const shell = useRef<HTMLElement>(null);
 
   const clearTimers = () => { timers.current.forEach(clearTimeout); timers.current = []; };
@@ -84,7 +85,14 @@ export default function Home() {
     cue(850, () => setPhase('countdown')); cue(1300, () => setCount(2)); cue(1750, () => setCount(1));
     cue(2200, () => setPhase('launch')); cue(3000, () => setPhase('chase')); cue(4550, () => setPhase('impact'));
     cue(5150, () => setStability(createHitStability(1))); cue(6650, () => setStability(createHitStability(2))); cue(8550, () => setStability(createHitStability(3)));
-    cue(9550, () => { setStability(previous => createFinalStability(selected,previous)); setPhase('outcome'); });
+    cue(9550, () => {
+      setStability(previous => {
+        const finalStability = createFinalStability(selected,previous,lastFinalStability.current);
+        lastFinalStability.current = finalStability;
+        return finalStability;
+      });
+      setPhase('outcome');
+    });
     cue(11250, () => { setBalance(value => value + Math.round(bet * outcomeInfo[selected].multiplier)); setPhase('result'); });
   };
 
