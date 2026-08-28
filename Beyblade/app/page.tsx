@@ -5,10 +5,10 @@ import type { CSSProperties } from 'react';
 
 type Outcome = 'spin' | 'ringout' | 'burst' | 'perfect' | 'lose';
 type Phase = 'lobby' | 'intro' | 'countdown' | 'launch' | 'chase' | 'impact' | 'suspense' | 'final' | 'outcome' | 'result';
-type MotionStops = { p1x:number; p1y:number; e1x:number; e1y:number; p2x:number; p2y:number; e2x:number; e2y:number };
+type MotionStops = { p1x:number; p1y:number; e1x:number; e1y:number; p2x:number; p2y:number; e2x:number; e2y:number; p3x:number; p3y:number; e3x:number; e3y:number };
 type Stability = { player:number; enemy:number };
 
-const initialMotion: MotionStops = { p1x:-108,p1y:52,e1x:108,e1y:-52,p2x:-98,p2y:-56,e2x:98,e2y:56 };
+const initialMotion: MotionStops = { p1x:-108,p1y:52,e1x:108,e1y:-52,p2x:-98,p2y:-56,e2x:98,e2y:56,p3x:-116,p3y:36,e3x:116,e3y:-36 };
 const randomBetween = (min:number,max:number) => Math.round(min + Math.random() * (max - min));
 const randomDifferent = (min:number,max:number,...previousValues:number[]) => {
   let value = randomBetween(min,max);
@@ -20,6 +20,8 @@ const createMotionStops = (): MotionStops => ({
   e1x:randomBetween(88,126), e1y:-randomBetween(34,70),
   p2x:-randomBetween(82,120), p2y:-randomBetween(32,72),
   e2x:randomBetween(82,120), e2y:randomBetween(32,72),
+  p3x:-randomBetween(86,124), p3y:randomBetween(-62,62),
+  e3x:randomBetween(86,124), e3y:randomBetween(-62,62),
 });
 const createHitStability = (hit:number): Stability => {
   const ranges = [[78,94],[56,75],[34,53]];
@@ -124,6 +126,8 @@ export default function Home() {
         '--e-stop-1-x': `${motionStops.e1x}px`, '--e-stop-1-y': `${motionStops.e1y}px`,
         '--p-stop-2-x': `${motionStops.p2x}px`, '--p-stop-2-y': `${motionStops.p2y}px`,
         '--e-stop-2-x': `${motionStops.e2x}px`, '--e-stop-2-y': `${motionStops.e2y}px`,
+        '--p-stop-3-x': `${motionStops.p3x}px`, '--p-stop-3-y': `${motionStops.p3y}px`,
+        '--e-stop-3-x': `${motionStops.e3x}px`, '--e-stop-3-y': `${motionStops.e3y}px`,
       } as CSSProperties}
     >
       <header className="topbar">
