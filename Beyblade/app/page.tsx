@@ -5,6 +5,16 @@ import type { CSSProperties } from 'react';
 
 type Outcome = 'spin' | 'ringout' | 'burst' | 'perfect' | 'lose';
 type Phase = 'lobby' | 'intro' | 'countdown' | 'launch' | 'chase' | 'impact' | 'suspense' | 'final' | 'outcome' | 'result';
+type MotionStops = { p1x:number; p1y:number; e1x:number; e1y:number; p2x:number; p2y:number; e2x:number; e2y:number };
+
+const initialMotion: MotionStops = { p1x:-108,p1y:52,e1x:108,e1y:-52,p2x:-98,p2y:-56,e2x:98,e2y:56 };
+const randomBetween = (min:number,max:number) => Math.round(min + Math.random() * (max - min));
+const createMotionStops = (): MotionStops => ({
+  p1x:-randomBetween(88,126), p1y:randomBetween(34,70),
+  e1x:randomBetween(88,126), e1y:-randomBetween(34,70),
+  p2x:-randomBetween(82,120), p2y:-randomBetween(32,72),
+  e2x:randomBetween(82,120), e2y:randomBetween(32,72),
+});
 
 const bets = [10, 50, 100, 200];
 const outcomeInfo: Record<Outcome, { label: string; kicker: string; multiplier: number }> = {
@@ -29,6 +39,7 @@ export default function Home() {
   const [forced, setForced] = useState<'auto' | Outcome>('auto');
   const [outcome, setOutcome] = useState<Outcome>('spin');
   const [notice, setNotice] = useState('');
+  const [motionStops, setMotionStops] = useState<MotionStops>(initialMotion);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const shell = useRef<HTMLElement>(null);
 
@@ -50,12 +61,12 @@ export default function Home() {
     if (balance < bet) { setNotice('點數不足，請選擇較低投入'); return; }
     clearTimers(); setNotice('');
     const selected = pickOutcome();
-    setOutcome(selected); setBalance(value => value - bet); setCount(3); setPhase('intro');
+    setOutcome(selected); setMotionStops(createMotionStops()); setBalance(value => value - bet); setCount(3); setPhase('intro');
     const cue = (delay: number, action: () => void) => timers.current.push(setTimeout(action, delay));
     cue(850, () => setPhase('countdown')); cue(1300, () => setCount(2)); cue(1750, () => setCount(1));
     cue(2200, () => setPhase('launch')); cue(3000, () => setPhase('chase')); cue(4550, () => setPhase('impact'));
     cue(9550, () => setPhase('outcome'));
-    cue(10850, () => { setBalance(value => value + Math.round(bet * outcomeInfo[selected].multiplier)); setPhase('result'); });
+    cue(11250, () => { setBalance(value => value + Math.round(bet * outcomeInfo[selected].multiplier)); setPhase('result'); });
   };
 
   const changeBet = () => { clearTimers(); setPhase('lobby'); };
@@ -84,6 +95,10 @@ export default function Home() {
       style={{
         '--player-top-image': `url("${assetBase}/tops/player-red.png")`,
         '--enemy-top-image': `url("${assetBase}/tops/enemy-blue.png")`,
+        '--p-stop-1-x': `${motionStops.p1x}px`, '--p-stop-1-y': `${motionStops.p1y}px`,
+        '--e-stop-1-x': `${motionStops.e1x}px`, '--e-stop-1-y': `${motionStops.e1y}px`,
+        '--p-stop-2-x': `${motionStops.p2x}px`, '--p-stop-2-y': `${motionStops.p2y}px`,
+        '--e-stop-2-x': `${motionStops.e2x}px`, '--e-stop-2-y': `${motionStops.e2y}px`,
       } as CSSProperties}
     >
       <header className="topbar">
