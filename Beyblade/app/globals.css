@@ -280,7 +280,7 @@ body { display:flex; justify-content:center; }
 .event-announcement { position:absolute; z-index:18; left:50%; top:36%; min-width:220px; padding:11px 22px 13px; text-align:center; transform:translate(-50%,-50%) skew(-6deg); border:1px solid rgba(255,224,126,.9); clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%); background:linear-gradient(105deg,rgba(255,65,28,.94),rgba(36,8,8,.95) 55%,rgba(255,187,35,.8)); box-shadow:0 0 25px rgba(255,75,25,.65),0 12px 35px rgba(0,0,0,.65); animation:event-banner .9s cubic-bezier(.16,.78,.3,1) both; pointer-events:none; }
 .event-announcement small { display:block; color:#ffe68d; font-size:8px; font-weight:900; letter-spacing:.22em; }
 .event-announcement strong { display:block; margin:3px 0; color:white; font-size:27px; font-style:italic; text-shadow:0 2px 0 #9d1708,0 0 14px #ffbe43; }
-.event-announcement b { color:#fff0a6; font-size:13px; }
+.event-announcement b { display:inline-block; margin-top:2px; color:#fff0a6; font-size:24px; line-height:1; letter-spacing:.04em; text-shadow:0 2px 0 rgba(104,38,0,.8),0 0 16px rgba(255,222,89,.95); }
 .event-rail { position:absolute; z-index:4; inset:7%; border:3px solid transparent; border-radius:50%; pointer-events:none; }
 .collision-sparks i:nth-child(13){--spark-angle:15deg;--spark-l:1.2}.collision-sparks i:nth-child(14){--spark-angle:75deg;--spark-l:.9}.collision-sparks i:nth-child(15){--spark-angle:135deg;--spark-l:1.25}.collision-sparks i:nth-child(16){--spark-angle:195deg;--spark-l:.8}.collision-sparks i:nth-child(17){--spark-angle:255deg;--spark-l:1.15}.collision-sparks i:nth-child(18){--spark-angle:315deg;--spark-l:1}
 
@@ -358,7 +358,7 @@ body { display:flex; justify-content:center; }
 @media(max-width:430px){
   .game-shell { padding-bottom:104px; }
   .round-events { top:67px; right:8px; width:118px; padding:6px 7px; }
-  .event-announcement { top:31%; min-width:205px; padding:9px 17px 11px; }.event-announcement strong { font-size:23px; }
+  .event-announcement { top:31%; min-width:205px; padding:9px 17px 11px; }.event-announcement strong { font-size:23px; }.event-announcement b { font-size:22px; }
   .v2-result { margin-top:8px; padding:12px 14px 10px; }.v2-result h2 { font-size:23px; margin-bottom:5px; }.settlement-stack { gap:3px; }.settlement-base,.settlement-event { min-height:26px; padding:3px 8px; }.final-multiplier { margin:5px 0 3px; padding:4px 9px; }.final-payout { min-height:29px; }.final-payout strong { font-size:18px; }.battle-rating.shown { max-height:101px; padding:6px 9px 7px; }.battle-rating strong { font-size:56px; }
   .v2-test-panel { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; height:auto; padding:5px; }.v2-test-panel select,.v2-test-panel button { min-width:0; width:100%; height:31px; padding:3px 5px; font-size:8px; }.v2-test-panel label { display:none; }
 }
