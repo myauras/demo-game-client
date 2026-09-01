@@ -237,13 +237,10 @@ export default function Home() {
       setHighestStreak((value) => Math.max(value, nextStreak));
       setIsPassing(false);
       const notices: QueuedNotice[] = [];
+      notices.push({ kind: "event", alert: { title: `${nextStreak}連超！`, subtitle: `+${multiplierLabel(GAME_CONFIG.streakBonuses[nextStreak])}倍`, tone: nextStreak >= 6 ? "red" : "cyan", variant: "streak" } });
       if (passedRival) {
         setRivalDefeated(true);
-        notices.push({ kind: "event", alert: { title: "擊敗宿敵！", subtitle: `宿敵獎勵 +0.5倍 · ${nextStreak}連超`, tone: "gold", variant: "panel" } });
-      } else if (nextStreak >= 6) {
-        notices.push({ kind: "event", alert: { title: "6連超！", subtitle: "+1.0倍", tone: "red", variant: "streak" } });
-      } else {
-        notices.push({ kind: "event", alert: { title: `${nextStreak}連超！`, subtitle: `+${multiplierLabel(GAME_CONFIG.streakBonuses[nextStreak])}倍`, tone: "cyan", variant: "streak" } });
+        notices.push({ kind: "event", alert: { title: "擊敗宿敵！", subtitle: "宿敵獎勵 +0.5倍", tone: "gold", variant: "panel" } });
       }
       if (nextStreak >= 3) {
         setStreakPulse(true);
@@ -352,7 +349,7 @@ export default function Home() {
 
             {state !== "setup" && <div className="race-hud"><div className="standings-board" aria-label={`完整車輛排名，我方目前第 ${place} 名`}><div className="standings-title"><span>即時排名</span><b>8 輛車</b></div><div className="standings-list">{standings.map((entry) => <div key={entry.id} className={`standing-row ${entry.isPlayer ? "player" : ""} ${entry.isRival ? "rival" : ""}`} style={{ "--rank": entry.rank, "--car-color": entry.color, "--car-hue": entry.isPlayer ? "0deg" : `${rivalHues[entry.color]}deg` } as React.CSSProperties}><strong>{entry.rank}</strong><img className="standing-car" src={`${assetBase}/neon-racer.png`} alt="" aria-hidden="true" /><small>{entry.isRival ? "宿敵" : `第${entry.rank}名`}</small></div>)}</div></div></div>}
 
-            {state !== "setup" && <><div className={`scene-multiplier ${place <= 3 ? "podium" : ""}`}><span>獎勵倍率</span><strong>×{multiplierLabel(multiplier)}</strong><div className="progress-track"><i style={{ width: `${Math.max(4, progress)}%` }} /></div></div><div className={`weather-chip ${weatherConfig.trigger !== "none" ? "bonus" : ""}`}><span>{weatherConfig.shortLabel}</span><b>{weatherConfig.bonus > 0 ? `+${multiplierLabel(weatherConfig.bonus)}` : "標準"}</b></div><div className={`streak-meter level-${Math.min(highestStreak, 6)}`}><span>連超</span><strong>{streak}</strong></div></>}
+            {state !== "setup" && <><div className={`scene-multiplier ${place <= 3 ? "podium" : ""}`}><span>獎勵倍率</span><strong>×{multiplierLabel(multiplier)}</strong><div className="progress-track"><i style={{ width: `${Math.max(4, progress)}%` }} /></div></div><div className={`weather-chip ${weatherConfig.trigger !== "none" ? "bonus" : ""}`}><span>{weatherConfig.shortLabel}</span><b>{weatherConfig.bonus > 0 ? `+${multiplierLabel(weatherConfig.bonus)}` : "標準"}</b></div><div className={`streak-meter level-${Math.min(highestStreak, 6)}`}><span>連超</span><strong>{streak}</strong><small>+{multiplierLabel(streakBonus)}倍</small></div></>}
             {weatherNotice && <div className="weather-notice" role="status"><span>本場天氣</span><strong>{weatherConfig.label}</strong><small>{weatherConfig.rule}</small></div>}
             {activeNotices.some((notice) => notice.kind === "champion" || notice.alert.variant === "panel") && <div className="notice-stack" aria-live="polite">{activeNotices.filter((notice) => notice.kind === "champion" || notice.alert.variant === "panel").map((notice) => notice.kind === "event" ? <div key={notice.id} className={`event-alert ${notice.alert.tone}`} style={{ "--notice-slot": notice.slot } as React.CSSProperties} role="status"><strong>{notice.alert.title}</strong><span>{notice.alert.subtitle}</span></div> : <div key={notice.id} className={`champion-alert ${championIsRival ? "rival-final" : ""}`} style={{ "--notice-slot": notice.slot } as React.CSSProperties} role="status"><span>{championIsRival ? "最終宿敵" : "冠軍挑戰"}</span><strong>{championIsRival ? "冠軍就在前方" : "挑戰冠軍賽，獎勵10倍!"}</strong></div>)}</div>}
             {activeNotices.some((notice) => notice.kind === "event" && notice.alert.variant === "streak") && <div className="streak-notice-layer" aria-live="polite">{activeNotices.filter((notice) => notice.kind === "event" && notice.alert.variant === "streak").map((notice) => notice.kind === "event" && <div key={notice.id} className={`streak-alert ${notice.alert.tone}`} style={{ "--streak-slot": notice.slot } as React.CSSProperties} role="status"><strong>{notice.alert.title}</strong><span>{notice.alert.subtitle}</span></div>)}</div>}
