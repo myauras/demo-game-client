@@ -11,11 +11,12 @@ type TestRival = "auto" | "none" | "1" | "2" | "3" | "4" | "5" | "6";
 type TestOutcome = "auto" | "win" | "lose";
 type ResultState = "won" | "cashed";
 
-type WeatherConfig = { label: string; shortLabel: string; rule: string; weight: number; bonus: number; trigger: "none" | "rival" | "streak" };
+type WeatherEffect = "none" | "rivalMultiplier" | "streakMultiplier" | "rivalFlat" | "totalMultiplier";
+type WeatherConfig = { label: string; shortLabel: string; rule: string; hudValue: string; weight: number; effect: WeatherEffect };
 type EventAlert = { title: string; subtitle: string; tone: "cyan" | "gold" | "red"; variant: "panel" | "streak" };
 type QueuedNotice = { kind: "event"; alert: EventAlert } | { kind: "champion" };
 type ActiveNotice = QueuedNotice & { id: number; slot: number };
-type SettlementRow = { key: "rank" | "rival" | "streak" | "weather"; label: string; detail: string; amount: number; total: number };
+type SettlementRow = { key: "rank" | "rival" | "streak" | "weather"; label: string; detail: string; amount: number; total: number; operation?: "multiply" };
 type SettlementData = { place: number; rows: SettlementRow[]; totalMultiplier: number; reward: number };
 
 const rankMultipliers: Record<number, number> = { 8: 1, 7: 1.2, 6: 1.5, 5: 1.9, 4: 2.5, 3: 3.5, 2: 5, 1: 10 };
@@ -26,11 +27,11 @@ const GAME_CONFIG = {
   rivalRanks: [6, 5, 4, 3, 2, 1],
   streakBonuses: { 0: 0, 1: 0, 2: 0.2, 3: 0.4, 4: 0.6, 5: 0.8, 6: 1 } as Record<number, number>,
   weather: {
-    sunny: { label: "晴天賽事", shortLabel: "晴天", rule: "標準賽事・無額外加成", weight: 60, bonus: 0, trigger: "none" },
-    rain: { label: "雨戰", shortLabel: "雨天", rule: "擊敗宿敵額外 +0.2倍", weight: 20, bonus: 0.2, trigger: "rival" },
-    storm: { label: "暴雨決勝圈", shortLabel: "暴雨", rule: "最高連超額外 +0.2倍", weight: 8, bonus: 0.2, trigger: "streak" },
-    fog: { label: "濃霧賽事", shortLabel: "濃霧", rule: "擊敗宿敵額外 +0.3倍", weight: 8, bonus: 0.3, trigger: "rival" },
-    thunder: { label: "雷雨決勝圈", shortLabel: "雷雨", rule: "最高連超額外 +0.3倍", weight: 4, bonus: 0.3, trigger: "streak" },
+    sunny: { label: "晴天", shortLabel: "晴天", rule: "無額外效果", hudValue: "標準", weight: 60, effect: "none" },
+    rain: { label: "雨天", shortLabel: "雨天", rule: "宿敵獎勵 x1.5", hudValue: "x1.5", weight: 20, effect: "rivalMultiplier" },
+    storm: { label: "暴雨", shortLabel: "暴雨", rule: "連超獎勵 x2", hudValue: "x2", weight: 8, effect: "streakMultiplier" },
+    fog: { label: "濃霧", shortLabel: "濃霧", rule: "擊敗宿敵 +0.3X", hudValue: "+0.3X", weight: 8, effect: "rivalFlat" },
+    thunder: { label: "雷雨", shortLabel: "雷雨", rule: "4連超以上，最終倍率 x1.2", hudValue: "x1.2", weight: 4, effect: "totalMultiplier" },
   } satisfies Record<WeatherId, WeatherConfig>,
 };
 
@@ -39,7 +40,7 @@ const rivalColors = ["#ff3b5f", "#9a6cff", "#22d3ee", "#3cff9b", "#ff8a34", "#e6
 const rivalHues: Record<string, number> = { "#ff3b5f": 18, "#9a6cff": 65, "#22d3ee": 145, "#3cff9b": 205, "#ff8a34": 315, "#e6f0ff": 110, "#ffd02f": 280 };
 const assetBase = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const credit = (value: number) => Math.floor(value).toLocaleString("zh-TW");
-const multiplierLabel = (value: number) => Number.isInteger(value) ? `${value}` : value.toFixed(1);
+const multiplierLabel = (value: number) => Number.isInteger(value) ? `${value}` : value.toFixed(2).replace(/0$/, "");
 
 const chooseWeather = (): WeatherId => {
   const roll = Math.random() * 100;
@@ -97,12 +98,17 @@ export default function Home() {
   const championIsRival = rivalPlace === 1 && !rivalDefeated;
   const weatherConfig = GAME_CONFIG.weather[weather];
   const streakBonus = GAME_CONFIG.streakBonuses[Math.min(highestStreak, 6)];
-  const earnedWeatherBonus = weatherConfig.trigger === "rival" && rivalDefeated
-    ? weatherConfig.bonus
-    : weatherConfig.trigger === "streak" && highestStreak >= 2
-      ? weatherConfig.bonus
-      : 0;
-  const claimMultiplier = Number((multiplier + (rivalDefeated ? GAME_CONFIG.rivalBonus : 0) + streakBonus + earnedWeatherBonus).toFixed(1));
+  const weatherBonusFor = (subtotal: number, didDefeatRival: boolean, maxStreak: number) => {
+    const bestStreakBonus = GAME_CONFIG.streakBonuses[Math.min(maxStreak, 6)];
+    if (weatherConfig.effect === "rivalMultiplier" && didDefeatRival) return GAME_CONFIG.rivalBonus * 0.5;
+    if (weatherConfig.effect === "streakMultiplier") return bestStreakBonus;
+    if (weatherConfig.effect === "rivalFlat" && didDefeatRival) return 0.3;
+    if (weatherConfig.effect === "totalMultiplier" && maxStreak >= 4) return subtotal * 0.2;
+    return 0;
+  };
+  const claimSubtotal = multiplier + (rivalDefeated ? GAME_CONFIG.rivalBonus : 0) + streakBonus;
+  const earnedWeatherBonus = weatherBonusFor(claimSubtotal, rivalDefeated, highestStreak);
+  const claimMultiplier = Number((claimSubtotal + earnedWeatherBonus).toFixed(2));
   const claimAmount = Math.floor(bet * claimMultiplier);
   const standings = useMemo(() => [
     { id: "player", rank: place, color: "#20e0ff", isPlayer: true, isRival: false },
@@ -117,28 +123,25 @@ export default function Home() {
     setNoticeLocked(true);
     let panelSlot = 0;
     let streakSlot = 0;
+    let latestNoticeEnd = 0;
     notices.forEach((notice, index) => {
       const id = noticeId.current + 1;
       noticeId.current = id;
       const isStreakNotice = notice.kind === "event" && notice.alert.variant === "streak";
+      const noticeDuration = isStreakNotice ? 1100 : 1500;
       const slot = isStreakNotice ? streakSlot++ : panelSlot++;
+      latestNoticeEnd = Math.max(latestNoticeEnd, index * 500 + noticeDuration);
       const showTimer = window.setTimeout(() => {
         setActiveNotices((current) => [...current, { ...notice, id, slot }]);
         const hideTimer = window.setTimeout(() => {
           setActiveNotices((current) => current.filter((activeNotice) => activeNotice.id !== id));
-        }, 1500);
+        }, noticeDuration);
         noticeTimers.current.push(hideTimer);
       }, index * 500);
       noticeTimers.current.push(showTimer);
     });
-    const unlockTimer = window.setTimeout(() => setNoticeLocked(false), (notices.length - 1) * 500 + 1550);
+    const unlockTimer = window.setTimeout(() => setNoticeLocked(false), latestNoticeEnd + 50);
     noticeTimers.current.push(unlockTimer);
-  };
-
-  const weatherBonusFor = (didDefeatRival: boolean, maxStreak: number) => {
-    if (weatherConfig.trigger === "rival" && didDefeatRival) return weatherConfig.bonus;
-    if (weatherConfig.trigger === "streak" && maxStreak >= 2) return weatherConfig.bonus;
-    return 0;
   };
 
   const beginSettlement = (resultPlace: number, resultState: ResultState, didDefeatRival: boolean, maxStreak: number) => {
@@ -146,7 +149,8 @@ export default function Home() {
     const rivalBonus = didDefeatRival ? GAME_CONFIG.rivalBonus : 0;
     const bestStreak = Math.min(maxStreak, 6);
     const bestStreakBonus = GAME_CONFIG.streakBonuses[bestStreak];
-    const weatherBonus = weatherBonusFor(didDefeatRival, bestStreak);
+    const subtotal = base + rivalBonus + bestStreakBonus;
+    const weatherBonus = weatherBonusFor(subtotal, didDefeatRival, bestStreak);
     const rows: SettlementRow[] = [];
     let runningTotal = base;
     rows.push({ key: "rank", label: `最終名次・第${resultPlace}名`, detail: "基礎倍率", amount: base, total: runningTotal });
@@ -159,10 +163,10 @@ export default function Home() {
       rows.push({ key: "streak", label: `${bestStreak}連超`, detail: "最高連超", amount: bestStreakBonus, total: runningTotal });
     }
     if (weatherBonus > 0) {
-      runningTotal += weatherBonus;
-      rows.push({ key: "weather", label: `${weatherConfig.shortLabel}加成`, detail: weatherConfig.rule, amount: weatherBonus, total: runningTotal });
+      runningTotal = Number((runningTotal + weatherBonus).toFixed(2));
+      rows.push({ key: "weather", label: `${weatherConfig.shortLabel}加成`, detail: weatherConfig.rule, amount: weatherBonus, total: runningTotal, operation: weatherConfig.effect === "totalMultiplier" ? "multiply" : undefined });
     }
-    const totalMultiplier = Number(runningTotal.toFixed(1));
+    const totalMultiplier = Number(runningTotal.toFixed(2));
     const reward = Math.floor(bet * totalMultiplier);
     setSettlement({ place: resultPlace, rows, totalMultiplier, reward });
     setSettlementStep(1);
@@ -180,7 +184,7 @@ export default function Home() {
   const startRace = () => {
     if (balance < bet || bet < 10) return;
     const selectedWeather = testWeather === "auto" ? chooseWeather() : testWeather;
-    const weatherRequiresRival = GAME_CONFIG.weather[selectedWeather].trigger === "rival";
+    const weatherRequiresRival = ["rivalMultiplier", "rivalFlat"].includes(GAME_CONFIG.weather[selectedWeather].effect);
     const selectedRival = weatherRequiresRival
       ? testRival !== "auto" && testRival !== "none"
         ? Number(testRival)
@@ -199,8 +203,8 @@ export default function Home() {
     setRivalDefeated(false);
     setStreak(0);
     setHighestStreak(0);
-    setRaceReady(false);
-    setWeatherNotice(true);
+    setRaceReady(selectedWeather === "sunny");
+    setWeatherNotice(selectedWeather !== "sunny");
     setActiveNotices([]);
     setNormalCrash(false);
     setSettlement(null);
@@ -215,7 +219,7 @@ export default function Home() {
       if (shuffled.every((color, index) => color === currentOrder[index])) shuffled.push(shuffled.shift()!);
       return shuffled;
     });
-    window.setTimeout(() => { setWeatherNotice(false); setRaceReady(true); }, 1500);
+    if (selectedWeather !== "sunny") window.setTimeout(() => { setWeatherNotice(false); setRaceReady(true); }, 1500);
   };
 
   const overtake = () => {
@@ -349,7 +353,7 @@ export default function Home() {
 
             {state !== "setup" && <div className="race-hud"><div className="standings-board" aria-label={`完整車輛排名，我方目前第 ${place} 名`}><div className="standings-title"><span>即時排名</span><b>8 輛車</b></div><div className="standings-list">{standings.map((entry) => <div key={entry.id} className={`standing-row ${entry.isPlayer ? "player" : ""} ${entry.isRival ? "rival" : ""}`} style={{ "--rank": entry.rank, "--car-color": entry.color, "--car-hue": entry.isPlayer ? "0deg" : `${rivalHues[entry.color]}deg` } as React.CSSProperties}><strong>{entry.rank}</strong><img className="standing-car" src={`${assetBase}/neon-racer.png`} alt="" aria-hidden="true" /><small>{entry.isRival ? "宿敵" : `第${entry.rank}名`}</small></div>)}</div></div></div>}
 
-            {state !== "setup" && <><div className={`scene-multiplier ${place <= 3 ? "podium" : ""}`}><span>獎勵倍率</span><strong>×{multiplierLabel(multiplier)}</strong><div className="progress-track"><i style={{ width: `${Math.max(4, progress)}%` }} /></div></div><div className={`weather-chip ${weatherConfig.trigger !== "none" ? "bonus" : ""}`}><span>{weatherConfig.shortLabel}</span><b>{weatherConfig.bonus > 0 ? `+${multiplierLabel(weatherConfig.bonus)}` : "標準"}</b></div><div className={`streak-meter level-${Math.min(highestStreak, 6)}`}><span>連超</span><strong>{streak}</strong><small>+{multiplierLabel(streakBonus)}倍</small></div></>}
+            {state !== "setup" && <><div className={`scene-multiplier ${place <= 3 ? "podium" : ""}`}><span>獎勵倍率</span><strong>×{multiplierLabel(multiplier)}</strong><div className="progress-track"><i style={{ width: `${Math.max(4, progress)}%` }} /></div></div><div className={`weather-chip ${weatherConfig.effect !== "none" ? "bonus" : ""}`}><span>{weatherConfig.shortLabel}</span><b>{weatherConfig.hudValue}</b></div><div className={`streak-meter level-${Math.min(highestStreak, 6)}`}><span>連超</span><strong>{streak}</strong><small>+{multiplierLabel(streakBonus)}倍</small></div></>}
             {weatherNotice && <div className="weather-notice" role="status"><span>本場天氣</span><strong>{weatherConfig.label}</strong><small>{weatherConfig.rule}</small></div>}
             {activeNotices.some((notice) => notice.kind === "champion" || notice.alert.variant === "panel") && <div className="notice-stack" aria-live="polite">{activeNotices.filter((notice) => notice.kind === "champion" || notice.alert.variant === "panel").map((notice) => notice.kind === "event" ? <div key={notice.id} className={`event-alert ${notice.alert.tone}`} style={{ "--notice-slot": notice.slot } as React.CSSProperties} role="status"><strong>{notice.alert.title}</strong><span>{notice.alert.subtitle}</span></div> : <div key={notice.id} className={`champion-alert ${championIsRival ? "rival-final" : ""}`} style={{ "--notice-slot": notice.slot } as React.CSSProperties} role="status"><span>{championIsRival ? "最終宿敵" : "冠軍挑戰"}</span><strong>{championIsRival ? "冠軍就在前方" : "挑戰冠軍賽，獎勵10倍!"}</strong></div>)}</div>}
             {activeNotices.some((notice) => notice.kind === "event" && notice.alert.variant === "streak") && <div className="streak-notice-layer" aria-live="polite">{activeNotices.filter((notice) => notice.kind === "event" && notice.alert.variant === "streak").map((notice) => notice.kind === "event" && <div key={notice.id} className={`streak-alert ${notice.alert.tone}`} style={{ "--streak-slot": notice.slot } as React.CSSProperties} role="status"><strong>{notice.alert.title}</strong><span>{notice.alert.subtitle}</span></div>)}</div>}
@@ -360,7 +364,7 @@ export default function Home() {
               <div className="impact-burst" aria-hidden="true"><span /><i /><b /></div><div className="player-kart"><span className="speed-lines" /><img className="racer-image" src={`${assetBase}/neon-racer.png`} alt="我方車輛" /></div>
             </div></div>
 
-            {(state === "settling" || state === "won" || state === "cashed") && settlement && <div className="result-overlay settlement-overlay"><div className="result-card settlement-card"><div className="settlement-heading"><span>分層結算</span><strong>第{settlement.place}名</strong></div><div className="settlement-rows">{settlement.rows.slice(0, settlementStep).map((row) => <div key={row.key} className={`settlement-row ${row.key}`}><div><strong>{row.label}</strong><small>{row.detail}</small></div><span>{row.key === "rank" ? `×${multiplierLabel(row.amount)}` : `+${multiplierLabel(row.amount)}倍`}</span><b>×{multiplierLabel(row.total)}</b></div>)}</div><div className={`settlement-total ${settlementComplete ? "revealed" : ""}`}><span>最終倍率</span><strong>×{multiplierLabel(settlement.totalMultiplier)}</strong><small>最終獎勵 +{credit(settlement.reward)}</small></div>{settlementComplete && <button onClick={reset}>再玩一局</button>}</div></div>}
+            {(state === "settling" || state === "won" || state === "cashed") && settlement && <div className="result-overlay settlement-overlay"><div className="result-card settlement-card"><div className="settlement-heading"><span>分層結算</span><strong>第{settlement.place}名</strong></div><div className="settlement-rows">{settlement.rows.slice(0, settlementStep).map((row) => <div key={row.key} className={`settlement-row ${row.key}`}><div><strong>{row.label}</strong><small>{row.detail}</small></div><span>{row.key === "rank" ? `×${multiplierLabel(row.amount)}` : row.operation === "multiply" ? "×1.2" : `+${multiplierLabel(row.amount)}倍`}</span><b>×{multiplierLabel(row.total)}</b></div>)}</div><div className={`settlement-total ${settlementComplete ? "revealed" : ""}`}><span>最終倍率</span><strong>×{multiplierLabel(settlement.totalMultiplier)}</strong><small>最終獎勵 +{credit(settlement.reward)}</small></div>{settlementComplete && <button onClick={reset}>再玩一局</button>}</div></div>}
             {state === "lost" && <div className="result-overlay"><div className="result-card lost"><div className="result-code">再接再厲!</div><p>最終名次 <strong>第 {place} 名 / 共 8 名</strong></p><div className="result-prize"><span>最終獎勵</span><strong>×0 · 0</strong></div><button onClick={reset}>再玩一局</button></div></div>}
           </section>
 
