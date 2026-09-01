@@ -261,6 +261,7 @@ export default function Home() {
 
   const reset = () => {
     setState("setup");
+    setWeather("sunny");
     setPlace(8);
     setMultiplier(1);
     setDuelPhase("idle");
