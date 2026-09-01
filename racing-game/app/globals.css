@@ -290,6 +290,110 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 @keyframes keepCrashRankSize { 0%,54% { transform: translateX(-50%) scale(1.393); } 64% { transform: translateX(-50%) scale(1.026); } 70% { transform: translateX(-50%) scale(1.083); } 100% { transform: translateX(-50%) scale(1.147); } }
 @keyframes championAlert { 0% { opacity: 0; transform: translateX(-50%) scale(.45); } 14% { opacity: 1; transform: translateX(-50%) scale(1.04); } 24%,68% { opacity: 1; transform: translateX(-50%) scale(1); } 100% { opacity: 0; transform: translateX(-50%) scale(.08); } }
 
+/* V2 systems: weather, rival, streak and layered settlement. */
+.test-panel { position: absolute; z-index: 50; top: 68px; right: 8px; width: min(250px,calc(100% - 16px)); padding: 12px; border: 1px solid rgba(32,224,255,.42); border-top: 2px solid var(--cyan); background: rgba(7,12,20,.97); box-shadow: 0 18px 45px rgba(0,0,0,.7),0 0 25px rgba(32,224,255,.08); clip-path: polygon(0 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%); }
+.test-panel-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; color: var(--cyan); font-size: 11px; letter-spacing: 1px; }
+.test-panel-title button { width: 24px; height: 24px; border: 1px solid var(--line); background: #111925; color: #94a7c0; cursor: pointer; }
+.test-panel label { display: grid; grid-template-columns: 72px 1fr; align-items: center; gap: 7px; margin-top: 7px; color: #8294aa; font: 800 9px monospace; }
+.test-panel select { width: 100%; height: 30px; padding: 0 8px; border: 1px solid #2b3d52; border-radius: 0; background: #0b1320; color: #dcecff; font: 800 10px monospace; }
+.test-streak { display: flex; gap: 5px; margin-top: 9px; }
+.test-streak span { flex: 1; padding: 7px 5px; border: 1px solid var(--line); background: #0c1420; color: #71839b; text-align: center; font: 800 8px monospace; }
+.test-streak b { color: var(--lime); font-size: 12px; }
+.test-panel > small { display: block; margin-top: 8px; color: #52647b; font-size: 7px; line-height: 1.45; }
+
+.weather-fx { position: absolute; z-index: 10; inset: 0; overflow: hidden; pointer-events: none; }
+.weather-fx::before, .weather-fx::after, .weather-fx i, .weather-fx b, .weather-fx span { content: ""; display: none; position: absolute; pointer-events: none; }
+.weather-rain .weather-fx::before, .weather-storm .weather-fx::before, .weather-thunder .weather-fx::before { display: block; inset: -28% -20%; background: repeating-linear-gradient(104deg,transparent 0 13px,rgba(173,224,255,.36) 14px 15px,transparent 16px 28px); animation: v2Rain .42s linear infinite; mix-blend-mode: screen; }
+.weather-rain .weather-fx::after, .weather-storm .weather-fx::after, .weather-thunder .weather-fx::after { display: block; left: 0; right: 0; bottom: 0; height: 62%; background: linear-gradient(180deg,transparent,rgba(33,150,210,.15)),repeating-linear-gradient(100deg,transparent 0 42px,rgba(116,215,255,.1) 44px 46px,transparent 48px 88px); mix-blend-mode: screen; }
+.weather-storm .weather-fx::before, .weather-thunder .weather-fx::before { opacity: .95; background-size: auto,auto; filter: blur(.2px); animation-duration: .27s; }
+.weather-storm .weather-fx i:first-child, .weather-thunder .weather-fx i:first-child { display: block; inset: 0; background: linear-gradient(rgba(2,6,12,.38),rgba(0,8,17,.2)); }
+.weather-rain .player-kart::before, .weather-storm .player-kart::before, .weather-thunder .player-kart::before { content: ""; position: absolute; z-index: -1; left: -32px; right: -32px; bottom: -12px; height: 34px; background: radial-gradient(ellipse,rgba(180,235,255,.36),transparent 66%); filter: blur(4px); animation: waterSpray .22s ease-in-out infinite alternate; }
+.weather-fog .weather-fx b { display: block; z-index: 2; inset: 0; background: linear-gradient(180deg,rgba(215,228,237,.55),rgba(173,193,205,.28) 48%,transparent 82%),radial-gradient(ellipse at 50% 30%,rgba(245,250,252,.62),transparent 64%); animation: fogDrift 4s ease-in-out infinite alternate; }
+.weather-fog .target-kart:not(.being-passed):not(.crashing) { opacity: .68; filter: blur(1.4px); }
+.weather-fog .rival-kart { opacity: .9 !important; filter: none !important; }
+.weather-thunder .weather-fx span { display: block; z-index: 3; inset: 0; background: rgba(204,235,255,.72); opacity: 0; animation: lightningFlash 4.8s steps(1) infinite; mix-blend-mode: screen; }
+.weather-thunder .weather-fx i:last-of-type { display: block; z-index: 4; left: 61%; top: 4%; width: 3px; height: 42%; background: #eaf8ff; box-shadow: 0 0 16px 3px #b8eaff; opacity: 0; clip-path: polygon(48% 0,100% 0,65% 42%,100% 42%,0 100%,34% 52%,0 52%); animation: lightningBolt 4.8s steps(1) infinite; }
+
+.weather-chip { position: absolute; z-index: 14; right: 10px; top: 72px; min-width: 62px; height: 25px; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 0 7px; border: 1px solid rgba(125,153,187,.22); background: rgba(6,12,20,.82); color: #8092aa; font: 800 7px monospace; }
+.weather-chip b { color: #b6c7da; font-size: 7px; }
+.weather-chip.bonus { border-color: rgba(255,201,40,.32); color: #d4ba68; }
+.weather-chip.bonus b { color: var(--gold); }
+.streak-meter { position: absolute; z-index: 14; right: 10px; top: 101px; width: 62px; height: 38px; display: grid; grid-template-columns: 1fr auto; grid-template-rows: 1fr 1fr; align-items: center; padding: 4px 6px; border-left: 2px solid #53647a; background: rgba(6,12,20,.82); color: #71839a; font: 800 7px monospace; }
+.streak-meter strong { grid-row: 1 / 3; grid-column: 2; color: #fff; font-family: Impact,"Arial Narrow",sans-serif; font-size: 24px; line-height: 1; }
+.streak-meter small { font-size: 6px; }
+.streak-meter.level-2, .streak-meter.level-3 { border-left-color: var(--cyan); box-shadow: 0 0 16px rgba(32,224,255,.12); }
+.streak-meter.level-4 { border-left-color: var(--gold); box-shadow: 0 0 18px rgba(255,201,40,.16); }
+.streak-meter.level-5 { border-left-color: var(--red); box-shadow: 0 0 22px rgba(255,49,88,.22); }
+
+.weather-notice, .event-alert { position: absolute; z-index: 19; left: 50%; top: 24%; transform: translateX(-50%); width: min(300px,76%); text-align: center; pointer-events: none; }
+.weather-notice { padding: 15px 18px; border: 1px solid rgba(32,224,255,.55); border-top: 3px solid var(--cyan); background: linear-gradient(135deg,rgba(5,14,23,.98),rgba(13,26,39,.95)); box-shadow: 0 0 40px rgba(32,224,255,.16); animation: v2Notice 1.1s ease both; }
+.weather-notice > span, .weather-notice > strong, .weather-notice > small { display: block; }
+.weather-notice > span { color: #71849b; font: 800 8px monospace; letter-spacing: 2px; }
+.weather-notice > strong { margin: 4px 0; color: #fff; font-size: 22px; font-style: italic; }
+.weather-notice > small { color: var(--cyan); font-size: 9px; font-weight: 800; }
+.event-alert { padding: 10px 14px; border-left: 3px solid var(--cyan); background: linear-gradient(90deg,rgba(5,13,22,.96),rgba(5,13,22,.78)); box-shadow: 0 12px 30px rgba(0,0,0,.35); animation: eventPop 1.35s ease both; }
+.event-alert strong, .event-alert span { display: block; }
+.event-alert strong { color: #fff; font-size: 20px; font-style: italic; text-shadow: 0 0 16px rgba(32,224,255,.3); }
+.event-alert span { margin-top: 3px; color: var(--cyan); font: 800 8px monospace; }
+.event-alert.gold { border-left-color: var(--gold); box-shadow: 0 0 34px rgba(255,201,40,.18); }
+.event-alert.gold span { color: var(--gold); }
+.event-alert.red { border-left-color: var(--red); box-shadow: 0 0 38px rgba(255,49,88,.22); }
+.event-alert.red strong { font-size: 25px; text-shadow: 0 0 20px rgba(255,49,88,.4); }
+.event-alert.red span { color: #ff8ca1; }
+
+.standing-row.rival { color: var(--gold); border-left-color: var(--gold); background: linear-gradient(90deg,rgba(255,201,40,.18),rgba(255,201,40,.03)); }
+.standing-row.rival .standing-car { filter: saturate(1.7) contrast(1.25) drop-shadow(0 0 4px rgba(255,201,40,.8)); }
+.rival-kart .racer-image { filter: hue-rotate(var(--car-hue)) saturate(1.75) contrast(1.28) brightness(.86) drop-shadow(0 0 13px rgba(255,201,40,.85)) drop-shadow(0 14px 9px rgba(0,0,0,.72)); }
+.rival-kart::after { content: ""; position: absolute; z-index: -1; left: 13%; right: 13%; bottom: 5%; height: 24%; background: radial-gradient(ellipse,rgba(255,201,40,.68),transparent 68%); filter: blur(7px); animation: rivalGlow .26s ease-in-out infinite alternate; }
+.rival-tag { display: inline-block; margin-right: 5px; padding: 2px 4px; background: var(--gold); color: #171000; font: 1000 7px monospace; letter-spacing: 1px; }
+.champion-alert.rival-final { border-color: rgba(255,201,40,.95); background: linear-gradient(105deg,rgba(54,35,3,.98),rgba(13,9,4,.96)); }
+
+.streak-level-3 .speed-lines { border-width: 4px; filter: drop-shadow(0 0 6px var(--cyan)); }
+.streak-level-4 .player-kart::after, .streak-level-5 .player-kart::after { content: ""; position: absolute; z-index: -1; left: 31%; right: 31%; bottom: -26px; height: 55px; background: linear-gradient(180deg,#fff 0 8%,#29e6ff 28%,#ff5a27 70%,transparent); filter: blur(2px) drop-shadow(0 0 8px #ff6a27); clip-path: polygon(20% 0,80% 0,100% 100%,50% 70%,0 100%); animation: exhaustFlame .12s ease-in-out infinite alternate; }
+.streak-level-5 .player-kart::after { left: 25%; right: 25%; bottom: -34px; height: 68px; }
+.streak-pulse .track-wrap { animation: cameraPunch .65s cubic-bezier(.2,.75,.2,1); }
+
+.v2-status-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 4px; margin: -5px 0 2px; }
+.v2-status-row span { min-width: 0; padding: 5px 3px; overflow: hidden; border: 1px solid rgba(117,144,177,.18); background: #0b121d; color: #64758b; text-align: center; text-overflow: ellipsis; white-space: nowrap; font: 800 7px monospace; }
+.v2-status-row .weather-status { color: var(--cyan); }
+.v2-status-row .earned { color: var(--gold); border-color: rgba(255,201,40,.25); }
+
+.settlement-overlay { background: rgba(3,6,10,.9); }
+.settlement-card { width: min(365px,94%); padding: 17px; border-color: rgba(255,201,40,.4); border-left-color: var(--gold); }
+.settlement-heading { display: flex; align-items: end; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.settlement-heading span { color: var(--gold); font: 900 9px monospace; letter-spacing: 2px; }
+.settlement-heading strong { font-size: 22px; font-style: italic; }
+.settlement-rows { min-height: 54px; }
+.settlement-row { display: grid; grid-template-columns: 1fr auto 48px; align-items: center; gap: 7px; min-height: 47px; border-bottom: 1px solid rgba(125,151,184,.13); animation: settleRow .4s cubic-bezier(.2,.8,.2,1) both; }
+.settlement-row > div strong, .settlement-row > div small { display: block; }
+.settlement-row > div strong { color: #fff; font-size: 11px; }
+.settlement-row > div small { margin-top: 2px; color: #62758d; font-size: 7px; }
+.settlement-row > span { color: var(--gold); font: 900 10px monospace; }
+.settlement-row > b { color: #fff; text-align: right; font: 900 12px monospace; }
+.settlement-row.rank > span { color: var(--cyan); }
+.settlement-row.rival { box-shadow: inset 2px 0 var(--gold); }
+.settlement-row.weather { box-shadow: inset 2px 0 #9a6cff; }
+.settlement-total { min-height: 78px; margin: 11px 0 12px; display: grid; place-items: center; align-content: center; border: 1px solid rgba(255,201,40,.2); background: radial-gradient(circle,rgba(255,201,40,.08),transparent 70%),#070b12; opacity: .22; transform: scale(.96); transition: .45s ease; }
+.settlement-total span, .settlement-total strong, .settlement-total small { display: block; text-align: center; }
+.settlement-total span { color: #87753b; font: 900 8px monospace; letter-spacing: 2px; }
+.settlement-total strong { color: var(--gold); font-family: Impact,"Arial Narrow",sans-serif; font-size: 38px; font-style: italic; line-height: 1; }
+.settlement-total small { margin-top: 4px; color: #fff; font-size: 10px; font-weight: 900; }
+.settlement-total:not(.revealed) strong, .settlement-total:not(.revealed) small { visibility: hidden; }
+.settlement-total.revealed { opacity: 1; transform: scale(1); box-shadow: 0 0 28px rgba(255,201,40,.12); animation: totalReveal .5s ease both; }
+
+@keyframes v2Rain { from { transform: translate(-5%,-12%); } to { transform: translate(5%,12%); } }
+@keyframes waterSpray { from { transform: scale(.86); opacity: .45; } to { transform: scale(1.14); opacity: .8; } }
+@keyframes fogDrift { from { transform: translateX(-5%) scale(1.08); opacity: .82; } to { transform: translateX(5%) scale(1.14); opacity: .98; } }
+@keyframes lightningFlash { 0%,76%,80%,100% { opacity: 0; } 77%,79% { opacity: .65; } 78% { opacity: .18; } }
+@keyframes lightningBolt { 0%,76%,80%,100% { opacity: 0; } 77%,79% { opacity: .95; } 78% { opacity: .2; } }
+@keyframes v2Notice { 0% { opacity: 0; transform: translateX(-50%) scale(.72); } 18%,75% { opacity: 1; transform: translateX(-50%) scale(1); } 100% { opacity: 0; transform: translateX(-50%) scale(.92); } }
+@keyframes eventPop { 0% { opacity: 0; transform: translateX(-50%) translateY(12px) scale(.82); } 14%,72% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } 100% { opacity: 0; transform: translateX(-50%) translateY(-8px) scale(.88); } }
+@keyframes rivalGlow { from { opacity: .5; transform: scale(.85); } to { opacity: 1; transform: scale(1.12); } }
+@keyframes exhaustFlame { from { transform: scaleY(.78); opacity: .72; } to { transform: scaleY(1.15); opacity: 1; } }
+@keyframes cameraPunch { 0%,100% { transform: scale(1); } 28% { transform: scale(1.08); } 55% { transform: scale(.98); } 74% { transform: scale(1.03); } }
+@keyframes settleRow { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes totalReveal { 0% { filter: brightness(.7); } 45% { filter: brightness(1.8); } 100% { filter: brightness(1); } }
+
 @media (max-width: 430px) {
   .game-shell { display: block; height: 100svh; height: 100dvh; padding: 0; }
   .game-card { width: 100%; height: 100svh; height: 100dvh; min-height: 0; border: 0; clip-path: none; }
