@@ -373,7 +373,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 .settlement-row.rank > span { color: var(--cyan); }
 .settlement-row.rival { box-shadow: inset 2px 0 var(--gold); }
 .settlement-row.subtotal { margin-top: 3px; border-top: 1px solid rgba(255,255,255,.16); }
-.settlement-row.superseded:not(.weather-child) > span { color: #68788e; text-decoration: line-through; text-decoration-color: #ff6a78; text-decoration-thickness: 1.5px; }
+.settlement-row.superseded:not(.weather-child) > span { color: #9aa8b9; text-decoration: line-through; text-decoration-color: #697789; text-decoration-thickness: 1px; }
 .settlement-row.weather-child { min-height: 34px; margin-left: 17px; padding: 0 7px 0 10px; border-bottom-color: rgba(125,151,184,.08); background: linear-gradient(90deg,rgba(154,108,255,.08),transparent 70%); box-shadow: inset 1px 0 rgba(154,108,255,.55); }
 .settlement-row.weather-child > div strong { color: #bdc8d8; font-size: 10px; font-weight: 800; }
 .settlement-row.weather-child > span { color: #d4c3ff; font-size: 10px; }
