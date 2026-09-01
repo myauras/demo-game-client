@@ -12,7 +12,7 @@ type TestOutcome = "auto" | "win" | "lose";
 type ResultState = "won" | "cashed";
 
 type WeatherEffect = "none" | "rivalMultiplier" | "streakMultiplier" | "rivalFlat" | "totalMultiplier";
-type WeatherConfig = { label: string; shortLabel: string; rule: string; hudValue: string; weight: number; effect: WeatherEffect };
+type WeatherConfig = { label: string; shortLabel: string; rule: string; weight: number; effect: WeatherEffect };
 type EventAlert = { title: string; subtitle: string; tone: "cyan" | "gold" | "red"; variant: "panel" | "streak" };
 type QueuedNotice = { kind: "event"; alert: EventAlert } | { kind: "champion" };
 type ActiveNotice = QueuedNotice & { id: number; slot: number };
@@ -27,11 +27,11 @@ const GAME_CONFIG = {
   rivalRanks: [6, 5, 4, 3, 2, 1],
   streakBonuses: { 0: 0, 1: 0, 2: 0.2, 3: 0.4, 4: 0.6, 5: 0.8, 6: 1 } as Record<number, number>,
   weather: {
-    sunny: { label: "晴天", shortLabel: "晴天", rule: "無額外效果", hudValue: "標準", weight: 60, effect: "none" },
-    rain: { label: "雨天", shortLabel: "雨天", rule: "宿敵獎勵 x1.5", hudValue: "x1.5", weight: 20, effect: "rivalMultiplier" },
-    storm: { label: "暴雨", shortLabel: "暴雨", rule: "連超獎勵 x2", hudValue: "x2", weight: 8, effect: "streakMultiplier" },
-    fog: { label: "濃霧", shortLabel: "濃霧", rule: "擊敗宿敵 +0.3X", hudValue: "+0.3X", weight: 8, effect: "rivalFlat" },
-    thunder: { label: "雷雨", shortLabel: "雷雨", rule: "4連超以上，最終倍率 x1.2", hudValue: "x1.2", weight: 4, effect: "totalMultiplier" },
+    sunny: { label: "晴天", shortLabel: "晴天", rule: "無額外效果", weight: 60, effect: "none" },
+    rain: { label: "雨天", shortLabel: "雨天", rule: "宿敵獎勵 x1.5", weight: 20, effect: "rivalMultiplier" },
+    storm: { label: "暴雨", shortLabel: "暴雨", rule: "連超獎勵 x2", weight: 8, effect: "streakMultiplier" },
+    fog: { label: "濃霧", shortLabel: "濃霧", rule: "擊敗宿敵 +0.3X", weight: 8, effect: "rivalFlat" },
+    thunder: { label: "雷雨", shortLabel: "雷雨", rule: "4連超以上，最終倍率 x1.2", weight: 4, effect: "totalMultiplier" },
   } satisfies Record<WeatherId, WeatherConfig>,
 };
 
