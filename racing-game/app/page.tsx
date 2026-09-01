@@ -14,6 +14,7 @@ type ResultState = "won" | "cashed";
 type WeatherConfig = { label: string; shortLabel: string; rule: string; weight: number; bonus: number; trigger: "none" | "rival" | "streak" };
 type EventAlert = { title: string; subtitle: string; tone: "cyan" | "gold" | "red" };
 type QueuedNotice = { kind: "event"; alert: EventAlert } | { kind: "champion" };
+type ActiveNotice = QueuedNotice & { id: number };
 type SettlementRow = { key: "rank" | "rival" | "streak" | "weather"; label: string; detail: string; amount: number; total: number };
 type SettlementData = { place: number; rows: SettlementRow[]; totalMultiplier: number; reward: number };
 
@@ -23,7 +24,7 @@ const GAME_CONFIG = {
   rivalChance: 0.65,
   rivalBonus: 0.5,
   rivalRanks: [6, 5, 4, 3, 2, 1],
-  streakBonuses: { 0: 0, 1: 0, 2: 0.2, 3: 0.4, 4: 0.6, 5: 1 } as Record<number, number>,
+  streakBonuses: { 0: 0, 1: 0, 2: 0.2, 3: 0.4, 4: 0.6, 5: 0.8, 6: 1 } as Record<number, number>,
   weather: {
     sunny: { label: "晴天賽事", shortLabel: "晴天", rule: "標準賽事・無額外加成", weight: 60, bonus: 0, trigger: "none" },
     rain: { label: "雨戰", shortLabel: "雨天", rule: "擊敗宿敵額外 +0.2倍", weight: 20, bonus: 0.2, trigger: "rival" },
@@ -61,7 +62,6 @@ export default function Home() {
   const [multiplier, setMultiplier] = useState(1);
   const [state, setState] = useState<GameState>("setup");
   const [duelPhase, setDuelPhase] = useState<DuelPhase>("idle");
-  const [championAlert, setChampionAlert] = useState(false);
   const [normalCrash, setNormalCrash] = useState(false);
   const [testRun, setTestRun] = useState(false);
   const [showTestPanel, setShowTestPanel] = useState(false);
@@ -81,15 +81,13 @@ export default function Home() {
   const [streak, setStreak] = useState(0);
   const [highestStreak, setHighestStreak] = useState(0);
   const [streakPulse, setStreakPulse] = useState(false);
-  const [eventAlert, setEventAlert] = useState<EventAlert | null>(null);
+  const [activeNotices, setActiveNotices] = useState<ActiveNotice[]>([]);
   const [settlement, setSettlement] = useState<SettlementData | null>(null);
   const [settlementStep, setSettlementStep] = useState(0);
   const [settlementComplete, setSettlementComplete] = useState(false);
   const [noticeLocked, setNoticeLocked] = useState(false);
-  const noticeQueue = useRef<QueuedNotice[]>([]);
-  const noticeRunning = useRef(false);
-  const noticeTimer = useRef<number | null>(null);
-  const noticeGapTimer = useRef<number | null>(null);
+  const noticeId = useRef(0);
+  const noticeTimers = useRef<number[]>([]);
 
   const progress = ((8 - place) / 7) * 100;
   const nextPlace = Math.max(1, place - 1);
@@ -98,7 +96,7 @@ export default function Home() {
   const activeTargetIsRival = rivalPlace === nextPlace && !rivalDefeated;
   const championIsRival = rivalPlace === 1 && !rivalDefeated;
   const weatherConfig = GAME_CONFIG.weather[weather];
-  const streakBonus = GAME_CONFIG.streakBonuses[Math.min(highestStreak, 5)];
+  const streakBonus = GAME_CONFIG.streakBonuses[Math.min(highestStreak, 6)];
   const earnedWeatherBonus = weatherConfig.trigger === "rival" && rivalDefeated
     ? weatherConfig.bonus
     : weatherConfig.trigger === "streak" && highestStreak >= 2
@@ -114,28 +112,23 @@ export default function Home() {
     }),
   ], [place, rivalOrder, rivalPlace, rivalDefeated]);
 
-  const playNextNotice = () => {
-    const nextNotice = noticeQueue.current.shift();
-    if (!nextNotice) {
-      noticeRunning.current = false;
-      setNoticeLocked(false);
-      return;
-    }
-    setEventAlert(nextNotice.kind === "event" ? nextNotice.alert : null);
-    setChampionAlert(nextNotice.kind === "champion");
-    noticeTimer.current = window.setTimeout(() => {
-      setEventAlert(null);
-      setChampionAlert(false);
-      noticeGapTimer.current = window.setTimeout(playNextNotice, 280);
-    }, nextNotice.kind === "champion" ? 1900 : 2200);
-  };
-
   const queueNotices = (notices: QueuedNotice[]) => {
-    noticeQueue.current.push(...notices);
-    if (noticeRunning.current) return;
-    noticeRunning.current = true;
+    if (notices.length === 0) return;
     setNoticeLocked(true);
-    playNextNotice();
+    notices.forEach((notice, index) => {
+      const id = noticeId.current + 1;
+      noticeId.current = id;
+      const showTimer = window.setTimeout(() => {
+        setActiveNotices((current) => [...current, { ...notice, id }]);
+        const hideTimer = window.setTimeout(() => {
+          setActiveNotices((current) => current.filter((activeNotice) => activeNotice.id !== id));
+        }, 1500);
+        noticeTimers.current.push(hideTimer);
+      }, index * 500);
+      noticeTimers.current.push(showTimer);
+    });
+    const unlockTimer = window.setTimeout(() => setNoticeLocked(false), (notices.length - 1) * 500 + 1550);
+    noticeTimers.current.push(unlockTimer);
   };
 
   const weatherBonusFor = (didDefeatRival: boolean, maxStreak: number) => {
@@ -147,7 +140,7 @@ export default function Home() {
   const beginSettlement = (resultPlace: number, resultState: ResultState, didDefeatRival: boolean, maxStreak: number) => {
     const base = rankMultipliers[resultPlace];
     const rivalBonus = didDefeatRival ? GAME_CONFIG.rivalBonus : 0;
-    const bestStreak = Math.min(maxStreak, 5);
+    const bestStreak = Math.min(maxStreak, 6);
     const bestStreakBonus = GAME_CONFIG.streakBonuses[bestStreak];
     const weatherBonus = weatherBonusFor(didDefeatRival, bestStreak);
     const rows: SettlementRow[] = [];
@@ -204,7 +197,7 @@ export default function Home() {
     setHighestStreak(0);
     setRaceReady(false);
     setWeatherNotice(true);
-    setChampionAlert(false);
+    setActiveNotices([]);
     setNormalCrash(false);
     setSettlement(null);
     setSettlementComplete(false);
@@ -218,7 +211,7 @@ export default function Home() {
       if (shuffled.every((color, index) => color === currentOrder[index])) shuffled.push(shuffled.shift()!);
       return shuffled;
     });
-    window.setTimeout(() => { setWeatherNotice(false); setRaceReady(true); }, 2200);
+    window.setTimeout(() => { setWeatherNotice(false); setRaceReady(true); }, 1500);
   };
 
   const overtake = () => {
@@ -232,7 +225,7 @@ export default function Home() {
       return;
     }
     const passedRival = activeTargetIsRival;
-    const nextStreak = Math.min(5, streak + 1);
+    const nextStreak = Math.min(6, streak + 1);
     window.setTimeout(() => {
       setPlace(nextPlace);
       setMultiplier(nextMultiplier);
@@ -243,8 +236,8 @@ export default function Home() {
       if (passedRival) {
         setRivalDefeated(true);
         notices.push({ kind: "event", alert: { title: "擊敗宿敵！", subtitle: `宿敵獎勵 +0.5倍 · ${nextStreak}連超`, tone: "gold" } });
-      } else if (nextStreak >= 5) {
-        notices.push({ kind: "event", alert: { title: "勢不可擋！", subtitle: "5連超 · 最高連超獎勵 +1.0倍", tone: "red" } });
+      } else if (nextStreak >= 6) {
+        notices.push({ kind: "event", alert: { title: "勢不可擋！", subtitle: "6連超 · 最高連超獎勵 +1.0倍", tone: "red" } });
       } else {
         notices.push({ kind: "event", alert: { title: `${nextStreak}連超！`, subtitle: nextStreak >= 2 ? `最高連超獎勵 +${multiplierLabel(GAME_CONFIG.streakBonuses[nextStreak])}倍` : "連續追擊開始", tone: "cyan" } });
       }
@@ -267,12 +260,12 @@ export default function Home() {
     setState("duel");
     setIsPassing(true);
     setDuelPhase("race");
-    setChampionAlert(false);
+    setActiveNotices([]);
     window.setTimeout(() => {
       const success = testOutcome === "win" ? true : testOutcome === "lose" ? false : Math.random() < rankMultipliers[2] / rankMultipliers[1];
       if (success) {
         const defeatedChampionRival = championIsRival;
-        const nextStreak = Math.min(5, streak + 1);
+        const nextStreak = Math.min(6, streak + 1);
         setDuelPhase("player-win");
         setStreak(nextStreak);
         setHighestStreak((value) => Math.max(value, nextStreak));
@@ -304,24 +297,20 @@ export default function Home() {
     setPlace(8);
     setMultiplier(1);
     setDuelPhase("idle");
-    setChampionAlert(false);
+    setActiveNotices([]);
     setNormalCrash(false);
     setTestRun(false);
     setRaceReady(false);
     setWeatherNotice(false);
-    setEventAlert(null);
     setSettlement(null);
     setSettlementStep(0);
     setSettlementComplete(false);
     setStreak(0);
     setHighestStreak(0);
     setRivalDefeated(false);
-    if (noticeTimer.current) window.clearTimeout(noticeTimer.current);
-    if (noticeGapTimer.current) window.clearTimeout(noticeGapTimer.current);
-    noticeQueue.current = [];
-    noticeRunning.current = false;
+    noticeTimers.current.forEach((timer) => window.clearTimeout(timer));
+    noticeTimers.current = [];
     setNoticeLocked(false);
-    setEventAlert(null);
   };
 
   const primaryAction = place === 2 ? challengeChampion : overtake;
@@ -353,16 +342,15 @@ export default function Home() {
         )}
 
         <div className="content-grid">
-          <section className={`race-scene weather-${weather} streak-level-${Math.min(highestStreak, 5)} ${streakPulse ? "streak-pulse" : ""} ${isPassing ? "boosting" : ""} ${normalCrash ? "normal-crash" : ""} ${isPassing && state === "racing" ? `passing-${passDirection}` : ""} ${state === "duel" ? `final-duel duel-${duelPhase}` : ""}`} style={{ "--race-background": `url(${assetBase}/race-background.png)` } as React.CSSProperties}>
+          <section className={`race-scene weather-${weather} streak-level-${Math.min(highestStreak, 6)} ${streakPulse ? "streak-pulse" : ""} ${isPassing ? "boosting" : ""} ${normalCrash ? "normal-crash" : ""} ${isPassing && state === "racing" ? `passing-${passDirection}` : ""} ${state === "duel" ? `final-duel duel-${duelPhase}` : ""}`} style={{ "--race-background": `url(${assetBase}/race-background.png)` } as React.CSSProperties}>
             <div className="weather-fx" aria-hidden="true"><i /><i /><b /><span /></div>
             <div className="city-glow" /><div className="cityline cityline-back" /><div className="cityline cityline-front" />
 
             {state !== "setup" && <div className="race-hud"><div className="standings-board" aria-label={`完整車輛排名，我方目前第 ${place} 名`}><div className="standings-title"><span>即時排名</span><b>8 輛車</b></div><div className="standings-list">{standings.map((entry) => <div key={entry.id} className={`standing-row ${entry.isPlayer ? "player" : ""} ${entry.isRival ? "rival" : ""}`} style={{ "--rank": entry.rank, "--car-color": entry.color, "--car-hue": entry.isPlayer ? "0deg" : `${rivalHues[entry.color]}deg` } as React.CSSProperties}><strong>{entry.rank}</strong><img className="standing-car" src={`${assetBase}/neon-racer.png`} alt="" aria-hidden="true" /><small>{entry.isRival ? "宿敵" : `第${entry.rank}名`}</small></div>)}</div></div></div>}
 
-            {state !== "setup" && <><div className={`scene-multiplier ${place <= 3 ? "podium" : ""}`}><span>獎勵倍率</span><strong>×{multiplierLabel(multiplier)}</strong><div className="progress-track"><i style={{ width: `${Math.max(4, progress)}%` }} /></div></div><div className={`weather-chip ${weatherConfig.trigger !== "none" ? "bonus" : ""}`}><span>{weatherConfig.shortLabel}</span><b>{weatherConfig.bonus > 0 ? `+${multiplierLabel(weatherConfig.bonus)}` : "標準"}</b></div><div className={`streak-meter level-${Math.min(highestStreak, 5)}`}><span>連超</span><strong>{streak}</strong></div></>}
+            {state !== "setup" && <><div className={`scene-multiplier ${place <= 3 ? "podium" : ""}`}><span>獎勵倍率</span><strong>×{multiplierLabel(multiplier)}</strong><div className="progress-track"><i style={{ width: `${Math.max(4, progress)}%` }} /></div></div><div className={`weather-chip ${weatherConfig.trigger !== "none" ? "bonus" : ""}`}><span>{weatherConfig.shortLabel}</span><b>{weatherConfig.bonus > 0 ? `+${multiplierLabel(weatherConfig.bonus)}` : "標準"}</b></div><div className={`streak-meter level-${Math.min(highestStreak, 6)}`}><span>連超</span><strong>{streak}</strong></div></>}
             {weatherNotice && <div className="weather-notice" role="status"><span>本場天氣</span><strong>{weatherConfig.label}</strong><small>{weatherConfig.rule}</small></div>}
-            {eventAlert && <div className={`event-alert ${eventAlert.tone}`} role="status"><strong>{eventAlert.title}</strong><span>{eventAlert.subtitle}</span></div>}
-            {championAlert && <div className={`champion-alert ${championIsRival ? "rival-final" : ""}`} role="status"><span>{championIsRival ? "最終宿敵" : "冠軍挑戰"}</span><strong>{championIsRival ? "冠軍就在前方" : "挑戰冠軍賽，獎勵10倍!"}</strong></div>}
+            {activeNotices.length > 0 && <div className="notice-stack" aria-live="polite">{activeNotices.map((notice) => notice.kind === "event" ? <div key={notice.id} className={`event-alert ${notice.alert.tone}`} role="status"><strong>{notice.alert.title}</strong><span>{notice.alert.subtitle}</span></div> : <div key={notice.id} className={`champion-alert ${championIsRival ? "rival-final" : ""}`} role="status"><span>{championIsRival ? "最終宿敵" : "冠軍挑戰"}</span><strong>{championIsRival ? "冠軍就在前方" : "挑戰冠軍賽，獎勵10倍!"}</strong></div>)}</div>}
 
             <div className="track-wrap"><div className="track"><div className="road-stream" /><div className="lane lane-one" /><div className="lane lane-two" /><div className="finish-line" />
               {state === "racing" && place > 1 && <div className={`target-kart ${activeTargetIsRival ? "rival-kart" : ""} ${normalCrash ? "crashing" : isPassing ? `being-passed pass-${passDirection}` : ""}`} style={{ "--kart-color": activeTargetIsRival ? "#ffc928" : activeRivalColor, "--car-hue": `${rivalHues[activeRivalColor]}deg` } as React.CSSProperties} aria-label={`前方第 ${nextPlace} 名${activeTargetIsRival ? "宿敵" : "車輛"}`}><span className="target-label">{activeTargetIsRival && <b className="rival-tag">宿敵</b>}<i />第{nextPlace}名</span><img className="racer-image" src={`${assetBase}/neon-racer.png`} alt="" aria-hidden="true" /></div>}
