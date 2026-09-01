@@ -39,7 +39,7 @@ const weatherOrder: WeatherId[] = ["sunny", "rain", "storm", "fog", "thunder"];
 const rivalColors = ["#ff3b5f", "#9a6cff", "#22d3ee", "#3cff9b", "#ff8a34", "#e6f0ff", "#ffd02f"];
 const rivalHues: Record<string, number> = { "#ff3b5f": 18, "#9a6cff": 65, "#22d3ee": 145, "#3cff9b": 205, "#ff8a34": 315, "#e6f0ff": 110, "#ffd02f": 280 };
 const assetBase = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-const credit = (value: number) => Math.floor(value).toLocaleString("zh-TW");
+const credit = (value: number) => value.toLocaleString("zh-TW", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const multiplierLabel = (value: number) => Number.isInteger(value) ? `${value}` : value.toFixed(2).replace(/0$/, "");
 const settlementMultiplierLabel = (value: number) => `${Number.isInteger(value) ? value.toFixed(1) : multiplierLabel(value)}倍`;
 
@@ -110,7 +110,7 @@ export default function Home() {
   const claimSubtotal = multiplier + (rivalDefeated ? GAME_CONFIG.rivalBonus : 0) + streakBonus;
   const earnedWeatherBonus = weatherBonusFor(claimSubtotal, rivalDefeated, highestStreak);
   const claimMultiplier = Number((claimSubtotal + earnedWeatherBonus).toFixed(2));
-  const claimAmount = Math.floor(bet * claimMultiplier);
+  const claimAmount = Number((bet * claimMultiplier).toFixed(2));
   const standings = useMemo(() => [
     { id: "player", rank: place, color: "#20e0ff", isPlayer: true, isRival: false },
     ...rivalOrder.map((color, index) => {
@@ -191,7 +191,7 @@ export default function Home() {
       runningTotal = Number((runningTotal + weatherBonus).toFixed(2));
     }
     const totalMultiplier = Number(runningTotal.toFixed(2));
-    const reward = Math.floor(bet * totalMultiplier);
+    const reward = Number((bet * totalMultiplier).toFixed(2));
     setSettlement({ place: resultPlace, rows, totalMultiplier, reward });
     setSettlementStep(1);
     setSettlementComplete(false);
@@ -388,8 +388,8 @@ export default function Home() {
               <div className="impact-burst" aria-hidden="true"><span /><i /><b /></div><div className="player-kart"><span className="speed-lines" /><img className="racer-image" src={`${assetBase}/neon-racer.png`} alt="我方車輛" /></div>
             </div></div>
 
-            {(state === "settling" || state === "won" || state === "cashed") && settlement && <div className="result-overlay settlement-overlay"><div className="result-card settlement-card"><div className="settlement-heading"><span>比賽結算</span></div><div className="settlement-rows">{settlement.rows.slice(0, settlementStep).map((row) => <div key={row.key} className={`settlement-row ${row.key} ${row.nested ? "weather-child" : ""}`}><div><strong>{row.label}</strong>{row.detail && <small>{row.detail}</small>}</div><span>{row.displayAmount}</span></div>)}</div><div className={`settlement-total ${settlementComplete ? "revealed" : ""}`}><span>最終倍率</span><strong>{settlementMultiplierLabel(settlement.totalMultiplier)}</strong><small>獎勵 +{credit(settlement.reward)}點</small></div>{settlementComplete && <button onClick={reset}>再玩一局</button>}</div></div>}
-            {state === "lost" && <div className="result-overlay"><div className="result-card lost"><div className="result-code">再接再厲!</div><p>最終名次 <strong>第 {place} 名 / 共 8 名</strong></p><div className="result-prize"><span>最終獎勵</span><strong>×0 · 0</strong></div><button onClick={reset}>再玩一局</button></div></div>}
+            {(state === "settling" || state === "won" || state === "cashed") && settlement && <div className="result-overlay settlement-overlay"><div className="result-card settlement-card"><div className="settlement-heading"><span>比賽結算</span></div><div className="settlement-rows">{settlement.rows.slice(0, settlementStep).map((row) => <div key={row.key} className={`settlement-row ${row.key} ${row.nested ? "weather-child" : ""}`}><div><strong>{row.label}</strong>{row.detail && <small>{row.detail}</small>}</div><span>{row.displayAmount}</span></div>)}</div><div className={`settlement-total ${settlementComplete ? "revealed" : ""}`}><span>最終倍率</span><strong>{settlementMultiplierLabel(settlement.totalMultiplier)}</strong><small>獎勵 +{credit(settlement.reward)}</small></div>{settlementComplete && <button onClick={reset}>再玩一局</button>}</div></div>}
+            {state === "lost" && <div className="result-overlay"><div className="result-card lost"><div className="result-code">再接再厲!</div><p>最終名次 <strong>第 {place} 名 / 共 8 名</strong></p><div className="result-prize"><span>最終獎勵</span><strong>×0 · 0.00</strong></div><button onClick={reset}>再玩一局</button></div></div>}
           </section>
 
           <aside className="control-panel">{state === "setup" ? <div className="setup-panel"><div className="bet-card"><div><span>投注金額</span><small>餘額 {credit(balance)}</small></div><div className="bet-input-row"><input type="number" inputMode="numeric" min="10" max={balance} step="10" value={bet || ""} onChange={(event) => setBet(Math.max(0, Math.floor(Number(event.target.value))))} onBlur={() => setBet(Math.min(balance, Math.max(10, bet || 10)))} aria-label="下注金額" /></div><div className="quick-bets" aria-label="快速下注">{[10, 50, 100, 200].map((amount) => <button key={amount} className={bet === amount ? "selected" : ""} onClick={() => setBet(amount)}>{amount}</button>)}</div></div><button className="start-button" onClick={startRace} disabled={balance < bet || bet < 10}>開始投注 <span>確認</span></button><p className="risk-note">挑戰失敗，宿敵、連超與天氣加成全部歸零</p></div> : <div className="race-panel"><div className="panel-heading"><div className="live-title"><h1>第{place}名 <small>/ 共 8 名</small></h1><span>{state === "duel" ? "冠軍賽" : "追擊中"}</span></div></div><button className={`overtake-button ${place === 2 ? "champion-button" : ""}`} onClick={primaryAction} disabled={isPassing || noticeLocked || state !== "racing" || !raceReady}><span>{isPassing ? "全力衝刺" : place === 2 ? "挑戰冠軍" : `超越第${nextPlace}名`}</span><small>{place === 2 ? "最高 ×10 · 最後直線" : `成功獎勵 ×${multiplierLabel(nextMultiplier)}`}</small></button><button className="cash-button" onClick={cashOut} disabled={multiplier <= 1 || isPassing || noticeLocked || state !== "racing" || !raceReady}>領取獎勵・{credit(claimAmount)}</button><p className="chance-note"><span />額外加成將於領取時逐層揭曉</p></div>}</aside>
