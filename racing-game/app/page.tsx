@@ -16,7 +16,7 @@ type WeatherConfig = { label: string; shortLabel: string; rule: string; hudValue
 type EventAlert = { title: string; subtitle: string; tone: "cyan" | "gold" | "red"; variant: "panel" | "streak" };
 type QueuedNotice = { kind: "event"; alert: EventAlert } | { kind: "champion" };
 type ActiveNotice = QueuedNotice & { id: number; slot: number };
-type SettlementRow = { key: "rank" | "rival" | "streak" | "subtotal" | "weather"; label: string; detail?: string; amount: number; total: number; displayAmount: string; nested?: boolean };
+type SettlementRow = { key: "rank" | "rival" | "streak" | "subtotal" | "weather"; label: string; detail?: string; amount: number; total: number; displayAmount: string; nested?: boolean; superseded?: boolean };
 type SettlementData = { place: number; rows: SettlementRow[]; totalMultiplier: number; reward: number };
 
 const rankMultipliers: Record<number, number> = { 8: 1, 7: 1.2, 6: 1.5, 5: 1.9, 4: 2.5, 3: 3.5, 2: 5, 1: 10 };
@@ -165,13 +165,19 @@ export default function Home() {
             : "└ ⚡ 雷雨爆發 ×1.2",
       amount: weatherBonus,
       total: Number((runningTotal + weatherBonus).toFixed(2)),
-      displayAmount: `+${settlementMultiplierLabel(weatherBonus)}`,
+      displayAmount: weatherConfig.effect === "rivalMultiplier"
+        ? `→ +${settlementMultiplierLabel(rivalBonus + weatherBonus)}`
+        : weatherConfig.effect === "streakMultiplier"
+          ? `→ +${settlementMultiplierLabel(bestStreakBonus + weatherBonus)}`
+          : weatherConfig.effect === "totalMultiplier"
+            ? `→ ${settlementMultiplierLabel(subtotal + weatherBonus)}`
+            : `+${settlementMultiplierLabel(weatherBonus)}`,
       nested: true,
     });
     rows.push({ key: "rank", label: "最終名次", detail: `第${resultPlace}名`, amount: base, total: runningTotal, displayAmount: settlementMultiplierLabel(base) });
     if (rivalBonus > 0) {
       runningTotal += rivalBonus;
-      rows.push({ key: "rival", label: "擊敗宿敵", amount: rivalBonus, total: runningTotal, displayAmount: `+${settlementMultiplierLabel(rivalBonus)}` });
+      rows.push({ key: "rival", label: "擊敗宿敵", amount: rivalBonus, total: runningTotal, displayAmount: `+${settlementMultiplierLabel(rivalBonus)}`, superseded: weatherBonus > 0 && weatherConfig.effect === "rivalMultiplier" });
       if (weatherBonus > 0 && ["rivalMultiplier", "rivalFlat"].includes(weatherConfig.effect)) {
         rows.push(weatherRow());
         runningTotal = Number((runningTotal + weatherBonus).toFixed(2));
@@ -179,14 +185,14 @@ export default function Home() {
     }
     if (bestStreakBonus > 0) {
       runningTotal += bestStreakBonus;
-      rows.push({ key: "streak", label: "最高連超", detail: `${bestStreak}連超`, amount: bestStreakBonus, total: runningTotal, displayAmount: `+${settlementMultiplierLabel(bestStreakBonus)}` });
+      rows.push({ key: "streak", label: "最高連超", detail: `${bestStreak}連超`, amount: bestStreakBonus, total: runningTotal, displayAmount: `+${settlementMultiplierLabel(bestStreakBonus)}`, superseded: weatherBonus > 0 && weatherConfig.effect === "streakMultiplier" });
       if (weatherBonus > 0 && weatherConfig.effect === "streakMultiplier") {
         rows.push(weatherRow());
         runningTotal = Number((runningTotal + weatherBonus).toFixed(2));
       }
     }
     if (weatherBonus > 0 && weatherConfig.effect === "totalMultiplier") {
-      rows.push({ key: "subtotal", label: "小計", amount: subtotal, total: subtotal, displayAmount: settlementMultiplierLabel(subtotal) });
+      rows.push({ key: "subtotal", label: "小計", amount: subtotal, total: subtotal, displayAmount: settlementMultiplierLabel(subtotal), superseded: true });
       rows.push(weatherRow());
       runningTotal = Number((runningTotal + weatherBonus).toFixed(2));
     }
@@ -388,7 +394,7 @@ export default function Home() {
               <div className="impact-burst" aria-hidden="true"><span /><i /><b /></div><div className="player-kart"><span className="speed-lines" /><img className="racer-image" src={`${assetBase}/neon-racer.png`} alt="我方車輛" /></div>
             </div></div>
 
-            {(state === "settling" || state === "won" || state === "cashed") && settlement && <div className="result-overlay settlement-overlay"><div className="result-card settlement-card"><div className="settlement-heading"><span>比賽結算</span></div><div className="settlement-rows">{settlement.rows.slice(0, settlementStep).map((row) => <div key={row.key} className={`settlement-row ${row.key} ${row.nested ? "weather-child" : ""}`}><div><strong>{row.label}</strong>{row.detail && <small>{row.detail}</small>}</div><span>{row.displayAmount}</span></div>)}</div><div className={`settlement-total ${settlementComplete ? "revealed" : ""}`}><span>最終倍率</span><strong>{settlementMultiplierLabel(settlement.totalMultiplier)}</strong><small>獎勵 +{credit(settlement.reward)}</small></div>{settlementComplete && <button onClick={reset}>再玩一局</button>}</div></div>}
+            {(state === "settling" || state === "won" || state === "cashed") && settlement && <div className="result-overlay settlement-overlay"><div className="result-card settlement-card"><div className="settlement-heading"><span>比賽結算</span></div><div className="settlement-rows">{settlement.rows.slice(0, settlementStep).map((row) => <div key={row.key} className={`settlement-row ${row.key} ${row.nested ? "weather-child" : ""} ${row.superseded ? "superseded" : ""}`}><div><strong>{row.label}</strong>{row.detail && <small>{row.detail}</small>}</div><span>{row.displayAmount}</span></div>)}</div><div className={`settlement-total ${settlementComplete ? "revealed" : ""}`}><span>最終倍率</span><strong>{settlementMultiplierLabel(settlement.totalMultiplier)}</strong><small>獎勵 +{credit(settlement.reward)}</small></div>{settlementComplete && <button onClick={reset}>再玩一局</button>}</div></div>}
             {state === "lost" && <div className="result-overlay"><div className="result-card lost"><div className="result-code">再接再厲!</div><p>最終名次 <strong>第 {place} 名 / 共 8 名</strong></p><div className="result-prize"><span>最終獎勵</span><strong>×0 · 0.00</strong></div><button onClick={reset}>再玩一局</button></div></div>}
           </section>
 
