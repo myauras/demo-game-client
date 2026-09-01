@@ -368,19 +368,19 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 .settlement-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; min-height: 47px; padding: 0 6px; border-bottom: 1px solid rgba(125,151,184,.13); animation: settleRow .4s cubic-bezier(.2,.8,.2,1) both; }
 .settlement-row > div strong, .settlement-row > div small { display: block; }
 .settlement-row > div strong { color: #fff; font-size: 11px; }
-.settlement-row > div small { margin-top: 2px; color: #62758d; font-size: 7px; }
+.settlement-row > div small { margin-top: 3px; color: #91a2b8; font-size: 10px; font-weight: 800; }
 .settlement-row > span { color: var(--gold); text-align: right; font: 900 11px monospace; }
 .settlement-row.rank > span { color: var(--cyan); }
 .settlement-row.rival { box-shadow: inset 2px 0 var(--gold); }
 .settlement-row.subtotal { margin-top: 3px; border-top: 1px solid rgba(255,255,255,.16); }
 .settlement-row.weather-child { min-height: 34px; margin-left: 17px; padding: 0 7px 0 10px; border-bottom-color: rgba(125,151,184,.08); background: linear-gradient(90deg,rgba(154,108,255,.08),transparent 70%); box-shadow: inset 1px 0 rgba(154,108,255,.55); }
-.settlement-row.weather-child > div strong { color: #aeb9c9; font-size: 9px; font-weight: 800; }
-.settlement-row.weather-child > span { color: #c0a5ff; font-size: 9px; }
+.settlement-row.weather-child > div strong { color: #bdc8d8; font-size: 10px; font-weight: 800; }
+.settlement-row.weather-child > span { color: #cbb6ff; font-size: 10px; }
 .settlement-total { min-height: 78px; margin: 11px 0 12px; display: grid; place-items: center; align-content: center; border: 1px solid rgba(255,201,40,.2); background: radial-gradient(circle,rgba(255,201,40,.08),transparent 70%),#070b12; opacity: .22; transform: scale(.96); transition: .45s ease; }
 .settlement-total span, .settlement-total strong, .settlement-total small { display: block; text-align: center; }
-.settlement-total span { color: #87753b; font: 900 8px monospace; letter-spacing: 2px; }
+.settlement-total span { color: #b69c4d; font: 900 10px monospace; letter-spacing: 2px; }
 .settlement-total strong { color: var(--gold); font-family: Impact,"Arial Narrow",sans-serif; font-size: 38px; font-style: italic; line-height: 1; }
-.settlement-total small { margin-top: 4px; color: #fff; font-size: 10px; font-weight: 900; }
+.settlement-total small { margin-top: 5px; color: #fff; font-size: 12px; font-weight: 900; }
 .settlement-total:not(.revealed) strong, .settlement-total:not(.revealed) small { visibility: hidden; }
 .settlement-total.revealed { opacity: 1; transform: scale(1); box-shadow: 0 0 28px rgba(255,201,40,.12); animation: totalReveal .5s ease both; }
 
