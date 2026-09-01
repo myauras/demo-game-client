@@ -327,9 +327,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 .weather-notice > span { color: #71849b; font: 800 8px monospace; letter-spacing: 2px; }
 .weather-notice > strong { margin: 4px 0; color: #fff; font-size: 22px; font-style: italic; }
 .weather-notice > small { color: var(--cyan); font-size: 12px; font-weight: 900; line-height: 1.45; }
-.notice-stack { position: absolute; z-index: 19; left: 50%; top: 20%; transform: translateX(-50%); width: min(300px,76%); display: grid; gap: 8px; pointer-events: none; }
-.event-alert { position: relative; width: 100%; padding: 12px 16px; border-left: 3px solid var(--cyan); background: linear-gradient(90deg,rgba(5,13,22,.96),rgba(5,13,22,.78)); text-align: center; box-shadow: 0 12px 30px rgba(0,0,0,.35); animation: eventPop 1.5s ease both; }
-.notice-stack .champion-alert { position: relative; inset: auto; width: 100%; padding: 13px 17px 14px; transform: none; animation: eventPop 1.5s ease both; }
+.notice-stack { position: absolute; z-index: 19; left: 50%; top: 18%; transform: translateX(-50%); width: min(300px,76%); height: 160px; pointer-events: none; }
+.event-alert { position: absolute; left: 0; top: calc(var(--notice-slot,0) * 78px); width: 100%; padding: 12px 16px; border-left: 3px solid var(--cyan); background: linear-gradient(90deg,rgba(5,13,22,.96),rgba(5,13,22,.78)); text-align: center; box-shadow: 0 12px 30px rgba(0,0,0,.35); animation: eventPop 1.5s ease both; }
+.notice-stack .champion-alert { position: absolute; inset: auto; left: 0; top: calc(var(--notice-slot,0) * 78px); width: 100%; padding: 13px 17px 14px; transform: none; animation: eventPop 1.5s ease both; }
 .event-alert strong, .event-alert span { display: block; }
 .event-alert strong { color: #fff; font-size: 20px; font-style: italic; text-shadow: 0 0 16px rgba(32,224,255,.3); }
 .event-alert span { margin-top: 5px; color: var(--cyan); font: 900 11px/1.45 monospace; }
@@ -338,6 +338,13 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 .event-alert.red { border-left-color: var(--red); box-shadow: 0 0 38px rgba(255,49,88,.22); }
 .event-alert.red strong { font-size: 25px; text-shadow: 0 0 20px rgba(255,49,88,.4); }
 .event-alert.red span { color: #ff8ca1; }
+.streak-notice-layer { position: absolute; z-index: 19; left: 0; right: 0; bottom: 10%; height: 72px; overflow: hidden; pointer-events: none; }
+.streak-alert { position: absolute; left: 0; right: 0; bottom: calc(var(--streak-slot,0) * 46px); text-align: center; animation: streakSweep 1.5s cubic-bezier(.2,.72,.2,1) both; }
+.streak-alert strong, .streak-alert span { display: block; }
+.streak-alert strong { color: #f5fdff; font-family: Impact,"Arial Narrow",sans-serif; font-size: 34px; font-style: italic; letter-spacing: 2px; line-height: 1; text-shadow: 0 0 7px #fff,0 0 18px var(--cyan),3px 3px 0 rgba(1,10,18,.92); }
+.streak-alert span { margin-top: 4px; color: var(--cyan); font: 1000 13px monospace; text-shadow: 0 0 12px rgba(32,224,255,.8),2px 2px 0 rgba(1,10,18,.95); }
+.streak-alert.red strong { color: #fff3b8; text-shadow: 0 0 8px #fff,0 0 20px var(--gold),3px 3px 0 rgba(20,9,0,.92); }
+.streak-alert.red span { color: var(--gold); text-shadow: 0 0 13px rgba(255,201,40,.85),2px 2px 0 rgba(20,9,0,.95); }
 
 .standing-row.rival { color: var(--gold); border-left-color: var(--gold); background: linear-gradient(90deg,rgba(255,201,40,.18),rgba(255,201,40,.03)); }
 .standing-row.rival .standing-car { filter: saturate(1.7) contrast(1.25) drop-shadow(0 0 4px rgba(255,201,40,.8)); }
@@ -381,6 +388,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 @keyframes lightningBolt { 0%,76%,80%,100% { opacity: 0; } 77%,79% { opacity: .95; } 78% { opacity: .2; } }
 @keyframes v2Notice { 0% { opacity: 0; transform: translateX(-50%) scale(.72); } 18%,75% { opacity: 1; transform: translateX(-50%) scale(1); } 100% { opacity: 0; transform: translateX(-50%) scale(.92); } }
 @keyframes eventPop { 0% { opacity: 0; transform: translateY(12px) scale(.82); } 14%,72% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-8px) scale(.88); } }
+@keyframes streakSweep { 0% { opacity: 0; transform: translateX(110%) skewX(-8deg) scale(.9); } 22%,72% { opacity: 1; transform: translateX(0) skewX(0) scale(1); } 100% { opacity: 0; transform: translateX(-110%) skewX(8deg) scale(.9); } }
 @keyframes rivalGlow { from { opacity: .5; transform: scale(.85); } to { opacity: 1; transform: scale(1.12); } }
 @keyframes exhaustFlame { from { transform: scaleY(.78); opacity: .72; } to { transform: scaleY(1.15); opacity: 1; } }
 @keyframes cameraPunch { 0%,100% { transform: scale(1); } 28% { transform: scale(1.08); } 55% { transform: scale(.98); } 74% { transform: scale(1.03); } }
