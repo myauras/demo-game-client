@@ -16,7 +16,7 @@ type WeatherConfig = { label: string; shortLabel: string; rule: string; hudValue
 type EventAlert = { title: string; subtitle: string; tone: "cyan" | "gold" | "red"; variant: "panel" | "streak" };
 type QueuedNotice = { kind: "event"; alert: EventAlert } | { kind: "champion" };
 type ActiveNotice = QueuedNotice & { id: number; slot: number };
-type SettlementRow = { key: "rank" | "rival" | "streak" | "weather"; label: string; detail: string; amount: number; total: number; operation?: "multiply" };
+type SettlementRow = { key: "rank" | "rival" | "streak" | "weather"; label: string; detail: string; amount: number; total: number; displayAmount?: string };
 type SettlementData = { place: number; rows: SettlementRow[]; totalMultiplier: number; reward: number };
 
 const rankMultipliers: Record<number, number> = { 8: 1, 7: 1.2, 6: 1.5, 5: 1.9, 4: 2.5, 3: 3.5, 2: 5, 1: 10 };
@@ -128,7 +128,7 @@ export default function Home() {
       const id = noticeId.current + 1;
       noticeId.current = id;
       const isStreakNotice = notice.kind === "event" && notice.alert.variant === "streak";
-      const noticeDuration = isStreakNotice ? 1100 : 1500;
+      const noticeDuration = isStreakNotice ? 900 : 1500;
       const slot = isStreakNotice ? streakSlot++ : panelSlot++;
       latestNoticeEnd = Math.max(latestNoticeEnd, index * 500 + noticeDuration);
       const showTimer = window.setTimeout(() => {
@@ -164,7 +164,14 @@ export default function Home() {
     }
     if (weatherBonus > 0) {
       runningTotal = Number((runningTotal + weatherBonus).toFixed(2));
-      rows.push({ key: "weather", label: `${weatherConfig.shortLabel}加成`, detail: weatherConfig.rule, amount: weatherBonus, total: runningTotal, operation: weatherConfig.effect === "totalMultiplier" ? "multiply" : undefined });
+      const displayAmount = weatherConfig.effect === "rivalMultiplier"
+        ? "×1.5"
+        : weatherConfig.effect === "streakMultiplier"
+          ? "×2"
+          : weatherConfig.effect === "totalMultiplier"
+            ? "×1.2"
+            : `+${multiplierLabel(weatherBonus)}倍`;
+      rows.push({ key: "weather", label: `${weatherConfig.shortLabel}加成`, detail: weatherConfig.rule, amount: weatherBonus, total: runningTotal, displayAmount });
     }
     const totalMultiplier = Number(runningTotal.toFixed(2));
     const reward = Math.floor(bet * totalMultiplier);
@@ -364,7 +371,7 @@ export default function Home() {
               <div className="impact-burst" aria-hidden="true"><span /><i /><b /></div><div className="player-kart"><span className="speed-lines" /><img className="racer-image" src={`${assetBase}/neon-racer.png`} alt="我方車輛" /></div>
             </div></div>
 
-            {(state === "settling" || state === "won" || state === "cashed") && settlement && <div className="result-overlay settlement-overlay"><div className="result-card settlement-card"><div className="settlement-heading"><span>分層結算</span><strong>第{settlement.place}名</strong></div><div className="settlement-rows">{settlement.rows.slice(0, settlementStep).map((row) => <div key={row.key} className={`settlement-row ${row.key}`}><div><strong>{row.label}</strong><small>{row.detail}</small></div><span>{row.key === "rank" ? `×${multiplierLabel(row.amount)}` : row.operation === "multiply" ? "×1.2" : `+${multiplierLabel(row.amount)}倍`}</span><b>×{multiplierLabel(row.total)}</b></div>)}</div><div className={`settlement-total ${settlementComplete ? "revealed" : ""}`}><span>最終倍率</span><strong>×{multiplierLabel(settlement.totalMultiplier)}</strong><small>最終獎勵 +{credit(settlement.reward)}</small></div>{settlementComplete && <button onClick={reset}>再玩一局</button>}</div></div>}
+            {(state === "settling" || state === "won" || state === "cashed") && settlement && <div className="result-overlay settlement-overlay"><div className="result-card settlement-card"><div className="settlement-heading"><span>分層結算</span><strong>第{settlement.place}名</strong></div><div className="settlement-rows">{settlement.rows.slice(0, settlementStep).map((row) => <div key={row.key} className={`settlement-row ${row.key}`}><div><strong>{row.label}</strong><small>{row.detail}</small></div><span>{row.displayAmount ?? (row.key === "rank" ? `×${multiplierLabel(row.amount)}` : `+${multiplierLabel(row.amount)}倍`)}</span><b>×{multiplierLabel(row.total)}</b></div>)}</div><div className={`settlement-total ${settlementComplete ? "revealed" : ""}`}><span>最終倍率</span><strong>×{multiplierLabel(settlement.totalMultiplier)}</strong><small>最終獎勵 +{credit(settlement.reward)}</small></div>{settlementComplete && <button onClick={reset}>再玩一局</button>}</div></div>}
             {state === "lost" && <div className="result-overlay"><div className="result-card lost"><div className="result-code">再接再厲!</div><p>最終名次 <strong>第 {place} 名 / 共 8 名</strong></p><div className="result-prize"><span>最終獎勵</span><strong>×0 · 0</strong></div><button onClick={reset}>再玩一局</button></div></div>}
           </section>
 
