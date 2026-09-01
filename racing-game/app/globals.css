@@ -361,19 +361,21 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 
 .settlement-overlay { background: rgba(3,6,10,.9); }
 .settlement-card { width: min(365px,94%); padding: 17px; border-color: rgba(255,201,40,.4); border-left-color: var(--gold); }
-.settlement-heading { display: flex; align-items: end; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
-.settlement-heading span { color: var(--gold); font: 900 9px monospace; letter-spacing: 2px; }
+.settlement-heading { display: flex; align-items: center; justify-content: center; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.settlement-heading span { color: var(--gold); font: 900 12px monospace; letter-spacing: 2px; }
 .settlement-heading strong { font-size: 22px; font-style: italic; }
 .settlement-rows { min-height: 54px; }
-.settlement-row { display: grid; grid-template-columns: 1fr auto 48px; align-items: center; gap: 7px; min-height: 47px; border-bottom: 1px solid rgba(125,151,184,.13); animation: settleRow .4s cubic-bezier(.2,.8,.2,1) both; }
+.settlement-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; min-height: 47px; padding: 0 6px; border-bottom: 1px solid rgba(125,151,184,.13); animation: settleRow .4s cubic-bezier(.2,.8,.2,1) both; }
 .settlement-row > div strong, .settlement-row > div small { display: block; }
 .settlement-row > div strong { color: #fff; font-size: 11px; }
 .settlement-row > div small { margin-top: 2px; color: #62758d; font-size: 7px; }
-.settlement-row > span { color: var(--gold); font: 900 10px monospace; }
-.settlement-row > b { color: #fff; text-align: right; font: 900 12px monospace; }
+.settlement-row > span { color: var(--gold); text-align: right; font: 900 11px monospace; }
 .settlement-row.rank > span { color: var(--cyan); }
 .settlement-row.rival { box-shadow: inset 2px 0 var(--gold); }
-.settlement-row.weather { box-shadow: inset 2px 0 #9a6cff; }
+.settlement-row.subtotal { margin-top: 3px; border-top: 1px solid rgba(255,255,255,.16); }
+.settlement-row.weather-child { min-height: 34px; margin-left: 17px; padding: 0 7px 0 10px; border-bottom-color: rgba(125,151,184,.08); background: linear-gradient(90deg,rgba(154,108,255,.08),transparent 70%); box-shadow: inset 1px 0 rgba(154,108,255,.55); }
+.settlement-row.weather-child > div strong { color: #aeb9c9; font-size: 9px; font-weight: 800; }
+.settlement-row.weather-child > span { color: #c0a5ff; font-size: 9px; }
 .settlement-total { min-height: 78px; margin: 11px 0 12px; display: grid; place-items: center; align-content: center; border: 1px solid rgba(255,201,40,.2); background: radial-gradient(circle,rgba(255,201,40,.08),transparent 70%),#070b12; opacity: .22; transform: scale(.96); transition: .45s ease; }
 .settlement-total span, .settlement-total strong, .settlement-total small { display: block; text-align: center; }
 .settlement-total span { color: #87753b; font: 900 8px monospace; letter-spacing: 2px; }
