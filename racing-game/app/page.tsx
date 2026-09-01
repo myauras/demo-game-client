@@ -13,6 +13,7 @@ type ResultState = "won" | "cashed";
 
 type WeatherConfig = { label: string; shortLabel: string; rule: string; weight: number; bonus: number; trigger: "none" | "rival" | "streak" };
 type EventAlert = { title: string; subtitle: string; tone: "cyan" | "gold" | "red" };
+type QueuedNotice = { kind: "event"; alert: EventAlert } | { kind: "champion" };
 type SettlementRow = { key: "rank" | "rival" | "streak" | "weather"; label: string; detail: string; amount: number; total: number };
 type SettlementData = { place: number; rows: SettlementRow[]; totalMultiplier: number; reward: number };
 
@@ -84,7 +85,11 @@ export default function Home() {
   const [settlement, setSettlement] = useState<SettlementData | null>(null);
   const [settlementStep, setSettlementStep] = useState(0);
   const [settlementComplete, setSettlementComplete] = useState(false);
-  const eventTimer = useRef<number | null>(null);
+  const [noticeLocked, setNoticeLocked] = useState(false);
+  const noticeQueue = useRef<QueuedNotice[]>([]);
+  const noticeRunning = useRef(false);
+  const noticeTimer = useRef<number | null>(null);
+  const noticeGapTimer = useRef<number | null>(null);
 
   const progress = ((8 - place) / 7) * 100;
   const nextPlace = Math.max(1, place - 1);
@@ -109,10 +114,28 @@ export default function Home() {
     }),
   ], [place, rivalOrder, rivalPlace, rivalDefeated]);
 
-  const showEvent = (alert: EventAlert, duration = 1350) => {
-    if (eventTimer.current) window.clearTimeout(eventTimer.current);
-    setEventAlert(alert);
-    eventTimer.current = window.setTimeout(() => setEventAlert(null), duration);
+  const playNextNotice = () => {
+    const nextNotice = noticeQueue.current.shift();
+    if (!nextNotice) {
+      noticeRunning.current = false;
+      setNoticeLocked(false);
+      return;
+    }
+    setEventAlert(nextNotice.kind === "event" ? nextNotice.alert : null);
+    setChampionAlert(nextNotice.kind === "champion");
+    noticeTimer.current = window.setTimeout(() => {
+      setEventAlert(null);
+      setChampionAlert(false);
+      noticeGapTimer.current = window.setTimeout(playNextNotice, 280);
+    }, nextNotice.kind === "champion" ? 1900 : 2200);
+  };
+
+  const queueNotices = (notices: QueuedNotice[]) => {
+    noticeQueue.current.push(...notices);
+    if (noticeRunning.current) return;
+    noticeRunning.current = true;
+    setNoticeLocked(true);
+    playNextNotice();
   };
 
   const weatherBonusFor = (didDefeatRival: boolean, maxStreak: number) => {
@@ -195,11 +218,11 @@ export default function Home() {
       if (shuffled.every((color, index) => color === currentOrder[index])) shuffled.push(shuffled.shift()!);
       return shuffled;
     });
-    window.setTimeout(() => { setWeatherNotice(false); setRaceReady(true); }, 1100);
+    window.setTimeout(() => { setWeatherNotice(false); setRaceReady(true); }, 2200);
   };
 
   const overtake = () => {
-    if (state !== "racing" || isPassing || place <= 2 || !raceReady) return;
+    if (state !== "racing" || isPassing || noticeLocked || place <= 2 || !raceReady) return;
     setIsPassing(true);
     setPassDirection(Math.random() < 0.5 ? "left" : "right");
     const successRate = place === 8 ? GAME_CONFIG.targetRtp / nextMultiplier : multiplier / nextMultiplier;
@@ -216,13 +239,14 @@ export default function Home() {
       setStreak(nextStreak);
       setHighestStreak((value) => Math.max(value, nextStreak));
       setIsPassing(false);
+      const notices: QueuedNotice[] = [];
       if (passedRival) {
         setRivalDefeated(true);
-        showEvent({ title: "擊敗宿敵！", subtitle: `宿敵獎勵 +0.5倍 · ${nextStreak}連超`, tone: "gold" }, 1650);
+        notices.push({ kind: "event", alert: { title: "擊敗宿敵！", subtitle: `宿敵獎勵 +0.5倍 · ${nextStreak}連超`, tone: "gold" } });
       } else if (nextStreak >= 5) {
-        showEvent({ title: "勢不可擋！", subtitle: "5連超 · 最高連超獎勵 +1.0倍", tone: "red" }, 1650);
+        notices.push({ kind: "event", alert: { title: "勢不可擋！", subtitle: "5連超 · 最高連超獎勵 +1.0倍", tone: "red" } });
       } else {
-        showEvent({ title: `${nextStreak}連超！`, subtitle: nextStreak >= 2 ? `最高連超獎勵 +${multiplierLabel(GAME_CONFIG.streakBonuses[nextStreak])}倍` : "連續追擊開始", tone: "cyan" });
+        notices.push({ kind: "event", alert: { title: `${nextStreak}連超！`, subtitle: nextStreak >= 2 ? `最高連超獎勵 +${multiplierLabel(GAME_CONFIG.streakBonuses[nextStreak])}倍` : "連續追擊開始", tone: "cyan" } });
       }
       if (nextStreak >= 3) {
         setStreakPulse(true);
@@ -230,16 +254,16 @@ export default function Home() {
       }
       if (nextPlace === 2) {
         setTestRun(false);
-        setChampionAlert(true);
-        window.setTimeout(() => setChampionAlert(false), 1900);
+        notices.push({ kind: "champion" });
       } else if (rivalPlace === nextPlace - 1 && !passedRival) {
-        window.setTimeout(() => showEvent({ title: "宿敵就在前方！", subtitle: `第${nextPlace - 1}名 · 特殊目標`, tone: "gold" }, 1550), 250);
+        notices.push({ kind: "event", alert: { title: "宿敵就在前方！", subtitle: `第${nextPlace - 1}名 · 擊敗額外 +0.5倍`, tone: "gold" } });
       }
+      queueNotices(notices);
     }, 1600);
   };
 
   const challengeChampion = () => {
-    if (state !== "racing" || place !== 2 || isPassing || !raceReady) return;
+    if (state !== "racing" || place !== 2 || isPassing || noticeLocked || !raceReady) return;
     setState("duel");
     setIsPassing(true);
     setDuelPhase("race");
@@ -269,7 +293,7 @@ export default function Home() {
   };
 
   const cashOut = () => {
-    if (state !== "racing" || multiplier <= 1 || isPassing || !raceReady) return;
+    if (state !== "racing" || multiplier <= 1 || isPassing || noticeLocked || !raceReady) return;
     setTestRun(false);
     beginSettlement(place, "cashed", rivalDefeated, highestStreak);
   };
@@ -292,6 +316,12 @@ export default function Home() {
     setStreak(0);
     setHighestStreak(0);
     setRivalDefeated(false);
+    if (noticeTimer.current) window.clearTimeout(noticeTimer.current);
+    if (noticeGapTimer.current) window.clearTimeout(noticeGapTimer.current);
+    noticeQueue.current = [];
+    noticeRunning.current = false;
+    setNoticeLocked(false);
+    setEventAlert(null);
   };
 
   const primaryAction = place === 2 ? challengeChampion : overtake;
@@ -344,7 +374,7 @@ export default function Home() {
             {state === "lost" && <div className="result-overlay"><div className="result-card lost"><div className="result-code">再接再厲!</div><p>最終名次 <strong>第 {place} 名 / 共 8 名</strong></p><div className="result-prize"><span>最終獎勵</span><strong>×0 · 0</strong></div><button onClick={reset}>再玩一局</button></div></div>}
           </section>
 
-          <aside className="control-panel">{state === "setup" ? <div className="setup-panel"><div className="bet-card"><div><span>投注金額</span><small>餘額 {credit(balance)}</small></div><div className="bet-input-row"><input type="number" inputMode="numeric" min="10" max={balance} step="10" value={bet || ""} onChange={(event) => setBet(Math.max(0, Math.floor(Number(event.target.value))))} onBlur={() => setBet(Math.min(balance, Math.max(10, bet || 10)))} aria-label="下注金額" /></div><div className="quick-bets" aria-label="快速下注">{[10, 50, 100, 200].map((amount) => <button key={amount} className={bet === amount ? "selected" : ""} onClick={() => setBet(amount)}>{amount}</button>)}</div></div><button className="start-button" onClick={startRace} disabled={balance < bet || bet < 10}>開始投注 <span>確認</span></button><p className="risk-note">挑戰失敗，宿敵、連超與天氣加成全部歸零</p></div> : <div className="race-panel"><div className="panel-heading"><div className="live-title"><h1>第{place}名 <small>/ 共 8 名</small></h1><span>{state === "duel" ? "冠軍賽" : "追擊中"}</span></div></div><button className={`overtake-button ${place === 2 ? "champion-button" : ""}`} onClick={primaryAction} disabled={isPassing || state !== "racing" || !raceReady}><span>{isPassing ? "全力衝刺" : place === 2 ? "挑戰冠軍" : `超越第${nextPlace}名`}</span><small>{place === 2 ? "最高 ×10 · 最後直線" : `成功獎勵 ×${multiplierLabel(nextMultiplier)}`}</small></button><button className="cash-button" onClick={cashOut} disabled={multiplier <= 1 || isPassing || state !== "racing" || !raceReady}>領取獎勵・{credit(claimAmount)}</button><p className="chance-note"><span />額外加成將於領取時逐層揭曉</p></div>}</aside>
+          <aside className="control-panel">{state === "setup" ? <div className="setup-panel"><div className="bet-card"><div><span>投注金額</span><small>餘額 {credit(balance)}</small></div><div className="bet-input-row"><input type="number" inputMode="numeric" min="10" max={balance} step="10" value={bet || ""} onChange={(event) => setBet(Math.max(0, Math.floor(Number(event.target.value))))} onBlur={() => setBet(Math.min(balance, Math.max(10, bet || 10)))} aria-label="下注金額" /></div><div className="quick-bets" aria-label="快速下注">{[10, 50, 100, 200].map((amount) => <button key={amount} className={bet === amount ? "selected" : ""} onClick={() => setBet(amount)}>{amount}</button>)}</div></div><button className="start-button" onClick={startRace} disabled={balance < bet || bet < 10}>開始投注 <span>確認</span></button><p className="risk-note">挑戰失敗，宿敵、連超與天氣加成全部歸零</p></div> : <div className="race-panel"><div className="panel-heading"><div className="live-title"><h1>第{place}名 <small>/ 共 8 名</small></h1><span>{state === "duel" ? "冠軍賽" : "追擊中"}</span></div></div><button className={`overtake-button ${place === 2 ? "champion-button" : ""}`} onClick={primaryAction} disabled={isPassing || noticeLocked || state !== "racing" || !raceReady}><span>{isPassing ? "全力衝刺" : place === 2 ? "挑戰冠軍" : `超越第${nextPlace}名`}</span><small>{place === 2 ? "最高 ×10 · 最後直線" : `成功獎勵 ×${multiplierLabel(nextMultiplier)}`}</small></button><button className="cash-button" onClick={cashOut} disabled={multiplier <= 1 || isPassing || noticeLocked || state !== "racing" || !raceReady}>領取獎勵・{credit(claimAmount)}</button><p className="chance-note"><span />額外加成將於領取時逐層揭曉</p></div>}</aside>
         </div>
       </section>
       <p className="demo-caption">可玩展示 · 極速反攻 // 決勝圈 V2</p>
