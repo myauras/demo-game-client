@@ -50,7 +50,7 @@ const pickAutoEvents = (outcome:Outcome): BattleEvent[] => {
   while (picked.length < count && weighted.length) { const candidate = weighted[randomBetween(0,weighted.length - 1)]; if (!picked.some(event => event.id === candidate.id) && !picked.some(event => eventConflicts(event.id,candidate.id))) picked.push(candidate); }
   return picked;
 };
-const getRating = (outcome:Outcome,events:BattleEvent[]) => { if (outcome === 'lose') return 'B'; if (outcome === 'perfect' && events.some(event => event.rarity === 'rare')) return 'SSS'; if (events.length >= 2) return 'SS'; if (events.some(event => event.rarity === 'rare')) return 'S'; if (events.length === 1) return 'A'; return 'B'; };
+const getRating = (outcome:Outcome,events:BattleEvent[]) => { if (outcome === 'lose') return 'B'; if (outcome === 'perfect' && events.some(event => event.rarity === 'rare')) return 'SSS'; if (events.length >= 2) return 'SS'; if (events.some(event => event.rarity === 'rare')) return 'S'; if (outcome === 'perfect') return 'S'; if (events.length === 1 || outcome === 'burst') return 'A'; return 'B'; };
 const ratingCopy: Record<string,string> = { B:'完成對決',A:'精彩交鋒',S:'超凡戰鬥',SS:'精彩對決',SSS:'傳奇對決' };
 
 export default function Home() {
