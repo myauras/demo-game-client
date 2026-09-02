@@ -38,7 +38,7 @@ const GAME_CONFIG = {
 const weatherOrder: WeatherId[] = ["sunny", "rain", "storm", "fog", "thunder"];
 const rivalColors = ["#ff3b5f", "#9a6cff", "#22d3ee", "#3cff9b", "#ff8a34", "#e6f0ff", "#ffd02f"];
 const rivalHues: Record<string, number> = { "#ff3b5f": 18, "#9a6cff": 65, "#22d3ee": 145, "#3cff9b": 205, "#ff8a34": 315, "#e6f0ff": 110, "#ffd02f": 280 };
-const assetBase = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+const assetBase = (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "");
 const credit = (value: number) => value.toLocaleString("zh-TW", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const multiplierLabel = (value: number) => Number.isInteger(value) ? `${value}` : value.toFixed(2).replace(/0$/, "");
 const settlementMultiplierLabel = (value: number) => `${Number.isInteger(value) ? value.toFixed(1) : multiplierLabel(value)}倍`;
