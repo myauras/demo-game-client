@@ -14,6 +14,7 @@ type BattleEvent = { id:EventId; label:string; bonus:number; rarity:'common' | '
 const initialMotion: MotionStops = { p1x:-108,p1y:52,e1x:108,e1y:-52,p2x:-98,p2y:-56,e2x:98,e2y:56,p3x:-116,p3y:36,e3x:116,e3y:-36 };
 const randomBetween = (min:number,max:number) => Math.round(min + Math.random() * (max - min));
 const randomDifferent = (min:number,max:number,...previousValues:number[]) => { let value = randomBetween(min,max); while (previousValues.includes(value)) value = value < max ? value + 1 : min; return value; };
+const pickWinningOutcome = (): Exclude<Outcome,'lose'> => { const roll = Math.random(); if (roll < .5) return 'spin'; if (roll < .75) return 'ringout'; if (roll < .94) return 'burst'; return 'perfect'; };
 const createMotionStops = (): MotionStops => ({
   p1x:-randomBetween(88,126), p1y:randomBetween(34,70), e1x:randomBetween(88,126), e1y:-randomBetween(34,70),
   p2x:-randomBetween(82,120), p2y:-randomBetween(32,72), e2x:randomBetween(82,120), e2y:randomBetween(32,72),
@@ -71,7 +72,7 @@ export default function Home() {
 
   const startBattle = () => {
     if (balance < bet) { setNotice('點數不足，請選擇較低投入'); return; }
-    clearTimers(); setNotice(''); const selectedOutcome = pickOutcome(); const roundEvents = chooseEvents();
+    clearTimers(); setNotice(''); let selectedOutcome = pickOutcome(); const roundEvents = chooseEvents(); if (selectedOutcome === 'lose' && roundEvents.some(event => event.id === 'dominance' || event.id === 'comeback')) selectedOutcome = pickWinningOutcome();
     const eventBonus = selectedOutcome === 'lose' ? 0 : roundEvents.reduce((sum,event) => sum + event.bonus,0); const finalPayout = Math.round(bet * (outcomeInfo[selectedOutcome].multiplier + eventBonus));
     comebackPlayerCeiling.current = null; dominanceEnemyCeiling.current = null; setOutcome(selectedOutcome); setSelectedEvents(roundEvents); setBattleEvents([]); setActiveEvent(null); setSettlementStep(0); setSettlementDone(false); setMotionStops(createMotionStops()); setStability({ player:100,enemy:100 }); setBalance(value => value - bet); setCount(3); setPhase('intro');
     const cue = (delay:number,action:() => void) => timers.current.push(setTimeout(action,delay));
