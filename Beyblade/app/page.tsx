@@ -44,7 +44,7 @@ const eventConflicts = (a:EventId,b:EventId) => (a === 'comeback' && b === 'domi
 const pickAutoEvents = (outcome:Outcome): BattleEvent[] => {
   const count = [0,0,1,1,1,2,2][randomBetween(0,6)];
   if (!count) return [];
-  const allowed = eventOptions.filter(event => outcome !== 'lose' || !['comeback','dominance'].includes(event.id));
+  const allowed = eventOptions.filter(event => outcome !== 'lose' || event.id !== 'comeback');
   const weighted = allowed.flatMap(event => Array(event.rarity === 'common' ? 5 : event.rarity === 'medium' ? 3 : 1).fill(event));
   const picked: BattleEvent[] = [];
   while (picked.length < count && weighted.length) { const candidate = weighted[randomBetween(0,weighted.length - 1)]; if (!picked.some(event => event.id === candidate.id) && !picked.some(event => eventConflicts(event.id,candidate.id))) picked.push(candidate); }
@@ -67,7 +67,7 @@ export default function Home() {
   useEffect(() => clearTimers,[]); useEffect(() => { if (shell.current) shell.current.scrollTop = 0; },[phase]);
 
   const pickOutcome = (): Outcome => { if (forced !== 'auto') return forced; const roll = Math.random(); if (roll < .36) return 'lose'; if (roll < .68) return 'spin'; if (roll < .84) return 'ringout'; if (roll < .96) return 'burst'; return 'perfect'; };
-  const chooseEvents = (selectedOutcome:Outcome) => { if (eventMode === 'none') return []; if (eventMode === 'auto') return pickAutoEvents(selectedOutcome); const ids = manualEvents.filter((id): id is EventId => id !== 'none').filter(id => selectedOutcome !== 'lose' || !['comeback','dominance'].includes(id)); return ids.filter((id,index) => ids.indexOf(id) === index).filter((id,index,array) => !array.slice(0,index).some(other => eventConflicts(other,id))).slice(0,2).map(id => eventInfo[id]); };
+  const chooseEvents = (selectedOutcome:Outcome) => { if (eventMode === 'none') return []; if (eventMode === 'auto') return pickAutoEvents(selectedOutcome); const ids = manualEvents.filter((id): id is EventId => id !== 'none').filter(id => selectedOutcome !== 'lose' || id !== 'comeback'); return ids.filter((id,index) => ids.indexOf(id) === index).filter((id,index,array) => !array.slice(0,index).some(other => eventConflicts(other,id))).slice(0,2).map(id => eventInfo[id]); };
 
   const startBattle = () => {
     if (balance < bet) { setNotice('點數不足，請選擇較低投入'); return; }
