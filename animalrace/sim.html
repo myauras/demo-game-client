@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B03 賽果生成與賠率｜冒煙自測</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 28px 20px 80px; background: #f4f2ee; color: #23201c;
+         font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+         font-size: 14px; line-height: 1.7; }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: #7c766c; font-size: 12.5px; margin-bottom: 20px; }
+  h2 { font-size: 15px; color: #194A63; border-bottom: 2px solid #BFD9E8; padding-bottom: 6px; margin: 34px 0 12px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; background: #fff; margin: 10px 0;
+          font-variant-numeric: tabular-nums; }
+  th, td { border: 1px solid #e3ded4; padding: 6px 10px; text-align: left; }
+  th { background: #EAF3F8; color: #194A63; font-weight: 600; }
+  .ctrl { background: #fff; border: 1px solid #e3ded4; border-radius: 6px; padding: 14px 18px;
+          display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+  .ctrl label { font-size: 13px; color: #555; }
+  select, button { font: inherit; padding: 5px 10px; border-radius: 5px; border: 1px solid #cfc9bd; }
+  button { background: #FF8A3D; color: #fff; border: none; padding: 7px 22px; cursor: pointer; font-weight: 700; }
+  button:disabled { background: #d8d2c6; cursor: default; }
+  .bar { height: 8px; background: #e8e3d9; border-radius: 4px; overflow: hidden; flex: 1; min-width: 140px; }
+  .bar i { display: block; height: 100%; width: 0; background: #2E6B8A; transition: width .15s; }
+  .ok { color: #2f8a3d; font-weight: 700; }
+  .bad { color: #E43D2E; font-weight: 700; }
+  .muted { color: #9a938a; }
+  .note { font-size: 12px; color: #7c766c; border-left: 2px solid #ddd8ce; padding-left: 10px; margin: 8px 0; }
+  #status { font-size: 12.5px; color: #555; min-width: 130px; }
+  ul.checks { list-style: none; padding: 0; margin: 8px 0; }
+  ul.checks li { background: #fff; border: 1px solid #e3ded4; border-radius: 5px; padding: 7px 12px; margin: 5px 0; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>B03 賽果生成與賠率｜冒煙自測</h1>
+<div class="sub">依據 reports/B規格書_v1.html（v1.1）｜此頁為冒煙級抽查；完整數值驗證見 reports/B04-數值驗證報告.html（B04 已定案：W_SHARP=1.5、冷熱門檻前三、MC_RUNS 更正為 100 萬）</div>
+
+<div class="ctrl">
+  <label>局數
+    <select id="rounds">
+      <option value="100">100（快速）</option>
+      <option value="300" selected>300</option>
+      <option value="1000">1000</option>
+      <option value="3000">3000（久）</option>
+    </select>
+  </label>
+  <label>蒙地卡羅／輪
+    <select id="mc">
+      <option value="1000000">1,000,000（規格 §6.2，約 0.7s/輪）</option>
+      <option value="100000" selected>100,000（快速）</option>
+      <option value="20000">20,000（極速冒煙）</option>
+    </select>
+  </label>
+  <button id="run">跑冒煙測試</button>
+  <div class="bar"><i id="prog"></i></div>
+  <span id="status">待命</span>
+</div>
+<p class="note">每局經真實接口走完整生命週期：newRound（含賠率 MC×2：本局＋無心情基準）→ 四注別 45 個盤口各押 10 → lockRound → settleRound。RTP 概驗即「全盤口均押」的實測回收率。</p>
+
+<h2>① 接口自測（載入即跑）</h2>
+<ul class="checks" id="iface"></ul>
+
+<h2>② RTP 概驗（目標 95／95／94／94）</h2>
+<div id="rtp" class="muted">尚未執行</div>
+
+<h2>③ 出包分佈</h2>
+<div id="outs" class="muted">尚未執行</div>
+
+<h2>④ 賽果向量自洽抽查</h2>
+<div id="consist" class="muted">尚未執行</div>
+
+</div>
+
+<script src="js/tables-b.js"></script>
+<script src="js/mock-server-b.js"></script>
+<script>
+(function () {
+  "use strict";
+  var T = TablesB, M = MockServerB;
+  var $ = function (id) { return document.getElementById(id); };
+
+  function li(name, pass, detail) {
+    var el = document.createElement("li");
+    el.innerHTML = "<span class='" + (pass ? "ok'>✔ 通過" : "bad'>✘ 失敗") + "</span>　" + name +
+      (detail ? "　<span class='muted'>" + detail + "</span>" : "");
+    $("iface").appendChild(el);
+  }
+  function pct(x) { return (x * 100).toFixed(2) + "%"; }
+
+  /* ── 45 個盤口（固定順序：win×8 → exacta×28 → out×8 → no_out）── */
+  function allMarkets(unit) {
+    var bets = [], i, j;
+    for (i = 1; i <= 8; i++) bets.push({ type: "win", target: i, amount: unit });
+    for (i = 1; i <= 8; i++) for (j = i + 1; j <= 8; j++) bets.push({ type: "exacta", target: i + "-" + j, amount: unit });
+    for (i = 1; i <= 8; i++) bets.push({ type: "out", target: i, amount: unit });
+    bets.push({ type: "no_out", amount: unit });
+    return bets;
+  }
+  function betType(idx) { return idx < 8 ? "win" : idx < 36 ? "exacta" : idx < 44 ? "out" : "no_out"; }
+
+  /* ══ ① 接口自測 ══ */
+  function interfaceTests() {
+    M._reset(); M._setMcRuns(20000); M._grant(100000);
+    try {
+      // 開局封包形狀
+      var r = M.newRound();
+      var moodCount = r.animals.filter(function (a) { return a.mood; }).length;
+      var segSum = r.segments.grass + r.segments.mud + r.segments.water;
+      li("開局封包形狀（8 隻／28 組前二連／賽段歸一化／心情 2–3 隻）",
+        r.animals.length === 8 && Object.keys(r.odds_exacta).length === 28 &&
+        Math.abs(segSum - 1) < 1e-9 && moodCount >= 2 && moodCount <= 3,
+        "心情 " + moodCount + " 隻");
+
+      // 複押 + 冪等
+      var bal0 = M.getBalance();
+      var resp1 = M.placeBets({ round_no: r.round_no, bets: allMarkets(10), idempotency_key: "K1" });
+      var bal1 = M.getBalance();
+      var resp2 = M.placeBets({ round_no: r.round_no, bets: allMarkets(10), idempotency_key: "K1" });
+      li("複押 45 注一次收單、扣款正確", resp1.accepted.length === 45 && bal0 - bal1 === 450);
+      li("冪等：同 idempotency_key 重試回原結果、不重複扣款",
+        resp2 === resp1 && M.getBalance() === bal1);
+
+      // 封盤拒單
+      M.lockRound();
+      var rejected = false, code = "";
+      try { M.placeBets({ round_no: r.round_no, bets: allMarkets(10) }); }
+      catch (e) { rejected = true; code = e.code; }
+      li("封盤拒單", rejected && code === "ROUND_LOCKED", code);
+
+      // 結算自洽
+      var oc = M.settleRound();
+      var outCount = oc.out.filter(Boolean).length;
+      var winHits = 0, exHits = 0, outHits = 0, noOutHits = 0;
+      oc.payouts.forEach(function (p) {
+        if (!p.hit) return;
+        var t = betType(p.bet_index);
+        if (t === "win") winHits++; else if (t === "exacta") exHits++;
+        else if (t === "out") outHits++; else noOutHits++;
+      });
+      var credited = M.getBalance() - bal1 === oc.total_payout;
+      li("結算判定（冠軍恰 1 中、前二連恰 1 中、出包中注數＝出包隻數、零出包互斥）＋派彩入帳",
+        winHits === 1 && exHits === 1 && outHits === outCount &&
+        noOutHits === (outCount === 0 ? 1 : 0) && credited,
+        "本局出包 " + outCount + " 隻，派彩 " + oc.total_payout);
+
+      // 全滅局：直接以 p_out=1 抽向量（§5.3：照 out_at 倒序、冠軍照判）
+      var w = [], p1 = [], i;
+      for (i = 0; i < 8; i++) { w.push(60); p1.push(1); }
+      var v = M._draw(w, p1);
+      var allOut = v.out.every(Boolean), desc = true;
+      for (i = 1; i < 8; i++) if (v.out_at[v.ranking[i] - 1] > v.out_at[v.ranking[i - 1] - 1]) desc = false;
+      li("全滅局：8 隻全出包時名次＝out_at 倒序（撐最久者為冠軍）", allOut && desc,
+        "冠軍 out_at=" + v.out_at[v.ranking[0] - 1] + "m");
+
+      // 心情方向抽查（驗收：亢奮 → 勝賠降）
+      var segs = { grass: 1 / 3, mud: 1 / 3, water: 1 / 3 };
+      var base = { burst: 60, terrain: 60, focus: 60 };
+      function mkParams(mut) {
+        var ws = [], ps = [];
+        for (var k = 0; k < 8; k++) {
+          var a = { burst: base.burst, terrain: base.terrain, focus: base.focus };
+          if (k === 0 && mut) mut(a);
+          ws.push(T.weight(a, segs)); ps.push(T.pOut(a.focus));
+        }
+        return { w: ws, p: ps };
+      }
+      M._setMcRuns(100000);
+      var o0 = M._computeOdds(mkParams(null).w, mkParams(null).p);
+      var oH = (function () { var q = mkParams(function (a) { a.burst += 15; }); return M._computeOdds(q.w, q.p); })();
+      var oS = (function () { var q = mkParams(function (a) { a.focus -= 20; }); return M._computeOdds(q.w, q.p); })();
+      var oN = (function () {
+        var segsW = { grass: 0.2, mud: 0.4, water: 0.4 }, ws = [], ps = [];
+        for (var k = 0; k < 8; k++) {
+          var a = { burst: 60, terrain: 60, focus: 60 };
+          if (k === 0) a.terrain -= 20;
+          ws.push(T.weight(a, segsW)); ps.push(T.pOut(a.focus));
+        }
+        return M._computeOdds(ws, ps);
+      })();
+      li("心情方向：亢奮（爆發+15）→ 勝賠降", oH.win[0] < o0.win[0],
+        o0.win[0] + " → " + oH.win[0]);
+      li("心情方向：想睡（專注−20）→ 該隻出包賠率降", oS.out[0] < o0.out[0],
+        o0.out[0] + " → " + oS.out[0]);
+      li("心情方向：怯場（地形−20）＋水多賽道 → 勝賠升", oN.win[0] > o0.win[0],
+        o0.win[0] + " → " + oN.win[0]);
+
+      // 同參數快取
+      var t0 = performance.now();
+      M._computeOdds(mkParams(null).w, mkParams(null).p);
+      li("同參數賠率快取（重算應近乎 0ms）", performance.now() - t0 < 5,
+        (performance.now() - t0).toFixed(2) + "ms");
+    } catch (e) {
+      li("接口自測中斷：" + (e.code || "") + " " + e.message, false);
+    }
+    M._reset();
+  }
+
+  /* ══ ②③④ 大量輪次冒煙 ══ */
+  function runSmoke() {
+    var rounds = +$("rounds").value, unit = 10;
+    var btn = $("run"); btn.disabled = true;
+
+    M._reset();
+    M._setMcRuns(+$("mc").value);
+    M._grant(rounds * 45 * unit + 100000);
+
+    var tally = { win: { bet: 0, pay: 0 }, exacta: { bet: 0, pay: 0 }, out: { bet: 0, pay: 0 }, no_out: { bet: 0, pay: 0 } };
+    var outDist = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+    var noOutOddsSum = 0;
+    var violations = { perm: 0, flag: 0, sink: 0, desc: 0 };
+    var done = 0;
+
+    function checkVector(oc) {
+      var i, seen = {};
+      for (i = 0; i < 8; i++) seen[oc.ranking[i]] = true;
+      if (Object.keys(seen).length !== 8) violations.perm++;
+      for (i = 0; i < 8; i++) if (oc.out[i] !== (oc.out_at[i] > 0)) violations.flag++;
+      var sawOut = false;
+      for (i = 0; i < 8; i++) {
+        var isOut = oc.out[oc.ranking[i] - 1];
+        if (sawOut && !isOut) { violations.sink++; break; }   // 出包者之後不得再出現完賽者
+        if (isOut) sawOut = true;
+      }
+      var prev = Infinity;
+      for (i = 0; i < 8; i++) {
+        var id = oc.ranking[i] - 1;
+        if (!oc.out[id]) continue;
+        if (oc.out_at[id] > prev) { violations.desc++; break; }
+        prev = oc.out_at[id];
+      }
+    }
+
+    function oneRound() {
+      var r = M.newRound();
+      noOutOddsSum += r.odds_no_out;
+      M.placeBets({ round_no: r.round_no, bets: allMarkets(unit) });
+      M.lockRound();
+      var oc = M.settleRound();
+      checkVector(oc);
+      outDist[oc.out.filter(Boolean).length]++;
+      oc.payouts.forEach(function (p) {
+        var t = tally[betType(p.bet_index)];
+        t.bet += unit; t.pay += p.payout;
+      });
+    }
+
+    function render() {
+      var target = { win: 95, exacta: 95, out: 94, no_out: 94 };
+      var names = { win: "冠軍", exacta: "前二連", out: "出包", no_out: "零出包" };
+      var rows = Object.keys(tally).map(function (k) {
+        var t = tally[k], rtp = t.bet ? t.pay / t.bet * 100 : 0;
+        return "<tr><td>" + names[k] + "</td><td>" + (t.bet / unit) + "</td><td>" + t.bet +
+          "</td><td>" + t.pay + "</td><td>" + rtp.toFixed(2) + "%</td><td>" + target[k] + "%</td></tr>";
+      }).join("");
+      $("rtp").innerHTML = "<table><tr><th>注別</th><th>注數</th><th>總注金</th><th>總派彩</th><th>實測 RTP</th><th>目標</th></tr>" +
+        rows + "</table><p class='note'>冒煙級樣本（前二連波動最大，±2–3% 屬正常）；±0.1% 精度驗證與防套利窮舉由 B04 以百萬輪執行。</p>";
+
+      var anyOut = done - outDist[0];
+      var distRow = outDist.map(function (c, i) { return "<td>" + c + "<br><span class='muted'>" + (done ? pct(c / done) : "—") + "</span></td>"; }).join("");
+      $("outs").innerHTML = "<table><tr><th>出包隻數</th>" + [0,1,2,3,4,5,6,7,8].map(function (i) { return "<th>" + i + "</th>"; }).join("") +
+        "</tr><tr><td>局數／占比</td>" + distRow + "</tr></table>" +
+        "<p>有出包：零出包 ＝ <b>" + (outDist[0] ? (anyOut / outDist[0]).toFixed(2) : "∞") + " : 1</b>（規格 §7.3 假設 ~3:1）　" +
+        "全滅局 " + outDist[8] + " 次　零出包賠率均值 " + (done ? (noOutOddsSum / done).toFixed(2) : "—") + "x</p>";
+
+      var vTotal = violations.perm + violations.flag + violations.sink + violations.desc;
+      $("consist").innerHTML = "<p class='" + (vTotal === 0 ? "ok" : "bad") + "'>" +
+        (vTotal === 0 ? "✔ 全數通過" : "✘ 發現 " + vTotal + " 筆違規") + "</p>" +
+        "<table><tr><th>檢查項</th><th>違規局數</th></tr>" +
+        "<tr><td>ranking 為 1–8 的排列</td><td>" + violations.perm + "</td></tr>" +
+        "<tr><td>out 旗標 ⇔ out_at &gt; 0</td><td>" + violations.flag + "</td></tr>" +
+        "<tr><td>完賽者一律排在出包者之前（沉底）</td><td>" + violations.sink + "</td></tr>" +
+        "<tr><td>出包段依 out_at 倒序</td><td>" + violations.desc + "</td></tr></table>" +
+        "<p class='muted'>共抽查 " + done + " 局。</p>";
+    }
+
+    (function step() {
+      var batch = +$("mc").value <= 20000 ? 5 : 1;
+      for (var i = 0; i < batch && done < rounds; i++) { oneRound(); done++; }
+      $("prog").style.width = (done / rounds * 100) + "%";
+      $("status").textContent = done + " / " + rounds + " 局";
+      if (done < rounds) { setTimeout(step, 0); return; }
+      render();
+      $("status").textContent = "完成（" + rounds + " 局）";
+      btn.disabled = false;
+    })();
+  }
+
+  $("run").onclick = runSmoke;
+  interfaceTests();
+})();
+</script>
+</body>
+</html>
