@@ -41,10 +41,10 @@ const eventInfo: Record<EventId,BattleEvent> = {
 const eventIds = Object.keys(eventInfo) as EventId[];
 const eventOptions = eventIds.map(id => eventInfo[id]);
 const eventConflicts = (a:EventId,b:EventId) => (a === 'comeback' && b === 'dominance') || (a === 'dominance' && b === 'comeback');
-const pickAutoEvents = (outcome:Outcome): BattleEvent[] => {
+const pickAutoEvents = (): BattleEvent[] => {
   const count = [0,0,1,1,1,2,2][randomBetween(0,6)];
   if (!count) return [];
-  const allowed = eventOptions.filter(event => outcome !== 'lose' || event.id !== 'comeback');
+  const allowed = eventOptions;
   const weighted = allowed.flatMap(event => Array(event.rarity === 'common' ? 5 : event.rarity === 'medium' ? 3 : 1).fill(event));
   const picked: BattleEvent[] = [];
   while (picked.length < count && weighted.length) { const candidate = weighted[randomBetween(0,weighted.length - 1)]; if (!picked.some(event => event.id === candidate.id) && !picked.some(event => eventConflicts(event.id,candidate.id))) picked.push(candidate); }
@@ -67,11 +67,11 @@ export default function Home() {
   useEffect(() => clearTimers,[]); useEffect(() => { if (shell.current) shell.current.scrollTop = 0; },[phase]);
 
   const pickOutcome = (): Outcome => { if (forced !== 'auto') return forced; const roll = Math.random(); if (roll < .36) return 'lose'; if (roll < .68) return 'spin'; if (roll < .84) return 'ringout'; if (roll < .96) return 'burst'; return 'perfect'; };
-  const chooseEvents = (selectedOutcome:Outcome) => { if (eventMode === 'none') return []; if (eventMode === 'auto') return pickAutoEvents(selectedOutcome); const ids = manualEvents.filter((id): id is EventId => id !== 'none').filter(id => selectedOutcome !== 'lose' || id !== 'comeback'); return ids.filter((id,index) => ids.indexOf(id) === index).filter((id,index,array) => !array.slice(0,index).some(other => eventConflicts(other,id))).slice(0,2).map(id => eventInfo[id]); };
+  const chooseEvents = () => { if (eventMode === 'none') return []; if (eventMode === 'auto') return pickAutoEvents(); const ids = manualEvents.filter((id): id is EventId => id !== 'none'); return ids.filter((id,index) => ids.indexOf(id) === index).filter((id,index,array) => !array.slice(0,index).some(other => eventConflicts(other,id))).slice(0,2).map(id => eventInfo[id]); };
 
   const startBattle = () => {
     if (balance < bet) { setNotice('點數不足，請選擇較低投入'); return; }
-    clearTimers(); setNotice(''); const selectedOutcome = pickOutcome(); const roundEvents = chooseEvents(selectedOutcome);
+    clearTimers(); setNotice(''); const selectedOutcome = pickOutcome(); const roundEvents = chooseEvents();
     const eventBonus = selectedOutcome === 'lose' ? 0 : roundEvents.reduce((sum,event) => sum + event.bonus,0); const finalPayout = Math.round(bet * (outcomeInfo[selectedOutcome].multiplier + eventBonus));
     comebackPlayerCeiling.current = null; dominanceEnemyCeiling.current = null; setOutcome(selectedOutcome); setSelectedEvents(roundEvents); setBattleEvents([]); setActiveEvent(null); setSettlementStep(0); setSettlementDone(false); setMotionStops(createMotionStops()); setStability({ player:100,enemy:100 }); setBalance(value => value - bet); setCount(3); setPhase('intro');
     const cue = (delay:number,action:() => void) => timers.current.push(setTimeout(action,delay));
