@@ -349,6 +349,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 .duel-distance strong { margin-top: 2px; color: #fff; font: italic 900 27px Impact,"Arial Narrow",sans-serif; }
 
 .race-panel { display: grid; gap: 7px; }
+.race-panel.action-only { gap: 8px; }
+.game-card > .settlement-overlay { z-index: 70; inset: 0; }
 .decision-summary { display: grid; grid-template-columns: 1fr auto; gap: 7px 10px; align-items: center; }
 .decision-summary .live-title { min-width: 0; }
 .decision-summary .live-title h1 { font-size: 29px; }
