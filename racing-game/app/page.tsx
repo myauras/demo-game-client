@@ -196,6 +196,11 @@ export default function Home() {
         setMilestones((current) => [...current, id]);
         notices.push({ kind: "event", alert: { title: item.title, subtitle: `里程碑 +${multiplierLabel(item.bonus)}倍`, tone: "gold", variant: "panel" } });
       }
+      const upcomingMilestone = milestoneEntries.find(([id, item]) => item.place === nextPlace - 1 && !milestones.includes(id));
+      if (upcomingMilestone) {
+        const [, item] = upcomingMilestone;
+        notices.push({ kind: "event", alert: { title: "里程碑預告", subtitle: `下次成功：${item.title.replace("！", "")}・+${multiplierLabel(item.bonus)}倍`, tone: "gold", variant: "panel" } });
+      }
       if (newStreak >= 3) {
         setStreakPulse(true);
         window.setTimeout(() => setStreakPulse(false), 650);
