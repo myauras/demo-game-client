@@ -34,6 +34,8 @@ var RoadsUI = (function () {
   var COLOR = { 1: "#F2F2F0", 2: "#C98B5B", 3: "#FFD02F", 4: "#AEB6BF",
                 5: "#E8B14C", 6: "#D9814C", 7: "#7FA65A", 8: "#D97BA6" };
   var DARK_TEXT = { 1: "#5a6472", 3: "#5a4a10" };
+  var NAME_DISP = { 1: "小兔", 2: "阿汪", 3: "鴨鴨", 4: "山羊",
+                    5: "小馬", 6: "阿猴", 7: "樹懶", 8: "小豬" };
   var YEL = "#FF8A3D", BLU = "#2E6B8A", GOLD = "#D4A017", GRID = "#E3EEF5";
 
   /* ── 狀態 ── */
@@ -41,7 +43,8 @@ var RoadsUI = (function () {
   var entries = {};         // n → 路子條目（含冷熱旗標，算一次快取）
   var lastKnown = 0;        // 已有紀錄的最新局號
   var ovMode = "winner";    // 總覽珠盤雙模式
-  var rsTab = "ov";         // 版位內當前頁籤（ov | bs | oe | hot）
+  var rsTab = "ov";         // 版位內當前頁籤（ov | bs | oe | hot | tr）
+  var trSel = 0;            // B08-R2 走勢頁：0＝八宮格、其餘＝單隻詳細（動物 id）
   var pendingDropN = 0;     // 待播落珠動畫的局號
 
   var $ = function (id) { return document.getElementById(id); };
@@ -121,21 +124,59 @@ var RoadsUI = (function () {
     }
     persist();
     buildDom();
+
+    /* B10-R2：回前景自癒——背景分頁期間漏掉的珠（節流下事件缺席）
+       於 visibilitychange 一次補齊並重繪，珠盤不留洞。 */
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden || !lastKnown) return;
+      var liveN = AdapterB.liveRoundNo();
+      for (var n = lastKnown + 1; n < liveN; n++) {   // 引擎可能尚未醒來回補→主動決定性補生
+        var rec = AdapterB.getRoadRecord(n);
+        if (!rec) { AdapterB.backfillRoadRecords(n, n); rec = AdapterB.getRoadRecord(n); }
+        mergeRec(rec);
+      }
+      healShoe();
+      persist();
+      renderActive();
+    });
+
     return { total: shoeEntries().length, replayed: replayed };
   }
 
   /* ══════════ 引擎事件掛鉤（由 game.js 轉發）══════════ */
 
+  /* B10-R2 自癒（珠盤空格保險②）：掃當靴範圍，缺局向 adapter 補生
+   * （決定性重放，任何裝置補出同一珠）。正常情況全為 O(1) 快取查找。 */
+  function healShoe() {
+    if (!lastKnown) return 0;
+    var from = (R.shoeOf(lastKnown) - 1) * R.SHOE_SIZE + 1, healed = 0;
+    for (var n = from; n <= lastKnown; n++) {
+      if (recs[n]) continue;
+      var rec = AdapterB.getRoadRecord(n);
+      if (!rec) { AdapterB.backfillRoadRecords(n, n); rec = AdapterB.getRoadRecord(n); }
+      if (rec) { mergeRec(rec); healed++; }
+    }
+    if (healed) { console.warn("[roads-ui] 自癒補珠 " + healed + " 局"); persist(); }
+    return healed;
+  }
+
+  /* B10-R2：珠的 DOM 插入改為結算事件驅動、同步完成（渲染不依賴
+   * 下個下注階段才刷新；落珠動畫仍留待下注階段重繪時疊加播放）。 */
   function onSettled(d) {
     var n = d.round.round_no;
-    mergeRec(AdapterB.getRoadRecord(n));
-    pendingDropN = n;
+    var rec = AdapterB.getRoadRecord(n);
+    if (!rec) { AdapterB.backfillRoadRecords(n, n); rec = AdapterB.getRoadRecord(n); }  // 保險
+    mergeRec(rec);
+    healShoe();
     persist();
+    renderActive();          // 同步插珠（此刻 stage 被結算面板覆蓋，但 DOM 已就位）
+    pendingDropN = n;        // 動畫標記留給下注階段重繪（純疊加效果）
   }
 
   function onBackfill() {   // 休眠醒來：引擎已依序重放漏局，取回其紀錄
     var liveN = AdapterB.liveRoundNo();
     for (var n = lastKnown + 1; n < liveN; n++) mergeRec(AdapterB.getRoadRecord(n));
+    healShoe();
     persist();
   }
 
@@ -314,6 +355,11 @@ var RoadsUI = (function () {
           '</div>' +
         '</section>';
     });
+    /* B08-R2 走勢頁（第五頁籤）：八宮格迷你折線 ⇄ 單隻詳細，就地切換 */
+    html += '<section class="rs-panel" id="rsp-tr">' +
+              '<div id="tr-grid"></div>' +
+              '<div id="tr-detail" hidden></div>' +
+            '</section>';
     body.insertAdjacentHTML("beforeend", html);
 
     /* 綁互動：拖曳（版位內所有捲區）＋頁籤就地切換＋總覽空白處切模式 */
@@ -326,10 +372,17 @@ var RoadsUI = (function () {
       Array.prototype.forEach.call($("rs-tabs").children, function (el) {
         el.classList.toggle("on", el.dataset.rt === rsTab);
       });
-      ["ov", "bs", "oe", "hot"].forEach(function (k) {
+      ["ov", "bs", "oe", "hot", "tr"].forEach(function (k) {
         $("rsp-" + k).classList.toggle("on", k === rsTab);
       });
       renderActive();   // 面板顯示之後才渲染＋捲到最新（§7.5）
+    });
+
+    /* 走勢頁互動：點迷你圖→單隻詳細、返回→八宮格 */
+    $("rsp-tr").addEventListener("click", function (e) {
+      if (e.target.closest(".trd-back")) { trSel = 0; renderActive(); return; }
+      var m = e.target.closest(".trm");
+      if (m) { trSel = +m.dataset.id; renderActive(); }
     });
 
     /* 點珠盤空白處 ⇄ 冠軍/出包計數（§7.2；R2 彈窗已移除，點珠=點空白同義） */
@@ -337,6 +390,87 @@ var RoadsUI = (function () {
       ovMode = ovMode === "winner" ? "outs" : "winner";
       renderActive();
     });
+  }
+
+  /* ══════════ B08-R2 走勢頁（迷你折線八宮格 ⇄ 單隻詳細）══════════
+   * 資料＝本模組 recs（賽果紀錄流）近 20 局：名次折線（Y 軸 1 上
+   * 8 下）、出包局標紅點。靜態 SVG、零外部庫；版位高度不變。 */
+
+  function trendData(id) {
+    var list = [];
+    for (var n = Math.max(1, lastKnown - 19); n <= lastKnown; n++) {
+      var rec = recs[n];
+      if (!rec) continue;
+      list.push({ n: n, pos: rec.ranking.indexOf(id) + 1,
+                  out: !!rec.out[id - 1], at: rec.out_at[id - 1] });
+    }
+    return list;
+  }
+
+  function beadMini(id, size) {
+    return '<i class="trbead" style="width:' + size + "px;height:" + size + "px;background:" + COLOR[id] +
+      (id === 1 ? ";box-shadow:inset 0 0 0 1px #8a94a6" : "") +
+      ";color:" + (DARK_TEXT[id] || "#fff") + ";font-size:" + Math.round(size * 0.6) + 'px">' + id + "</i>";
+  }
+
+  /** 單張迷你折線 SVG（W×H 固定座標系；名次 1→上、8→下） */
+  function miniSvg(list, W, H) {
+    var padT = 4, padB = 5, padX = 4;
+    var yOf = function (pos) { return padT + (pos - 1) / 7 * (H - padT - padB); };
+    var xOf = function (i) {
+      return list.length === 1 ? W / 2 : padX + i / (list.length - 1) * (W - padX * 2);
+    };
+    var grid = "", g;
+    for (g = 1; g <= 8; g += 7)   // 名次 1 與 8 兩條淡線（上下界）
+      grid += '<line x1="0" y1="' + yOf(g) + '" x2="' + W + '" y2="' + yOf(g) +
+              '" stroke="' + GRID + '" stroke-width="1"/>';
+    var pts = list.map(function (d, i) { return xOf(i).toFixed(1) + "," + yOf(d.pos).toFixed(1); });
+    var line = list.length > 1
+      ? '<polyline points="' + pts.join(" ") + '" fill="none" stroke="' + BLU +
+        '" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>' : "";
+    var dots = "";
+    list.forEach(function (d, i) {
+      if (d.out) dots += '<circle cx="' + xOf(i).toFixed(1) + '" cy="' + yOf(d.pos).toFixed(1) +
+        '" r="2.6" fill="#E43D2E" stroke="#fff" stroke-width="1"/>';
+      else if (d.pos === 1) dots += '<circle cx="' + xOf(i).toFixed(1) + '" cy="' + yOf(d.pos).toFixed(1) +
+        '" r="2" fill="' + YEL + '"/>';
+    });
+    return '<svg width="100%" height="' + H + '" viewBox="0 0 ' + W + " " + H +
+           '" preserveAspectRatio="none">' + grid + line + dots + "</svg>";
+  }
+
+  function renderTrendPanel() {
+    var grid = $("tr-grid"), det = $("tr-detail");
+    if (!trSel) {
+      det.hidden = true;
+      grid.hidden = false;
+      var html = "";
+      for (var id = 1; id <= 8; id++) {
+        var list = trendData(id);
+        html += '<div class="trm" data-id="' + id + '">' +
+          '<div class="trm-head">' + beadMini(id, 13) +
+          '<span>' + NAME_DISP[id] + "</span></div>" + miniSvg(list, 74, 66) + "</div>";
+      }
+      grid.innerHTML = html;
+      return;
+    }
+    grid.hidden = true;
+    det.hidden = false;
+    var listD = trendData(trSel).reverse();   // 新局在前
+    var wins = 0, outs = 0;
+    listD.forEach(function (d) { if (d.out) outs++; else if (d.pos === 1) wins++; });
+    var rows = listD.map(function (d) {
+      return '<div class="trd-row' + (d.out ? " lo" : d.pos === 1 ? " hi" : "") + '">' +
+        '<span class="trd-n">局 ' + d.n.toLocaleString("en-US") + "</span>" +
+        (d.out ? '<b class="trd-out">💥 出包 @' + d.at + "m</b>"
+               : '<b class="trd-pos">第 ' + d.pos + " 名" + (d.pos === 1 ? " 🏆" : "") + "</b>") +
+        "</div>";
+    }).join("") || '<div class="trd-empty">尚無歷史紀錄</div>';
+    det.innerHTML =
+      '<div class="trd-head"><button class="trd-back">‹ 返回</button>' +
+      beadMini(trSel, 17) + "<b>" + NAME_DISP[trSel] + "</b>" +
+      '<span class="trd-stat">近 ' + listD.length + " 局：勝 " + wins + "・出包 " + outs + "</span></div>" +
+      '<div class="trd-list">' + rows + "</div>";
   }
 
   /* ══════════ 就地渲染（當前頁籤）══════════ */
@@ -354,6 +488,9 @@ var RoadsUI = (function () {
         : "點珠盤 ⇄ 冠軍・珠＝出包隻數：0 灰框・1 黃框・2 橘框・3+ 紅實心";
       sc.scrollLeft = sc.scrollWidth;
       pendingDropN = 0;   // 落珠動畫一次性
+    } else if (rsTab === "tr") {
+      $("road-mode").textContent = trSel ? "走勢・" + NAME_DISP[trSel] : "走勢";
+      renderTrendPanel();
     } else {
       var k = rsTab;
       $("road-mode").textContent = BIN[k].name;

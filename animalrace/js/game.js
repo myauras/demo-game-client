@@ -62,7 +62,7 @@
     /* ── 本層狀態 ── */
     var currentRound = null;
     var curPhase = null;
-    var betTab = "win";              // win | exacta | out | no_out
+    var betTab = "win";              // win | exacta | out | special（B10：原 no_out 頁籤併入特殊）
     var pairSel = [];                // 前二連配對選取（動物 id ×2）
     var chipAmount = 100;
     var staged = [];                 // 待確認注單 [{type,target,amount,label}]
@@ -166,15 +166,48 @@
        列 1＝頭像/名/▾；列 2＝心情迷你徽章＋賠率標籤（僅冠軍/出包頁籤）。
        手勢統一：點卡＝下注動作（零出包除外，卡維持純資訊）、▾＝展開屬性
        （手風琴，一次僅一張；展開後高度增加靠卡片區捲動）。 */
-    var expandedId = null;
-    function renderCards(round) {
-      var h = "";
+    /* ── B08 冷熱標示（工作項 6）：與路子冷熱頁同源──同樣以
+       TablesB 折算心情後的 weight/pOut 餵 Roads.favOrder（精確勝率
+       枚舉，零 MC 噪音），前三熱門 🔥、末二大冷門 ❄。 */
+    var hotCache = { n: 0 };
+    function hotCold(round) {
+      if (hotCache.n === round.round_no) return hotCache;
+      var w = [], p = [];
       round.animals.forEach(function (a) {
+        var e = { burst: a.attrs.burst, terrain: a.attrs.terrain, focus: a.attrs.focus };
+        if (a.mood) e[TablesB.MOODS[a.mood].attr] += a.mood_delta;
+        w.push(TablesB.weight(e, round.segments));
+        p.push(TablesB.pOut(e.focus));
+      });
+      var order = Roads.favOrder(w, p);
+      var hot = {}, cold = {};
+      order.slice(0, TablesB.ROAD_HOT.FAV_TOP).forEach(function (id) { hot[id] = 1; });
+      order.slice(8 - TablesB.ROAD_HOT.LONG_BOTTOM).forEach(function (id) { cold[id] = 1; });
+      hotCache = { n: round.round_no, hot: hot, cold: cold, order: order };
+      return hotCache;
+    }
+
+    var sortMode = "num";                  // num＝編號序 | hot＝冷熱序（熱→冷）
+    function updateSortBtn() {
+      var b = $("sort-toggle");
+      b.textContent = sortMode === "num" ? "1→8" : "🔥→❄";
+      b.classList.toggle("hotmode", sortMode === "hot");
+    }
+
+    var expandedId = null;
+    var animOnce = null;     // B10-R2：僅使用者點擊展開那一次重繪播 unfold 動畫
+    function renderCards(round) {
+      var hc = hotCold(round);
+      var list = sortMode === "hot"
+        ? hc.order.map(function (id) { return round.animals[id - 1]; })
+        : round.animals;
+      var h = "";
+      list.forEach(function (a) {
         var m = a.mood ? MOOD[a.mood] : null;
         var d = function (attr) { return (m && m.attr === attr) ? a.mood_delta : 0; };
         var open = expandedId === a.id;
         var detail = !open ? "" :
-          '<div class="cdetail">' +
+          '<div class="cdetail' + (a.id === animOnce ? "" : " no-anim") + '">' +
           attrRow("爆發", "f-burst", a.attrs.burst, d("burst")) +
           attrRow("地形", "f-terrain", a.attrs.terrain, d("terrain")) +
           attrRow("專注", "f-focus", a.attrs.focus, d("focus")) +
@@ -187,6 +220,7 @@
           (open ? " open" : "") + '" data-id="' + a.id + '">' +
           '<div class="chead">' + avatarHtml(a.id) +
           '<span class="cname">' + displayName(a) + '</span>' +
+          (hc.hot[a.id] ? '<b class="hcb">🔥</b>' : hc.cold[a.id] ? '<b class="hcb">❄</b>' : "") +
           '<i class="chev">' + (open ? "▴" : "▾") + '</i></div>' +
           '<div class="csub">' +
           (m ? '<span class="mood ' + m.cls + '">' + m.txt.split(" ")[0] +
@@ -196,6 +230,7 @@
       var wrap = $("cards");
       wrap.className = "mode-" + betTab;      // 模式標記（CSS 依此調整卡片互動感）
       wrap.innerHTML = h;
+      animOnce = null;                        // 動畫一次性：程式性重繪不再重播
     }
 
     /* R2.1：前二連賠率上卡──未選時顯示該動物全部配對的賠率區間，
@@ -234,34 +269,61 @@
 
     function renderTabBar() {
       var bar = $("tab-bar");
-      bar.classList.toggle("hero", betTab === "no_out");
+      bar.classList.toggle("special", betTab === "special");
       if (betTab === "exacta") {
         // R2 一步到位：第一張標記、第二張點下即成注（用當前籌碼額），無中繼按鈕
         bar.innerHTML = pairSel.length
           ? "🔗 已選 <b>#" + pairSel[0] + "</b>・再點一張卡即成注（每注 " + fmt(chipAmount) + "）"
           : "🔗 前二連：連點兩張動物卡，第二張點下即入注單（不計順序）";
         bar.classList.add("show");
-      } else if (betTab === "no_out") {
-        // R3：零出包主打面板──大字賠率＋單一大按鈕，卡片區轉純資訊
+      } else if (betTab === "special") {
+        /* B10 特殊面板四列（示意稿 v2）：大小／奇偶／熱門度三選項／零出包寬鈕。
+           點大鈕＝當前籌碼成注（沿用原零出包手勢）；動物卡轉純資訊。
+           定價取 AdapterB.specialInfo（roads.js 解析勝率、與冷熱頁同源）。 */
+        var sp = currentRound && AdapterB.specialInfo(currentRound);
         var no = currentRound && currentRound.odds_no_out;
-        bar.innerHTML = '<span class="hero-ico">🛡</span><div class="hero-txt">' +
-          (no ? '<b class="hero-odds">@' + no.toFixed(2) + "x</b>"
-              : '<b class="hero-odds full">額度滿</b>') +
-          '<span class="hero-sub">押 8 隻全數平安完賽</span></div>' +
-          '<button class="tb-add hero-btn" data-act="add-noout"' + (no ? "" : " disabled") +
-          ">押零出包 " + fmt(chipAmount) + "</button>";
+        function spBtn(t, cls, txt) {
+          return '<button class="sp-btn ' + cls + '" data-sp="' + t + '">' + txt +
+            "<small>" + sp.odds[t].toFixed(2) + "x</small></button>";
+        }
+        bar.innerHTML = !sp ? "" :
+          '<div class="sp-row" data-row="bs"><span class="sp-lbl">大小</span>' +
+            spBtn("big", "c-org", "大 5–8") + spBtn("small", "c-blu", "小 1–4") + "</div>" +
+          '<div class="sp-row" data-row="oe"><span class="sp-lbl">奇偶</span>' +
+            spBtn("odd", "c-org", "奇") + spBtn("even", "c-blu", "偶") + "</div>" +
+          '<div class="sp-row" data-row="hot"><span class="sp-lbl">熱門度</span>' +
+            spBtn("hot", "c-red", "熱門") + spBtn("cold", "c-nvy", "冷門") +
+            spBtn("longshot", "c-gld", "爆冷門") + "</div>" +
+          '<div class="sp-row" data-row="no"><span class="sp-lbl">零出包</span>' +
+            '<button class="sp-btn c-grn" data-sp="no_out"' + (no ? "" : " disabled") +
+            ">🛡 8 隻全數平安完賽<small>" + (no ? no.toFixed(2) + "x" : "額度滿") + "</small></button></div>" +
+          '<div class="sp-hint">與路子頁籤同源：大＝冠軍 5–8・奇＝冠軍編號奇數・熱門＝前三熱門奪冠／爆冷門＝勝率末二／冷門＝其餘三隻</div>';
         bar.classList.add("show");
+        syncSpGlow();
       } else {
         bar.classList.remove("show");
         bar.innerHTML = "";
       }
     }
 
+    /* B10 連動：路子區正看大小/奇偶/冷熱頁籤時，特殊面板對應列微發光 */
+    function syncSpGlow() {
+      if (betTab !== "special") return;
+      var on = document.querySelector("#rs-tabs button.on");
+      var rt = on ? on.dataset.rt : "";
+      Array.prototype.forEach.call(document.querySelectorAll("#tab-bar .sp-row"), function (row) {
+        row.classList.toggle("glow", rt === row.dataset.row);
+      });
+    }
+
     /* ══════════ 注單（staged 可撤單 → 確認送引擎）══════════ */
+    var SP_LABEL = { big: "🛣大", small: "🛣小", odd: "🛣奇", even: "🛣偶",
+                     hot: "🛣熱門", cold: "🛣冷門", longshot: "🛣爆冷門" };
     function betLabel(b) {
       if (b.type === "win") return "🏆#" + b.target;
       if (b.type === "out") return "💥#" + b.target;
       if (b.type === "exacta") return "🔗" + b.target;
+      if (SP_LABEL[b.type]) return SP_LABEL[b.type];
       return "🛡零出包";
     }
 
@@ -307,6 +369,7 @@
         btn.disabled = true;
         btn.textContent = "選注後確認";
       }
+      AutoBet.refreshEntry();                // B10：⟳ 鈕隨「有無已確認注單」亮暗
     }
 
     function stagedTotal() { return staged.reduce(function (s, b) { return s + b.amount; }, 0); }
@@ -322,9 +385,12 @@
       } else if (type === "exacta") {
         odds = currentRound.odds_exacta[target];
         if (!odds) { toast("⛔ 本輪額度已滿"); return; }
-      } else {
+      } else if (type === "no_out") {
         odds = currentRound.odds_no_out;
         if (!odds) { toast("⛔ 本輪額度已滿"); return; }
+      } else {   // B10 特殊注別：公式定價（P>0 恆有值）
+        odds = AdapterB.specialInfo(currentRound).odds[type];
+        if (!odds) return;
       }
       // 已押注額已自錢包扣除，故只需驗「待確認總額 ≦ 現餘額」
       if (stagedTotal() + chipAmount > RoundEngine.getWallet()) { toast("⛔ 餘額不足"); return; }
@@ -343,7 +409,7 @@
         ok++;
       }
       renderSlip();
-      if (ok) toast("✅ 下注成功：" + ok + " 注");
+      if (ok) { toast("✅ 下注成功：" + ok + " 注"); SFX.play("bet"); }
     }
 
     /* 成注回饋（R3.1 前二連版 → B06-R2 四頁籤共用）：
@@ -412,27 +478,68 @@
           ';color:' + (DARK_TEXT[id] || "#fff") + '">' + id + "</span>" +
           (isOut ? "包" : "") + "</span>";
       }).join("");
-      var pay = "";
-      if (d.payouts.length) {
-        var hits = d.payouts.filter(function (p) { return p.hit; }).length;
-        pay = d.total_payout > 0
-          ? '<div class="settle-pay won">🎉 中 ' + hits + " 注・派彩 +" + fmt(d.total_payout) + "</div>"
-          : '<div class="settle-pay lost">本局 ' + d.payouts.length + " 注未中，下局再來</div>";
+      /* B08 工作項 1：逐注開獎（注別/賠率/中未中/派彩，逐列揭示）
+         ＋總派彩 0.4s 滾動入帳（§5.4 註：0.4s 不可省略） */
+      var bets = RoundEngine.getBetHistory(20).filter(function (b) {
+        return b.round_no === d.round.round_no;
+      });
+      function oddsOf(b) {
+        if (b.type === "win" || b.type === "out") return d.round.animals[b.target - 1].odds[b.type];
+        if (b.type === "exacta") return d.round.odds_exacta[b.target];
+        if (SP_LABEL[b.type]) return AdapterB.specialInfo(d.round).odds[b.type];
+        return d.round.odds_no_out;
+      }
+      var pay = "", revealMs = 0;
+      if (bets.length) {
+        var di = Math.min(140, Math.floor(700 / bets.length));
+        revealMs = di * bets.length;
+        var rows = "";
+        bets.forEach(function (b, i) {
+          var o2 = oddsOf(b);
+          rows += '<div class="spb' + (b.hit ? " hit" : "") + '" style="animation-delay:' + (i * di) + 'ms">' +
+            '<span class="spb-l">' + betLabel(b) + '</span>' +
+            '<span class="spb-a">' + fmt(b.amount) + '</span>' +
+            '<span class="spb-o">' + (o2 ? "@" + o2.toFixed(2) : "—") + '</span>' +
+            (b.hit ? '<b class="spb-w">+' + fmt(b.payout) + "</b>" : '<i class="spb-m">未中</i>') +
+            "</div>";
+        });
+        var hits = bets.filter(function (b) { return b.hit; }).length;
+        pay = '<div class="settle-bets">' + rows + "</div>" +
+          (d.total_payout > 0
+            ? '<div class="settle-pay won">🎉 中 ' + hits + ' 注・派彩 +<b id="pay-roll">0</b></div>'
+            : '<div class="settle-pay lost">本局 ' + bets.length + " 注未中，下局再來</div>");
       }
       overlay('<div class="settle-panel">' +
         '<div class="settle-champ">🏆 ' + avatarHtml(champ) + " " +
         displayName(d.round.animals[champ - 1]) + " 奪冠" +
         (allOut ? "（全滅局・依 out_at 判定）" : "") + "</div>" +
         '<div class="settle-ranks">' + ranks + "</div>" + pay + "</div>");
+      if (d.total_payout > 0) {
+        // 逐注揭示完 → 0.4s 滾動入帳＋金幣聲
+        setTimeout(function () {
+          var el = $("pay-roll");
+          if (!el) return;
+          SFX.play("coins");
+          var t0 = performance.now(), total = d.total_payout;
+          (function roll(now) {
+            var u = Math.min(1, (now - t0) / 400);      // 0.4s 派彩動畫
+            el.textContent = fmt(Math.round(total * u));
+            if (u < 1) requestAnimationFrame(roll);
+            else el.parentElement.classList.add("landed");
+          })(t0);
+        }, revealMs + 120);
+      }
     }
 
     /* ══════════ 事件接線 ══════════ */
     RoundEngine.configure({
       store: Store,
       onEvent: function (t, d) {
+        AutoBet.onEvent(t, d);               // B10：自動下注掛引擎事件流（排程零計時器）
         switch (t) {
           case "round_start":
             currentRound = d.round;
+            Ambience.onRound(d.round);
             staged = [];
             pairSel = [];
             renderSegments(d.round.segments);
@@ -447,6 +554,7 @@
 
           case "phase":
             curPhase = d.phase;
+            Ambience.onPhase(d.phase);
             document.body.classList.toggle("locked-mode", d.phase !== "betting");
             if (d.phase === "locked" && staged.length) {
               staged = [];
@@ -462,6 +570,9 @@
             RaceFX.stop();                   // 名次板落定 → 交棒結算面板
             overlaySettle(d);
             RoadsUI.onSettled(d);              // 路子落新珠（下個下注階段播落珠動畫）
+            Ambience.onSettled(d);             // 跑馬燈播報（大冷門/全滅/擬真大額）
+            if (d.total_payout > 0)            // 玩家自己的事件即時插隊
+              Ambience.playerEvent("🎉 恭喜您命中，本局派彩 <b>+" + fmt(d.total_payout) + "</b>！");
             $("wallet").textContent = fmt(d.wallet);
             renderSlip();
             break;
@@ -485,11 +596,42 @@
       if (b) setTab(b.dataset.tab);
     });
 
-    $("tab-bar").addEventListener("click", function (e) {
-      var b = e.target.closest(".tb-add");
-      if (!b || b.disabled) return;
-      if (b.dataset.act === "add-noout") stageBet("no_out", null);
+    /* B08 工作項 6：排序切換（僅下注階段；不動 staged/pairSel/展開態） */
+    $("sort-toggle").addEventListener("click", function () {
+      if (curPhase !== "betting") { toast("⛔ 僅下注階段可切換排序"); return; }
+      sortMode = sortMode === "num" ? "hot" : "num";
+      updateSortBtn();
+      if (currentRound) renderCards(currentRound);
+      toast(sortMode === "hot" ? "已切換：冷熱序（熱→冷）" : "已切換：編號序", 1400);
     });
+    updateSortBtn();
+
+    /* B08：勝負紀錄入口（R2：靜音鈕隨音效停用一併移除） */
+    LogUI.init({ toast: toast });
+
+    /* B10：自動下注（⟳ 入口鈕＋底部彈窗＋進行中浮條，autobet.js） */
+    AutoBet.init({ toast: toast, betLabel: betLabel, fmt: fmt });
+
+    /* B10 特殊面板：點大鈕＝當前籌碼成注＋脈衝＋藥丸飛入注單列 */
+    $("tab-bar").addEventListener("click", function (e) {
+      var b = e.target.closest("button[data-sp]");
+      if (!b || b.disabled) return;
+      var t = b.dataset.sp;
+      var before = staged.length;
+      stageBet(t, null);
+      if (staged.length > before) {
+        b.classList.remove("hit");
+        void b.offsetWidth;
+        b.classList.add("hit");
+        var o = t === "no_out" ? currentRound.odds_no_out
+                               : AdapterB.specialInfo(currentRound).odds[t];
+        flyToSlip(b, betLabel({ type: t }) + " @" + o.toFixed(2));
+      }
+    });
+
+    /* B10 連動：路子頁籤切換後同步特殊面板發光
+       （roads-ui 的切換監聽晚於本監聽綁定，setTimeout 0 讓 .on 先更新） */
+    $("rs-tabs").addEventListener("click", function () { setTimeout(syncSpGlow, 0); });
 
     $("cards").addEventListener("click", function (e) {
       var card = e.target.closest(".card");
@@ -497,6 +639,7 @@
       var id = +card.dataset.id;
       function toggleExpand() {               // 手風琴：一次僅展開一張
         expandedId = expandedId === id ? null : id;
+        if (expandedId === id) animOnce = id; // 使用者手點展開→這次重繪播動畫
         if (currentRound) renderCards(currentRound);
       }
       if (e.target.closest(".chev")) { toggleExpand(); return; }  // ▾＝四頁籤統一的展開入口
@@ -586,6 +729,8 @@
        決定性重放）→ 引擎對時（首局全量 MC 同步阻塞 ~1s；
        setTimeout 讓遮罩先上屏）══════════ */
     AdapterB.install();
+    SFX.init();                              // B08：音效預載（首次互動解鎖）
+    Ambience.init();                         // B08：跑馬燈/他人下注流
     setTimeout(function () {
       var bt0 = performance.now();
       var rb = RoadsUI.boot();                 // 須在引擎 start() 前（results 流時序）

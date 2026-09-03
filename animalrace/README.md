@@ -1,6 +1,6 @@
 # 動物大賽跑｜HTML Demo
 
-遊戲 B 的純本地 Demo。**唯一規格依據：`reports/B規格書_v1.html`（v1.3 定稿）**；任務板：`TASKS-B.md`。
+遊戲 B 的純本地 Demo。**唯一規格依據：`reports/B規格書_v1.html`（v1.6 定稿）**；任務板：`TASKS-B.md`。
 
 ## 運行方式
 
@@ -24,6 +24,9 @@
 | `js/roads.js` | 可移植：二元投影＋路子演算法（精確勝率冷熱判定、大路/衍生路、換靴分段；零 DOM 純函式） | B06 | 邏輯照搬 |
 | `js/roads-ui.js` | 拋棄式：路子渲染與互動（總覽嵌入/詳細頁/點珠詳情彈窗/當靴回補編排＋localStorage 持久化 `gbr_b06_roads`） | B06 | 畫面重做 |
 | `js/game.js` | 拋棄式：骨架 UI 綁定＋localStorage 轉接器 | B02（B05 起重排） | 畫面重做 |
+| `js/sfx.js` | 拋棄式：音效骨架（R2 裁決全域停用 DISABLED=true；換資源填 FILES 檔名即恢復） | B08 | 換引擎音訊系統 |
+| `js/ambience.js` | 拋棄式：他人下注流＋跑馬燈（自帶 PRNG，零觸碰 Math.random） | B08 | 正式版接真實全服流 |
+| `js/log-ui.js` | 拋棄式：勝負 log 頁（定死規格）＋動物走勢彈層＋錢包重置 | B08 | 畫面重做、資料接後台 |
 | `index.html` | 拋棄式 | B02（B05 起重排） | 重做 |
 
 script 載入順序固定：`tables-b → adapter-b → mock-server-b → roads → round-engine → roads-ui → game`（round-engine 偵測到全域 `MockServerB` 即自動棄用內建 STUB；adapter-b 必須先於 mock-server-b，見 index.html 註）。路子歷史＝開機時由 adapter-b 賽果紀錄流以「局號種子決定性重放」補齊當靴全量（升冪重放保 stats20 時序；歷史局賠率以低 MC 重估，賽果向量逐位一致）。
@@ -66,6 +69,6 @@ settle(bets, round, outcome)          → { payouts, total_payout }
 
 ## 功能狀態
 
-- 完成：B02 輪次引擎（40 秒循環）、B03 賽果生成與 MC 賠率（100 萬輪）、B04 數值驗證（RTP 95/95/94/94）、B05 下注 UI（三輪修訂：25s 窗、點卡成注、Kenney CC0 素材、名冊小馬/阿猴/樹懶）、B06 路子四頁籤就地切換
-- 待驗收：B07 賽事演出（結果反推編排、出包喜劇、MC Worker 化；R2 字級加大＋Q11 暫緩套 ZZZ 佔位）
-- 待辦：B08 結算氛圍（派彩動畫、他人下注流、勝負 log 頁）→ B09 整合驗收與 GitHub Pages 部署
+- 完成：B02 輪次引擎（40 秒循環）、B03 賽果生成與 MC 賠率（100 萬輪）、B04 數值驗證（RTP 95/95/94/94）、B05 下注 UI（三輪修訂：25s 窗、點卡成注、Kenney CC0 素材、名冊小馬/阿猴/樹懶）、B06 路子四頁籤就地切換、B07 賽事演出（結果反推編排、出包喜劇、MC Worker 化）
+- 待驗收：B08 結算氛圍（結算逐注開獎＋0.4s 派彩滾動、他人下注流/跑馬燈 js/ambience.js、勝負 log 頁 js/log-ui.js、冷熱徽章＋排序、路子第五頁籤「走勢」、錢包重置；R2：音效停用留骨架、捲條全隱藏）
+- 待辦：B09 整合驗收與 GitHub Pages 部署

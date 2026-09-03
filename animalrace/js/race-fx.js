@@ -419,6 +419,7 @@ var RaceFX = (function () {
   }
 
   function fire(ev, silent) {
+    if (!silent && window.SFX) SFX.raceEvent(ev.kind, ev);  // B08 音效鉤子（出包/衝線）
     if (ev.kind === "out") {
       applyGag(ev.id, silent);
       if (!silent) {
@@ -459,6 +460,7 @@ var RaceFX = (function () {
     if (key === S.cdKey) return;
     S.cdKey = key;
     if (!key) { el.className = ""; el.innerHTML = ""; return; }
+    if (window.SFX) SFX.countdown(key);      // B08 音效鉤子（發車倒數/GO）
     el.className = "";
     void el.offsetWidth;                     // 重觸發 pop 動畫
     el.className = "show " + (key === "2" ? "c2" : key === "1" ? "c1" : "cgo");

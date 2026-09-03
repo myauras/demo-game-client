@@ -172,7 +172,9 @@ var AdapterB = (function () {
       withRng(rngFor(lastEngineRound, "outcome"), function () { MockServerB.lockRound(); });
     }
     var oc = MockServerB.settleRound();
-    cachePut(outcomeCache, outcomeKeys, lastEngineRound, shapeOutcome(lastEngineRound, oc));
+    var shaped = shapeOutcome(lastEngineRound, oc);
+    cachePut(outcomeCache, outcomeKeys, lastEngineRound, shaped);
+    captureRoadRec(lastEngineRound, r, shaped);   // B10-R2：安全網局也落紀錄（珠盤空格根因①）
   }
 
   function shapeOutcome(n, oc) {
@@ -212,7 +214,12 @@ var AdapterB = (function () {
    * MockServerB 內部無注單（本層不呼叫 placeBets），settleRound
    * 派彩恆為 0，不會動到任何錢包。 */
   function ensureOutcome(n) {
-    if (outcomeCache[n]) return outcomeCache[n];
+    if (outcomeCache[n]) {
+      // B10-R2：快取命中但紀錄缺（走過安全網或紀錄被裁剪）→ 補 capture，
+      // 使 backfillRoadRecords 對這類局也能補齊（珠盤空格根因②）
+      if (!roadRecs[n]) captureRoadRec(n, ensureRound(n), outcomeCache[n]);
+      return outcomeCache[n];
+    }
     var packet = ensureRound(n);
     mutSeq++;                 // lock/settle 亦屬變異：作廢在途 Worker 回包
     withRng(rngFor(n, "outcome"), function () { MockServerB.lockRound(); });
@@ -252,6 +259,53 @@ var AdapterB = (function () {
     return oc;
   }
 
+  /* ── B10 特殊注別（大小/奇偶/熱門度）：定價與結算純函數 ──
+   * 裁決 1-a（TASKS-B 2026-09-03）：機率＝roads.js 既有 2⁸ 解析勝率
+   * 分組加總——與冷熱頁/卡片徽章同一管道（TablesB 折算心情後的
+   * weight/pOut 餵 Roads.winProbs/favOrder），零 MC 零隨機、
+   * 跨裝置決定性天生成立；賠率＝0.95/P 向下取兩位（向莊家有利），
+   * 每局隨屬性/心情自然浮動。零出包不在此列（沿用封包 odds_no_out）。
+   * RTP 未經 MC 複驗一事記規格 §12（正式版補驗）。 */
+  var SP_RTP = 0.95;
+  var SP_TYPES = { big: 1, small: 1, odd: 1, even: 1, hot: 1, cold: 1, longshot: 1 };
+  var spCache = { n: 0 };
+  function specialInfo(round) {
+    if (spCache.n === round.round_no) return spCache;
+    var w = [], p = [];
+    round.animals.forEach(function (a) {
+      var e = { burst: a.attrs.burst, terrain: a.attrs.terrain, focus: a.attrs.focus };
+      if (a.mood) e[TablesB.MOODS[a.mood].attr] += a.mood_delta;
+      w.push(TablesB.weight(e, round.segments));
+      p.push(TablesB.pOut(e.focus));
+    });
+    var probs = Roads.winProbs(w, p);
+    var order = Roads.favOrder(w, p);        // 熱→冷（與冷熱頁判定同源）
+    var hotIds = order.slice(0, TablesB.ROAD_HOT.FAV_TOP);
+    var longIds = order.slice(8 - TablesB.ROAD_HOT.LONG_BOTTOM);
+    var coldIds = order.slice(TablesB.ROAD_HOT.FAV_TOP, 8 - TablesB.ROAD_HOT.LONG_BOTTOM);
+    function pSum(ids) { var s = 0; ids.forEach(function (id) { s += probs[id - 1]; }); return s; }
+    var prob = { big: pSum([5, 6, 7, 8]), small: pSum([1, 2, 3, 4]),
+                 odd: pSum([1, 3, 5, 7]), even: pSum([2, 4, 6, 8]),
+                 hot: pSum(hotIds), cold: pSum(coldIds), longshot: pSum(longIds) };
+    var odds = {};
+    Object.keys(prob).forEach(function (k) {
+      odds[k] = Math.floor(SP_RTP / prob[k] * 100) / 100;   // 向下取兩位（§6.2 取整向莊家）
+    });
+    spCache = { n: round.round_no, prob: prob, odds: odds,
+                hotIds: hotIds, coldIds: coldIds, longIds: longIds, order: order };
+    return spCache;
+  }
+  /* 結算判定：只看「冠軍編號屬哪組」（三分互斥由 favOrder 切片保證） */
+  function specialHit(type, champ, sp) {
+    if (type === "big") return champ >= 5;
+    if (type === "small") return champ <= 4;
+    if (type === "odd") return champ % 2 === 1;
+    if (type === "even") return champ % 2 === 0;
+    if (type === "hot") return sp.hotIds.indexOf(champ) !== -1;
+    if (type === "cold") return sp.coldIds.indexOf(champ) !== -1;
+    return sp.longIds.indexOf(champ) !== -1;   // longshot
+  }
+
   /* 結算：純函數，依 round 封包賠率判定（裁決③：單一帳本在引擎側）。
    * 全滅局照 §5.3：冠軍/前二連按 out_at 倒序名次判定（ranking 已含）、
    * 出包注全中、零出包注全輸──ranking/out 向量天然涵蓋，無特例。 */
@@ -273,6 +327,10 @@ var AdapterB = (function () {
       } else if (bet.type === "out") {
         hit = outcome.out[bet.target - 1];
         odds = round.animals[bet.target - 1].odds.out;
+      } else if (SP_TYPES[bet.type]) {   // B10 特殊注別：判冠軍屬組＋公式賠率
+        var sp = specialInfo(round);
+        hit = specialHit(bet.type, outcome.ranking[0], sp);
+        odds = sp.odds[bet.type];
       } else {  // no_out
         hit = noOut;
         odds = round.odds_no_out;
@@ -312,6 +370,9 @@ var AdapterB = (function () {
     },
     /** 牆鐘當前局號（與引擎同式推導） */
     liveRoundNo: liveRoundNo,
+
+    /** B10：特殊注別定價資訊（odds/prob/熱門度分組；round 封包純函數） */
+    specialInfo: specialInfo,
 
     ping: function () { return "adapter-b.js OK"; }
   };

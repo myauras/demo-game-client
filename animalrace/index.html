@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<title>動物大賽跑｜Demo（B07 賽事演出）</title>
+<title>動物大賽跑｜Demo（B10 特殊注別與自動下注）</title>
 <link rel="icon" href="data:,"><!-- B07：止 favicon 404 -->
 
 <link rel="stylesheet" href="css/game.css">
@@ -16,8 +16,20 @@
     <div id="round-label"><b id="shoe-label">對時中…</b><span id="round-sub"></span></div>
     <div id="count-pill"><b id="count-num">--</b><span id="count-txt">對時</span></div>
     <div id="wallet-box">餘額<b id="wallet">--</b></div>
+    <div id="top-btns">
+      <button id="log-btn" title="勝負紀錄">📒</button>
+    </div>
   </header>
   <div id="bet-progress"><i id="bet-progress-fill"></i></div>
+
+  <!-- B08 跑馬燈：大額中獎/大冷門/全滅播報（玩家事件插隊） -->
+  <div id="ticker"><i id="ticker-msg"></i></div>
+
+  <!-- B10 自動下注進行中浮條（常駐頂部、不遮跑馬燈；autobet.js 驅動） -->
+  <div id="auto-pill" hidden>
+    <span id="auto-pill-txt"></span>
+    <button id="auto-stop">停止</button>
+  </div>
 
   <!-- 賽段組成條（每局重抽） -->
   <section id="segwrap">
@@ -35,7 +47,7 @@
       <div id="road-title"><b>路子</b><span id="road-shoe"></span><span id="road-mode"></span></div>
       <nav id="rs-tabs">
         <button data-rt="ov" class="on">總覽</button><button data-rt="bs">大小</button>
-        <button data-rt="oe">奇偶</button><button data-rt="hot">冷熱</button>
+        <button data-rt="oe">奇偶</button><button data-rt="hot">冷熱</button><button data-rt="tr">走勢</button>
       </nav>
       <div id="rs-body">
         <section class="rs-panel on" id="rsp-ov">
@@ -54,16 +66,23 @@
     <button data-tab="win" class="on">冠軍</button>
     <button data-tab="exacta">前二連</button>
     <button data-tab="out">出包</button>
-    <button data-tab="no_out">零出包</button>
+    <button data-tab="special">特殊</button><!-- B10：原零出包頁籤併入特殊 -->
+    <button id="sort-toggle" title="排序：編號 ⇄ 冷熱">1→8</button>
   </nav>
   <div id="tab-bar"></div>
 
   <!-- 動物卡 × 8（2×4 可捲動） -->
   <main id="cards"></main>
 
-  <!-- 複押注單列（可撤單） -->
+  <!-- B08 他人下注流嵌條（下注階段滾動；ambience.js 驅動） -->
+  <div id="abet-feed"><span id="abet-line" class="empty">等待開盤…</span><i id="abet-count"></i></div>
+
+  <!-- 複押注單列（可撤單）＋B10 自動下注入口 ⟳ -->
   <section id="slip">
-    <div id="slip-list"><span class="empty">點動物卡即下注（可複押多注別）</span></div>
+    <div id="slip-row">
+      <div id="slip-list"><span class="empty">點動物卡即下注（可複押多注別）</span></div>
+      <button id="auto-btn" title="自動下注（續押）" disabled>⟳</button>
+    </div>
     <div id="slip-sum">尚未選注</div>
   </section>
 
@@ -72,6 +91,30 @@
     <div id="chips"></div>
     <button id="confirm" disabled>選注後確認</button>
   </footer>
+
+  <!-- B08 勝負 log 頁（定死規格；log-ui.js 渲染） -->
+  <div id="log-modal" hidden>
+    <div class="lg-head">
+      <button id="lg-back" hidden>‹ 返回</button>
+      <b id="lg-title">勝負紀錄</b>
+      <button id="lg-close">✕</button>
+    </div>
+    <div id="lg-body-ov" class="lg-body"></div>
+    <div id="lg-body-dt" class="lg-body" hidden></div>
+  </div>
+
+  <!-- B10 自動下注設定（底部彈窗；autobet.js 驅動） -->
+  <div id="auto-modal" hidden>
+    <div id="auto-backdrop"></div>
+    <div id="auto-sheet">
+      <h4>⟳ 自動下注設定</h4>
+      <div class="af-row"><span class="af-k">注單範本</span><div class="af-v" id="auto-tpl"></div></div>
+      <div class="af-row"><span class="af-k">局數</span><div class="af-seg" id="auto-rounds"></div></div>
+      <div class="af-row"><span class="af-k">停利</span><div class="af-seg" id="auto-tp"></div></div>
+      <div class="af-row"><span class="af-k">停損</span><div class="af-seg" id="auto-sl"></div></div>
+      <button id="auto-go">開始自動下注</button>
+    </div>
+  </div>
 
   <div id="hurry-num"></div>
   <div id="toast"></div>
@@ -90,6 +133,10 @@
 <script src="js/round-engine.js"></script>
 <script src="js/roads-ui.js"></script>
 <script src="js/race-fx.js"></script>
+<script src="js/sfx.js"></script>
+<script src="js/ambience.js"></script>
+<script src="js/log-ui.js"></script>
+<script src="js/autobet.js"></script>
 <script src="js/game.js"></script>
 </body>
 </html>
