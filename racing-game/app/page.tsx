@@ -9,7 +9,7 @@ type TestOutcome = "auto" | "win" | "lose";
 type ResultState = "won" | "cashed";
 type MilestoneId = "topFive" | "podium" | "champion";
 
-type EventAlert = { title: string; subtitle: string; tone: "cyan" | "gold" | "red"; variant: "panel" | "streak" };
+type EventAlert = { title: string; subtitle: string; tone: "cyan" | "gold" | "red"; variant: "panel" | "streak" | "special" };
 type QueuedNotice = { kind: "event"; alert: EventAlert } | { kind: "champion" };
 type ActiveNotice = QueuedNotice & { id: number; slot: number };
 type SettlementRow = { key: "rank" | "streak" | "milestone"; label: string; detail?: string; amount: number; total: number; displayAmount: string };
@@ -94,7 +94,8 @@ export default function Home() {
       const id = noticeId.current + 1;
       noticeId.current = id;
       const isStreakNotice = notice.kind === "event" && notice.alert.variant === "streak";
-      const noticeDuration = isStreakNotice ? 900 : 1500;
+      const isSpecialNotice = notice.kind === "event" && notice.alert.variant === "special";
+      const noticeDuration = isStreakNotice ? 900 : isSpecialNotice ? 1200 : 1500;
       const slot = isStreakNotice ? streakSlot++ : panelSlot++;
       latestNoticeEnd = Math.max(latestNoticeEnd, index * 500 + noticeDuration);
       const showTimer = window.setTimeout(() => {
@@ -188,16 +189,18 @@ export default function Home() {
       setHighestStreak((value) => Math.max(value, newStreak));
       setIsPassing(false);
       const notices: QueuedNotice[] = [];
-      notices.push({ kind: "event", alert: { title: `第${place}名 ↑ 第${nextPlace}名！`, subtitle: `${settlementMultiplierLabel(multiplier)} → ${settlementMultiplierLabel(nextMultiplier)}`, tone: nextPlace <= 3 ? "gold" : "cyan", variant: "panel" } });
+      const usesSpecialRankText = [5, 3, 2].includes(nextPlace);
+      notices.push({ kind: "event", alert: usesSpecialRankText
+        ? { title: `第${nextPlace}名！`, subtitle: `獎勵倍率 ${settlementMultiplierLabel(nextMultiplier)}`, tone: "gold", variant: "special" }
+        : { title: `第${place}名 ↑ 第${nextPlace}名！`, subtitle: `${settlementMultiplierLabel(multiplier)} → ${settlementMultiplierLabel(nextMultiplier)}`, tone: nextPlace <= 3 ? "gold" : "cyan", variant: "panel" } });
       notices.push({ kind: "event", alert: { title: newStreak >= 6 ? `極速連破！ ${newStreak}連超` : newStreak >= 5 ? `勢不可擋！ ${newStreak}連超` : `${newStreak}連超！`, subtitle: `+${multiplierLabel(GAME_CONFIG.streakBonuses[newStreak])}倍`, tone: newStreak >= 5 ? "red" : "cyan", variant: "streak" } });
       const reachedMilestone = milestoneEntries.find(([id, item]) => item.place === nextPlace && !milestones.includes(id));
       if (reachedMilestone) {
-        const [id, item] = reachedMilestone;
+        const [id] = reachedMilestone;
         setMilestones((current) => [...current, id]);
-        notices.push({ kind: "event", alert: { title: item.title, subtitle: `里程碑 +${multiplierLabel(item.bonus)}倍`, tone: "gold", variant: "panel" } });
       }
       const upcomingMilestone = milestoneEntries.find(([id, item]) => item.place === nextPlace - 1 && !milestones.includes(id));
-      if (upcomingMilestone) {
+      if (upcomingMilestone && nextPlace !== 2) {
         const [, item] = upcomingMilestone;
         notices.push({ kind: "event", alert: { title: "里程碑預告", subtitle: `下次成功：${item.title.replace("！", "")}・+${multiplierLabel(item.bonus)}倍`, tone: "gold", variant: "panel" } });
       }
@@ -207,7 +210,6 @@ export default function Home() {
       }
       if (nextPlace === 2) {
         setTestRun(false);
-        notices.push({ kind: "champion" });
       }
       queueNotices(notices);
     }, 1600);
@@ -309,6 +311,7 @@ export default function Home() {
             {state !== "setup" && <><div className={`scene-multiplier ${place <= 3 ? "podium" : ""}`}><span>目前可領</span><strong>×{multiplierLabel(claimMultiplier)}</strong><div className="progress-track"><i style={{ width: `${Math.max(4, progress)}%` }} /></div></div><div className={`streak-meter level-${Math.min(highestStreak, 6)}`}><span>連超</span><strong>{streak}</strong><small>+{multiplierLabel(streakBonus)}倍</small></div></>}
             {activeNotices.some((notice) => notice.kind === "champion" || notice.alert.variant === "panel") && <div className="notice-stack" aria-live="polite">{activeNotices.filter((notice) => notice.kind === "champion" || notice.alert.variant === "panel").map((notice) => notice.kind === "event" ? <div key={notice.id} className={`event-alert ${notice.alert.tone}`} style={{ "--notice-slot": notice.slot } as React.CSSProperties} role="status"><strong>{notice.alert.title}</strong><span>{notice.alert.subtitle}</span></div> : <div key={notice.id} className="champion-alert" style={{ "--notice-slot": notice.slot } as React.CSSProperties} role="status"><span>冠軍挑戰</span><strong>挑戰冠軍賽，獎勵10倍!</strong></div>)}</div>}
             {activeNotices.some((notice) => notice.kind === "event" && notice.alert.variant === "streak") && <div className="streak-notice-layer" aria-live="polite">{activeNotices.filter((notice) => notice.kind === "event" && notice.alert.variant === "streak").map((notice) => notice.kind === "event" && <div key={notice.id} className={`streak-alert ${notice.alert.tone}`} style={{ "--streak-slot": notice.slot } as React.CSSProperties} role="status"><strong>{notice.alert.title}</strong><span>{notice.alert.subtitle}</span></div>)}</div>}
+            {activeNotices.some((notice) => notice.kind === "event" && notice.alert.variant === "special") && <div className="rank-special-layer" aria-live="polite">{activeNotices.filter((notice) => notice.kind === "event" && notice.alert.variant === "special").map((notice) => notice.kind === "event" && <div key={notice.id} className="rank-special" role="status"><strong>{notice.alert.title}</strong><span>{notice.alert.subtitle}</span></div>)}</div>}
 
             <div className="track-wrap"><div className="track"><div className="road-stream" /><div className="lane lane-one" /><div className="lane lane-two" /><div className="finish-line" />
               {state === "racing" && place > 1 && <div className={`target-kart ${normalCrash ? "crashing" : isPassing ? `being-passed pass-${passDirection}` : ""}`} style={{ "--kart-color": activeOpponentColor, "--car-hue": `${opponentHues[activeOpponentColor]}deg` } as React.CSSProperties} aria-label={`前方第 ${nextPlace} 名車輛`}><span className="target-label"><i />第{nextPlace}名</span><img className="racer-image" src={`${assetBase}/neon-racer.png`} alt="" aria-hidden="true" /></div>}
