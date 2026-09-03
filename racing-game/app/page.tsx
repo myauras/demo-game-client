@@ -5,48 +5,27 @@ import { useMemo, useRef, useState } from "react";
 type GameState = "setup" | "racing" | "duel" | "settling" | "won" | "lost" | "cashed";
 type DuelPhase = "idle" | "race" | "player-win" | "collision" | "opponent-win";
 type PassDirection = "left" | "right";
-type WeatherId = "sunny" | "rain" | "storm" | "fog" | "thunder";
-type TestWeather = WeatherId | "auto";
 type TestOutcome = "auto" | "win" | "lose";
 type ResultState = "won" | "cashed";
 
-type WeatherConfig = { label: string; shortLabel: string; rule: string; weight: number; finishBonus: number };
 type EventAlert = { title: string; subtitle: string; tone: "cyan" | "gold" | "red"; variant: "panel" | "streak" };
 type QueuedNotice = { kind: "event"; alert: EventAlert } | { kind: "champion" };
 type ActiveNotice = QueuedNotice & { id: number; slot: number };
-type SettlementRow = { key: "rank" | "streak" | "weather"; label: string; detail?: string; amount: number; total: number; displayAmount: string };
+type SettlementRow = { key: "rank" | "streak"; label: string; detail?: string; amount: number; total: number; displayAmount: string };
 type SettlementData = { place: number; rows: SettlementRow[]; totalMultiplier: number; reward: number };
 
 const rankMultipliers: Record<number, number> = { 8: 1, 7: 1.2, 6: 1.5, 5: 1.9, 4: 2.5, 3: 3.5, 2: 5, 1: 10 };
 const GAME_CONFIG = {
   targetRtp: 0.95,
   streakBonuses: { 0: 0, 1: 0, 2: 0.2, 3: 0.4, 4: 0.6, 5: 0.8, 6: 1 } as Record<number, number>,
-  weather: {
-    sunny: { label: "晴天", shortLabel: "晴天", rule: "無額外效果", weight: 60, finishBonus: 0 },
-    rain: { label: "雨天", shortLabel: "雨天", rule: "完賽 +0.3倍", weight: 20, finishBonus: 0.3 },
-    storm: { label: "暴雨", shortLabel: "暴雨", rule: "完賽 +0.8倍", weight: 8, finishBonus: 0.8 },
-    fog: { label: "濃霧", shortLabel: "濃霧", rule: "完賽 +0.5倍", weight: 8, finishBonus: 0.5 },
-    thunder: { label: "雷雨", shortLabel: "雷雨", rule: "完賽 +1.0倍", weight: 4, finishBonus: 1 },
-  } satisfies Record<WeatherId, WeatherConfig>,
 };
 
-const weatherOrder: WeatherId[] = ["sunny", "rain", "storm", "fog", "thunder"];
 const opponentColors = ["#ff3b5f", "#9a6cff", "#22d3ee", "#3cff9b", "#ff8a34", "#e6f0ff", "#ffd02f"];
 const opponentHues: Record<string, number> = { "#ff3b5f": 18, "#9a6cff": 65, "#22d3ee": 145, "#3cff9b": 205, "#ff8a34": 315, "#e6f0ff": 110, "#ffd02f": 280 };
 const assetBase = (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "");
 const credit = (value: number) => value.toLocaleString("zh-TW", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const multiplierLabel = (value: number) => Number.isInteger(value) ? `${value}` : value.toFixed(2).replace(/0$/, "");
 const settlementMultiplierLabel = (value: number) => `${Number.isInteger(value) ? value.toFixed(1) : multiplierLabel(value)}倍`;
-
-const chooseWeather = (): WeatherId => {
-  const roll = Math.random() * 100;
-  let cursor = 0;
-  for (const weather of weatherOrder) {
-    cursor += GAME_CONFIG.weather[weather].weight;
-    if (roll < cursor) return weather;
-  }
-  return "sunny";
-};
 
 export default function Home() {
   const [bet, setBet] = useState(10);
@@ -57,16 +36,12 @@ export default function Home() {
   const [normalCrash, setNormalCrash] = useState(false);
   const [testRun, setTestRun] = useState(false);
   const [showTestPanel, setShowTestPanel] = useState(false);
-  const [testWeather, setTestWeather] = useState<TestWeather>("auto");
   const [testOutcome, setTestOutcome] = useState<TestOutcome>("auto");
   const [isPassing, setIsPassing] = useState(false);
   const [passDirection, setPassDirection] = useState<PassDirection>("right");
   const [soundOn, setSoundOn] = useState(true);
   const [balance, setBalance] = useState(12800);
   const [opponentOrder, setOpponentOrder] = useState(opponentColors);
-  const [weather, setWeather] = useState<WeatherId>("sunny");
-  const [weatherNotice, setWeatherNotice] = useState(false);
-  const [raceReady, setRaceReady] = useState(false);
   const [streak, setStreak] = useState(0);
   const [highestStreak, setHighestStreak] = useState(0);
   const [streakPulse, setStreakPulse] = useState(false);
@@ -82,11 +57,9 @@ export default function Home() {
   const nextPlace = Math.max(1, place - 1);
   const nextMultiplier = rankMultipliers[nextPlace];
   const activeOpponentColor = place > 1 ? opponentOrder[place - 2] : opponentOrder[0];
-  const weatherConfig = GAME_CONFIG.weather[weather];
   const streakBonus = GAME_CONFIG.streakBonuses[Math.min(highestStreak, 6)];
   const claimSubtotal = multiplier + streakBonus;
-  const earnedWeatherBonus = weatherConfig.finishBonus;
-  const claimMultiplier = Number((claimSubtotal + earnedWeatherBonus).toFixed(2));
+  const claimMultiplier = Number(claimSubtotal.toFixed(2));
   const claimAmount = Number((bet * claimMultiplier).toFixed(2));
   const standings = useMemo(() => [
     { id: "player", rank: place, color: "#20e0ff", isPlayer: true },
@@ -126,17 +99,12 @@ export default function Home() {
     const base = rankMultipliers[resultPlace];
     const bestStreak = Math.min(maxStreak, 6);
     const bestStreakBonus = GAME_CONFIG.streakBonuses[bestStreak];
-    const weatherBonus = weatherConfig.finishBonus;
     const rows: SettlementRow[] = [];
     let runningTotal = base;
     rows.push({ key: "rank", label: "最終名次", detail: `第${resultPlace}名`, amount: base, total: runningTotal, displayAmount: settlementMultiplierLabel(base) });
     if (bestStreakBonus > 0) {
       runningTotal += bestStreakBonus;
       rows.push({ key: "streak", label: "最高連超", detail: `${bestStreak}連超`, amount: bestStreakBonus, total: runningTotal, displayAmount: `+${settlementMultiplierLabel(bestStreakBonus)}` });
-    }
-    if (weatherBonus > 0) {
-      runningTotal = Number((runningTotal + weatherBonus).toFixed(2));
-      rows.push({ key: "weather", label: "天氣", detail: `${weatherConfig.label}完賽`, amount: weatherBonus, total: runningTotal, displayAmount: `+${settlementMultiplierLabel(weatherBonus)}` });
     }
     const totalMultiplier = Number(runningTotal.toFixed(2));
     const reward = Number((bet * totalMultiplier).toFixed(2));
@@ -155,16 +123,12 @@ export default function Home() {
 
   const startRace = () => {
     if (balance < bet || bet < 10) return;
-    const selectedWeather = testWeather === "auto" ? chooseWeather() : testWeather;
     setBalance((value) => value - bet);
     setPlace(8);
     setMultiplier(1);
     setState("racing");
-    setWeather(selectedWeather);
     setStreak(0);
     setHighestStreak(0);
-    setRaceReady(selectedWeather === "sunny");
-    setWeatherNotice(selectedWeather !== "sunny");
     setActiveNotices([]);
     setNormalCrash(false);
     setSettlement(null);
@@ -179,11 +143,10 @@ export default function Home() {
       if (shuffled.every((color, index) => color === currentOrder[index])) shuffled.push(shuffled.shift()!);
       return shuffled;
     });
-    if (selectedWeather !== "sunny") window.setTimeout(() => { setWeatherNotice(false); setRaceReady(true); }, 1500);
   };
 
   const overtake = () => {
-    if (state !== "racing" || isPassing || noticeLocked || place <= 2 || !raceReady) return;
+    if (state !== "racing" || isPassing || noticeLocked || place <= 2) return;
     setIsPassing(true);
     setPassDirection(Math.random() < 0.5 ? "left" : "right");
     const successRate = place === 8 ? GAME_CONFIG.targetRtp / nextMultiplier : multiplier / nextMultiplier;
@@ -214,7 +177,7 @@ export default function Home() {
   };
 
   const challengeChampion = () => {
-    if (state !== "racing" || place !== 2 || isPassing || noticeLocked || !raceReady) return;
+    if (state !== "racing" || place !== 2 || isPassing || noticeLocked) return;
     setState("duel");
     setIsPassing(true);
     setDuelPhase("race");
@@ -242,22 +205,19 @@ export default function Home() {
   };
 
   const cashOut = () => {
-    if (state !== "racing" || multiplier <= 1 || isPassing || noticeLocked || !raceReady) return;
+    if (state !== "racing" || multiplier <= 1 || isPassing || noticeLocked) return;
     setTestRun(false);
     beginSettlement(place, "cashed", highestStreak);
   };
 
   const reset = () => {
     setState("setup");
-    setWeather("sunny");
     setPlace(8);
     setMultiplier(1);
     setDuelPhase("idle");
     setActiveNotices([]);
     setNormalCrash(false);
     setTestRun(false);
-    setRaceReady(false);
-    setWeatherNotice(false);
     setSettlement(null);
     setSettlementStep(0);
     setSettlementComplete(false);
@@ -288,7 +248,6 @@ export default function Home() {
         {showTestPanel && (
           <div className="test-panel" aria-label="V2 測試設定">
             <div className="test-panel-title"><strong>V2 測試設定</strong><button onClick={() => setShowTestPanel(false)} aria-label="關閉測試設定">×</button></div>
-            <label>天氣控制<select value={testWeather} onChange={(event) => setTestWeather(event.target.value as TestWeather)} disabled={state !== "setup"}><option value="auto">自動</option>{weatherOrder.map((id) => <option key={id} value={id}>{GAME_CONFIG.weather[id].shortLabel}</option>)}</select></label>
             <label>冠軍結果<select value={testOutcome} onChange={(event) => setTestOutcome(event.target.value as TestOutcome)} disabled={state !== "setup"}><option value="auto">自動</option><option value="win">指定成功</option><option value="lose">指定失敗</option></select></label>
             <div className="test-streak"><span>當前連超 <b>{streak}</b></span><span>最高連超 <b>{highestStreak}</b></span></div>
             <small>賽事中點擊 LOGO 旁「測試」可保證安全抵達冠軍賽。</small>
@@ -296,14 +255,12 @@ export default function Home() {
         )}
 
         <div className="content-grid">
-          <section className={`race-scene weather-${weather} streak-level-${Math.min(highestStreak, 6)} ${streakPulse ? "streak-pulse" : ""} ${isPassing ? "boosting" : ""} ${normalCrash ? "normal-crash" : ""} ${isPassing && state === "racing" ? `passing-${passDirection}` : ""} ${state === "duel" ? `final-duel duel-${duelPhase}` : ""}`} style={{ "--race-background": `url(${assetBase}/race-background.png)` } as React.CSSProperties}>
-            <div className="weather-fx" aria-hidden="true"><i /><i /><b /><span /></div>
+          <section className={`race-scene streak-level-${Math.min(highestStreak, 6)} ${streakPulse ? "streak-pulse" : ""} ${isPassing ? "boosting" : ""} ${normalCrash ? "normal-crash" : ""} ${isPassing && state === "racing" ? `passing-${passDirection}` : ""} ${state === "duel" ? `final-duel duel-${duelPhase}` : ""}`} style={{ "--race-background": `url(${assetBase}/race-background.png)` } as React.CSSProperties}>
             <div className="city-glow" /><div className="cityline cityline-back" /><div className="cityline cityline-front" />
 
             {state !== "setup" && <div className="race-hud"><div className="standings-board" aria-label={`完整車輛排名，我方目前第 ${place} 名`}><div className="standings-title"><span>即時排名</span><b>8 輛車</b></div><div className="standings-list">{standings.map((entry) => <div key={entry.id} className={`standing-row ${entry.isPlayer ? "player" : ""}`} style={{ "--rank": entry.rank, "--car-color": entry.color, "--car-hue": entry.isPlayer ? "0deg" : `${opponentHues[entry.color]}deg` } as React.CSSProperties}><strong>{entry.rank}</strong><img className="standing-car" src={`${assetBase}/neon-racer.png`} alt="" aria-hidden="true" /><small>第{entry.rank}名</small></div>)}</div></div></div>}
 
-            {state !== "setup" && <><div className={`weather-chip ${weatherConfig.finishBonus > 0 ? "bonus" : ""}`}><span>{weatherConfig.shortLabel}</span></div><div className={`scene-multiplier ${place <= 3 ? "podium" : ""}`}><span>獎勵倍率</span><strong>×{multiplierLabel(multiplier)}</strong><div className="progress-track"><i style={{ width: `${Math.max(4, progress)}%` }} /></div></div><div className={`streak-meter level-${Math.min(highestStreak, 6)}`}><span>連超</span><strong>{streak}</strong><small>+{multiplierLabel(streakBonus)}倍</small></div></>}
-            {weatherNotice && <div className="weather-notice" role="status"><span>本場天氣</span><strong>{weatherConfig.label}</strong><small>{weatherConfig.rule}</small></div>}
+            {state !== "setup" && <><div className={`scene-multiplier ${place <= 3 ? "podium" : ""}`}><span>獎勵倍率</span><strong>×{multiplierLabel(multiplier)}</strong><div className="progress-track"><i style={{ width: `${Math.max(4, progress)}%` }} /></div></div><div className={`streak-meter level-${Math.min(highestStreak, 6)}`}><span>連超</span><strong>{streak}</strong><small>+{multiplierLabel(streakBonus)}倍</small></div></>}
             {activeNotices.some((notice) => notice.kind === "champion" || notice.alert.variant === "panel") && <div className="notice-stack" aria-live="polite">{activeNotices.filter((notice) => notice.kind === "champion" || notice.alert.variant === "panel").map((notice) => notice.kind === "event" ? <div key={notice.id} className={`event-alert ${notice.alert.tone}`} style={{ "--notice-slot": notice.slot } as React.CSSProperties} role="status"><strong>{notice.alert.title}</strong><span>{notice.alert.subtitle}</span></div> : <div key={notice.id} className="champion-alert" style={{ "--notice-slot": notice.slot } as React.CSSProperties} role="status"><span>冠軍挑戰</span><strong>挑戰冠軍賽，獎勵10倍!</strong></div>)}</div>}
             {activeNotices.some((notice) => notice.kind === "event" && notice.alert.variant === "streak") && <div className="streak-notice-layer" aria-live="polite">{activeNotices.filter((notice) => notice.kind === "event" && notice.alert.variant === "streak").map((notice) => notice.kind === "event" && <div key={notice.id} className={`streak-alert ${notice.alert.tone}`} style={{ "--streak-slot": notice.slot } as React.CSSProperties} role="status"><strong>{notice.alert.title}</strong><span>{notice.alert.subtitle}</span></div>)}</div>}
 
@@ -317,7 +274,7 @@ export default function Home() {
             {state === "lost" && <div className="result-overlay"><div className="result-card lost"><div className="result-code">再接再厲!</div><p>最終名次 <strong>第 {place} 名 / 共 8 名</strong></p><div className="result-prize"><span>最終獎勵</span><strong>×0 · 0.00</strong></div><button onClick={reset}>再玩一局</button></div></div>}
           </section>
 
-          <aside className="control-panel">{state === "setup" ? <div className="setup-panel"><div className="bet-card"><div><span>投注金額</span><small>餘額 {credit(balance)}</small></div><div className="bet-input-row"><input type="number" inputMode="numeric" min="10" max={balance} step="10" value={bet || ""} onChange={(event) => setBet(Math.max(0, Math.floor(Number(event.target.value))))} onBlur={() => setBet(Math.min(balance, Math.max(10, bet || 10)))} aria-label="下注金額" /></div><div className="quick-bets" aria-label="快速下注">{[10, 50, 100, 200].map((amount) => <button key={amount} className={bet === amount ? "selected" : ""} onClick={() => setBet(amount)}>{amount}</button>)}</div></div><button className="start-button" onClick={startRace} disabled={balance < bet || bet < 10}>開始投注 <span>確認</span></button><p className="risk-note">挑戰失敗，連超與天氣加成全部歸零</p></div> : <div className="race-panel"><div className="panel-heading"><div className="live-title"><h1>第{place}名 <small>/ 共 8 名</small></h1><span>{state === "duel" ? "冠軍賽" : "追擊中"}</span></div></div><button className={`overtake-button ${place === 2 ? "champion-button" : ""}`} onClick={primaryAction} disabled={isPassing || noticeLocked || state !== "racing" || !raceReady}><span>{isPassing ? "全力衝刺" : place === 2 ? "挑戰冠軍" : `超越第${nextPlace}名`}</span><small>{place === 2 ? "最高 ×10 · 最後直線" : `成功獎勵 ×${multiplierLabel(nextMultiplier)}`}</small></button><button className="cash-button" onClick={cashOut} disabled={multiplier <= 1 || isPassing || noticeLocked || state !== "racing" || !raceReady}>領取獎勵・{credit(claimAmount)}</button><p className="chance-note"><span />額外加成將於領取時逐層揭曉</p></div>}</aside>
+          <aside className="control-panel">{state === "setup" ? <div className="setup-panel"><div className="bet-card"><div><span>投注金額</span><small>餘額 {credit(balance)}</small></div><div className="bet-input-row"><input type="number" inputMode="numeric" min="10" max={balance} step="10" value={bet || ""} onChange={(event) => setBet(Math.max(0, Math.floor(Number(event.target.value))))} onBlur={() => setBet(Math.min(balance, Math.max(10, bet || 10)))} aria-label="下注金額" /></div><div className="quick-bets" aria-label="快速下注">{[10, 50, 100, 200].map((amount) => <button key={amount} className={bet === amount ? "selected" : ""} onClick={() => setBet(amount)}>{amount}</button>)}</div></div><button className="start-button" onClick={startRace} disabled={balance < bet || bet < 10}>開始投注 <span>確認</span></button><p className="risk-note">挑戰失敗，連超加成全部歸零</p></div> : <div className="race-panel"><div className="panel-heading"><div className="live-title"><h1>第{place}名 <small>/ 共 8 名</small></h1><span>{state === "duel" ? "冠軍賽" : "追擊中"}</span></div></div><button className={`overtake-button ${place === 2 ? "champion-button" : ""}`} onClick={primaryAction} disabled={isPassing || noticeLocked || state !== "racing"}><span>{isPassing ? "全力衝刺" : place === 2 ? "挑戰冠軍" : `超越第${nextPlace}名`}</span><small>{place === 2 ? "最高 ×10 · 最後直線" : `成功獎勵 ×${multiplierLabel(nextMultiplier)}`}</small></button><button className="cash-button" onClick={cashOut} disabled={multiplier <= 1 || isPassing || noticeLocked || state !== "racing"}>領取獎勵・{credit(claimAmount)}</button><p className="chance-note"><span />額外加成將於領取時逐層揭曉</p></div>}</aside>
         </div>
       </section>
       <p className="demo-caption">可玩展示 · 極速反攻 // 決勝圈 V2</p>
