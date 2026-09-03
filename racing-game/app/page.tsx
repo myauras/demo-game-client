@@ -134,8 +134,10 @@ export default function Home() {
       runningTotal += bestStreakBonus;
       rows.push({ key: "streak", label: "最高連超", detail: `${bestStreak}連超`, amount: bestStreakBonus, total: runningTotal, displayAmount: `+${settlementMultiplierLabel(bestStreakBonus)}` });
     }
-    runningTotal = Number((runningTotal + weatherBonus).toFixed(2));
-    rows.push({ key: "weather", label: "天氣", detail: `${weatherConfig.label}完賽`, amount: weatherBonus, total: runningTotal, displayAmount: `+${settlementMultiplierLabel(weatherBonus)}` });
+    if (weatherBonus > 0) {
+      runningTotal = Number((runningTotal + weatherBonus).toFixed(2));
+      rows.push({ key: "weather", label: "天氣", detail: `${weatherConfig.label}完賽`, amount: weatherBonus, total: runningTotal, displayAmount: `+${settlementMultiplierLabel(weatherBonus)}` });
+    }
     const totalMultiplier = Number(runningTotal.toFixed(2));
     const reward = Number((bet * totalMultiplier).toFixed(2));
     setSettlement({ place: resultPlace, rows, totalMultiplier, reward });
