@@ -323,7 +323,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 .notice-stack .champion-alert { position: absolute; inset: auto; left: 0; top: calc(var(--notice-slot,0) * 78px); width: 100%; padding: 13px 17px 14px; transform: none; animation: eventPop 1.5s ease both; }
 .event-alert strong, .event-alert span { display: block; }
 .event-alert strong { color: #fff; font-size: 20px; font-style: italic; text-shadow: 0 0 16px rgba(32,224,255,.3); }
-.event-alert span { margin-top: 5px; color: var(--cyan); font: 900 11px/1.45 monospace; }
+.event-alert span { margin-top: 6px; color: var(--cyan); font: 1000 16px/1.35 monospace; letter-spacing: .3px; }
 .event-alert.gold { border-left-color: var(--gold); box-shadow: 0 0 34px rgba(255,201,40,.18); }
 .event-alert.gold span { color: var(--gold); }
 .event-alert.red { border-left-color: var(--red); box-shadow: 0 0 38px rgba(255,49,88,.22); }

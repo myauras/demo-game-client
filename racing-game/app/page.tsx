@@ -20,10 +20,10 @@ const GAME_CONFIG = {
   rankMultipliers: { 8: 1, 7: 1.2, 6: 1.5, 5: 1.9, 4: 2.5, 3: 3.5, 2: 5, 1: 10 } as Record<number, number>,
   streakBonuses: { 0: 0, 1: 0, 2: 0.2, 3: 0.4, 4: 0.6, 5: 1, 6: 1.5 } as Record<number, number>,
   milestones: {
-    topFive: { place: 5, title: "殺入前五！", label: "前五里程碑", bonus: 0.2 },
-    podium: { place: 3, title: "登上頒獎台！", label: "頒獎台里程碑", bonus: 0.5 },
-    champion: { place: 1, title: "奪得冠軍！", label: "冠軍里程碑", bonus: 1 },
-  } as Record<MilestoneId, { place: number; title: string; label: string; bonus: number }>,
+    topFive: { place: 5, title: "殺入前五！", previewTitle: "殺進前五", label: "前五里程碑", bonus: 0.2 },
+    podium: { place: 3, title: "登上頒獎台！", previewTitle: "晉升前三", label: "頒獎台里程碑", bonus: 0.5 },
+    champion: { place: 1, title: "奪得冠軍！", previewTitle: "競爭冠軍", label: "冠軍里程碑", bonus: 1 },
+  } as Record<MilestoneId, { place: number; title: string; previewTitle: string; label: string; bonus: number }>,
 };
 const rankMultipliers = GAME_CONFIG.rankMultipliers;
 const milestoneEntries = Object.entries(GAME_CONFIG.milestones) as [MilestoneId, (typeof GAME_CONFIG.milestones)[MilestoneId]][];
@@ -200,9 +200,9 @@ export default function Home() {
         setMilestones((current) => [...current, id]);
       }
       const upcomingMilestone = milestoneEntries.find(([id, item]) => item.place === nextPlace - 1 && !milestones.includes(id));
-      if (upcomingMilestone && nextPlace !== 2) {
+      if (upcomingMilestone) {
         const [, item] = upcomingMilestone;
-        notices.push({ kind: "event", alert: { title: "里程碑預告", subtitle: `下次成功：${item.title.replace("！", "")}・+${multiplierLabel(item.bonus)}倍`, tone: "gold", variant: "panel" } });
+        notices.push({ kind: "event", alert: { title: item.previewTitle, subtitle: `+${settlementMultiplierLabel(item.bonus)}`, tone: "gold", variant: "panel" } });
       }
       if (newStreak >= 3) {
         setStreakPulse(true);
