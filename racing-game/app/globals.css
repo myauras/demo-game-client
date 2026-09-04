@@ -400,7 +400,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 .settlement-total span, .settlement-total strong, .settlement-total small { display: block; text-align: center; }
 .settlement-total span { color: #b69c4d; font: 900 10px monospace; letter-spacing: 2px; }
 .settlement-total strong { color: var(--gold); font-family: Impact,"Arial Narrow",sans-serif; font-size: 38px; font-style: italic; line-height: 1; }
-.settlement-total small { margin-top: 5px; color: #fff; font-size: 12px; font-weight: 900; }
+.settlement-total small { margin-top: 7px; color: #fff; font-size: 18px; font-weight: 1000; letter-spacing: .3px; text-shadow: 0 0 12px rgba(255,255,255,.28); }
 .settlement-total:not(.revealed) strong, .settlement-total:not(.revealed) small { visibility: hidden; }
 .settlement-total.revealed { opacity: 1; transform: scale(1); box-shadow: 0 0 28px rgba(255,201,40,.12); animation: totalReveal .5s ease both; }
 
