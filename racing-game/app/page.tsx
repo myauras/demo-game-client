@@ -20,14 +20,21 @@ const GAME_CONFIG = {
   rankMultipliers: { 8: 1, 7: 1.2, 6: 1.5, 5: 1.9, 4: 2.5, 3: 3.5, 2: 5, 1: 10 } as Record<number, number>,
   streakBonuses: { 0: 0, 1: 0, 2: 0.2, 3: 0.4, 4: 0.6, 5: 1, 6: 1.5 } as Record<number, number>,
   milestones: {
-    topFive: { place: 5, title: "殺入前五！", previewTitle: "殺進前五", label: "前五里程碑", bonus: 0.2 },
-    podium: { place: 3, title: "晉升前三！", previewTitle: "晉升前三", label: "前三里程碑", bonus: 0.5 },
-    champion: { place: 1, title: "奪得冠軍！", previewTitle: "競爭冠軍", label: "冠軍里程碑", bonus: 1 },
-  } as Record<MilestoneId, { place: number; title: string; previewTitle: string; label: string; bonus: number }>,
+    topFive: { place: 5, title: "殺入前五！", previewTitle: "殺進前五", label: "前五里程碑", minBonus: 0.1, maxBonus: 0.4 },
+    podium: { place: 3, title: "晉升前三！", previewTitle: "晉升前三", label: "前三里程碑", minBonus: 0.4, maxBonus: 0.8 },
+    champion: { place: 1, title: "奪得冠軍！", previewTitle: "競爭冠軍", label: "冠軍里程碑", minBonus: 0.8, maxBonus: 1.5 },
+  } as Record<MilestoneId, { place: number; title: string; previewTitle: string; label: string; minBonus: number; maxBonus: number }>,
 };
 const rankMultipliers = GAME_CONFIG.rankMultipliers;
 const milestoneEntries = Object.entries(GAME_CONFIG.milestones) as [MilestoneId, (typeof GAME_CONFIG.milestones)[MilestoneId]][];
-const milestoneRankBonuses: Record<number, number> = { 5: 0.2, 3: 0.5 };
+const milestoneByPlace: Record<number, MilestoneId> = { 5: "topFive", 3: "podium", 1: "champion" };
+const defaultMilestoneRewards: Record<MilestoneId, number> = { topFive: 0.1, podium: 0.4, champion: 0.8 };
+const rollMilestoneBonus = (min: number, max: number) => (Math.floor(Math.random() * (Math.round((max - min) * 10) + 1)) + Math.round(min * 10)) / 10;
+const createMilestoneRewards = (): Record<MilestoneId, number> => ({
+  topFive: rollMilestoneBonus(0.1, 0.4),
+  podium: rollMilestoneBonus(0.4, 0.8),
+  champion: rollMilestoneBonus(0.8, 1.5),
+});
 
 const opponentColors = ["#ff3b5f", "#9a6cff", "#22d3ee", "#3cff9b", "#ff8a34", "#e6f0ff", "#ffd02f"];
 const opponentHues: Record<string, number> = { "#ff3b5f": 18, "#9a6cff": 65, "#22d3ee": 145, "#3cff9b": 205, "#ff8a34": 315, "#e6f0ff": 110, "#ffd02f": 280 };
@@ -54,6 +61,7 @@ export default function Home() {
   const [streak, setStreak] = useState(0);
   const [highestStreak, setHighestStreak] = useState(0);
   const [milestones, setMilestones] = useState<MilestoneId[]>([]);
+  const [milestoneRewards, setMilestoneRewards] = useState<Record<MilestoneId, number>>(defaultMilestoneRewards);
   const [testNextOutcome, setTestNextOutcome] = useState<TestOutcome>("auto");
   const [duelDistance, setDuelDistance] = useState(40);
   const [streakPulse, setStreakPulse] = useState(false);
@@ -70,7 +78,7 @@ export default function Home() {
   const nextMultiplier = rankMultipliers[nextPlace];
   const activeOpponentColor = place > 1 ? opponentOrder[place - 2] : opponentOrder[0];
   const streakBonus = GAME_CONFIG.streakBonuses[Math.min(highestStreak, 6)];
-  const milestoneBonus = milestones.reduce((total, id) => total + GAME_CONFIG.milestones[id].bonus, 0);
+  const milestoneBonus = milestones.reduce((total, id) => total + milestoneRewards[id], 0);
   const claimSubtotal = multiplier + streakBonus + milestoneBonus;
   const claimMultiplier = Number(claimSubtotal.toFixed(2));
   const claimAmount = Number((bet * claimMultiplier).toFixed(2));
@@ -125,8 +133,9 @@ export default function Home() {
     }
     earnedMilestones.forEach((id, index) => {
       const item = GAME_CONFIG.milestones[id];
-      runningTotal += item.bonus;
-      rows.push({ key: "milestone", label: index === 0 ? "里程碑" : "", detail: item.title.replace("！", ""), amount: item.bonus, total: runningTotal, displayAmount: `+${settlementMultiplierLabel(item.bonus)}` });
+      const earnedBonus = milestoneRewards[id];
+      runningTotal += earnedBonus;
+      rows.push({ key: "milestone", label: index === 0 ? "里程碑" : "", detail: item.title.replace("！", ""), amount: earnedBonus, total: runningTotal, displayAmount: `+${settlementMultiplierLabel(earnedBonus)}` });
     });
     const totalMultiplier = Number(runningTotal.toFixed(2));
     const reward = Number((bet * totalMultiplier).toFixed(2));
@@ -152,6 +161,7 @@ export default function Home() {
     setStreak(0);
     setHighestStreak(0);
     setMilestones([]);
+    setMilestoneRewards(createMilestoneRewards());
     setTestNextOutcome("auto");
     setDuelDistance(40);
     setActiveNotices([]);
@@ -193,7 +203,7 @@ export default function Home() {
       if (nextPlace !== 2) {
         const usesSpecialRankText = [5, 3].includes(nextPlace);
         notices.push({ kind: "event", alert: usesSpecialRankText
-          ? { title: `第${nextPlace}名！`, subtitle: `+${settlementMultiplierLabel(milestoneRankBonuses[nextPlace])}`, tone: "gold", variant: "special" }
+          ? { title: `第${nextPlace}名！`, subtitle: `+${settlementMultiplierLabel(milestoneRewards[milestoneByPlace[nextPlace]])}`, tone: "gold", variant: "special" }
           : { title: `第${place}名 ↑ 第${nextPlace}名！`, subtitle: `${settlementMultiplierLabel(multiplier)} → ${settlementMultiplierLabel(nextMultiplier)}`, tone: nextPlace <= 3 ? "gold" : "cyan", variant: "panel" } });
       }
       notices.push({ kind: "event", alert: { title: `${newStreak}連超！`, subtitle: `+${multiplierLabel(GAME_CONFIG.streakBonuses[newStreak])}倍`, tone: newStreak >= 5 ? "red" : "cyan", variant: "streak" } });
@@ -205,7 +215,7 @@ export default function Home() {
       const upcomingMilestone = milestoneEntries.find(([id, item]) => item.place === nextPlace - 1 && !milestones.includes(id));
       if (upcomingMilestone) {
         const [, item] = upcomingMilestone;
-        notices.push({ kind: "event", alert: { title: item.previewTitle, subtitle: "贏得額外獎勵", tone: "gold", variant: "panel" } });
+        notices.push({ kind: "event", alert: { title: item.previewTitle, subtitle: `+${multiplierLabel(item.minBonus)}～+${multiplierLabel(item.maxBonus)}倍`, tone: "gold", variant: "panel" } });
       }
       if (newStreak >= 3) {
         setStreakPulse(true);
@@ -234,7 +244,7 @@ export default function Home() {
         setDuelPhase("player-win");
         setStreak(nextStreak);
         setHighestStreak((value) => Math.max(value, nextStreak));
-        queueNotices([{ kind: "event", alert: { title: "第1名！", subtitle: "+1.0倍", tone: "gold", variant: "special" } }]);
+        queueNotices([{ kind: "event", alert: { title: "第1名！", subtitle: `+${settlementMultiplierLabel(milestoneRewards.champion)}`, tone: "gold", variant: "special" } }]);
         window.setTimeout(() => {
           setPlace(1);
           setMilestones(championMilestones);
@@ -271,6 +281,7 @@ export default function Home() {
     setStreak(0);
     setHighestStreak(0);
     setMilestones([]);
+    setMilestoneRewards(defaultMilestoneRewards);
     setTestNextOutcome("auto");
     setDuelDistance(40);
     noticeTimers.current.forEach((timer) => window.clearTimeout(timer));
@@ -301,7 +312,7 @@ export default function Home() {
             <label>冠軍結果<select value={testOutcome} onChange={(event) => setTestOutcome(event.target.value as TestOutcome)} disabled={state !== "setup"}><option value="auto">自動</option><option value="win">指定成功</option><option value="lose">指定失敗</option></select></label>
             <div className="test-streak"><span>當前連超 <b>{streak}</b></span><span>最高連超 <b>{highestStreak}</b></span></div>
             <div className="test-readout"><span>當前名次<b>第{place}名</b></span><span>連超獎勵<b>+{multiplierLabel(streakBonus)}倍</b></span><span>名次基礎<b>{settlementMultiplierLabel(multiplier)}</b></span><span>目前可領<b>{settlementMultiplierLabel(claimMultiplier)}</b></span><span>下一名次<b>{settlementMultiplierLabel(nextMultiplier)}</b></span><span>冠軍挑戰<b>{place === 2 || state === "duel" ? "已進入" : "未進入"}</b></span></div>
-            <div className="test-milestones"><span>已取得里程碑</span><b>{milestones.length ? milestones.map((id) => GAME_CONFIG.milestones[id].title.replace("！", "")).join("、") : "無"}</b><small>下次成功：{nextMilestone ? nextMilestone[1].title.replace("！", "") : "無里程碑"} · 連超 +{multiplierLabel(nextStreakBonus)}倍</small></div>
+            <div className="test-milestones"><span>已取得里程碑</span><b>{milestones.length ? milestones.map((id) => `${GAME_CONFIG.milestones[id].title.replace("！", "")} +${settlementMultiplierLabel(milestoneRewards[id])}`).join("、") : "無"}</b><small>下次成功：{nextMilestone ? `${nextMilestone[1].title.replace("！", "")} +${multiplierLabel(nextMilestone[1].minBonus)}～+${multiplierLabel(nextMilestone[1].maxBonus)}倍` : "無里程碑"} · 連超 +{multiplierLabel(nextStreakBonus)}倍</small></div>
             {state === "racing" && place > 2 && <div className="test-force"><button onClick={() => setTestNextOutcome("win")} className={testNextOutcome === "win" ? "active" : ""}>強制下次成功</button><button onClick={() => setTestNextOutcome("lose")} className={testNextOutcome === "lose" ? "active" : ""}>強制下次失敗</button><button onClick={() => setTestRun(true)} className={testRun ? "active" : ""}>安全抵達第2名</button></div>}
           </div>
         )}
