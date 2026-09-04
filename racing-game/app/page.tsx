@@ -21,12 +21,13 @@ const GAME_CONFIG = {
   streakBonuses: { 0: 0, 1: 0, 2: 0.2, 3: 0.4, 4: 0.6, 5: 1, 6: 1.5 } as Record<number, number>,
   milestones: {
     topFive: { place: 5, title: "殺入前五！", previewTitle: "殺進前五", label: "前五里程碑", bonus: 0.2 },
-    podium: { place: 3, title: "登上頒獎台！", previewTitle: "晉升前三", label: "頒獎台里程碑", bonus: 0.5 },
+    podium: { place: 3, title: "晉升前三！", previewTitle: "晉升前三", label: "前三里程碑", bonus: 0.5 },
     champion: { place: 1, title: "奪得冠軍！", previewTitle: "競爭冠軍", label: "冠軍里程碑", bonus: 1 },
   } as Record<MilestoneId, { place: number; title: string; previewTitle: string; label: string; bonus: number }>,
 };
 const rankMultipliers = GAME_CONFIG.rankMultipliers;
 const milestoneEntries = Object.entries(GAME_CONFIG.milestones) as [MilestoneId, (typeof GAME_CONFIG.milestones)[MilestoneId]][];
+const milestoneRankBonuses: Record<number, number> = { 5: 0.2, 3: 0.5, 2: 1 };
 
 const opponentColors = ["#ff3b5f", "#9a6cff", "#22d3ee", "#3cff9b", "#ff8a34", "#e6f0ff", "#ffd02f"];
 const opponentHues: Record<string, number> = { "#ff3b5f": 18, "#9a6cff": 65, "#22d3ee": 145, "#3cff9b": 205, "#ff8a34": 315, "#e6f0ff": 110, "#ffd02f": 280 };
@@ -191,9 +192,9 @@ export default function Home() {
       const notices: QueuedNotice[] = [];
       const usesSpecialRankText = [5, 3, 2].includes(nextPlace);
       notices.push({ kind: "event", alert: usesSpecialRankText
-        ? { title: `第${nextPlace}名！`, subtitle: `獎勵倍率 ${settlementMultiplierLabel(nextMultiplier)}`, tone: "gold", variant: "special" }
+        ? { title: `第${nextPlace}名！`, subtitle: `+${settlementMultiplierLabel(milestoneRankBonuses[nextPlace])}`, tone: "gold", variant: "special" }
         : { title: `第${place}名 ↑ 第${nextPlace}名！`, subtitle: `${settlementMultiplierLabel(multiplier)} → ${settlementMultiplierLabel(nextMultiplier)}`, tone: nextPlace <= 3 ? "gold" : "cyan", variant: "panel" } });
-      notices.push({ kind: "event", alert: { title: newStreak >= 6 ? `極速連破！ ${newStreak}連超` : newStreak >= 5 ? `勢不可擋！ ${newStreak}連超` : `${newStreak}連超！`, subtitle: `+${multiplierLabel(GAME_CONFIG.streakBonuses[newStreak])}倍`, tone: newStreak >= 5 ? "red" : "cyan", variant: "streak" } });
+      notices.push({ kind: "event", alert: { title: `${newStreak}連超！`, subtitle: `+${multiplierLabel(GAME_CONFIG.streakBonuses[newStreak])}倍`, tone: newStreak >= 5 ? "red" : "cyan", variant: "streak" } });
       const reachedMilestone = milestoneEntries.find(([id, item]) => item.place === nextPlace && !milestones.includes(id));
       if (reachedMilestone) {
         const [id] = reachedMilestone;
@@ -202,7 +203,7 @@ export default function Home() {
       const upcomingMilestone = milestoneEntries.find(([id, item]) => item.place === nextPlace - 1 && !milestones.includes(id));
       if (upcomingMilestone) {
         const [, item] = upcomingMilestone;
-        notices.push({ kind: "event", alert: { title: item.previewTitle, subtitle: `+${settlementMultiplierLabel(item.bonus)}`, tone: "gold", variant: "panel" } });
+        notices.push({ kind: "event", alert: { title: item.previewTitle, subtitle: "贏得額外獎勵", tone: "gold", variant: "panel" } });
       }
       if (newStreak >= 3) {
         setStreakPulse(true);
