@@ -9,7 +9,7 @@ type TestOutcome = "auto" | "win" | "lose";
 type ResultState = "won" | "cashed";
 type MilestoneId = "topFive" | "podium" | "champion";
 
-type EventAlert = { title: string; subtitle: string; tone: "cyan" | "gold" | "red"; variant: "panel" | "streak" | "special"; countUpValue?: number };
+type EventAlert = { title: string; subtitle: string; tone: "cyan" | "gold" | "red"; variant: "panel" | "streak" | "special"; countUpValue?: number; countUpMin?: number; countUpMax?: number };
 type QueuedNotice = { kind: "event"; alert: EventAlert } | { kind: "champion" };
 type ActiveNotice = QueuedNotice & { id: number; slot: number };
 type SettlementRow = { key: "rank" | "streak" | "milestone"; label: string; detail?: string; amount: number; total: number; displayAmount: string };
@@ -42,27 +42,31 @@ const assetBase = (import.meta.env.BASE_URL ?? "/").replace(/\/$/, "");
 const credit = (value: number) => value.toLocaleString("zh-TW", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const multiplierLabel = (value: number) => Number.isInteger(value) ? `${value}` : value.toFixed(2).replace(/0$/, "");
 const settlementMultiplierLabel = (value: number) => `${Number.isInteger(value) ? value.toFixed(1) : multiplierLabel(value)}倍`;
-function AnimatedMultiplier({ value }: { value: number }) {
-  const [displayValue, setDisplayValue] = useState(0);
+function AnimatedMultiplier({ value, min, max }: { value: number; min: number; max: number }) {
+  const [displayValue, setDisplayValue] = useState(min);
+  const [settled, setSettled] = useState(false);
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      const frame = window.requestAnimationFrame(() => setDisplayValue(value));
+      const frame = window.requestAnimationFrame(() => {
+        setDisplayValue(value);
+        setSettled(true);
+      });
       return () => window.cancelAnimationFrame(frame);
     }
-    const startedAt = performance.now();
-    let frame = 0;
-    const tick = (now: number) => {
-      const progress = Math.min(1, (now - startedAt) / 620);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplayValue(Number((value * eased).toFixed(1)));
-      if (progress < 1) frame = window.requestAnimationFrame(tick);
+    const randomTimer = window.setInterval(() => setDisplayValue(rollMilestoneBonus(min, max)), 55);
+    const settleTimer = window.setTimeout(() => {
+      window.clearInterval(randomTimer);
+      setDisplayValue(value);
+      setSettled(true);
+    }, 1000);
+    return () => {
+      window.clearInterval(randomTimer);
+      window.clearTimeout(settleTimer);
     };
-    frame = window.requestAnimationFrame(tick);
-    return () => window.cancelAnimationFrame(frame);
-  }, [value]);
+  }, [max, min, value]);
 
-  return <>+{settlementMultiplierLabel(displayValue)}</>;
+  return <b className={`random-reward ${settled ? "settled" : "rolling"}`}>+{settlementMultiplierLabel(displayValue)}</b>;
 }
 
 export default function Home() {
@@ -125,8 +129,7 @@ export default function Home() {
       const id = noticeId.current + 1;
       noticeId.current = id;
       const isStreakNotice = notice.kind === "event" && notice.alert.variant === "streak";
-      const isSpecialNotice = notice.kind === "event" && notice.alert.variant === "special";
-      const noticeDuration = isStreakNotice ? 900 : isSpecialNotice ? 1200 : 1500;
+      const noticeDuration = isStreakNotice ? 900 : 1500;
       const slot = isStreakNotice ? streakSlot++ : panelSlot++;
       latestNoticeEnd = Math.max(latestNoticeEnd, index * 500 + noticeDuration);
       const showTimer = window.setTimeout(() => {
@@ -224,8 +227,9 @@ export default function Home() {
       const notices: QueuedNotice[] = [];
       if (nextPlace !== 2) {
         const usesSpecialRankText = [5, 3].includes(nextPlace);
+        const milestoneConfig = usesSpecialRankText ? GAME_CONFIG.milestones[milestoneByPlace[nextPlace]] : null;
         notices.push({ kind: "event", alert: usesSpecialRankText
-          ? { title: `第${nextPlace}名！`, subtitle: `+${settlementMultiplierLabel(milestoneRewards[milestoneByPlace[nextPlace]])}`, tone: "gold", variant: "special", countUpValue: milestoneRewards[milestoneByPlace[nextPlace]] }
+          ? { title: `第${nextPlace}名！`, subtitle: `+${settlementMultiplierLabel(milestoneRewards[milestoneByPlace[nextPlace]])}`, tone: "gold", variant: "special", countUpValue: milestoneRewards[milestoneByPlace[nextPlace]], countUpMin: milestoneConfig!.minBonus, countUpMax: milestoneConfig!.maxBonus }
           : { title: `第${place}名 ↑ 第${nextPlace}名！`, subtitle: `${settlementMultiplierLabel(multiplier)} → ${settlementMultiplierLabel(nextMultiplier)}`, tone: nextPlace <= 3 ? "gold" : "cyan", variant: "panel" } });
       }
       notices.push({ kind: "event", alert: { title: `${newStreak}連超！`, subtitle: `+${multiplierLabel(GAME_CONFIG.streakBonuses[newStreak])}倍`, tone: newStreak >= 5 ? "red" : "cyan", variant: "streak" } });
@@ -266,7 +270,7 @@ export default function Home() {
         setDuelPhase("player-win");
         setStreak(nextStreak);
         setHighestStreak((value) => Math.max(value, nextStreak));
-        const championNotices: QueuedNotice[] = [{ kind: "event", alert: { title: "第1名！", subtitle: `+${settlementMultiplierLabel(milestoneRewards.champion)}`, tone: "gold", variant: "special", countUpValue: milestoneRewards.champion } }];
+        const championNotices: QueuedNotice[] = [{ kind: "event", alert: { title: "第1名！", subtitle: `+${settlementMultiplierLabel(milestoneRewards.champion)}`, tone: "gold", variant: "special", countUpValue: milestoneRewards.champion, countUpMin: GAME_CONFIG.milestones.champion.minBonus, countUpMax: GAME_CONFIG.milestones.champion.maxBonus } }];
         queueNotices(championNotices);
         window.setTimeout(() => {
           setPlace(1);
@@ -349,7 +353,7 @@ export default function Home() {
             {state !== "setup" && <><div className={`scene-multiplier ${place <= 3 ? "podium" : ""}`}><span>目前可領</span><strong>×{multiplierLabel(claimMultiplier)}</strong><div className="progress-track"><i style={{ width: `${Math.max(4, progress)}%` }} /></div></div><div className={`streak-meter level-${Math.min(highestStreak, 6)}`}><span>連超</span><strong>{streak}</strong><small>+{multiplierLabel(streakBonus)}倍</small></div></>}
             {activeNotices.some((notice) => notice.kind === "champion" || notice.alert.variant === "panel") && <div className="notice-stack" aria-live="polite">{activeNotices.filter((notice) => notice.kind === "champion" || notice.alert.variant === "panel").map((notice) => notice.kind === "event" ? <div key={notice.id} className={`event-alert ${notice.alert.tone}`} style={{ "--notice-slot": notice.slot } as React.CSSProperties} role="status"><strong>{notice.alert.title}</strong><span>{notice.alert.subtitle}</span></div> : <div key={notice.id} className="champion-alert" style={{ "--notice-slot": notice.slot } as React.CSSProperties} role="status"><span>冠軍挑戰</span><strong>挑戰冠軍賽，獎勵10倍!</strong></div>)}</div>}
             {activeNotices.some((notice) => notice.kind === "event" && notice.alert.variant === "streak") && <div className="streak-notice-layer" aria-live="polite">{activeNotices.filter((notice) => notice.kind === "event" && notice.alert.variant === "streak").map((notice) => notice.kind === "event" && <div key={notice.id} className={`streak-alert ${notice.alert.tone}`} style={{ "--streak-slot": notice.slot } as React.CSSProperties} role="status"><strong>{notice.alert.title}</strong><span>{notice.alert.subtitle}</span></div>)}</div>}
-            {activeNotices.some((notice) => notice.kind === "event" && notice.alert.variant === "special") && <div className="rank-special-layer" aria-live="polite">{activeNotices.filter((notice) => notice.kind === "event" && notice.alert.variant === "special").map((notice) => notice.kind === "event" && <div key={notice.id} className="rank-special" role="status"><strong>{notice.alert.title}</strong><span>{notice.alert.countUpValue === undefined ? notice.alert.subtitle : <AnimatedMultiplier value={notice.alert.countUpValue} />}</span></div>)}</div>}
+            {activeNotices.some((notice) => notice.kind === "event" && notice.alert.variant === "special") && <div className="rank-special-layer" aria-live="polite">{activeNotices.filter((notice) => notice.kind === "event" && notice.alert.variant === "special").map((notice) => notice.kind === "event" && <div key={notice.id} className="rank-special" role="status"><strong>{notice.alert.title}</strong><span>{notice.alert.countUpValue === undefined ? notice.alert.subtitle : <AnimatedMultiplier value={notice.alert.countUpValue} min={notice.alert.countUpMin ?? 0} max={notice.alert.countUpMax ?? notice.alert.countUpValue} />}</span></div>)}</div>}
 
             <div className="track-wrap"><div className="track"><div className="road-stream" /><div className="lane lane-one" /><div className="lane lane-two" /><div className="finish-line" />
               {state === "racing" && place > 1 && <div className={`target-kart ${normalCrash ? "crashing" : isPassing ? `being-passed pass-${passDirection}` : ""}`} style={{ "--kart-color": activeOpponentColor, "--car-hue": `${opponentHues[activeOpponentColor]}deg` } as React.CSSProperties} aria-label={`前方第 ${nextPlace} 名車輛`}><span className="target-label"><i />第{nextPlace}名</span><img className="racer-image" src={`${assetBase}/neon-racer.png`} alt="" aria-hidden="true" /></div>}
