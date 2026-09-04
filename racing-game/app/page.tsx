@@ -190,10 +190,12 @@ export default function Home() {
       setHighestStreak((value) => Math.max(value, newStreak));
       setIsPassing(false);
       const notices: QueuedNotice[] = [];
-      const usesSpecialRankText = [5, 3, 2].includes(nextPlace);
-      notices.push({ kind: "event", alert: usesSpecialRankText
-        ? { title: `第${nextPlace}名！`, subtitle: nextPlace === 2 ? `獎勵倍率 ${settlementMultiplierLabel(nextMultiplier)}` : `+${settlementMultiplierLabel(milestoneRankBonuses[nextPlace])}`, tone: "gold", variant: "special" }
-        : { title: `第${place}名 ↑ 第${nextPlace}名！`, subtitle: `${settlementMultiplierLabel(multiplier)} → ${settlementMultiplierLabel(nextMultiplier)}`, tone: nextPlace <= 3 ? "gold" : "cyan", variant: "panel" } });
+      if (nextPlace !== 2) {
+        const usesSpecialRankText = [5, 3].includes(nextPlace);
+        notices.push({ kind: "event", alert: usesSpecialRankText
+          ? { title: `第${nextPlace}名！`, subtitle: `+${settlementMultiplierLabel(milestoneRankBonuses[nextPlace])}`, tone: "gold", variant: "special" }
+          : { title: `第${place}名 ↑ 第${nextPlace}名！`, subtitle: `${settlementMultiplierLabel(multiplier)} → ${settlementMultiplierLabel(nextMultiplier)}`, tone: nextPlace <= 3 ? "gold" : "cyan", variant: "panel" } });
+      }
       notices.push({ kind: "event", alert: { title: `${newStreak}連超！`, subtitle: `+${multiplierLabel(GAME_CONFIG.streakBonuses[newStreak])}倍`, tone: newStreak >= 5 ? "red" : "cyan", variant: "streak" } });
       const reachedMilestone = milestoneEntries.find(([id, item]) => item.place === nextPlace && !milestones.includes(id));
       if (reachedMilestone) {
@@ -232,13 +234,13 @@ export default function Home() {
         setDuelPhase("player-win");
         setStreak(nextStreak);
         setHighestStreak((value) => Math.max(value, nextStreak));
+        queueNotices([{ kind: "event", alert: { title: "第1名！", subtitle: "+1.0倍", tone: "gold", variant: "special" } }]);
         window.setTimeout(() => {
           setPlace(1);
           setMilestones(championMilestones);
           setIsPassing(false);
-          queueNotices([{ kind: "event", alert: { title: "第1名！", subtitle: "+1.0倍", tone: "gold", variant: "special" } }]);
-          window.setTimeout(() => beginSettlement(1, "won", Math.max(highestStreak, nextStreak), championMilestones), 1300);
-        }, 1150);
+          beginSettlement(1, "won", Math.max(highestStreak, nextStreak), championMilestones);
+        }, 1250);
       } else {
         setDuelPhase("collision");
         window.setTimeout(() => {
