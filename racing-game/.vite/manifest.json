@@ -21,7 +21,7 @@
     ]
   },
   "node_modules/.pnpm/vinext@1.0.0-beta.2_@vitejs_93f6fd6c708956198cb05a5cfe3fd3ab/node_modules/vinext/dist/shims/layout-segment-context.js": {
-    "file": "demo-game-client/racing-game/_next/static/chunks/layout-segment-context-C2jvybPL.js",
+    "file": "demo-game-client/racing-game/_next/static/chunks/layout-segment-context-Zau9_Wep.js",
     "name": "layout-segment-context",
     "src": "node_modules/.pnpm/vinext@1.0.0-beta.2_@vitejs_93f6fd6c708956198cb05a5cfe3fd3ab/node_modules/vinext/dist/shims/layout-segment-context.js",
     "isDynamicEntry": true,
@@ -32,7 +32,7 @@
     ]
   },
   "virtual:vinext-app-browser-entry": {
-    "file": "demo-game-client/racing-game/_next/static/chunks/index-CdbBbr5e.js",
+    "file": "demo-game-client/racing-game/_next/static/chunks/index-1SHW19UR.js",
     "name": "index",
     "src": "virtual:vinext-app-browser-entry",
     "isEntry": true,
