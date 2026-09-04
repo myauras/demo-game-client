@@ -254,6 +254,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 .result-card p strong { color: #fff; font-size: 11px; }
 .result-prize { margin: 13px 0 17px; padding: 12px; border: 1px solid var(--line); background: #070b12; display: flex; align-items: center; justify-content: space-between; font: 800 9px monospace; }
 .result-prize strong { color: var(--lime); font-size: 22px; }
+.result-prize .zero-reward { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; line-height: 1; }
+.result-prize .zero-reward span:last-child { color: #aeb9c8; font-size: 17px; }
 .result-card button { height: 44px; font-size: 12px; }
 .demo-caption { display: none; position: relative; z-index: 3; margin: 12px 0 0; color: rgba(130,153,182,.46); font: 800 9px monospace; letter-spacing: 2.2px; }
 
@@ -319,7 +321,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 .streak-meter.level-6 { border-left-color: var(--red); box-shadow: 0 0 22px rgba(255,49,88,.22); }
 
 .notice-stack { position: absolute; z-index: 19; left: 50%; top: 18%; transform: translateX(-50%); width: min(300px,76%); height: 160px; pointer-events: none; }
-.event-alert { position: absolute; left: 0; top: calc(var(--notice-slot,0) * 78px); width: 100%; padding: 12px 16px; border-left: 3px solid var(--cyan); background: linear-gradient(90deg,rgba(5,13,22,.96),rgba(5,13,22,.78)); text-align: center; box-shadow: 0 12px 30px rgba(0,0,0,.35); animation: eventPop 1.5s ease both; }
+.event-alert { position: absolute; left: 0; top: calc(var(--notice-slot,0) * 78px); width: 100%; padding: 12px 16px; border-left: 3px solid var(--cyan); background: linear-gradient(90deg,rgba(5,13,22,.96),rgba(5,13,22,.78)); text-align: center; box-shadow: 0 12px 30px rgba(0,0,0,.35); animation: eventPop 1.8s ease both; }
 .notice-stack .champion-alert { position: absolute; inset: auto; left: 0; top: calc(var(--notice-slot,0) * 78px); width: 100%; padding: 13px 17px 14px; transform: none; animation: eventPop 1.5s ease both; }
 .event-alert strong, .event-alert span { display: block; }
 .event-alert strong { color: #fff; font-size: 20px; font-style: italic; text-shadow: 0 0 16px rgba(32,224,255,.3); }
@@ -330,14 +332,14 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 .event-alert.red strong { font-size: 25px; text-shadow: 0 0 20px rgba(255,49,88,.4); }
 .event-alert.red span { color: #ff8ca1; }
 .streak-notice-layer { position: absolute; z-index: 19; left: 0; right: 0; bottom: 10%; height: 72px; overflow: hidden; pointer-events: none; }
-.streak-alert { position: absolute; left: 0; right: 0; bottom: calc(var(--streak-slot,0) * 46px); text-align: center; animation: streakSweep .9s cubic-bezier(.2,.72,.2,1) both; }
+.streak-alert { position: absolute; left: 0; right: 0; bottom: calc(var(--streak-slot,0) * 46px); text-align: center; animation: streakSweep 1.2s cubic-bezier(.2,.72,.2,1) both; }
 .streak-alert strong, .streak-alert span { display: block; }
 .streak-alert strong { color: #f5fdff; font-family: Impact,"Arial Narrow",sans-serif; font-size: 34px; font-style: italic; letter-spacing: 2px; line-height: 1; text-shadow: 0 0 7px #fff,0 0 18px var(--cyan),3px 3px 0 rgba(1,10,18,.92); }
 .streak-alert span { margin-top: 4px; color: var(--cyan); font: 1000 18px monospace; text-shadow: 0 0 12px rgba(32,224,255,.8),2px 2px 0 rgba(1,10,18,.95); }
 .streak-alert.red strong { color: #fff3b8; text-shadow: 0 0 8px #fff,0 0 20px var(--gold),3px 3px 0 rgba(20,9,0,.92); }
 .streak-alert.red span { color: var(--gold); text-shadow: 0 0 13px rgba(255,201,40,.85),2px 2px 0 rgba(20,9,0,.95); }
 .rank-special-layer { position: absolute; z-index: 20; left: 0; right: 0; top: 39%; height: 96px; pointer-events: none; }
-.rank-special { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; text-align: center; animation: rankSpecialPop 1.5s cubic-bezier(.18,.78,.2,1) both; }
+.rank-special { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; text-align: center; animation: rankSpecialPop 1.8s cubic-bezier(.18,.78,.2,1) both; }
 .rank-special strong, .rank-special span { display: block; }
 .rank-special strong { color: #fff7d2; font-family: Impact,"Arial Narrow",sans-serif; font-size: 48px; font-style: italic; letter-spacing: 2px; line-height: 1; text-shadow: 0 0 8px #fff,0 0 24px var(--gold),4px 4px 0 rgba(18,10,0,.88); }
 .rank-special span { min-height: 35px; margin-top: 8px; color: var(--gold); font: 1000 23px/1.2 monospace; text-shadow: 0 0 13px rgba(255,201,40,.9),2px 2px 0 rgba(18,10,0,.9); }

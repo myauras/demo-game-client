@@ -129,7 +129,7 @@ export default function Home() {
       const id = noticeId.current + 1;
       noticeId.current = id;
       const isStreakNotice = notice.kind === "event" && notice.alert.variant === "streak";
-      const noticeDuration = isStreakNotice ? 900 : 1500;
+      const noticeDuration = isStreakNotice ? 1200 : 1800;
       const slot = isStreakNotice ? streakSlot++ : panelSlot++;
       latestNoticeEnd = Math.max(latestNoticeEnd, index * 500 + noticeDuration);
       const showTimer = window.setTimeout(() => {
@@ -362,7 +362,7 @@ export default function Home() {
             </div></div>
             {state === "duel" && duelPhase === "race" && <div className="duel-distance" aria-live="polite"><span>距離冠軍</span><strong>{duelDistance}m</strong></div>}
 
-            {state === "lost" && <div className="result-overlay"><div className="result-card lost"><div className="result-code">再接再厲!</div><p>最終名次 <strong>第 {place} 名 / 共 8 名</strong></p><div className="result-prize"><span>最終獎勵</span><strong>×0 · 0.00</strong></div><button onClick={reset}>再玩一局</button></div></div>}
+            {state === "lost" && <div className="result-overlay"><div className="result-card lost"><div className="result-code">再接再厲!</div><p>最終名次 <strong>第 {place} 名 / 共 8 名</strong></p><div className="result-prize"><span>最終獎勵</span><strong className="zero-reward"><span>×0</span><span>0.00</span></strong></div><button onClick={reset}>再玩一局</button></div></div>}
           </section>
 
           <aside className="control-panel">{state === "setup" ? <div className="setup-panel"><div className="bet-card"><div><span>投注金額</span><small>餘額 {credit(balance)}</small></div><div className="bet-input-row"><input type="number" inputMode="numeric" min="10" max={balance} step="10" value={bet || ""} onChange={(event) => setBet(Math.max(0, Math.floor(Number(event.target.value))))} onBlur={() => setBet(Math.min(balance, Math.max(10, bet || 10)))} aria-label="下注金額" /></div><div className="quick-bets" aria-label="快速下注">{[10, 50, 100, 200].map((amount) => <button key={amount} className={bet === amount ? "selected" : ""} onClick={() => setBet(amount)}>{amount}</button>)}</div></div><button className="start-button" onClick={startRace} disabled={balance < bet || bet < 10}>開始投注 <span>確認</span></button><p className="risk-note">挑戰失敗，名次、連超與里程碑獎勵全部歸零</p></div> : <div className={`race-panel action-only ${place === 2 ? "champion-decision" : ""}`}><button className={`overtake-button ${place === 2 ? "champion-button" : ""}`} onClick={primaryAction} disabled={isPassing || noticeLocked || state !== "racing"}><span>{isPassing ? "全力衝刺" : place === 2 ? "挑戰冠軍" : `超越第${nextPlace}名`}</span></button><button className="cash-button" onClick={cashOut} disabled={multiplier <= 1 || isPassing || noticeLocked || state !== "racing"}>領取獎勵・{credit(claimAmount)}</button></div>}</aside>
