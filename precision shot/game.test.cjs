@@ -9,7 +9,7 @@ function game(random=.1){
   const get=id=>{if(!elements.has(id))elements.set(id,element());return elements.get(id);};
   const levels=['easy','medium','hard'].map(level=>Object.assign(element(),{dataset:{level}}));
   const counts=[1,2,3,5,10,20].map(count=>Object.assign(element(),{dataset:{count:String(count)}}));
-  const presets=[10,50,100,500].map(bet=>Object.assign(element(),{dataset:{bet:String(bet)}}));
+  const presets=[10,50,100,200].map(bet=>Object.assign(element(),{dataset:{bet:String(bet)}}));
   let tick=0;
   vm.runInNewContext(fs.readFileSync(__dirname+'/game.js','utf8'),{
     document:{addEventListener(){},getElementById:get,createElement:element,querySelectorAll:s=>s==='#difficulty button'?levels:s==='#bullets button'?counts:s==='[data-bet]'?presets:[]},
@@ -17,7 +17,7 @@ function game(random=.1){
     requestAnimationFrame(){},performance:{now:()=>tick+=100},setTimeout:fn=>queueMicrotask(fn),
     crypto:{getRandomValues:a=>{a[0]=Math.floor(random*4294967296);return a;}},window:{},
   });
-  return {get,levels,counts};
+  return {get,levels,counts,presets};
 }
 for(const [level,multipliers] of [['easy',[.5,2,5,10]],['medium',[.2,3,10,50]],['hard',[0,10,100,1000]]]){
   for(const [zone,r] of [.1,.7,.95,.999].entries()){
@@ -50,6 +50,12 @@ test('bullet count controls cost, full loss blocks unaffordable next round, rese
   await g.get('start').onclick();assert.equal(g.get('balance').textContent,'0.00');assert.equal(g.get('start').disabled,true);
   await g.get('start').onclick();assert.equal(g.get('balance').textContent,'0.00');
   g.get('reset').onclick();assert.equal(g.get('start').disabled,false);
+});
+test('quick bets update total and are ignored during an active round',async()=>{
+  const g=game();g.counts.find(b=>b.dataset.count==='3').onclick();
+  for(const b of g.presets){b.onclick();assert.equal(g.get('bet').value,b.dataset.bet);assert.equal(g.get('total-bet').textContent,(Number(b.dataset.bet)*3).toFixed(2));}
+  const run=g.get('start').onclick();g.presets[0].onclick();assert.equal(g.get('bet').value,'200');await run;
+  assert.equal(g.get('balance').textContent,'9,700.00');
 });
 for(const count of [1,2,3,5,10,20])test(`${count} bullets: correct cost, shot count and payout`,async()=>{
   const g=game(.7);g.counts.find(b=>b.dataset.count===String(count)).onclick();
