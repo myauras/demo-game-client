@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#151b19">
+  <title>精準射擊 · Precision Shot</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="layout.css">
+  <script defer src="game.js"></script>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <a class="brand" href="./index.html" aria-label="精準射擊首頁"><span class="brand-mark">⌖</span><span>PRECISION<span class="brand-sub">SHOT / 精準射擊</span></span></a>
+      <span class="demo-badge"><i></i> H5 DEMO</span>
+      <div class="wallet"><span>模擬點數</span><strong id="balance">10,000.00</strong><button id="reset" class="icon-button" title="重設模擬點數" aria-label="重設模擬點數">↻</button></div>
+    </header>
+
+    <div class="game-layout">
+      <section class="range-panel" aria-label="射擊演出">
+        <div class="range-top"><div><span class="eyebrow">INDOOR RANGE / 01</span><h1>精準射擊<span>PRECISION SHOT</span></h1></div><div class="live-label"><i></i><span id="range-status">靶場就緒</span></div></div>
+        <div class="canvas-wrap"><canvas id="range" role="img" aria-label="人形標靶射擊演出，獎勵由示範機率決定"></canvas></div>
+        <div class="weapon-layer" aria-hidden="true"><img id="weapon-image" src="assets/rifle-olive.png" alt="" draggable="false"><span id="muzzle-flash"></span></div>
+        <div class="range-bottom"><span class="range-distance">25<span>m</span><small>SHOOTING DISTANCE</small></span><div class="shot-feedback" id="shot-feedback" aria-live="polite"><span>鎖定目標</span><strong>READY TO FIRE</strong></div><div class="ammo"><span>彈匣 <b id="ammo-count">05 / 05</b></span><div id="ammo-icons"></div></div></div>
+        <div class="range-caption"><span>選擇難度與子彈，開始你的射擊回合。</span><button class="text-button" id="sound" aria-pressed="false">音效：關</button></div>
+      </section>
+
+      <aside class="controls-panel">
+        <div class="panel-title"><span class="eyebrow">MISSION SETUP</span><span class="round-number" id="round-number">ROUND 01</span></div>
+        <h2>準備你的下一發</h2>
+        <fieldset class="difficulty-field"><legend>難度</legend><div class="picker"><button id="difficulty-toggle" class="picker-toggle" aria-expanded="false" aria-controls="difficulty"><span>簡單</span><span class="arrow">▾</span></button><div class="option-list" id="difficulty" hidden><button data-level="hard" aria-pressed="false">困難</button><button data-level="medium" aria-pressed="false">中等</button><button data-level="easy" class="selected" aria-pressed="true">簡單</button></div></div></fieldset>
+        <div class="multiplier-list" id="multipliers" aria-label="各部位倍率"></div>
+        <fieldset class="bet-field"><legend>下注金額</legend><div class="bet-input"><input id="bet" type="number" min="1" max="1000" step="1" value="10" inputmode="numeric" aria-label="單發投注"><button id="bet-minus" aria-label="投注減半">½</button><button id="bet-plus" aria-label="投注加倍">2X</button></div></fieldset>
+        <fieldset class="bullets-field"><legend>子彈</legend><div class="picker"><button id="bullets-toggle" class="picker-toggle" aria-expanded="false" aria-controls="bullets"><span>1</span><span class="arrow">▾</span></button><div class="option-list" id="bullets" hidden><button data-count="20" aria-pressed="false">20</button><button data-count="10" aria-pressed="false">10</button><button data-count="5" aria-pressed="false">5</button><button data-count="3" aria-pressed="false">3</button><button data-count="2" aria-pressed="false">2</button><button data-count="1" class="selected" aria-pressed="true">1</button></div></div></fieldset>
+        <div class="total-row"><span>總下注</span><strong id="total-bet">10.00</strong></div>
+        <button id="start" class="start-button"><span>投注</span><span aria-hidden="true">↗</span></button>
+        <p class="control-hint" id="hint" aria-live="polite">扣除總投注後，自動完成本局射擊。</p>
+        <button class="rules-button" id="rules-open"><span>ⓘ</span> 玩法與倍率說明 <span>↗</span></button>
+      </aside>
+    </div>
+
+    <section class="results-panel" aria-label="本局射擊紀錄">
+      <div class="results-heading"><div><span class="eyebrow">SHOT REPORT</span><h2>本局射擊紀錄</h2></div><div class="result-total"><span>本局獎勵</span><strong id="round-reward">0.00</strong></div></div>
+      <div class="shot-log" id="shot-log"><div class="empty-log"><span>⌖</span><p>每一發，都有新的可能。<small>開始射擊後，這裡會顯示每發的命中區域與獎勵。</small></p></div></div>
+      <div class="summary" id="summary" aria-live="polite">等待開始新回合</div>
+    </section>
+    <footer><span>PRECISION SHOT <b>/</b> PROTOTYPE 01</span><span>僅供玩法展示 · 模擬點數無現金價值</span></footer>
+  </main>
+  <dialog id="rules"><div class="dialog-header"><h2>玩法與倍率</h2><button id="rules-close" class="icon-button" aria-label="關閉說明">×</button></div><p>選擇難度、單發投注與子彈數，開始後扣除總投注，自動演出每一發射擊並發放獎勵。</p><p><b>總投注 = 單發投注 × 子彈數</b><br>每發獎勵 = 單發投注 × 命中區域倍率</p><table><thead><tr><th>難度</th><th>外圈</th><th>中圈</th><th>內圈</th><th>靶心</th></tr></thead><tbody><tr><th>簡單</th><td>0.5×</td><td>2×</td><td>5×</td><td>10×</td></tr><tr><th>中等</th><td>0.2×</td><td>3×</td><td>10×</td><td>50×</td></tr><tr><th>困難</th><td>0×</td><td>10×</td><td>100×</td><td>1000×</td></tr></tbody></table><p class="demo-note">Demo 補充設定：外圈／中圈／內圈／靶心命中機率為 65%／25%／9%／1%，三種難度共用。同心環分區、機率、點數與投注限制為示範設定，原表未定義；非正式賠率模型。結果由程式抽取，瞄準動畫不影響結果。</p><button id="rules-done" class="start-button">了解，準備射擊</button></dialog>
+</body>
+</html>
+
