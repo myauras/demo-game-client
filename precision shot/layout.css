@@ -34,6 +34,11 @@ button:focus-visible,input:focus-visible{outline-color:#d5f580}
 .weapon-layer img{display:block;width:100%;height:100%;object-fit:cover;object-position:top right;transform-origin:70% 90%;will-change:transform}
 #muzzle-flash{position:absolute;left:31%;top:16%;width:65px;height:65px;transform:translate(-50%,-50%);background:radial-gradient(circle,#ffffdc 0%,#e9ee9b99 20%,#d5f58000 70%);opacity:0}
 .range-bottom{z-index:1}
+.results-panel{display:none}
+.total-row .shot-feedback{position:absolute;bottom:calc(100% + 10px);left:5px;max-width:calc(100vw - 40px);width:max-content;padding:8px 12px;box-shadow:0 4px 14px #0004;pointer-events:none}
+.weapon-layer{transition:transform .4s cubic-bezier(.22,.7,.25,1);transform-origin:70% 100%;will-change:transform}
+.weapon-layer.raised{transform:translateY(clamp(-70px,-8vh,-42px)) scale(1.04)}
+@media(prefers-reduced-motion:reduce){.weapon-layer{transition:none}.weapon-layer.raised{transform:translateY(-25px)}}
 .controls-panel .bet-field{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.12fr);gap:5px}
 .controls-panel .bet-field legend{float:none;width:100%;font-size:13px;line-height:20px;margin-bottom:3px}
 .bet-field .bet-input{width:100%;height:32px}.bet-field .bet-input input{padding:0 5px;font-size:17px}
