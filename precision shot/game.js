@@ -14,6 +14,11 @@
   function validBet(){return $('bet').value.trim()!=='' && Number.isInteger(bet()) && bet()>=1 && bet()<=1000;}
   function select(group, attr, value){document.querySelectorAll(`#${group} button`).forEach(b=>{const on=b.dataset[attr]===String(value);b.classList.toggle('selected',on);b.setAttribute('aria-pressed',String(on));});}
   function update(){
+    document.querySelectorAll('[data-bet]').forEach(button=>{
+      const selected=validBet() && Number(button.dataset.bet)===bet();
+      button.classList.toggle('selected',selected);
+      button.setAttribute('aria-pressed',String(selected));
+    });
     const total=bet()*state.bullets;
     $('balance').textContent=money(state.balance);
     $('total-bet').textContent=validBet()?money(total):'—';
