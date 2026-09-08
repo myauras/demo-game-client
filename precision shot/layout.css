@@ -30,7 +30,7 @@ body{background:#101513;color:var(--text)}
 dialog{background:#1d2421;color:var(--text)}dialog p,dialog .demo-note{color:var(--muted)}
 button:focus-visible,input:focus-visible{outline-color:#d5f580}
 .controls-panel:has(.control-hint.error) .control-hint{color:#ffa999}
-.weapon-layer{position:absolute;top:55%;bottom:0;left:0;right:0;overflow:hidden;pointer-events:none;mask-image:linear-gradient(to bottom,transparent,#000 18px);-webkit-mask-image:linear-gradient(to bottom,transparent,#000 18px)}
+.weapon-layer{position:absolute;top:55%;bottom:0;left:0;right:0;overflow:hidden;pointer-events:none;mask-image:none;-webkit-mask-image:none}
 .weapon-layer img{display:block;width:100%;height:100%;object-fit:cover;object-position:top right;transform-origin:70% 90%;will-change:transform}
 #muzzle-flash{position:absolute;left:31%;top:16%;width:65px;height:65px;transform:translate(-50%,-50%);background:radial-gradient(circle,#ffffdc 0%,#e9ee9b99 20%,#d5f58000 70%);opacity:0}
 .range-bottom{z-index:1}
@@ -54,3 +54,7 @@ button:focus-visible,input:focus-visible{outline-color:#d5f580}
 .quick-bets button:active:not(:disabled){box-shadow:inset 0 2px 4px #0003}
 @media(prefers-reduced-motion:reduce){.quick-bets button{transition:none}}
 @media(max-width:350px){.controls-panel .bet-field{gap:4px;grid-template-columns:minmax(0,1fr) minmax(0,1.12fr)}.quick-bets{gap:3px}.quick-bets button{font-size:12px}.bet-field .bet-input button{width:23px}.bet-field .bet-input input{font-size:16px}}
+
+/* Extend below the frame so lifting the rifle never exposes a green strip. */
+.weapon-layer{bottom:-85px}
+
