@@ -4,6 +4,14 @@ body{background:#bfc1c3;color:#111}.app{position:relative;width:min(100%,420px);
 @media(min-width:600px){body{min-height:100dvh;display:flex;align-items:center;justify-content:center}.app{box-shadow:0 0 40px #0002}}
 @media(max-width:350px){.controls-panel{left:10px;right:10px;padding:11px 14px;gap:6px}.controls-panel legend{font-size:14px}.picker-toggle{font-size:16px}.total-row{left:-12px}.wallet>span{display:none}}
 
+#reward-dialog{width:min(330px,calc(100% - 40px));padding:30px 26px 24px;border:1px solid #596b4c;border-radius:14px;background:linear-gradient(180deg,#263126,#18201b);color:#edf1e8;text-align:center;box-shadow:0 18px 55px #0009}
+#reward-dialog::backdrop{background:#07100bcc;backdrop-filter:blur(4px)}
+#reward-dialog .reward-kicker{display:block;color:#a1aea5;font-size:11px;font-weight:650;letter-spacing:2px}
+#reward-dialog h2{margin:10px 0 16px;font-size:18px;font-weight:600}
+#reward-dialog #reward-amount{display:block;color:#d5f580;font-size:46px;line-height:1;font-weight:750;font-variant-numeric:tabular-nums;text-shadow:0 0 22px #d5f58022}
+#reward-dialog p{margin:8px 0 22px;color:#a1aea5;font-size:12px}
+#reward-dialog .start-button{height:42px;min-height:42px;padding:8px;display:block}
+
 /* Original range palette, retaining the compact layout and upward pickers. */
 :root{color-scheme:dark;--text:#edf1e8;--muted:#a1aea5;--line:#354039;--lime:#d5f580}
 body{background:#101513;color:var(--text)}

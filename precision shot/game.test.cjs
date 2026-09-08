@@ -5,7 +5,7 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 function game(random=.1){
   const elements=new Map();
-  function element(){return {value:'10',hidden:true,textContent:'',innerHTML:'',disabled:false,dataset:{},style:{setProperty(){}},classList:{toggle(){}},setAttribute(){},focus(){},firstElementChild:{},lastElementChild:{},append(){},getBoundingClientRect(){return {width:420,height:740}},getContext(){return {setTransform(){}}}};}
+  function element(){return {value:'10',hidden:true,open:false,textContent:'',innerHTML:'',disabled:false,dataset:{},style:{setProperty(){}},classList:{toggle(){}},setAttribute(){},focus(){},showModal(){this.open=true},close(){this.open=false},firstElementChild:{},lastElementChild:{},append(){},getBoundingClientRect(){return {width:420,height:740}},getContext(){return {setTransform(){}}}};}
   const get=id=>{if(!elements.has(id))elements.set(id,element());return elements.get(id);};
   const levels=['easy','medium','hard'].map(level=>Object.assign(element(),{dataset:{level}}));
   const counts=[1,2,3,5,10,20].map(count=>Object.assign(element(),{dataset:{count:String(count)}}));
@@ -56,6 +56,13 @@ test('quick bets update total and are ignored during an active round',async()=>{
   for(const b of g.presets){b.onclick();assert.equal(g.get('bet').value,b.dataset.bet);assert.equal(g.get('total-bet').textContent,(Number(b.dataset.bet)*3).toFixed(2));}
   const run=g.get('start').onclick();g.presets[0].onclick();assert.equal(g.get('bet').value,'200');await run;
   assert.equal(g.get('balance').textContent,'9,700.00');
+});
+test('completed round opens reward dialog with the total reward',async()=>{
+  const g=game(.7);g.counts.find(b=>b.dataset.count==='2').onclick();
+  await g.get('start').onclick();
+  assert.equal(g.get('reward-dialog').open,true);
+  assert.equal(g.get('reward-amount').textContent,'40.00');
+  g.get('reward-close').onclick();assert.equal(g.get('reward-dialog').open,false);
 });
 for(const count of [1,2,3,5,10,20])test(`${count} bullets: correct cost, shot count and payout`,async()=>{
   const g=game(.7);g.counts.find(b=>b.dataset.count===String(count)).onclick();
