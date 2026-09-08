@@ -4,13 +4,11 @@ body{background:#bfc1c3;color:#111}.app{position:relative;width:min(100%,420px);
 @media(min-width:600px){body{min-height:100dvh;display:flex;align-items:center;justify-content:center}.app{box-shadow:0 0 40px #0002}}
 @media(max-width:350px){.controls-panel{left:10px;right:10px;padding:11px 14px;gap:6px}.controls-panel legend{font-size:14px}.picker-toggle{font-size:16px}.total-row{left:-12px}.wallet>span{display:none}}
 
-#reward-dialog{width:min(330px,calc(100% - 40px));padding:30px 26px 24px;border:1px solid #596b4c;border-radius:14px;background:linear-gradient(180deg,#263126,#18201b);color:#edf1e8;text-align:center;box-shadow:0 18px 55px #0009}
+#reward-dialog{width:min(330px,calc(100% - 40px));padding:26px 26px 24px;border:1px solid #596b4c;border-radius:14px;background:linear-gradient(180deg,#263126,#18201b);color:#edf1e8;text-align:center;box-shadow:0 18px 55px #0009}
 #reward-dialog::backdrop{background:#07100bcc;backdrop-filter:blur(4px)}
-#reward-dialog .reward-kicker{display:block;color:#a1aea5;font-size:11px;font-weight:650;letter-spacing:2px}
-#reward-dialog h2{margin:10px 0 16px;font-size:18px;font-weight:600}
+#reward-dialog h2{margin:0 0 16px;font-size:18px;font-weight:600}
 #reward-dialog #reward-amount{display:block;color:#d5f580;font-size:46px;line-height:1;font-weight:750;font-variant-numeric:tabular-nums;text-shadow:0 0 22px #d5f58022}
-#reward-dialog p{margin:8px 0 22px;color:#a1aea5;font-size:12px}
-#reward-dialog .start-button{height:42px;min-height:42px;padding:8px;display:block}
+#reward-dialog .start-button{height:42px;min-height:42px;margin-top:24px;padding:8px;display:block}
 
 /* Keep only the requested balance display above the target. */
 .topbar{display:flex;height:48px;padding:8px 12px;background:linear-gradient(180deg,#111914e8,#11191400);border:0;pointer-events:none}
@@ -68,6 +66,13 @@ button:focus-visible,input:focus-visible{outline-color:#d5f580}
 .quick-bets button.selected,.quick-bets button.selected:hover:not(:disabled){background:#d5f580;border-color:#d5f580;color:#1c2813;box-shadow:inset 0 1px 0 #f1ffd166,0 0 8px #d5f58018;font-weight:750}
 .quick-bets button:active:not(:disabled){box-shadow:inset 0 2px 4px #0003}
 @media(prefers-reduced-motion:reduce){.quick-bets button{transition:none}}
+
+/* Compact single-row balance plate with no bar below it. */
+.topbar{height:38px;padding:5px 8px;background:transparent;border:0}
+.topbar .wallet{display:flex;flex-wrap:nowrap;align-items:center;max-width:none;padding:3px 5px 3px 9px;gap:6px;border-radius:6px;white-space:nowrap}
+.topbar .wallet>span{font-size:10px}
+.topbar .wallet strong{font-size:15px}
+.topbar .wallet .icon-button{flex:0 0 22px;width:22px;height:22px;margin:0;padding:0;font-size:14px;line-height:20px}
 @media(max-width:350px){.controls-panel .bet-field{gap:4px;grid-template-columns:minmax(0,1fr) minmax(0,1.12fr)}.quick-bets{gap:3px}.quick-bets button{font-size:12px}.bet-field .bet-input button{width:23px}.bet-field .bet-input input{font-size:16px}}
 
 /* Extend below the frame so lifting the rifle never exposes a green strip. */
