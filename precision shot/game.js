@@ -6,7 +6,7 @@
   const COLORS = ['#aab798','#8cc8b6','#f0d780','#eeb278'];
   const $ = id => document.getElementById(id);
   const money = n => n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-  const state = {level:'easy', bullets:1, balance:10000, running:false, fired:0, reward:0, round:1, hits:[], aim:{x:0,y:0}, flash:0, sound:false};
+  const state = {level:'easy', bullets:1, balance:10000, running:false, settling:false, fired:0, reward:0, round:1, hits:[], aim:{x:0,y:0}, flash:0, sound:false};
   const canvas = $('range'), ctx = canvas.getContext('2d');
   let width=800, height=620, audioContext, previousTime=0;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -28,8 +28,8 @@
     $('ammo-count').textContent=`${String(state.bullets-state.fired).padStart(2,'0')} / ${String(state.bullets).padStart(2,'0')}`;
     $('ammo-icons').innerHTML=Array.from({length:state.bullets},(_,i)=>`<span class="cartridge ${i<state.fired?'spent':''}"></span>`).join('');
     $('multipliers').innerHTML=LEVELS[state.level].map((m,i)=>`<div class="multiplier-item" style="--zone-color:${COLORS[i]}"><strong>${m}×</strong><span>${ZONES[i]}</span></div>`).join('');
-    document.querySelectorAll('fieldset button, fieldset input, #reset').forEach(el=>el.disabled=state.running);
-    $('start').disabled=state.running || !validBet() || total>state.balance;
+    document.querySelectorAll('fieldset button, fieldset input, #reset').forEach(el=>el.disabled=state.running||state.settling);
+    $('start').disabled=state.running || state.settling || !validBet() || total>state.balance;
     $('start').firstElementChild.textContent=state.running?`射擊中 ${state.fired} / ${state.bullets}`:'投注';
     $('difficulty-toggle').firstElementChild.textContent={easy:'簡單',medium:'中等',hard:'困難'}[state.level];
     $('bullets-toggle').firstElementChild.textContent=String(state.bullets);
@@ -51,16 +51,10 @@
   function scaleBet(factor){if(state.running)return;$('bet').value=String(Math.max(1,Math.min(1000,Math.floor((validBet()?bet():10)*factor))));update();}
   $('bet-minus').onclick=()=>scaleBet(.5);$('bet-plus').onclick=()=>scaleBet(2);
   $('rules-open').onclick=()=>$('rules').showModal();
-  function closeReward(){
-    if(!$('reward-dialog').open)return;
-    $('reward-dialog').close();
-    update();
-  }
-  $('reward-close').onclick=closeReward;
   $('reward-dialog').addEventListener('cancel',event=>event.preventDefault());
   $('rules-close').onclick=$('rules-done').onclick=()=>$('rules').close();
   $('rules').onclick=e=>{if(e.target===$('rules')){const r=$('rules').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)$('rules').close();}};
-  $('reset').onclick=()=>{if(state.running)return;state.balance=10000;state.reward=0;state.fired=0;state.hits=[];state.round=1;$('shot-log').innerHTML='<div class="empty-log"><span>⌖</span><p>模擬點數已重設。<small>選擇設定，開始新回合。</small></p></div>';$('summary').textContent='等待開始新回合';$('range-status').textContent='靶場就緒';feedback('鎖定目標','READY TO FIRE',false);update();};
+  $('reset').onclick=()=>{if(state.running||state.settling)return;state.balance=10000;state.reward=0;state.fired=0;state.hits=[];state.round=1;$('shot-log').innerHTML='<div class="empty-log"><span>⌖</span><p>模擬點數已重設。<small>選擇設定，開始新回合。</small></p></div>';$('summary').textContent='等待開始新回合';$('range-status').textContent='靶場就緒';feedback('鎖定目標','READY TO FIRE',false);update();};
   function prepareSound(){try{const Audio=window.AudioContext||window.webkitAudioContext;if(Audio){audioContext ||= new Audio();if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});}}catch{state.sound=false;}}
   $('sound').onclick=()=>{state.sound=!state.sound;if(state.sound)prepareSound();$('sound').textContent=`音效：${state.sound?'開':'關'}`;$('sound').setAttribute('aria-pressed',String(state.sound));};
   function playShot(){if(!state.sound||!audioContext)return;try{const length=audioContext.sampleRate*.13,buffer=audioContext.createBuffer(1,length,audioContext.sampleRate),data=buffer.getChannelData(0);for(let i=0;i<length;i++)data[i]=(Math.random()*2-1)*Math.exp(-i/(length*.16));const source=audioContext.createBufferSource(),gain=audioContext.createGain();source.buffer=buffer;gain.gain.value=.18;source.connect(gain).connect(audioContext.destination);source.start();}catch{/* Audio is optional. */}}
@@ -70,7 +64,7 @@
   const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
   function feedback(label,value,hit=true){$('shot-feedback').classList.toggle('hit',hit);$('shot-feedback').firstElementChild.textContent=label;$('shot-feedback').lastElementChild.textContent=value;}
   async function fireRound(){
-    if(state.running||$('reward-dialog').open||!validBet()||bet()*state.bullets>state.balance)return;
+    if(state.running||state.settling||$('reward-dialog').open||!validBet()||bet()*state.bullets>state.balance)return;
     const stake=bet(), count=state.bullets, multipliers=[...LEVELS[state.level]], cost=stake*count;
     closePickers();state.running=true;state.balance=Math.round((state.balance-cost)*100)/100;state.reward=0;state.fired=0;state.hits=[];
     $('shot-log').innerHTML='';$('summary').textContent=`本局投注 ${money(cost)} · 正在射擊`;$('range-status').textContent='射擊進行中';feedback('正在舉槍','ACQUIRING TARGET',false);if(state.sound)prepareSound();update();
@@ -81,12 +75,17 @@
       state.aim=point;state.flash=1;state.hits.push({...point,zone});state.fired++;playShot();
       const payout=Math.round(stake*multipliers[zone]*100)/100;state.reward=Math.round((state.reward+payout)*100)/100;
       feedback(`命中${ZONES[zone]} · ${multipliers[zone]}×`,`+ ${money(payout)}`);
-      const card=document.createElement('div');card.className='shot-card';card.style.setProperty('--zone-color',COLORS[zone]);card.innerHTML=`<small><span>SHOT ${String(i+1).padStart(2,'0')}</span><span>${ZONES[zone]}</span></small><strong>${multipliers[zone]}×</strong><span>+ ${money(payout)}</span>`;$('shot-log').append(card);$('shot-log').scrollLeft=$('shot-log').scrollWidth;update();await wait(200);
+      const card=document.createElement('div');card.className='shot-card';card.style.setProperty('--zone-color',COLORS[zone]);card.innerHTML=`<small><span>SHOT ${String(i+1).padStart(2,'0')}</span><span>${ZONES[zone]}</span></small><strong>${multipliers[zone]}×</strong><span>+ ${money(payout)}</span>`;$('shot-log').append(card);$('shot-log').scrollLeft=$('shot-log').scrollWidth;update();if(i<count-1)await wait(200);
     }
-    state.running=false;state.round++;state.balance=Math.round((state.balance+state.reward)*100)/100;const net=Math.round((state.reward-cost)*100)/100;
+    state.running=false;state.settling=true;state.round++;state.balance=Math.round((state.balance+state.reward)*100)/100;const net=Math.round((state.reward-cost)*100)/100;
     $('range-status').textContent='本局完成';feedback('本局總獎勵',money(state.reward));$('summary').textContent=`${count} 發射擊完成 · 總投注 ${money(cost)} · 總獎勵 ${money(state.reward)} · 淨${net>=0?'獲得':'損失'} ${money(Math.abs(net))}`;update();
     $('reward-amount').textContent=money(state.reward);
+    await wait(900);
     $('reward-dialog').showModal();
+    await wait(1500);
+    $('reward-dialog').close();
+    state.settling=false;
+    update();
   }
   $('start').onclick=fireRound;
 
