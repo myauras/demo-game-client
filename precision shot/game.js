@@ -80,10 +80,17 @@
     state.running=false;state.settling=true;state.round++;state.balance=Math.round((state.balance+state.reward)*100)/100;const net=Math.round((state.reward-cost)*100)/100;
     $('range-status').textContent='本局完成';feedback('本局總獎勵',money(state.reward));$('summary').textContent=`${count} 發射擊完成 · 總投注 ${money(cost)} · 總獎勵 ${money(state.reward)} · 淨${net>=0?'獲得':'損失'} ${money(Math.abs(net))}`;update();
     $('reward-amount').textContent=money(state.reward);
-    await wait(900);
-    $('reward-dialog').showModal();
+    await wait(400);
+    const rewardDialog=$('reward-dialog');
+    rewardDialog.showModal();
+    void rewardDialog.offsetWidth;
+    rewardDialog.classList.add('is-visible');
     await wait(1500);
-    $('reward-dialog').close();
+    rewardDialog.classList.remove('is-visible');
+    rewardDialog.classList.add('is-closing');
+    await wait(240);
+    rewardDialog.close();
+    rewardDialog.classList.remove('is-closing');
     state.settling=false;
     update();
   }
