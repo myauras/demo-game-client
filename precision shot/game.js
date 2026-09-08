@@ -69,12 +69,12 @@
     $('shot-log').innerHTML='';$('summary').textContent=`本局投注 ${money(cost)} · 正在射擊`;$('range-status').textContent='射擊進行中';feedback('正在舉槍','ACQUIRING TARGET',false);if(state.sound)prepareSound();update();
     for(let i=0;i<count;i++){
       const zone=chooseZone(random()),point=pointFor(zone),start={...state.aim};
-      const aimStart=performance.now();
-      while(performance.now()-aimStart<450){const t=Math.min(1,(performance.now()-aimStart)/450),ease=t*t*(3-2*t);state.aim={x:start.x+(point.x-start.x)*ease,y:start.y+(point.y-start.y)*ease};await wait(16);}
+      const aimStart=performance.now(), aimDuration=i===0?450:100;
+      while(performance.now()-aimStart<aimDuration){const t=Math.min(1,(performance.now()-aimStart)/aimDuration),ease=t*t*(3-2*t);state.aim={x:start.x+(point.x-start.x)*ease,y:start.y+(point.y-start.y)*ease};await wait(16);}
       state.aim=point;state.flash=1;state.hits.push({...point,zone});state.fired++;playShot();
       const payout=Math.round(stake*multipliers[zone]*100)/100;state.reward=Math.round((state.reward+payout)*100)/100;state.balance=Math.round((state.balance+payout)*100)/100;
       feedback(`命中${ZONES[zone]} · ${multipliers[zone]}×`,`+ ${money(payout)}`);
-      const card=document.createElement('div');card.className='shot-card';card.style.setProperty('--zone-color',COLORS[zone]);card.innerHTML=`<small><span>SHOT ${String(i+1).padStart(2,'0')}</span><span>${ZONES[zone]}</span></small><strong>${multipliers[zone]}×</strong><span>+ ${money(payout)}</span>`;$('shot-log').append(card);$('shot-log').scrollLeft=$('shot-log').scrollWidth;update();await wait(580);
+      const card=document.createElement('div');card.className='shot-card';card.style.setProperty('--zone-color',COLORS[zone]);card.innerHTML=`<small><span>SHOT ${String(i+1).padStart(2,'0')}</span><span>${ZONES[zone]}</span></small><strong>${multipliers[zone]}×</strong><span>+ ${money(payout)}</span>`;$('shot-log').append(card);$('shot-log').scrollLeft=$('shot-log').scrollWidth;update();await wait(100);
     }
     state.running=false;state.round++;const net=Math.round((state.reward-cost)*100)/100;
     $('range-status').textContent='本局完成';feedback('本局總獎勵',money(state.reward));$('summary').textContent=`${count} 發射擊完成 · 總投注 ${money(cost)} · 總獎勵 ${money(state.reward)} · 淨${net>=0?'獲得':'損失'} ${money(Math.abs(net))}`;update();
@@ -87,7 +87,7 @@
   function ellipse(x,y,rx,ry,fill,stroke){ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke();}}
   function label(text,x,y,color,size=16){ctx.font=`600 ${size}px "Segoe UI",sans-serif`;ctx.textAlign='center';ctx.fillStyle=color;ctx.fillText(text,x,y);}
   function draw(now){
-    const delta=Math.min((now-previousTime)/1000,.05);previousTime=now;state.flash=Math.max(0,state.flash-delta*4);
+    const delta=Math.min((now-previousTime)/1000,.05);previousTime=now;state.flash=Math.max(0,state.flash-delta*12);
     ctx.clearRect(0,0,width,height);const cx=width/2;
     const bg=ctx.createRadialGradient(cx,height*.32,25,cx,height*.4,width*.95);
     bg.addColorStop(0,'#48533a');bg.addColorStop(.5,'#303b2b');bg.addColorStop(1,'#17221c');
@@ -128,5 +128,6 @@
   }
   update();resize();requestAnimationFrame(draw);
 })();
+
 
 
