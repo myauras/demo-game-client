@@ -51,7 +51,14 @@
   function scaleBet(factor){if(state.running)return;$('bet').value=String(Math.max(1,Math.min(1000,Math.floor((validBet()?bet():10)*factor))));update();}
   $('bet-minus').onclick=()=>scaleBet(.5);$('bet-plus').onclick=()=>scaleBet(2);
   $('rules-open').onclick=()=>$('rules').showModal();
-  $('reward-close').onclick=()=>$('reward-dialog').close();
+  function claimReward(){
+    if(!$('reward-dialog').open)return;
+    state.balance=Math.round((state.balance+state.reward)*100)/100;
+    $('reward-dialog').close();
+    update();
+  }
+  $('reward-close').onclick=claimReward;
+  $('reward-dialog').addEventListener('cancel',event=>event.preventDefault());
   $('rules-close').onclick=$('rules-done').onclick=()=>$('rules').close();
   $('rules').onclick=e=>{if(e.target===$('rules')){const r=$('rules').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)$('rules').close();}};
   $('reset').onclick=()=>{if(state.running)return;state.balance=10000;state.reward=0;state.fired=0;state.hits=[];state.round=1;$('shot-log').innerHTML='<div class="empty-log"><span>⌖</span><p>模擬點數已重設。<small>選擇設定，開始新回合。</small></p></div>';$('summary').textContent='等待開始新回合';$('range-status').textContent='靶場就緒';feedback('鎖定目標','READY TO FIRE',false);update();};
@@ -73,7 +80,7 @@
       const aimStart=performance.now(), aimDuration=i===0?450:100;
       while(performance.now()-aimStart<aimDuration){const t=Math.min(1,(performance.now()-aimStart)/aimDuration),ease=t*t*(3-2*t);state.aim={x:start.x+(point.x-start.x)*ease,y:start.y+(point.y-start.y)*ease};await wait(16);}
       state.aim=point;state.flash=1;state.hits.push({...point,zone});state.fired++;playShot();
-      const payout=Math.round(stake*multipliers[zone]*100)/100;state.reward=Math.round((state.reward+payout)*100)/100;state.balance=Math.round((state.balance+payout)*100)/100;
+      const payout=Math.round(stake*multipliers[zone]*100)/100;state.reward=Math.round((state.reward+payout)*100)/100;
       feedback(`命中${ZONES[zone]} · ${multipliers[zone]}×`,`+ ${money(payout)}`);
       const card=document.createElement('div');card.className='shot-card';card.style.setProperty('--zone-color',COLORS[zone]);card.innerHTML=`<small><span>SHOT ${String(i+1).padStart(2,'0')}</span><span>${ZONES[zone]}</span></small><strong>${multipliers[zone]}×</strong><span>+ ${money(payout)}</span>`;$('shot-log').append(card);$('shot-log').scrollLeft=$('shot-log').scrollWidth;update();await wait(200);
     }
@@ -125,7 +132,7 @@
     // The supplied rifle artwork tracks the aim and retains the recoil animation.
     const recoil=reducedMotion?0:state.flash;
     const sway=state.running&&!reducedMotion?state.aim.x*.04:0;
-    $('weapon-image').style.transform=`translate(${sway}px, ${recoil*17}px) rotate(${-recoil*1.5}deg) scale(${1+recoil*.035})`;
+    $('weapon-image').style.transform=`translate(${18+sway}px, ${recoil*17}px) rotate(${-recoil*1.5}deg) scale(${1+recoil*.035})`;
     $('muzzle-flash').style.opacity=String(reducedMotion?0:Math.max(0,(state.flash-.45)*1.8));
     requestAnimationFrame(draw);
   }
