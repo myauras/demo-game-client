@@ -51,6 +51,7 @@
   function scaleBet(factor){if(state.running)return;$('bet').value=String(Math.max(1,Math.min(1000,Math.floor((validBet()?bet():10)*factor))));update();}
   $('bet-minus').onclick=()=>scaleBet(.5);$('bet-plus').onclick=()=>scaleBet(2);
   $('rules-open').onclick=()=>$('rules').showModal();
+  $('reward-close').onclick=()=>$('reward-dialog').close();
   $('rules-close').onclick=$('rules-done').onclick=()=>$('rules').close();
   $('rules').onclick=e=>{if(e.target===$('rules')){const r=$('rules').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)$('rules').close();}};
   $('reset').onclick=()=>{if(state.running)return;state.balance=10000;state.reward=0;state.fired=0;state.hits=[];state.round=1;$('shot-log').innerHTML='<div class="empty-log"><span>⌖</span><p>模擬點數已重設。<small>選擇設定，開始新回合。</small></p></div>';$('summary').textContent='等待開始新回合';$('range-status').textContent='靶場就緒';feedback('鎖定目標','READY TO FIRE',false);update();};
@@ -63,7 +64,7 @@
   const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
   function feedback(label,value,hit=true){$('shot-feedback').classList.toggle('hit',hit);$('shot-feedback').firstElementChild.textContent=label;$('shot-feedback').lastElementChild.textContent=value;}
   async function fireRound(){
-    if(state.running||!validBet()||bet()*state.bullets>state.balance)return;
+    if(state.running||$('reward-dialog').open||!validBet()||bet()*state.bullets>state.balance)return;
     const stake=bet(), count=state.bullets, multipliers=[...LEVELS[state.level]], cost=stake*count;
     closePickers();state.running=true;state.balance=Math.round((state.balance-cost)*100)/100;state.reward=0;state.fired=0;state.hits=[];
     $('shot-log').innerHTML='';$('summary').textContent=`本局投注 ${money(cost)} · 正在射擊`;$('range-status').textContent='射擊進行中';feedback('正在舉槍','ACQUIRING TARGET',false);if(state.sound)prepareSound();update();
@@ -74,10 +75,12 @@
       state.aim=point;state.flash=1;state.hits.push({...point,zone});state.fired++;playShot();
       const payout=Math.round(stake*multipliers[zone]*100)/100;state.reward=Math.round((state.reward+payout)*100)/100;state.balance=Math.round((state.balance+payout)*100)/100;
       feedback(`命中${ZONES[zone]} · ${multipliers[zone]}×`,`+ ${money(payout)}`);
-      const card=document.createElement('div');card.className='shot-card';card.style.setProperty('--zone-color',COLORS[zone]);card.innerHTML=`<small><span>SHOT ${String(i+1).padStart(2,'0')}</span><span>${ZONES[zone]}</span></small><strong>${multipliers[zone]}×</strong><span>+ ${money(payout)}</span>`;$('shot-log').append(card);$('shot-log').scrollLeft=$('shot-log').scrollWidth;update();await wait(100);
+      const card=document.createElement('div');card.className='shot-card';card.style.setProperty('--zone-color',COLORS[zone]);card.innerHTML=`<small><span>SHOT ${String(i+1).padStart(2,'0')}</span><span>${ZONES[zone]}</span></small><strong>${multipliers[zone]}×</strong><span>+ ${money(payout)}</span>`;$('shot-log').append(card);$('shot-log').scrollLeft=$('shot-log').scrollWidth;update();await wait(200);
     }
     state.running=false;state.round++;const net=Math.round((state.reward-cost)*100)/100;
     $('range-status').textContent='本局完成';feedback('本局總獎勵',money(state.reward));$('summary').textContent=`${count} 發射擊完成 · 總投注 ${money(cost)} · 總獎勵 ${money(state.reward)} · 淨${net>=0?'獲得':'損失'} ${money(Math.abs(net))}`;update();
+    $('reward-amount').textContent=money(state.reward);
+    $('reward-dialog').showModal();
   }
   $('start').onclick=fireRound;
 
@@ -128,6 +131,7 @@
   }
   update();resize();requestAnimationFrame(draw);
 })();
+
 
 
 
