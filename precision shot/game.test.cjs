@@ -33,8 +33,6 @@ for(const [level,multipliers] of [['easy',[.5,2,5,10]],['medium',[.2,3,10,50]],[
       assert.equal(g.get('balance').textContent,(9950+reward).toLocaleString('en-US',{minimumFractionDigits:2}));
       assert.equal(g.get('ammo-count').textContent,'00 / 05');
       assert.match(g.get('summary').textContent,/5 發射擊完成/);
-      g.get('reward-close').onclick();
-      assert.equal(g.get('balance').textContent,(9950+reward).toLocaleString('en-US',{minimumFractionDigits:2}));
       g.get('reset').onclick();assert.equal(g.get('balance').textContent,'10,000.00');
     });
   }
@@ -59,13 +57,11 @@ test('quick bets update total and are ignored during an active round',async()=>{
   const run=g.get('start').onclick();g.presets[0].onclick();assert.equal(g.get('bet').value,'200');await run;
   assert.equal(g.get('balance').textContent,'9,700.00');
 });
-test('completed round opens reward dialog with the total reward',async()=>{
+test('completed round shows the reward and closes it automatically',async()=>{
   const g=game(.7);g.counts.find(b=>b.dataset.count==='2').onclick();
   await g.get('start').onclick();
-  assert.equal(g.get('reward-dialog').open,true);
+  assert.equal(g.get('reward-dialog').open,false);
   assert.equal(g.get('reward-amount').textContent,'40.00');
-  assert.equal(g.get('balance').textContent,'10,020.00');
-  g.get('reward-close').onclick();assert.equal(g.get('reward-dialog').open,false);
   assert.equal(g.get('balance').textContent,'10,020.00');
 });
 for(const count of [1,2,3,5,10,20])test(`${count} bullets: correct cost, shot count and payout`,async()=>{
