@@ -85,7 +85,7 @@
     rewardDialog.showModal();
     void rewardDialog.offsetWidth;
     rewardDialog.classList.add('is-visible');
-    await wait(1500);
+    await wait(1000);
     rewardDialog.classList.remove('is-visible');
     rewardDialog.classList.add('is-closing');
     await wait(240);
