@@ -58,3 +58,8 @@ button:focus-visible,input:focus-visible{outline-color:#d5f580}
 /* Extend below the frame so lifting the rifle never exposes a green strip. */
 .weapon-layer{bottom:-85px}
 
+
+/* Shift the oversized transparent artwork right so the sight sits centrally. */
+.weapon-layer img{object-position:75% top}
+#muzzle-flash{left:45%}
+
