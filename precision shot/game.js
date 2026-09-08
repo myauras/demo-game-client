@@ -51,13 +51,12 @@
   function scaleBet(factor){if(state.running)return;$('bet').value=String(Math.max(1,Math.min(1000,Math.floor((validBet()?bet():10)*factor))));update();}
   $('bet-minus').onclick=()=>scaleBet(.5);$('bet-plus').onclick=()=>scaleBet(2);
   $('rules-open').onclick=()=>$('rules').showModal();
-  function claimReward(){
+  function closeReward(){
     if(!$('reward-dialog').open)return;
-    state.balance=Math.round((state.balance+state.reward)*100)/100;
     $('reward-dialog').close();
     update();
   }
-  $('reward-close').onclick=claimReward;
+  $('reward-close').onclick=closeReward;
   $('reward-dialog').addEventListener('cancel',event=>event.preventDefault());
   $('rules-close').onclick=$('rules-done').onclick=()=>$('rules').close();
   $('rules').onclick=e=>{if(e.target===$('rules')){const r=$('rules').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)$('rules').close();}};
@@ -84,7 +83,7 @@
       feedback(`命中${ZONES[zone]} · ${multipliers[zone]}×`,`+ ${money(payout)}`);
       const card=document.createElement('div');card.className='shot-card';card.style.setProperty('--zone-color',COLORS[zone]);card.innerHTML=`<small><span>SHOT ${String(i+1).padStart(2,'0')}</span><span>${ZONES[zone]}</span></small><strong>${multipliers[zone]}×</strong><span>+ ${money(payout)}</span>`;$('shot-log').append(card);$('shot-log').scrollLeft=$('shot-log').scrollWidth;update();await wait(200);
     }
-    state.running=false;state.round++;const net=Math.round((state.reward-cost)*100)/100;
+    state.running=false;state.round++;state.balance=Math.round((state.balance+state.reward)*100)/100;const net=Math.round((state.reward-cost)*100)/100;
     $('range-status').textContent='本局完成';feedback('本局總獎勵',money(state.reward));$('summary').textContent=`${count} 發射擊完成 · 總投注 ${money(cost)} · 總獎勵 ${money(state.reward)} · 淨${net>=0?'獲得':'損失'} ${money(Math.abs(net))}`;update();
     $('reward-amount').textContent=money(state.reward);
     $('reward-dialog').showModal();
