@@ -5,7 +5,7 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 function game(random=.1){
   const elements=new Map();
-  function element(){return {value:'10',hidden:true,open:false,textContent:'',innerHTML:'',disabled:false,dataset:{},style:{setProperty(){}},classList:{toggle(){}},setAttribute(){},addEventListener(){},focus(){},showModal(){this.open=true},close(){this.open=false},firstElementChild:{},lastElementChild:{},append(){},getBoundingClientRect(){return {width:420,height:740}},getContext(){return {setTransform(){}}}};}
+  function element(){return {value:'10',hidden:true,open:false,offsetWidth:330,textContent:'',innerHTML:'',disabled:false,dataset:{},style:{setProperty(){}},classList:{toggle(){},add(){},remove(){}},setAttribute(){},addEventListener(){},focus(){},showModal(){this.open=true},close(){this.open=false},firstElementChild:{},lastElementChild:{},append(){},getBoundingClientRect(){return {width:420,height:740}},getContext(){return {setTransform(){}}}};}
   const get=id=>{if(!elements.has(id))elements.set(id,element());return elements.get(id);};
   const levels=['easy','medium','hard'].map(level=>Object.assign(element(),{dataset:{level}}));
   const counts=[1,2,3,5,10,20].map(count=>Object.assign(element(),{dataset:{count:String(count)}}));
