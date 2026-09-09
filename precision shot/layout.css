@@ -77,7 +77,7 @@ button:focus-visible,input:focus-visible{outline-color:#d5f580}
 .topbar .wallet .icon-button{flex:0 0 22px;width:22px;height:22px;margin:0;padding:0;font-size:14px;line-height:20px}
 
 /* User-provided outdoor range scene behind the transparent game canvas. */
-.canvas-wrap{background:#6f6658 url('assets/range-background.png') center center/cover no-repeat}
+.canvas-wrap{background:#6f6658 url('assets/range-background.webp') center center/cover no-repeat}
 @media(max-width:350px){.controls-panel .bet-field{gap:4px;grid-template-columns:minmax(0,1fr) minmax(0,1.12fr)}.quick-bets{gap:3px}.quick-bets button{font-size:12px}.bet-field .bet-input button{width:23px}.bet-field .bet-input input{font-size:16px}}
 
 /* Extend below the frame so lifting the rifle never exposes a green strip. */
