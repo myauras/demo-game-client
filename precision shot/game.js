@@ -139,7 +139,7 @@
     for(const reward of state.hitRewards){
       const remaining=reward.expiresAt-now;
       ctx.save();ctx.globalAlpha=Math.min(1,remaining/70);ctx.shadowColor='#000';ctx.shadowBlur=4;
-      label(`+${compactNumber(reward.amount)}`,reward.x,reward.y+19,'#d5f580',12);
+      label(`+${compactNumber(reward.amount)}`,reward.x,reward.y-12,'#d5f580',12);
       ctx.restore();
     }
     const aimX=state.aim.x,aimY=state.aim.y;
