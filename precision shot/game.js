@@ -75,9 +75,9 @@
       while(performance.now()-aimStart<aimDuration){const t=Math.min(1,(performance.now()-aimStart)/aimDuration),ease=t*t*(3-2*t);state.aim={x:start.x+(point.x-start.x)*ease,y:start.y+(point.y-start.y)*ease};await wait(16);}
       state.aim=point;state.flash=1;state.hits.push({...point,zone,impactAt:performance.now()});state.fired++;playShot();
       const payout=Math.round(stake*multipliers[zone]*100)/100;state.reward=Math.round((state.reward+payout)*100)/100;
-      state.hitRewards.push({x:point.x,y:point.y,amount:payout,expiresAt:performance.now()+400});
+      state.hitRewards.push({x:point.x,y:point.y,amount:payout,expiresAt:performance.now()+500});
       feedback(`命中${ZONES[zone]} · ${multipliers[zone]}×`,`+ ${money(payout)}`);
-      const card=document.createElement('div');card.className='shot-card';card.style.setProperty('--zone-color',COLORS[zone]);card.innerHTML=`<small><span>SHOT ${String(i+1).padStart(2,'0')}</span><span>${ZONES[zone]}</span></small><strong>${multipliers[zone]}×</strong><span>+ ${money(payout)}</span>`;$('shot-log').append(card);$('shot-log').scrollLeft=$('shot-log').scrollWidth;update();if(i<count-1)await wait(200);
+      const card=document.createElement('div');card.className='shot-card';card.style.setProperty('--zone-color',COLORS[zone]);card.innerHTML=`<small><span>SHOT ${String(i+1).padStart(2,'0')}</span><span>${ZONES[zone]}</span></small><strong>${multipliers[zone]}×</strong><span>+ ${money(payout)}</span>`;$('shot-log').append(card);$('shot-log').scrollLeft=$('shot-log').scrollWidth;update();if(i<count-1)await wait(400);
     }
     state.running=false;state.settling=true;state.round++;state.balance=Math.round((state.balance+state.reward)*100)/100;const net=Math.round((state.reward-cost)*100)/100;
     $('range-status').textContent='本局完成';feedback('本局總獎勵',money(state.reward));$('summary').textContent=`${count} 發射擊完成 · 總投注 ${money(cost)} · 總獎勵 ${money(state.reward)} · 淨${net>=0?'獲得':'損失'} ${money(Math.abs(net))}`;update();
@@ -104,12 +104,14 @@
   function ellipse(x,y,rx,ry,fill,stroke){ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke();}}
   function label(text,x,y,color,size=16){ctx.font=`600 ${size}px "Segoe UI",sans-serif`;ctx.textAlign='center';ctx.fillStyle=color;ctx.fillText(text,x,y);}
   function drawImpactSparks(hit,now){
-    if(!hit||hit.zone===0||reducedMotion)return;
-    const durations=[0,180,240,320],counts=[0,6,11,18],lengths=[0,9,18,29];
-    const progress=Math.min(1,(now-hit.impactAt)/durations[hit.zone]);
+    if(!hit)return;
+    const counts=[0,6,11,18],lengths=[0,9,18,29];
+    const progress=Math.min(1,(now-hit.impactAt)/500);
     if(progress>=1)return;
     const fade=(1-progress)*(1-progress),count=counts[hit.zone],travel=5+progress*(hit.zone===3?17:10);
     ctx.save();ctx.globalAlpha=fade;ctx.lineCap='round';ctx.shadowColor=hit.zone===3?'#ffb02e':'#ffe08a';ctx.shadowBlur=hit.zone===3?12:6;
+    ellipse(hit.x,hit.y,6+progress*25,6+progress*25,null,'#ffffc6');
+    if(hit.zone===0||reducedMotion){ctx.restore();return;}
     if(hit.zone===3){
       const glow=ctx.createRadialGradient(hit.x,hit.y,0,hit.x,hit.y,20+progress*12);
       glow.addColorStop(0,'#fffbd4');glow.addColorStop(.2,'#ffbd38dd');glow.addColorStop(1,'#f06a0000');
@@ -167,7 +169,6 @@
     }
     const aimX=state.aim.x,aimY=state.aim.y;
     if(state.running){ctx.save();ctx.translate(aimX,aimY);ctx.strokeStyle='#e1ffae';ctx.lineWidth=.8;ctx.beginPath();ctx.arc(0,0,14,0,Math.PI*2);ctx.stroke();line(-23,0,-6,0,'#e1ffae');line(6,0,23,0,'#e1ffae');line(0,-23,0,-6,'#e1ffae');line(0,6,0,23,'#e1ffae');ellipse(0,0,1.5,1.5,'#edffbd');ctx.restore();}
-    if(state.flash>0){const hit=state.hits[state.hits.length-1];if(hit){ctx.globalAlpha=state.flash;ellipse(hit.x,hit.y,25*(1-state.flash)+6,25*(1-state.flash)+6,null,'#ffffc6');ctx.globalAlpha=1;}}
     drawImpactSparks(state.hits[state.hits.length-1],now);
     ctx.restore();
     // The supplied rifle artwork tracks the aim and retains the recoil animation.
