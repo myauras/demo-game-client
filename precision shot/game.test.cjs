@@ -3,7 +3,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
-function game(random=.1){
+function game(random=.2){
   const elements=new Map();
   function element(){return {value:'10',hidden:true,open:false,offsetWidth:330,textContent:'',innerHTML:'',disabled:false,dataset:{},style:{setProperty(){}},classList:{toggle(){},add(){},remove(){}},setAttribute(){},addEventListener(){},focus(){},showModal(){this.open=true},close(){this.open=false},firstElementChild:{},lastElementChild:{},append(){},getBoundingClientRect(){return {width:420,height:740}},getContext(){return {setTransform(){}}}};}
   const get=id=>{if(!elements.has(id))elements.set(id,element());return elements.get(id);};
@@ -20,7 +20,7 @@ function game(random=.1){
   return {get,levels,counts,presets};
 }
 for(const [level,multipliers] of [['easy',[.5,2,5,10]],['medium',[.2,3,10,50]],['hard',[0,10,100,1000]]]){
-  for(const [zone,r] of [.1,.7,.95,.999].entries()){
+  for(const [zone,r] of [.2,.7,.95,.999].entries()){
     test(`${level}, zone ${zone}: five shots debit once and pay correct multiplier`,async()=>{
       const g=game(r);g.levels.find(b=>b.dataset.level===level).onclick();g.counts.find(b=>b.dataset.count==='5').onclick();
       const reward=50*multipliers[zone];
@@ -37,6 +37,13 @@ for(const [level,multipliers] of [['easy',[.5,2,5,10]],['medium',[.2,3,10,50]],[
     });
   }
 }
+test('Lucky Hit independently doubles the actual hit multiplier',async()=>{
+  const g=game(.05);g.counts.find(b=>b.dataset.count==='2').onclick();
+  await g.get('start').onclick();
+  assert.equal(g.get('round-reward').textContent,'20.00');
+  assert.equal(g.get('balance').textContent,'10,000.00');
+  assert.match(g.get('summary').textContent,/Lucky Hit 2 次/);
+});
 test('invalid stakes are rejected without a deduction',async()=>{
   for(const value of ['','0','-10','1.5','1001','abc']){
     const g=game();g.get('bet').value=value;g.get('bet').oninput();

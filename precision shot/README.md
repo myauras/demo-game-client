@@ -10,6 +10,9 @@
 
 https://docs.google.com/spreadsheets/d/1xUDoHdrmYn3xl0gpig5PwZveQumyH6IyaVh-klKL-KA/edit?usp=sharing
 
+Lucky Hit 規格：
+https://docs.google.com/spreadsheets/d/1DKcSM26yJXYzpZuIh48iy5-mf1cACXSbudMEUS5VUc0/edit?gid=596691796#gid=596691796
+
 - 選擇難度、子彈數與投注，開始後表演拿槍射擊人形標靶。
 - 總投注 = 單發投注 × 子彈數；每發獎勵 = 單發投注 × 命中倍率。
 - 簡單倍率：0.5×、2×、5×、10×。
@@ -22,6 +25,7 @@ https://docs.google.com/spreadsheets/d/1xUDoHdrmYn3xl0gpig5PwZveQumyH6IyaVh-klKL
 
 - 四種倍率對應外圈、中圈、內圈、靶心。
 - 共同命中機率為 65%、25%、9%、1%。僅供功能演示，未做正式 RTP／經濟模型校準。
+- Lucky Hit 每發獨立判定，Demo 預設機率 10%、倍率 2 倍；不改變落點或原命中區域，觸發時以金色彈孔與金色命中特效呈現。
 - 下注後自動連射，瞄準與彈孔是結果演出，不是滑鼠技巧射擊。
 - 初始模擬點數 10,000；單發整數投注 1～1,000；子彈 1、2、3、5、10、20 發，預設 1 發。
 - 開局一次扣除總投注，每發完成即派獎。回合中鎖定投注設定及重設。
