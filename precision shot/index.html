@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#151b19">
   <title>精準射擊 · Precision Shot</title>
+  <link rel="preload" as="image" href="assets/range-background.webp" type="image/webp">
+  <link rel="preload" as="image" href="assets/rifle-transparent.webp" type="image/webp">
   <link rel="stylesheet" href="style.css?v=a85a2ef4e6ff">
-  <link rel="stylesheet" href="layout.css?v=8729a9126a8f">
+  <link rel="stylesheet" href="layout.css?v=76b9aea04b62">
   <script defer src="game.js?v=1e91df90b531"></script>
 </head>
 <body>
@@ -21,7 +23,7 @@
       <section class="range-panel" aria-label="射擊演出">
         <div class="range-top"><div><span class="eyebrow">INDOOR RANGE / 01</span><h1>精準射擊<span>PRECISION SHOT</span></h1></div><div class="live-label"><i></i><span id="range-status">靶場就緒</span></div></div>
         <div class="canvas-wrap"><canvas id="range" role="img" aria-label="人形標靶射擊演出，獎勵由示範機率決定"></canvas></div>
-        <div id="weapon-layer" class="weapon-layer" aria-hidden="true"><img id="weapon-image" src="assets/rifle-transparent.png" alt="" draggable="false"><span id="muzzle-flash"></span></div>
+        <div id="weapon-layer" class="weapon-layer" aria-hidden="true"><img id="weapon-image" src="assets/rifle-transparent.webp" width="1200" height="719" decoding="async" fetchpriority="high" alt="" draggable="false"><span id="muzzle-flash"></span></div>
         <div class="range-bottom"><span class="range-distance">25<span>m</span><small>SHOOTING DISTANCE</small></span><div class="ammo"><span>彈匣 <b id="ammo-count">05 / 05</b></span><div id="ammo-icons"></div></div></div>
         <div class="range-caption"><span>選擇難度與子彈，開始你的射擊回合。</span><button class="text-button" id="sound" aria-pressed="false">音效：關</button></div>
       </section>
