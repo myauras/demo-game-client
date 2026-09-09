@@ -106,15 +106,6 @@
   function draw(now){
     const delta=Math.min((now-previousTime)/1000,.05);previousTime=now;state.flash=Math.max(0,state.flash-delta*12);
     ctx.clearRect(0,0,width,height);const cx=width/2;
-    const bg=ctx.createRadialGradient(cx,height*.32,25,cx,height*.4,width*.95);
-    bg.addColorStop(0,'#48533a');bg.addColorStop(.5,'#303b2b');bg.addColorStop(1,'#17221c');
-    ctx.fillStyle=bg;ctx.fillRect(0,0,width,height);
-    const van={x:cx,y:height*.4};
-    for(let i=-3;i<=3;i++){
-      line(van.x+i*25,van.y+40,cx+i*width*.35,height,'#85916b18');
-      line(van.x+i*25,van.y-40,cx+i*width*.35,0,'#99a47e12');
-    }
-    for(let i=0;i<5;i++){const y=height*.62+i*i*height*.018;line(0,y,width,y,'#b4c39410');}
     const scale=Math.min(width/310,(height*.53-55)/309,1.35),targetY=55+175*scale;
     ctx.save();ctx.translate(cx,targetY);ctx.scale(scale,scale);
     if(!reducedMotion&&state.flash>0)ctx.translate(Math.sin(now*.06)*state.flash*2,0);
