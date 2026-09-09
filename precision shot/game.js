@@ -9,7 +9,7 @@
   const $ = id => document.getElementById(id);
   const money = n => n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
   const compactNumber = n => n.toLocaleString('en-US',{maximumFractionDigits:2});
-  const state = {level:'easy', bullets:1, balance:10000, running:false, settling:false, fired:0, reward:0, round:1, hits:[], hitRewards:[], luckyHits:0, luckyWeaponUntil:0, aimLucky:false, aim:{x:0,y:0}, flash:0, sound:false};
+  const state = {level:'easy', bullets:1, balance:10000, running:false, settling:false, fired:0, reward:0, round:1, hits:[], hitRewards:[], luckyHits:0, luckyWeaponUntil:0, luckyBannerStartedAt:0, luckyBannerUntil:0, aimLucky:false, aim:{x:0,y:0}, flash:0, sound:false};
   const canvas = $('range'), ctx = canvas.getContext('2d');
   let width=800, height=620, audioContext, previousTime=0;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -57,7 +57,7 @@
   $('reward-dialog').addEventListener('cancel',event=>event.preventDefault());
   $('rules-close').onclick=$('rules-done').onclick=()=>$('rules').close();
   $('rules').onclick=e=>{if(e.target===$('rules')){const r=$('rules').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)$('rules').close();}};
-  $('reset').onclick=()=>{if(state.running||state.settling)return;state.balance=10000;state.reward=0;state.fired=0;state.hits=[];state.hitRewards=[];state.luckyHits=0;state.luckyWeaponUntil=0;state.aimLucky=false;state.round=1;$('shot-log').innerHTML='<div class="empty-log"><span>⌖</span><p>模擬點數已重設。<small>選擇設定，開始新回合。</small></p></div>';$('summary').textContent='等待開始新回合';$('range-status').textContent='靶場就緒';feedback('鎖定目標','READY TO FIRE',false);update();};
+  $('reset').onclick=()=>{if(state.running||state.settling)return;state.balance=10000;state.reward=0;state.fired=0;state.hits=[];state.hitRewards=[];state.luckyHits=0;state.luckyWeaponUntil=0;state.luckyBannerStartedAt=0;state.luckyBannerUntil=0;state.aimLucky=false;state.round=1;$('shot-log').innerHTML='<div class="empty-log"><span>⌖</span><p>模擬點數已重設。<small>選擇設定，開始新回合。</small></p></div>';$('summary').textContent='等待開始新回合';$('range-status').textContent='靶場就緒';feedback('鎖定目標','READY TO FIRE',false);update();};
   function prepareSound(){try{const Audio=window.AudioContext||window.webkitAudioContext;if(Audio){audioContext ||= new Audio();if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});}}catch{state.sound=false;}}
   $('sound').onclick=()=>{state.sound=!state.sound;if(state.sound)prepareSound();$('sound').textContent=`音效：${state.sound?'開':'關'}`;$('sound').setAttribute('aria-pressed',String(state.sound));};
   function playShot(){if(!state.sound||!audioContext)return;try{const length=audioContext.sampleRate*.13,buffer=audioContext.createBuffer(1,length,audioContext.sampleRate),data=buffer.getChannelData(0);for(let i=0;i<length;i++)data[i]=(Math.random()*2-1)*Math.exp(-i/(length*.16));const source=audioContext.createBufferSource(),gain=audioContext.createGain();source.buffer=buffer;gain.gain.value=.18;source.connect(gain).connect(audioContext.destination);source.start();}catch{/* Audio is optional. */}}
@@ -69,7 +69,7 @@
   async function fireRound(){
     if(state.running||state.settling||$('reward-dialog').open||!validBet()||bet()*state.bullets>state.balance)return;
     const stake=bet(), count=state.bullets, multipliers=[...LEVELS[state.level]], cost=stake*count;
-    closePickers();state.running=true;state.balance=Math.round((state.balance-cost)*100)/100;state.reward=0;state.fired=0;state.hits=[];state.hitRewards=[];state.luckyHits=0;state.luckyWeaponUntil=0;state.aimLucky=false;
+    closePickers();state.running=true;state.balance=Math.round((state.balance-cost)*100)/100;state.reward=0;state.fired=0;state.hits=[];state.hitRewards=[];state.luckyHits=0;state.luckyWeaponUntil=0;state.luckyBannerStartedAt=0;state.luckyBannerUntil=0;state.aimLucky=false;
     $('shot-log').innerHTML='';$('summary').textContent=`本局投注 ${money(cost)} · 正在射擊`;$('range-status').textContent='射擊進行中';feedback('正在舉槍','ACQUIRING TARGET',false);if(state.sound)prepareSound();update();
     for(let i=0;i<count;i++){
       const zone=chooseZone(random()),point=pointFor(zone),isLuckyHit=random()<LUCKY_HIT.chance,start={...state.aim};
@@ -78,7 +78,7 @@
       while(performance.now()-aimStart<aimDuration){const t=Math.min(1,(performance.now()-aimStart)/aimDuration),ease=t*t*(3-2*t);state.aim={x:start.x+(point.x-start.x)*ease,y:start.y+(point.y-start.y)*ease};await wait(16);}
       const impactAt=performance.now(),baseMultiplier=multipliers[zone],finalMultiplier=baseMultiplier*(isLuckyHit?LUCKY_HIT.multiplier:1);
       state.aim=point;state.flash=1;state.hits.push({...point,zone,impactAt,isLuckyHit,baseMultiplier,finalMultiplier});state.fired++;playShot();
-      if(isLuckyHit){state.luckyHits++;state.luckyWeaponUntil=impactAt+350;}
+      if(isLuckyHit){state.luckyHits++;state.luckyWeaponUntil=impactAt+350;state.luckyBannerStartedAt=impactAt;state.luckyBannerUntil=impactAt+900;}
       const payout=Math.round(stake*finalMultiplier*100)/100;state.reward=Math.round((state.reward+payout)*100)/100;
       state.hitRewards.push({x:point.x,y:point.y,amount:payout,createdAt:impactAt,expiresAt:impactAt+(isLuckyHit?REWARD_DISPLAY_MS.lucky:REWARD_DISPLAY_MS.normal),isLuckyHit,baseMultiplier,finalMultiplier});
       feedback(isLuckyHit?`LUCKY HIT · ${baseMultiplier}× ×2`:`命中${ZONES[zone]} · ${baseMultiplier}×`,`${finalMultiplier}× · + ${money(payout)}`);
@@ -150,6 +150,17 @@
     }
     ctx.restore();
   }
+  function drawLuckyBanner(now){
+    if(now>=state.luckyBannerUntil)return;
+    const age=now-state.luckyBannerStartedAt,remaining=state.luckyBannerUntil-now;
+    const enter=Math.min(1,Math.max(0,age)/130),exit=Math.min(1,remaining/180),alpha=Math.min(enter,exit);
+    const pop=1.12-.12*(1-Math.pow(1-enter,3));
+    ctx.save();ctx.translate(width/2,height*.42);ctx.scale(pop,pop);ctx.globalAlpha=alpha;ctx.textAlign='center';ctx.lineJoin='round';ctx.shadowColor='#f0a51d';ctx.shadowBlur=16;
+    const gold=ctx.createLinearGradient(0,-38,0,25);gold.addColorStop(0,'#fff7b4');gold.addColorStop(.45,'#ffd04f');gold.addColorStop(1,'#d99016');
+    ctx.strokeStyle='#3b2608';ctx.lineWidth=5;ctx.font='900 24px "Segoe UI",sans-serif';ctx.strokeText('LUCKY HIT',0,-8);ctx.fillStyle=gold;ctx.fillText('LUCKY HIT',0,-8);
+    ctx.lineWidth=6;ctx.font='900 38px "Segoe UI",sans-serif';ctx.strokeText(`×${LUCKY_HIT.multiplier}`,0,29);ctx.fillText(`×${LUCKY_HIT.multiplier}`,0,29);
+    ctx.restore();
+  }
   function draw(now){
     const delta=Math.min((now-previousTime)/1000,.05);previousTime=now;state.flash=Math.max(0,state.flash-delta*12);
     ctx.clearRect(0,0,width,height);const cx=width/2;
@@ -187,9 +198,8 @@
       const remaining=reward.expiresAt-now,age=now-reward.createdAt;
       ctx.save();ctx.shadowColor='#000';ctx.shadowBlur=4;
       if(reward.isLuckyHit){
-        ctx.globalAlpha=age<420?Math.min(1,(420-age)/100):0;label(`X${reward.baseMultiplier}`,reward.x,reward.y-42,'#f5edd5',10);
-        ctx.globalAlpha=age<820?Math.min(1,age/100,(820-age)/140):0;ctx.shadowColor='#f1a91f';ctx.shadowBlur=7;label(`LUCKY HIT ×${LUCKY_HIT.multiplier}`,reward.x,reward.y-27,'#ffd45c',11);
-        ctx.globalAlpha=age>300?Math.min(1,(age-300)/120,remaining/130):0;label(`X${reward.finalMultiplier}  +${compactNumber(reward.amount)}`,reward.x,reward.y-11,'#ffe47e',13);
+        ctx.globalAlpha=age<600?Math.min(1,(600-age)/120):0;ctx.shadowColor='#f1a91f';ctx.shadowBlur=7;label(`${reward.baseMultiplier} ×${LUCKY_HIT.multiplier}`,reward.x,reward.y-27,'#ffd45c',12);
+        ctx.globalAlpha=age>330?Math.min(1,(age-330)/130,remaining/130):0;label(`+${compactNumber(reward.amount)}`,reward.x,reward.y-11,'#ffe47e',14);
       }else{
         ctx.globalAlpha=Math.min(1,remaining/70);label(`+${compactNumber(reward.amount)}`,reward.x,reward.y-12,'#d5f580',12);
       }
@@ -200,12 +210,13 @@
     drawImpactSparks(state.hits[state.hits.length-1],now);
     for(const hit of state.hits)drawLuckyImpact(hit,now);
     ctx.restore();
+    drawLuckyBanner(now);
     // The supplied rifle artwork tracks the aim and retains the recoil animation.
     const recoil=reducedMotion?0:state.flash;
     const sway=state.running&&!reducedMotion?state.aim.x*.04:0;
     const idleBob=!state.running&&!reducedMotion?Math.sin(now*.0022)*2.5:0;
     const idleTilt=!state.running&&!reducedMotion?Math.sin(now*.0017)*.18:0;
-    $('weapon-layer').classList.toggle('lucky-hit',now<state.luckyWeaponUntil);
+    $('weapon-layer').classList.toggle('lucky-hit',(state.running&&state.aimLucky)||now<state.luckyWeaponUntil);
     $('weapon-image').style.transform=`translate(${30+sway}px, ${idleBob+recoil*17}px) rotate(${idleTilt-recoil*1.5}deg) scale(${1+recoil*.035})`;
     $('muzzle-flash').style.opacity=String(reducedMotion?0:Math.max(0,(state.flash-.45)*1.8));
     requestAnimationFrame(draw);
