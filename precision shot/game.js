@@ -110,10 +110,22 @@
     ctx.save();ctx.translate(cx,targetY);ctx.scale(scale,scale);
     if(!reducedMotion&&state.flash>0)ctx.translate(Math.sin(now*.06)*state.flash*2,0);
     const body=new Path2D('M -24 -141 Q -27 -175 0 -175 Q 27 -175 24 -141 L 27 -141 L 26 -127 L 22 -127 L 17 -109 Q 30 -99 58 -89 Q 72 -84 76 -61 Q 93 29 77 71 L 67 116 Q 80 133 65 134 L -65 134 Q -80 133 -67 116 L -77 71 Q -93 29 -76 -61 Q -72 -84 -58 -89 Q -30 -99 -17 -109 L -22 -127 L -26 -127 L -27 -141 Z');
-    ctx.shadowColor='#0008';ctx.shadowBlur=18;ctx.fillStyle='#263425';ctx.fill(body);ctx.shadowBlur=0;
-    ctx.strokeStyle='#aab798';ctx.lineWidth=1;ctx.stroke(body);
+    // A weathered timber stake anchors the target to the ground.
+    const post=ctx.createLinearGradient(-9,0,10,0);post.addColorStop(0,'#4a3422');post.addColorStop(.35,'#8a6844');post.addColorStop(.7,'#6c4b2f');post.addColorStop(1,'#38271b');
+    ctx.shadowColor='#17120d99';ctx.shadowBlur=9;ctx.fillStyle=post;ctx.fillRect(-9,112,18,175);ctx.shadowBlur=0;
+    ctx.strokeStyle='#2d2118';ctx.lineWidth=1.5;ctx.strokeRect(-9,112,18,175);
+    line(-4,139,-3,272,'#b08a5a88',1);line(4,150,3,250,'#30211699',1);line(-7,211,7,207,'#c19a6766',1);
+    // Muted paper and worn pigment match the sun-faded outdoor range.
+    const targetFill=ctx.createLinearGradient(-70,-170,78,134);targetFill.addColorStop(0,'#4b453a');targetFill.addColorStop(.52,'#292b28');targetFill.addColorStop(1,'#51483b');
+    ctx.shadowColor='#18140f99';ctx.shadowBlur=18;ctx.fillStyle=targetFill;ctx.fill(body);ctx.shadowBlur=0;
+    ctx.strokeStyle='#b39c78';ctx.lineWidth=2;ctx.stroke(body);
+    ctx.save();ctx.clip(body);ctx.globalAlpha=.22;
+    line(-69,-72,56,-88,'#d8c29a',2);line(-77,48,66,29,'#121713',3);line(-47,103,54,112,'#c9ad7d',1);
+    line(-23,-158,18,-151,'#cbb388',1);line(62,-51,73,18,'#d5bd91',2);line(-65,-34,-72,33,'#141816',2);
+    ellipse(-43,-42,2.2,8,'#d5bd8b');ellipse(51,63,3,10,'#b69d74');ellipse(-30,85,5,2,'#d9c292');
+    ctx.restore();
     const m=LEVELS[state.level];
-    [1,.75,.5,.27].forEach((r,i)=>ellipse(0,0,68*r,94*r,['#35422e','#315044','#5e5830','#765634'][i],COLORS[i]));
+    [1,.75,.5,.27].forEach((r,i)=>ellipse(0,0,68*r,94*r,['#3b3a32','#4b4738','#5c513b','#755b38'][i],['#d8c79e','#d2bd91','#ddc692','#f0d497'][i]));
     for(let z=0;z<3;z++){
       const r=[.865,.62,.385][z];
       label(`X${m[z]}`,0,-94*r+3,COLORS[z],9);
