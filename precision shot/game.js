@@ -6,7 +6,8 @@
   const COLORS = ['#aab798','#8cc8b6','#f0d780','#eeb278'];
   const $ = id => document.getElementById(id);
   const money = n => n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
-  const state = {level:'easy', bullets:1, balance:10000, running:false, settling:false, fired:0, reward:0, round:1, hits:[], aim:{x:0,y:0}, flash:0, sound:false};
+  const compactNumber = n => n.toLocaleString('en-US',{maximumFractionDigits:2});
+  const state = {level:'easy', bullets:1, balance:10000, running:false, settling:false, fired:0, reward:0, round:1, hits:[], hitReward:null, aim:{x:0,y:0}, flash:0, sound:false};
   const canvas = $('range'), ctx = canvas.getContext('2d');
   let width=800, height=620, audioContext, previousTime=0;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -44,7 +45,7 @@
   }
   document.addEventListener('click',e=>{if(!e.target.closest('.picker'))closePickers();});
   document.addEventListener('focusin',e=>{if(!e.target.closest('.picker'))closePickers();});
-  document.querySelectorAll('#difficulty button').forEach(b=>b.onclick=()=>{if(state.running)return;state.level=b.dataset.level;select('difficulty','level',state.level);state.hits=[];closePickers();$('difficulty-toggle').focus();update();});
+  document.querySelectorAll('#difficulty button').forEach(b=>b.onclick=()=>{if(state.running)return;state.level=b.dataset.level;select('difficulty','level',state.level);state.hits=[];state.hitReward=null;closePickers();$('difficulty-toggle').focus();update();});
   document.querySelectorAll('#bullets button').forEach(b=>b.onclick=()=>{if(state.running)return;state.bullets=Number(b.dataset.count);state.fired=0;select('bullets','count',state.bullets);closePickers();$('bullets-toggle').focus();update();});
   document.querySelectorAll('[data-bet]').forEach(b=>b.onclick=()=>{if(state.running)return;$('bet').value=b.dataset.bet;update();});
   $('bet').oninput=update;
@@ -54,7 +55,7 @@
   $('reward-dialog').addEventListener('cancel',event=>event.preventDefault());
   $('rules-close').onclick=$('rules-done').onclick=()=>$('rules').close();
   $('rules').onclick=e=>{if(e.target===$('rules')){const r=$('rules').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)$('rules').close();}};
-  $('reset').onclick=()=>{if(state.running||state.settling)return;state.balance=10000;state.reward=0;state.fired=0;state.hits=[];state.round=1;$('shot-log').innerHTML='<div class="empty-log"><span>⌖</span><p>模擬點數已重設。<small>選擇設定，開始新回合。</small></p></div>';$('summary').textContent='等待開始新回合';$('range-status').textContent='靶場就緒';feedback('鎖定目標','READY TO FIRE',false);update();};
+  $('reset').onclick=()=>{if(state.running||state.settling)return;state.balance=10000;state.reward=0;state.fired=0;state.hits=[];state.hitReward=null;state.round=1;$('shot-log').innerHTML='<div class="empty-log"><span>⌖</span><p>模擬點數已重設。<small>選擇設定，開始新回合。</small></p></div>';$('summary').textContent='等待開始新回合';$('range-status').textContent='靶場就緒';feedback('鎖定目標','READY TO FIRE',false);update();};
   function prepareSound(){try{const Audio=window.AudioContext||window.webkitAudioContext;if(Audio){audioContext ||= new Audio();if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});}}catch{state.sound=false;}}
   $('sound').onclick=()=>{state.sound=!state.sound;if(state.sound)prepareSound();$('sound').textContent=`音效：${state.sound?'開':'關'}`;$('sound').setAttribute('aria-pressed',String(state.sound));};
   function playShot(){if(!state.sound||!audioContext)return;try{const length=audioContext.sampleRate*.13,buffer=audioContext.createBuffer(1,length,audioContext.sampleRate),data=buffer.getChannelData(0);for(let i=0;i<length;i++)data[i]=(Math.random()*2-1)*Math.exp(-i/(length*.16));const source=audioContext.createBufferSource(),gain=audioContext.createGain();source.buffer=buffer;gain.gain.value=.18;source.connect(gain).connect(audioContext.destination);source.start();}catch{/* Audio is optional. */}}
@@ -66,7 +67,7 @@
   async function fireRound(){
     if(state.running||state.settling||$('reward-dialog').open||!validBet()||bet()*state.bullets>state.balance)return;
     const stake=bet(), count=state.bullets, multipliers=[...LEVELS[state.level]], cost=stake*count;
-    closePickers();state.running=true;state.balance=Math.round((state.balance-cost)*100)/100;state.reward=0;state.fired=0;state.hits=[];
+    closePickers();state.running=true;state.balance=Math.round((state.balance-cost)*100)/100;state.reward=0;state.fired=0;state.hits=[];state.hitReward=null;
     $('shot-log').innerHTML='';$('summary').textContent=`本局投注 ${money(cost)} · 正在射擊`;$('range-status').textContent='射擊進行中';feedback('正在舉槍','ACQUIRING TARGET',false);if(state.sound)prepareSound();update();
     for(let i=0;i<count;i++){
       const zone=chooseZone(random()),point=pointFor(zone),start={...state.aim};
@@ -74,6 +75,7 @@
       while(performance.now()-aimStart<aimDuration){const t=Math.min(1,(performance.now()-aimStart)/aimDuration),ease=t*t*(3-2*t);state.aim={x:start.x+(point.x-start.x)*ease,y:start.y+(point.y-start.y)*ease};await wait(16);}
       state.aim=point;state.flash=1;state.hits.push({...point,zone});state.fired++;playShot();
       const payout=Math.round(stake*multipliers[zone]*100)/100;state.reward=Math.round((state.reward+payout)*100)/100;
+      state.hitReward={x:point.x,y:point.y,amount:payout,expiresAt:performance.now()+300};
       feedback(`命中${ZONES[zone]} · ${multipliers[zone]}×`,`+ ${money(payout)}`);
       const card=document.createElement('div');card.className='shot-card';card.style.setProperty('--zone-color',COLORS[zone]);card.innerHTML=`<small><span>SHOT ${String(i+1).padStart(2,'0')}</span><span>${ZONES[zone]}</span></small><strong>${multipliers[zone]}×</strong><span>+ ${money(payout)}</span>`;$('shot-log').append(card);$('shot-log').scrollLeft=$('shot-log').scrollWidth;update();if(i<count-1)await wait(200);
     }
@@ -130,6 +132,12 @@
     }
     ellipse(0,-2,5,9,'#ffe9bd');label(`X${m[3]}`,0,17,'#ffe9bd',10);
     for(const hit of state.hits){ellipse(hit.x,hit.y,4,4,'#141c16','#deddb6');line(hit.x-6,hit.y-2,hit.x+6,hit.y+2,'#182011',1);}
+    if(state.hitReward&&now<state.hitReward.expiresAt){
+      const remaining=state.hitReward.expiresAt-now;
+      ctx.save();ctx.globalAlpha=Math.min(1,remaining/70);ctx.shadowColor='#000';ctx.shadowBlur=4;
+      label(`+${compactNumber(state.hitReward.amount)}`,state.hitReward.x,state.hitReward.y+19,'#d5f580',12);
+      ctx.restore();
+    }
     const aimX=state.aim.x,aimY=state.aim.y;
     if(state.running){ctx.save();ctx.translate(aimX,aimY);ctx.strokeStyle='#e1ffae';ctx.lineWidth=.8;ctx.beginPath();ctx.arc(0,0,14,0,Math.PI*2);ctx.stroke();line(-23,0,-6,0,'#e1ffae');line(6,0,23,0,'#e1ffae');line(0,-23,0,-6,'#e1ffae');line(0,6,0,23,'#e1ffae');ellipse(0,0,1.5,1.5,'#edffbd');ctx.restore();}
     if(state.flash>0){const hit=state.hits[state.hits.length-1];if(hit){ctx.globalAlpha=state.flash;ellipse(hit.x,hit.y,25*(1-state.flash)+6,25*(1-state.flash)+6,null,'#ffffc6');ctx.globalAlpha=1;}}
