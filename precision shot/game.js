@@ -73,7 +73,7 @@
       const zone=chooseZone(random()),point=pointFor(zone),start={...state.aim};
       const aimStart=performance.now(), aimDuration=i===0?450:100;
       while(performance.now()-aimStart<aimDuration){const t=Math.min(1,(performance.now()-aimStart)/aimDuration),ease=t*t*(3-2*t);state.aim={x:start.x+(point.x-start.x)*ease,y:start.y+(point.y-start.y)*ease};await wait(16);}
-      state.aim=point;state.flash=1;state.hits.push({...point,zone});state.fired++;playShot();
+      state.aim=point;state.flash=1;state.hits.push({...point,zone,impactAt:performance.now()});state.fired++;playShot();
       const payout=Math.round(stake*multipliers[zone]*100)/100;state.reward=Math.round((state.reward+payout)*100)/100;
       state.hitRewards.push({x:point.x,y:point.y,amount:payout,expiresAt:performance.now()+400});
       feedback(`命中${ZONES[zone]} · ${multipliers[zone]}×`,`+ ${money(payout)}`);
@@ -103,6 +103,29 @@
   function line(x1,y1,x2,y2,color,width=1){ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();}
   function ellipse(x,y,rx,ry,fill,stroke){ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke();}}
   function label(text,x,y,color,size=16){ctx.font=`600 ${size}px "Segoe UI",sans-serif`;ctx.textAlign='center';ctx.fillStyle=color;ctx.fillText(text,x,y);}
+  function drawImpactSparks(hit,now){
+    if(!hit||hit.zone===0||reducedMotion)return;
+    const durations=[0,180,240,320],counts=[0,6,11,18],lengths=[0,9,18,29];
+    const progress=Math.min(1,(now-hit.impactAt)/durations[hit.zone]);
+    if(progress>=1)return;
+    const fade=(1-progress)*(1-progress),count=counts[hit.zone],travel=5+progress*(hit.zone===3?17:10);
+    ctx.save();ctx.globalAlpha=fade;ctx.lineCap='round';ctx.shadowColor=hit.zone===3?'#ffb02e':'#ffe08a';ctx.shadowBlur=hit.zone===3?12:6;
+    if(hit.zone===3){
+      const glow=ctx.createRadialGradient(hit.x,hit.y,0,hit.x,hit.y,20+progress*12);
+      glow.addColorStop(0,'#fffbd4');glow.addColorStop(.2,'#ffbd38dd');glow.addColorStop(1,'#f06a0000');
+      ellipse(hit.x,hit.y,20+progress*12,20+progress*12,glow);
+      ctx.lineWidth=2.4;ctx.strokeStyle='#ffd36a';ctx.beginPath();ctx.arc(hit.x,hit.y,8+progress*30,0,Math.PI*2);ctx.stroke();
+    }
+    for(let i=0;i<count;i++){
+      const angle=Math.PI*2*i/count+Math.sin(i*9.7+hit.x*.13+hit.y*.07)*.18;
+      const inner=travel+(i%3)*1.5,outer=inner+lengths[hit.zone]*(.72+(i%4)*.1);
+      const x1=hit.x+Math.cos(angle)*inner,y1=hit.y+Math.sin(angle)*inner;
+      const x2=hit.x+Math.cos(angle)*outer,y2=hit.y+Math.sin(angle)*outer;
+      line(x1,y1,x2,y2,i%3===0?'#fff7bd':'#f2a63b',hit.zone===1?1:hit.zone===2?1.7:2.2);
+      if(hit.zone>=2)ellipse(x2,y2,hit.zone===3?2.2:1.4,hit.zone===3?2.2:1.4,'#ffe9a0');
+    }
+    ctx.restore();
+  }
   function draw(now){
     const delta=Math.min((now-previousTime)/1000,.05);previousTime=now;state.flash=Math.max(0,state.flash-delta*12);
     ctx.clearRect(0,0,width,height);const cx=width/2;
@@ -145,6 +168,7 @@
     const aimX=state.aim.x,aimY=state.aim.y;
     if(state.running){ctx.save();ctx.translate(aimX,aimY);ctx.strokeStyle='#e1ffae';ctx.lineWidth=.8;ctx.beginPath();ctx.arc(0,0,14,0,Math.PI*2);ctx.stroke();line(-23,0,-6,0,'#e1ffae');line(6,0,23,0,'#e1ffae');line(0,-23,0,-6,'#e1ffae');line(0,6,0,23,'#e1ffae');ellipse(0,0,1.5,1.5,'#edffbd');ctx.restore();}
     if(state.flash>0){const hit=state.hits[state.hits.length-1];if(hit){ctx.globalAlpha=state.flash;ellipse(hit.x,hit.y,25*(1-state.flash)+6,25*(1-state.flash)+6,null,'#ffffc6');ctx.globalAlpha=1;}}
+    drawImpactSparks(state.hits[state.hits.length-1],now);
     ctx.restore();
     // The supplied rifle artwork tracks the aim and retains the recoil animation.
     const recoil=reducedMotion?0:state.flash;
