@@ -86,5 +86,5 @@ button:focus-visible,input:focus-visible{outline-color:#d5f580}
 
 /* Shift the oversized transparent artwork right so the sight sits centrally. */
 .weapon-layer img{object-position:75% top}
-#muzzle-flash{left:45%}
+#muzzle-flash{left:calc(45% + 12px)}
 
