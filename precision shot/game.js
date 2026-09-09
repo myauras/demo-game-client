@@ -137,7 +137,7 @@
     // The supplied rifle artwork tracks the aim and retains the recoil animation.
     const recoil=reducedMotion?0:state.flash;
     const sway=state.running&&!reducedMotion?state.aim.x*.04:0;
-    $('weapon-image').style.transform=`translate(${18+sway}px, ${recoil*17}px) rotate(${-recoil*1.5}deg) scale(${1+recoil*.035})`;
+    $('weapon-image').style.transform=`translate(${30+sway}px, ${recoil*17}px) rotate(${-recoil*1.5}deg) scale(${1+recoil*.035})`;
     $('muzzle-flash').style.opacity=String(reducedMotion?0:Math.max(0,(state.flash-.45)*1.8));
     requestAnimationFrame(draw);
   }
