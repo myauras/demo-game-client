@@ -88,3 +88,9 @@ button:focus-visible,input:focus-visible{outline-color:#d5f580}
 .weapon-layer img{object-position:75% top}
 #muzzle-flash{left:calc(45% + 12px)}
 
+/* Lucky Hit adds a short gold pulse without changing the weapon artwork. */
+.weapon-layer img{transition:filter .12s ease-out}
+.weapon-layer.lucky-hit img{filter:brightness(1.18) saturate(1.2) drop-shadow(0 0 10px #ffc84d)}
+.weapon-layer.lucky-hit #muzzle-flash{width:82px;height:82px;background:radial-gradient(circle,#fffbd8 0%,#ffd45ccc 24%,#ee9d2400 72%)}
+@media(prefers-reduced-motion:reduce){.weapon-layer img{transition:none}.weapon-layer.lucky-hit img{filter:brightness(1.1) drop-shadow(0 0 5px #ffc84d)}}
+
