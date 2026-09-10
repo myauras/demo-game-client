@@ -1,7 +1,7 @@
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
-const allowed = new Set(['index.html','style.css','layout.css','game.js','assets/rifle-olive.png','assets/rifle-transparent.png','assets/rifle-transparent.webp','assets/range-background.png','assets/range-background.webp']);
+const allowed = new Set(['index.html','style.css','layout.css','game-math.js','game.js','assets/rifle-olive.png','assets/rifle-transparent.png','assets/rifle-transparent.webp','assets/range-background.png','assets/range-background.webp']);
 const types = {'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.png':'image/png','.webp':'image/webp'};
 http.createServer((req,res)=>{
   const name = new URL(req.url,'http://localhost').pathname.slice(1) || 'index.html';

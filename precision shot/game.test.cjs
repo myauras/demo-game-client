@@ -3,6 +3,8 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
+const math=require('./game-math.js');
+const mathSource=fs.readFileSync(__dirname+'/game-math.js','utf8');
 const gameSource=fs.readFileSync(__dirname+'/game.js','utf8');
 function game(random=.2){
   const elements=new Map();
@@ -12,7 +14,7 @@ function game(random=.2){
   const counts=[1,2,3,5,10,20].map(count=>Object.assign(element(),{dataset:{count:String(count)}}));
   const presets=[10,50,100,200].map(bet=>Object.assign(element(),{dataset:{bet:String(bet)}}));
   let tick=0;
-  vm.runInNewContext(gameSource,{
+  vm.runInNewContext(`${mathSource}\n${gameSource}`,{
     document:{addEventListener(){},getElementById:get,createElement:element,querySelectorAll:s=>s==='#difficulty button'?levels:s==='#bullets button'?counts:s==='[data-bet]'?presets:[]},
     matchMedia:()=>({matches:false}),ResizeObserver:class{observe(){}},devicePixelRatio:1,
     requestAnimationFrame(){},performance:{now:()=>tick+=100},setTimeout:fn=>queueMicrotask(fn),
@@ -42,17 +44,21 @@ for(const [level,multipliers,samples] of [
     });
   }
 }
-test('configured zone probabilities include Lucky Hit and produce 95% RTP',()=>{
-  const probabilities=vm.runInNewContext(`(${gameSource.match(/const ZONE_PROBABILITIES = (\{[^;]+\});/)[1]})`);
-  const levels=vm.runInNewContext(`(${gameSource.match(/const LEVELS = (\{[^;]+\});/)[1]})`);
-  const lucky=vm.runInNewContext(`(${gameSource.match(/const LUCKY_HIT = (\{[^;]+\});/)[1]})`);
-  for(const level of Object.keys(levels)){
-    const baseRtp=probabilities[level].reduce((sum,p,index)=>sum+p*levels[level][index],0);
-    const totalRtp=baseRtp*(1+lucky.chance*(lucky.multiplier-1));
-    assert.ok(Math.abs(totalRtp-.95)<1e-9,`${level} RTP was ${totalRtp}`);
+test('Lucky Time model produces 95% exact RTP for every difficulty and bullet count',()=>{
+  for(const level of Object.keys(math.LEVELS))for(const bulletCount of math.GAME_CONFIG.bulletCounts){
+    const result=math.exactRtp(level,bulletCount);
+    assert.ok(Math.abs(result.baseRtp-.9)<1e-12,`${level} base RTP was ${result.baseRtp}`);
+    assert.ok(Math.abs(result.rtp-math.GAME_CONFIG.targetRTP)<1e-10,`${level} × ${bulletCount} RTP was ${result.rtp}`);
   }
 });
-test('Lucky Hit independently doubles the actual hit multiplier',async()=>{
+test('Lucky Time appears before a shot, persists on another-zone hit, and pays only on its zone',()=>{
+  const round=math.createRoundState(3),values=[0,.45,.5,.9],random=()=>values.shift();
+  const first=math.resolveShot('easy',round,random);
+  assert.equal(first.luckyTimeTriggered,true);assert.equal(first.luckyZoneIdAtShot,1);assert.equal(first.hitZoneId,0);assert.equal(first.isLuckyHit,false);assert.equal(round.luckyTimeActive,true);
+  const second=math.resolveShot('easy',round,random);
+  assert.equal(second.luckyTimeTriggered,false);assert.equal(second.hitZoneId,1);assert.equal(second.isLuckyHit,true);assert.equal(second.finalMultiplier,4);assert.equal(round.luckyTimeActive,false);assert.equal(round.luckyZoneId,null);
+});
+test('browser flow awards ×2 only after hitting the visible Lucky Zone',async()=>{
   const g=game(.05);g.counts.find(b=>b.dataset.count==='2').onclick();
   await g.get('start').onclick();
   assert.equal(g.get('round-reward').textContent,'20.00');
