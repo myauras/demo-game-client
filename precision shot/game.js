@@ -74,12 +74,11 @@
     $('shot-log').innerHTML='';$('summary').textContent=`本局投注 ${money(cost)} · 正在射擊`;$('range-status').textContent='射擊進行中';feedback('正在舉槍','ACQUIRING TARGET',false);if(state.sound)prepareSound();update();
     for(let i=0;i<count;i++){
       const zone=chooseZone(random()),point=pointFor(zone),isLuckyHit=random()<LUCKY_HIT.chance,start={...state.aim};
-      state.aimLucky=isLuckyHit;state.showAim=!rapidFire||i===0;
+      state.aimLucky=isLuckyHit;state.showAim=true;
       const aimStart=performance.now(), aimDuration=rapidFire&&i>0?0:isLuckyHit?(i===0?800:420):(i===0?450:100);
       while(performance.now()-aimStart<aimDuration){const t=Math.min(1,(performance.now()-aimStart)/aimDuration),ease=t*t*(3-2*t);state.aim={x:start.x+(point.x-start.x)*ease,y:start.y+(point.y-start.y)*ease};await wait(16);}
       const impactAt=performance.now(),baseMultiplier=multipliers[zone],finalMultiplier=baseMultiplier*(isLuckyHit?LUCKY_HIT.multiplier:1);
       state.aim=point;state.flash=1;state.hits.push({...point,zone,impactAt,isLuckyHit,baseMultiplier,finalMultiplier});state.fired++;playShot();
-      if(rapidFire)state.showAim=false;
       if(isLuckyHit){state.luckyHits++;state.luckyWeaponUntil=impactAt+350;state.luckyBannerStartedAt=impactAt;state.luckyBannerUntil=impactAt+900;}
       const payout=Math.round(stake*finalMultiplier*100)/100;state.reward=Math.round((state.reward+payout)*100)/100;
       state.hitRewards.push({x:point.x,y:point.y,amount:payout,createdAt:impactAt,expiresAt:impactAt+(isLuckyHit?REWARD_DISPLAY_MS.lucky:REWARD_DISPLAY_MS.normal),isLuckyHit,baseMultiplier,finalMultiplier});
