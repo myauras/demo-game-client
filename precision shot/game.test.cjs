@@ -3,6 +3,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
+const gameSource=fs.readFileSync(__dirname+'/game.js','utf8');
 function game(random=.2){
   const elements=new Map();
   function element(){return {value:'10',hidden:true,open:false,offsetWidth:330,textContent:'',innerHTML:'',disabled:false,dataset:{},style:{setProperty(){}},classList:{toggle(){},add(){},remove(){}},setAttribute(){},addEventListener(){},focus(){},showModal(){this.open=true},close(){this.open=false},firstElementChild:{},lastElementChild:{},append(){},getBoundingClientRect(){return {width:420,height:740}},getContext(){return {setTransform(){}}}};}
@@ -11,7 +12,7 @@ function game(random=.2){
   const counts=[1,2,3,5,10,20].map(count=>Object.assign(element(),{dataset:{count:String(count)}}));
   const presets=[10,50,100,200].map(bet=>Object.assign(element(),{dataset:{bet:String(bet)}}));
   let tick=0;
-  vm.runInNewContext(fs.readFileSync(__dirname+'/game.js','utf8'),{
+  vm.runInNewContext(gameSource,{
     document:{addEventListener(){},getElementById:get,createElement:element,querySelectorAll:s=>s==='#difficulty button'?levels:s==='#bullets button'?counts:s==='[data-bet]'?presets:[]},
     matchMedia:()=>({matches:false}),ResizeObserver:class{observe(){}},devicePixelRatio:1,
     requestAnimationFrame(){},performance:{now:()=>tick+=100},setTimeout:fn=>queueMicrotask(fn),
@@ -19,8 +20,12 @@ function game(random=.2){
   });
   return {get,levels,counts,presets};
 }
-for(const [level,multipliers] of [['easy',[.5,2,5,10]],['medium',[.2,3,10,50]],['hard',[0,10,100,1000]]]){
-  for(const [zone,r] of [.2,.7,.95,.999].entries()){
+for(const [level,multipliers,samples] of [
+  ['easy',[.5,2,5,10],[.5,.9,.99,.9995]],
+  ['medium',[.2,3,10,50],[.5,.9,.997,.9999]],
+  ['hard',[0,10,100,1000],[.5,.95,.9995,.99999]],
+]){
+  for(const [zone,r] of samples.entries()){
     test(`${level}, zone ${zone}: five shots debit once and pay correct multiplier`,async()=>{
       const g=game(r);g.levels.find(b=>b.dataset.level===level).onclick();g.counts.find(b=>b.dataset.count==='5').onclick();
       const reward=50*multipliers[zone];
@@ -37,6 +42,16 @@ for(const [level,multipliers] of [['easy',[.5,2,5,10]],['medium',[.2,3,10,50]],[
     });
   }
 }
+test('configured zone probabilities include Lucky Hit and produce 95% RTP',()=>{
+  const probabilities=vm.runInNewContext(`(${gameSource.match(/const ZONE_PROBABILITIES = (\{[^;]+\});/)[1]})`);
+  const levels=vm.runInNewContext(`(${gameSource.match(/const LEVELS = (\{[^;]+\});/)[1]})`);
+  const lucky=vm.runInNewContext(`(${gameSource.match(/const LUCKY_HIT = (\{[^;]+\});/)[1]})`);
+  for(const level of Object.keys(levels)){
+    const baseRtp=probabilities[level].reduce((sum,p,index)=>sum+p*levels[level][index],0);
+    const totalRtp=baseRtp*(1+lucky.chance*(lucky.multiplier-1));
+    assert.ok(Math.abs(totalRtp-.95)<1e-9,`${level} RTP was ${totalRtp}`);
+  }
+});
 test('Lucky Hit independently doubles the actual hit multiplier',async()=>{
   const g=game(.05);g.counts.find(b=>b.dataset.count==='2').onclick();
   await g.get('start').onclick();
@@ -65,14 +80,14 @@ test('quick bets update total and are ignored during an active round',async()=>{
   assert.equal(g.get('balance').textContent,'9,700.00');
 });
 test('completed round shows the reward and closes it automatically',async()=>{
-  const g=game(.7);g.counts.find(b=>b.dataset.count==='2').onclick();
+  const g=game(.9);g.counts.find(b=>b.dataset.count==='2').onclick();
   await g.get('start').onclick();
   assert.equal(g.get('reward-dialog').open,false);
   assert.equal(g.get('reward-amount').textContent,'40.00');
   assert.equal(g.get('balance').textContent,'10,020.00');
 });
 for(const count of [1,2,3,5,10,20])test(`${count} bullets: correct cost, shot count and payout`,async()=>{
-  const g=game(.7);g.counts.find(b=>b.dataset.count===String(count)).onclick();
+  const g=game(.9);g.counts.find(b=>b.dataset.count===String(count)).onclick();
   assert.equal(g.get('total-bet').textContent,(10*count).toFixed(2));
   await g.get('start').onclick();
   assert.equal(g.get('round-reward').textContent,(20*count).toFixed(2));

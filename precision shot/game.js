@@ -2,6 +2,12 @@
 (() => {
   'use strict';
   const LEVELS = {easy:[0.5,2,5,10], medium:[0.2,3,10,50], hard:[0,10,100,1000]};
+  // Calibrated per difficulty so the 10% Lucky Hit ×2 mechanic yields 95% theoretical RTP.
+  const ZONE_PROBABILITIES = {
+    easy:[.8029090909,.1760909091,.02,.001],
+    medium:[.7788441558,.2159558442,.005,.0002],
+    hard:[.9275863636,.0713636364,.001,.00005]
+  };
   const ZONES = ['外圈','中圈','內圈','靶心'];
   const COLORS = ['#aab798','#8cc8b6','#f0d780','#eeb278'];
   const LUCKY_HIT = {chance:.1,multiplier:2};
@@ -62,7 +68,7 @@
   $('sound').onclick=()=>{state.sound=!state.sound;if(state.sound)prepareSound();$('sound').textContent=`音效：${state.sound?'開':'關'}`;$('sound').setAttribute('aria-pressed',String(state.sound));};
   function playShot(){if(!state.sound||!audioContext)return;try{const length=audioContext.sampleRate*.13,buffer=audioContext.createBuffer(1,length,audioContext.sampleRate),data=buffer.getChannelData(0);for(let i=0;i<length;i++)data[i]=(Math.random()*2-1)*Math.exp(-i/(length*.16));const source=audioContext.createBufferSource(),gain=audioContext.createGain();source.buffer=buffer;gain.gain.value=.18;source.connect(gain).connect(audioContext.destination);source.start();}catch{/* Audio is optional. */}}
   function random(){if(globalThis.crypto?.getRandomValues){const a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]/4294967296;}return Math.random();}
-  function chooseZone(r){return r<.65?0:r<.9?1:r<.99?2:3;}
+  function chooseZone(level,r){const [outer,middle,inner]=ZONE_PROBABILITIES[level];return r<outer?0:r<outer+middle?1:r<outer+middle+inner?2:3;}
   function pointFor(zone){const angle=random()*Math.PI*2;const bands=[[.78,.94],[.55,.71],[.32,.48],[.03,.24]];const [lo,hi]=bands[zone],r=Math.sqrt(lo*lo+random()*(hi*hi-lo*lo));return{x:Math.cos(angle)*r*68,y:Math.sin(angle)*r*94};}
   const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
   function feedback(label,value,hit=true){$('shot-feedback').classList.toggle('hit',hit);$('shot-feedback').firstElementChild.textContent=label;$('shot-feedback').lastElementChild.textContent=value;}
@@ -73,7 +79,7 @@
     closePickers();state.running=true;state.balance=Math.round((state.balance-cost)*100)/100;state.reward=0;state.fired=0;state.hits=[];state.hitRewards=[];state.luckyHits=0;state.luckyWeaponUntil=0;state.luckyBannerStartedAt=0;state.luckyBannerUntil=0;state.aimLucky=false;state.showAim=false;
     $('shot-log').innerHTML='';$('summary').textContent=`本局投注 ${money(cost)} · 正在射擊`;$('range-status').textContent='射擊進行中';feedback('正在舉槍','ACQUIRING TARGET',false);if(state.sound)prepareSound();update();
     for(let i=0;i<count;i++){
-      const zone=chooseZone(random()),point=pointFor(zone),isLuckyHit=random()<LUCKY_HIT.chance,start={...state.aim};
+      const zone=chooseZone(state.level,random()),point=pointFor(zone),isLuckyHit=random()<LUCKY_HIT.chance,start={...state.aim};
       state.aimLucky=isLuckyHit;state.showAim=true;
       const aimStart=performance.now(), aimDuration=rapidFire&&i>0?0:isLuckyHit?(i===0?800:420):(i===0?450:100);
       while(performance.now()-aimStart<aimDuration){const t=Math.min(1,(performance.now()-aimStart)/aimDuration),ease=t*t*(3-2*t);state.aim={x:start.x+(point.x-start.x)*ease,y:start.y+(point.y-start.y)*ease};await wait(16);}
