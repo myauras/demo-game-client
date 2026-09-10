@@ -175,13 +175,17 @@
     ctx.restore();
   }
   function drawLuckyTimeBanner(now){
-    let zone=state.luckyTimeActive?state.luckyZoneId:null,alpha=1;
-    if(now<state.luckyHitZoneUntil){zone=state.luckyHitZoneId;alpha=Math.max(0,(state.luckyHitZoneUntil-now)/LUCKY_TIME.hitEffectDurationMs);}
+    let zone=state.luckyTimeActive?state.luckyZoneId:null,alpha=1,hitScale=1;
+    if(now<state.luckyHitZoneUntil){
+      zone=state.luckyHitZoneId;const hitProgress=1-(state.luckyHitZoneUntil-now)/LUCKY_TIME.hitEffectDurationMs;
+      alpha=Math.max(0,1-hitProgress*hitProgress);
+      hitScale=hitProgress<.35?1+.3*(hitProgress/.35):1.3-.5*((hitProgress-.35)/.65);
+    }
     else if(state.luckyTimeActive&&now<state.luckyExpireUntil)alpha=Math.max(0,(state.luckyExpireUntil-now)/LUCKY_TIME.expireDurationMs);
     if(zone===null||zone===undefined)return;
     const age=now-state.luckyIntroStartedAt,enter=Math.min(1,Math.max(0,age)/110),pop=.82+.18*(1-Math.pow(1-enter,3));
     alpha*=enter;
-    ctx.save();ctx.translate(width*.5,height*.12);ctx.scale(pop,pop);ctx.globalAlpha=alpha;ctx.textAlign='center';ctx.lineJoin='round';ctx.shadowColor='#ffbd32';ctx.shadowBlur=18;
+    ctx.save();ctx.translate(width*.5,height*.12);ctx.scale(pop*hitScale,pop*hitScale);ctx.globalAlpha=alpha;ctx.textAlign='center';ctx.lineJoin='round';ctx.shadowColor='#ffbd32';ctx.shadowBlur=18;
     ctx.strokeStyle='#3c2808';ctx.lineWidth=5;ctx.font='900 26px "Segoe UI",sans-serif';ctx.strokeText('LUCKY TIME',0,0);ctx.fillStyle='#ffe16f';ctx.fillText('LUCKY TIME',0,0);
     ctx.lineWidth=4;ctx.font='800 16px "Segoe UI",sans-serif';const zoneText=`X${LEVELS[state.level][zone]}  ×${LUCKY_TIME.rewardMultiplier}`;ctx.strokeText(zoneText,0,24);ctx.fillText(zoneText,0,24);ctx.restore();
   }
