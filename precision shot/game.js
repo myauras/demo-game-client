@@ -223,8 +223,7 @@
       const remaining=reward.expiresAt-now,age=now-reward.createdAt;
       ctx.save();ctx.shadowColor='#000';ctx.shadowBlur=4;
       if(reward.isLuckyHit){
-        ctx.globalAlpha=age<600?Math.min(1,(600-age)/120):0;ctx.shadowColor='#f1a91f';ctx.shadowBlur=7;label(`${reward.baseMultiplier} ×${LUCKY_TIME.rewardMultiplier}`,reward.x,reward.y-27,'#ffd45c',12);
-        ctx.globalAlpha=age>330?Math.min(1,(age-330)/130,remaining/130):0;label(`+${compactNumber(reward.amount)}`,reward.x,reward.y-11,'#ffe47e',14);
+        ctx.globalAlpha=Math.min(1,age/100,remaining/130);ctx.shadowColor='#f1a91f';ctx.shadowBlur=7;label(`+${compactNumber(reward.amount)}`,reward.x,reward.y-12,'#ffe47e',14);
       }else{
         ctx.globalAlpha=Math.min(1,remaining/70);label(`+${compactNumber(reward.amount)}`,reward.x,reward.y-12,'#d5f580',12);
       }
