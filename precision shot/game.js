@@ -155,7 +155,7 @@
     const age=now-state.luckyBannerStartedAt,remaining=state.luckyBannerUntil-now;
     const enter=Math.min(1,Math.max(0,age)/130),exit=Math.min(1,remaining/180),alpha=Math.min(enter,exit);
     const pop=1.12-.12*(1-Math.pow(1-enter,3));
-    ctx.save();ctx.translate(width/2,height*.42);ctx.scale(pop,pop);ctx.globalAlpha=alpha;ctx.textAlign='center';ctx.lineJoin='round';ctx.shadowColor='#f0a51d';ctx.shadowBlur=16;
+    ctx.save();ctx.translate(width*.77,height*.13);ctx.scale(pop,pop);ctx.globalAlpha=alpha;ctx.textAlign='center';ctx.lineJoin='round';ctx.shadowColor='#f0a51d';ctx.shadowBlur=16;
     const gold=ctx.createLinearGradient(0,-38,0,25);gold.addColorStop(0,'#fff7b4');gold.addColorStop(.45,'#ffd04f');gold.addColorStop(1,'#d99016');
     ctx.strokeStyle='#3b2608';ctx.lineWidth=5;ctx.font='900 24px "Segoe UI",sans-serif';ctx.strokeText('LUCKY HIT',0,-8);ctx.fillStyle=gold;ctx.fillText('LUCKY HIT',0,-8);
     ctx.lineWidth=6;ctx.font='900 38px "Segoe UI",sans-serif';ctx.strokeText(`×${LUCKY_HIT.multiplier}`,0,29);ctx.fillText(`×${LUCKY_HIT.multiplier}`,0,29);
