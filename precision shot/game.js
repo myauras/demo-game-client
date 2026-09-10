@@ -1,21 +1,15 @@
 /* Precision Shot — local H5 prototype. No external libraries or requests. */
 (() => {
   'use strict';
-  const LEVELS = {easy:[0.5,2,5,10], medium:[0.2,3,10,50], hard:[0,10,100,1000]};
-  // Calibrated per difficulty so the 10% Lucky Hit ×2 mechanic yields 95% theoretical RTP.
-  const ZONE_PROBABILITIES = {
-    easy:[.8029090909,.1760909091,.02,.001],
-    medium:[.7788441558,.2159558442,.005,.0002],
-    hard:[.9275863636,.0713636364,.001,.00005]
-  };
+  const {LEVELS,ZONE_PROBABILITIES,GAME_CONFIG,createRoundState,rollLuckyTime,resolveShot}=globalThis.PrecisionShotMath;
   const ZONES = ['外圈','中圈','內圈','靶心'];
   const COLORS = ['#aab798','#8cc8b6','#f0d780','#eeb278'];
-  const LUCKY_HIT = {chance:.1,multiplier:2};
+  const LUCKY_TIME=GAME_CONFIG.luckyTime;
   const REWARD_DISPLAY_MS = {normal:800,lucky:1100};
   const $ = id => document.getElementById(id);
   const money = n => n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
   const compactNumber = n => n.toLocaleString('en-US',{maximumFractionDigits:2});
-  const state = {level:'easy', bullets:1, balance:10000, running:false, settling:false, fired:0, reward:0, round:1, hits:[], hitRewards:[], luckyHits:0, luckyWeaponUntil:0, luckyBannerStartedAt:0, luckyBannerUntil:0, aimLucky:false, showAim:false, aim:{x:0,y:0}, flash:0, sound:false};
+  const state = {level:'easy', bullets:1, balance:10000, running:false, settling:false, fired:0, reward:0, round:1, hits:[], hitRewards:[], luckyHits:0, luckyTimeTriggers:0, luckyTimeActive:false, luckyZoneId:null, luckyIntroStartedAt:0, luckyIntroUntil:0, luckyHitZoneId:null, luckyHitZoneUntil:0, luckyExpireStartedAt:0, luckyExpireUntil:0, luckyWeaponUntil:0, luckyBannerStartedAt:0, luckyBannerUntil:0, luckyBannerMultiplier:0, aimLucky:false, showAim:false, aim:{x:0,y:0}, flash:0, sound:false};
   const canvas = $('range'), ctx = canvas.getContext('2d');
   let width=800, height=620, audioContext, previousTime=0;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -63,12 +57,11 @@
   $('reward-dialog').addEventListener('cancel',event=>event.preventDefault());
   $('rules-close').onclick=$('rules-done').onclick=()=>$('rules').close();
   $('rules').onclick=e=>{if(e.target===$('rules')){const r=$('rules').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)$('rules').close();}};
-  $('reset').onclick=()=>{if(state.running||state.settling)return;state.balance=10000;state.reward=0;state.fired=0;state.hits=[];state.hitRewards=[];state.luckyHits=0;state.luckyWeaponUntil=0;state.luckyBannerStartedAt=0;state.luckyBannerUntil=0;state.aimLucky=false;state.showAim=false;state.round=1;$('shot-log').innerHTML='<div class="empty-log"><span>⌖</span><p>模擬點數已重設。<small>選擇設定，開始新回合。</small></p></div>';$('summary').textContent='等待開始新回合';$('range-status').textContent='靶場就緒';feedback('鎖定目標','READY TO FIRE',false);update();};
+  $('reset').onclick=()=>{if(state.running||state.settling)return;state.balance=10000;state.reward=0;state.fired=0;state.hits=[];state.hitRewards=[];state.luckyHits=0;state.luckyTimeTriggers=0;state.luckyTimeActive=false;state.luckyZoneId=null;state.luckyIntroUntil=0;state.luckyHitZoneId=null;state.luckyHitZoneUntil=0;state.luckyExpireUntil=0;state.luckyWeaponUntil=0;state.luckyBannerStartedAt=0;state.luckyBannerUntil=0;state.aimLucky=false;state.showAim=false;state.round=1;$('shot-log').innerHTML='<div class="empty-log"><span>⌖</span><p>模擬點數已重設。<small>選擇設定，開始新回合。</small></p></div>';$('summary').textContent='等待開始新回合';$('range-status').textContent='靶場就緒';feedback('鎖定目標','READY TO FIRE',false);update();};
   function prepareSound(){try{const Audio=window.AudioContext||window.webkitAudioContext;if(Audio){audioContext ||= new Audio();if(audioContext.state==='suspended')audioContext.resume().catch(()=>{});}}catch{state.sound=false;}}
   $('sound').onclick=()=>{state.sound=!state.sound;if(state.sound)prepareSound();$('sound').textContent=`音效：${state.sound?'開':'關'}`;$('sound').setAttribute('aria-pressed',String(state.sound));};
   function playShot(){if(!state.sound||!audioContext)return;try{const length=audioContext.sampleRate*.13,buffer=audioContext.createBuffer(1,length,audioContext.sampleRate),data=buffer.getChannelData(0);for(let i=0;i<length;i++)data[i]=(Math.random()*2-1)*Math.exp(-i/(length*.16));const source=audioContext.createBufferSource(),gain=audioContext.createGain();source.buffer=buffer;gain.gain.value=.18;source.connect(gain).connect(audioContext.destination);source.start();}catch{/* Audio is optional. */}}
   function random(){if(globalThis.crypto?.getRandomValues){const a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]/4294967296;}return Math.random();}
-  function chooseZone(level,r){const [outer,middle,inner]=ZONE_PROBABILITIES[level];return r<outer?0:r<outer+middle?1:r<outer+middle+inner?2:3;}
   function pointFor(zone){const angle=random()*Math.PI*2;const bands=[[.78,.94],[.55,.71],[.32,.48],[.03,.24]];const [lo,hi]=bands[zone],r=Math.sqrt(lo*lo+random()*(hi*hi-lo*lo));return{x:Math.cos(angle)*r*68,y:Math.sin(angle)*r*94};}
   const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
   function feedback(label,value,hit=true){$('shot-feedback').classList.toggle('hit',hit);$('shot-feedback').firstElementChild.textContent=label;$('shot-feedback').lastElementChild.textContent=value;}
@@ -76,23 +69,32 @@
     if(state.running||state.settling||$('reward-dialog').open||!validBet()||bet()*state.bullets>state.balance)return;
     const stake=bet(), count=state.bullets, multipliers=[...LEVELS[state.level]], cost=stake*count;
     const rapidFire=count>=2;
-    closePickers();state.running=true;state.balance=Math.round((state.balance-cost)*100)/100;state.reward=0;state.fired=0;state.hits=[];state.hitRewards=[];state.luckyHits=0;state.luckyWeaponUntil=0;state.luckyBannerStartedAt=0;state.luckyBannerUntil=0;state.aimLucky=false;state.showAim=false;
+    closePickers();state.running=true;state.balance=Math.round((state.balance-cost)*100)/100;state.reward=0;state.fired=0;state.hits=[];state.hitRewards=[];state.luckyHits=0;state.luckyTimeTriggers=0;state.luckyTimeActive=false;state.luckyZoneId=null;state.luckyIntroUntil=0;state.luckyHitZoneId=null;state.luckyHitZoneUntil=0;state.luckyExpireUntil=0;state.luckyWeaponUntil=0;state.luckyBannerStartedAt=0;state.luckyBannerUntil=0;state.aimLucky=false;state.showAim=false;
     $('shot-log').innerHTML='';$('summary').textContent=`本局投注 ${money(cost)} · 正在射擊`;$('range-status').textContent='射擊進行中';feedback('正在舉槍','ACQUIRING TARGET',false);if(state.sound)prepareSound();update();
+    const roundState=createRoundState(count);
     for(let i=0;i<count;i++){
-      const zone=chooseZone(state.level,random()),point=pointFor(zone),isLuckyHit=random()<LUCKY_HIT.chance,start={...state.aim};
-      state.aimLucky=isLuckyHit;state.showAim=true;
+      const luckyTimeTriggered=rollLuckyTime(state.level,roundState,random);
+      if(luckyTimeTriggered){
+        state.luckyTimeTriggers++;await wait(LUCKY_TIME.introPauseMs);
+        state.luckyTimeActive=true;state.luckyZoneId=roundState.luckyZoneId;state.luckyIntroStartedAt=performance.now();state.luckyIntroUntil=state.luckyIntroStartedAt+LUCKY_TIME.introDurationMs;
+        feedback('LUCKY TIME',`${multipliers[state.luckyZoneId]}× ZONE · ×${LUCKY_TIME.rewardMultiplier}`);await wait(LUCKY_TIME.introDurationMs);
+      }
+      const result=resolveShot(state.level,roundState,random,true),zone=result.hitZoneId,point=pointFor(zone),isLuckyHit=result.isLuckyHit,start={...state.aim};
+      state.aimLucky=state.luckyTimeActive;state.showAim=true;
       const aimDuration=i===0?450:0;
       if(aimDuration){const aimStart=performance.now();while(performance.now()-aimStart<aimDuration){const t=Math.min(1,(performance.now()-aimStart)/aimDuration),ease=t*t*(3-2*t);state.aim={x:start.x+(point.x-start.x)*ease,y:start.y+(point.y-start.y)*ease};await wait(16);}}else state.aim=point;
-      const impactAt=performance.now(),baseMultiplier=multipliers[zone],finalMultiplier=baseMultiplier*(isLuckyHit?LUCKY_HIT.multiplier:1);
+      const impactAt=performance.now(),baseMultiplier=result.baseMultiplier,finalMultiplier=result.finalMultiplier;
       state.aim=point;state.flash=1;state.hits.push({...point,zone,impactAt,isLuckyHit,baseMultiplier,finalMultiplier});state.fired++;playShot();
-      if(isLuckyHit){state.luckyHits++;state.luckyWeaponUntil=impactAt+350;state.luckyBannerStartedAt=impactAt;state.luckyBannerUntil=impactAt+900;}
+      if(isLuckyHit){state.luckyHits++;state.luckyHitZoneId=result.luckyZoneIdAtShot;state.luckyHitZoneUntil=impactAt+LUCKY_TIME.hitEffectDurationMs;state.luckyTimeActive=false;state.luckyZoneId=null;state.luckyWeaponUntil=impactAt+350;state.luckyBannerStartedAt=impactAt;state.luckyBannerUntil=impactAt+LUCKY_TIME.hitEffectDurationMs;state.luckyBannerMultiplier=finalMultiplier;}
       const payout=Math.round(stake*finalMultiplier*100)/100;state.reward=Math.round((state.reward+payout)*100)/100;
       state.hitRewards.push({x:point.x,y:point.y,amount:payout,createdAt:impactAt,expiresAt:impactAt+(isLuckyHit?REWARD_DISPLAY_MS.lucky:REWARD_DISPLAY_MS.normal),isLuckyHit,baseMultiplier,finalMultiplier});
-      feedback(isLuckyHit?`LUCKY HIT · ${baseMultiplier}× ×2`:`命中${ZONES[zone]} · ${baseMultiplier}×`,`${finalMultiplier}× · + ${money(payout)}`);
-      const card=document.createElement('div');card.className=`shot-card${isLuckyHit?' lucky':''}`;card.style.setProperty('--zone-color',isLuckyHit?'#f4c54f':COLORS[zone]);card.innerHTML=`<small><span>SHOT ${String(i+1).padStart(2,'0')}</span><span>${isLuckyHit?'LUCKY ×2':ZONES[zone]}</span></small><strong>${finalMultiplier}×</strong><span>+ ${money(payout)}</span>`;$('shot-log').append(card);$('shot-log').scrollLeft=$('shot-log').scrollWidth;update();if(i<count-1)await wait(rapidFire?300:400);
+      feedback(isLuckyHit?`LUCKY HIT · ${baseMultiplier}× ×${LUCKY_TIME.rewardMultiplier}`:`命中${ZONES[zone]} · ${baseMultiplier}×`,`${finalMultiplier}× · + ${money(payout)}`);
+      const card=document.createElement('div');card.className=`shot-card${isLuckyHit?' lucky':''}`;card.style.setProperty('--zone-color',isLuckyHit?'#f4c54f':COLORS[zone]);card.innerHTML=`<small><span>SHOT ${String(i+1).padStart(2,'0')}</span><span>${isLuckyHit?'LUCKY HIT':ZONES[zone]}</span></small><strong>${finalMultiplier}×</strong><span>+ ${money(payout)}</span>`;$('shot-log').append(card);$('shot-log').scrollLeft=$('shot-log').scrollWidth;update();
+      if(isLuckyHit)await wait(LUCKY_TIME.hitEffectDurationMs);else if(i<count-1)await wait(rapidFire?300:400);
     }
+    if(roundState.luckyTimeActive){state.luckyExpireStartedAt=performance.now();state.luckyExpireUntil=state.luckyExpireStartedAt+LUCKY_TIME.expireDurationMs;await wait(LUCKY_TIME.expireDurationMs);roundState.luckyTimeActive=false;roundState.luckyZoneId=null;state.luckyTimeActive=false;state.luckyZoneId=null;}
     state.running=false;state.settling=true;state.aimLucky=false;state.showAim=false;state.round++;state.balance=Math.round((state.balance+state.reward)*100)/100;const net=Math.round((state.reward-cost)*100)/100;
-    $('range-status').textContent='本局完成';feedback('本局總獎勵',money(state.reward));$('summary').textContent=`${count} 發射擊完成 · Lucky Hit ${state.luckyHits} 次 · 總投注 ${money(cost)} · 總獎勵 ${money(state.reward)} · 淨${net>=0?'獲得':'損失'} ${money(Math.abs(net))}`;update();
+    $('range-status').textContent='本局完成';feedback('本局總獎勵',money(state.reward));$('summary').textContent=`${count} 發射擊完成 · Lucky Time ${state.luckyTimeTriggers} 次 · Lucky Hit ${state.luckyHits} 次 · 總投注 ${money(cost)} · 總獎勵 ${money(state.reward)} · 淨${net>=0?'獲得':'損失'} ${money(Math.abs(net))}`;update();
     $('reward-amount').textContent=money(state.reward);
     await wait(state.hits[state.hits.length-1]?.isLuckyHit?REWARD_DISPLAY_MS.lucky:REWARD_DISPLAY_MS.normal);
     const rewardDialog=$('reward-dialog');
@@ -140,6 +142,19 @@
     }
     ctx.restore();
   }
+  function drawLuckyZone(now){
+    let zone=state.luckyTimeActive?state.luckyZoneId:null,alpha=1,scale=1,burst=false;
+    if(now<state.luckyHitZoneUntil){zone=state.luckyHitZoneId;const progress=1-(state.luckyHitZoneUntil-now)/LUCKY_TIME.hitEffectDurationMs;alpha=1-progress;scale=1-progress*.42;burst=true;}
+    else if(state.luckyTimeActive&&now<state.luckyExpireUntil){const progress=(now-state.luckyExpireStartedAt)/LUCKY_TIME.expireDurationMs;alpha=Math.max(0,1-progress);}
+    if(zone===null||zone===undefined||alpha<=0)return;
+    const radii=[[68,94],[51,70.5],[34,47],[18,25]],radius=radii[zone],intro=now<state.luckyIntroUntil;
+    const pulse=reducedMotion?1:.82+Math.sin(now*.009)*.18;
+    ctx.save();ctx.globalAlpha=alpha;ctx.scale(scale,scale);ctx.shadowColor='#ffc43f';ctx.shadowBlur=burst?22:10+5*pulse;ctx.strokeStyle='#ffd55e';ctx.lineWidth=burst?3.2:2.1;
+    ctx.beginPath();ctx.ellipse(0,0,radius[0],radius[1],0,0,Math.PI*2);ctx.stroke();
+    if(intro&&!reducedMotion){ctx.setLineDash([18,10]);ctx.lineDashOffset=-now*.08;ctx.strokeStyle='#fff3a2';ctx.lineWidth=3.2;ctx.beginPath();ctx.ellipse(0,0,radius[0]+2,radius[1]+2,0,0,Math.PI*2);ctx.stroke();}
+    const markerY=-radius[1]+(zone===3?5:12);ctx.shadowBlur=8;ctx.fillStyle='#2d220cdd';ctx.beginPath();ctx.roundRect(-15,markerY-11,30,17,6);ctx.fill();label(`×${LUCKY_TIME.rewardMultiplier}`,0,markerY+2,'#ffe47e',10);
+    ctx.restore();
+  }
   function drawLuckyImpact(hit,now){
     if(!hit?.isLuckyHit)return;
     const duration=hit.zone===3?780:650,progress=Math.min(1,(now-hit.impactAt)/duration);
@@ -162,11 +177,18 @@
     const age=now-state.luckyBannerStartedAt,remaining=state.luckyBannerUntil-now;
     const enter=Math.min(1,Math.max(0,age)/130),exit=Math.min(1,remaining/180),alpha=Math.min(enter,exit);
     const pop=1.12-.12*(1-Math.pow(1-enter,3));
-    ctx.save();ctx.translate(width*.77,height*.13);ctx.scale(pop,pop);ctx.globalAlpha=alpha;ctx.textAlign='center';ctx.lineJoin='round';ctx.shadowColor='#f0a51d';ctx.shadowBlur=16;
+    ctx.save();ctx.translate(width*.77,height*.14);ctx.scale(pop,pop);ctx.globalAlpha=alpha;ctx.textAlign='center';ctx.lineJoin='round';ctx.shadowColor='#f0a51d';ctx.shadowBlur=12;
     const gold=ctx.createLinearGradient(0,-38,0,25);gold.addColorStop(0,'#fff7b4');gold.addColorStop(.45,'#ffd04f');gold.addColorStop(1,'#d99016');
-    ctx.strokeStyle='#3b2608';ctx.lineWidth=5;ctx.font='900 24px "Segoe UI",sans-serif';ctx.strokeText('LUCKY HIT',0,-8);ctx.fillStyle=gold;ctx.fillText('LUCKY HIT',0,-8);
-    ctx.lineWidth=6;ctx.font='900 38px "Segoe UI",sans-serif';ctx.strokeText(`×${LUCKY_HIT.multiplier}`,0,29);ctx.fillText(`×${LUCKY_HIT.multiplier}`,0,29);
+    ctx.strokeStyle='#3b2608';ctx.lineWidth=4;ctx.font='900 18px "Segoe UI",sans-serif';ctx.strokeText('LUCKY HIT',0,-5);ctx.fillStyle=gold;ctx.fillText('LUCKY HIT',0,-5);
+    ctx.lineWidth=4;ctx.font='900 24px "Segoe UI",sans-serif';ctx.strokeText(`X${compactNumber(state.luckyBannerMultiplier)}`,0,21);ctx.fillText(`X${compactNumber(state.luckyBannerMultiplier)}`,0,21);
     ctx.restore();
+  }
+  function drawLuckyTimeBanner(now){
+    if(now>=state.luckyIntroUntil)return;
+    const age=now-state.luckyIntroStartedAt,remaining=state.luckyIntroUntil-now,enter=Math.min(1,Math.max(0,age)/110),exit=Math.min(1,remaining/120),alpha=Math.min(enter,exit),pop=.82+.18*(1-Math.pow(1-enter,3));
+    ctx.save();ctx.translate(width*.5,height*.12);ctx.scale(pop,pop);ctx.globalAlpha=alpha;ctx.textAlign='center';ctx.lineJoin='round';ctx.shadowColor='#ffbd32';ctx.shadowBlur=18;
+    ctx.strokeStyle='#3c2808';ctx.lineWidth=5;ctx.font='900 26px "Segoe UI",sans-serif';ctx.strokeText('LUCKY TIME',0,0);ctx.fillStyle='#ffe16f';ctx.fillText('LUCKY TIME',0,0);
+    ctx.lineWidth=4;ctx.font='800 16px "Segoe UI",sans-serif';const zoneText=`X${LEVELS[state.level][state.luckyZoneId]}  ×${LUCKY_TIME.rewardMultiplier}`;ctx.strokeText(zoneText,0,24);ctx.fillText(zoneText,0,24);ctx.restore();
   }
   function draw(now){
     const delta=Math.min((now-previousTime)/1000,.05);previousTime=now;state.flash=Math.max(0,state.flash-delta*12);
@@ -199,13 +221,14 @@
       label(String(m[z]),68*r,3,COLORS[z],8);
     }
     ellipse(0,-2,5,9,'#ffe9bd');label(`X${m[3]}`,0,17,'#ffe9bd',10);
+    drawLuckyZone(now);
     for(const hit of state.hits){ctx.save();if(hit.isLuckyHit){ctx.shadowColor='#ffc83d';ctx.shadowBlur=5;}ellipse(hit.x,hit.y,4,4,'#141c16',hit.isLuckyHit?'#ffe47a':'#deddb6');line(hit.x-6,hit.y-2,hit.x+6,hit.y+2,hit.isLuckyHit?'#d99a2b':'#182011',1);ctx.restore();}
     state.hitRewards=state.hitRewards.filter(reward=>now<reward.expiresAt);
     for(const reward of state.hitRewards){
       const remaining=reward.expiresAt-now,age=now-reward.createdAt;
       ctx.save();ctx.shadowColor='#000';ctx.shadowBlur=4;
       if(reward.isLuckyHit){
-        ctx.globalAlpha=age<600?Math.min(1,(600-age)/120):0;ctx.shadowColor='#f1a91f';ctx.shadowBlur=7;label(`${reward.baseMultiplier} ×${LUCKY_HIT.multiplier}`,reward.x,reward.y-27,'#ffd45c',12);
+        ctx.globalAlpha=age<600?Math.min(1,(600-age)/120):0;ctx.shadowColor='#f1a91f';ctx.shadowBlur=7;label(`${reward.baseMultiplier} ×${LUCKY_TIME.rewardMultiplier}`,reward.x,reward.y-27,'#ffd45c',12);
         ctx.globalAlpha=age>330?Math.min(1,(age-330)/130,remaining/130):0;label(`+${compactNumber(reward.amount)}`,reward.x,reward.y-11,'#ffe47e',14);
       }else{
         ctx.globalAlpha=Math.min(1,remaining/70);label(`+${compactNumber(reward.amount)}`,reward.x,reward.y-12,'#d5f580',12);
@@ -217,6 +240,7 @@
     drawImpactSparks(state.hits[state.hits.length-1],now);
     for(const hit of state.hits)drawLuckyImpact(hit,now);
     ctx.restore();
+    drawLuckyTimeBanner(now);
     drawLuckyBanner(now);
     // The supplied rifle artwork tracks the aim and retains the recoil animation.
     const recoil=reducedMotion?0:state.flash;

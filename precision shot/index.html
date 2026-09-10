@@ -9,7 +9,8 @@
   <link rel="preload" as="image" href="assets/rifle-transparent.webp" type="image/webp">
   <link rel="stylesheet" href="style.css?v=a85a2ef4e6ff">
   <link rel="stylesheet" href="layout.css?v=225faad543ae">
-  <script defer src="game.js?v=08b35e862035"></script>
+  <script defer src="game-math.js?v=f0dd8ac970ec"></script>
+  <script defer src="game.js?v=b8aca10e8528"></script>
 </head>
 <body>
   <main class="app">
@@ -49,7 +50,7 @@
     </section>
     <footer><span>PRECISION SHOT <b>/</b> PROTOTYPE 01</span><span>僅供玩法展示 · 模擬點數無現金價值</span></footer>
   </main>
-  <dialog id="rules"><div class="dialog-header"><h2>玩法與倍率</h2><button id="rules-close" class="icon-button" aria-label="關閉說明">×</button></div><p>選擇難度、單發投注與子彈數，開始後扣除總投注，自動演出每一發射擊並發放獎勵。</p><p><b>總投注 = 單發投注 × 子彈數</b><br>每發獎勵 = 單發投注 × 最終倍率</p><p><b>Lucky Hit｜幸運命中</b><br>每發獨立判定；觸發時不改變落點與命中區域，該發實際命中倍率乘以 2，並留下金色彈孔。</p><table><thead><tr><th>難度</th><th>外圈</th><th>中圈</th><th>內圈</th><th>靶心</th></tr></thead><tbody><tr><th>簡單</th><td>0.5×</td><td>2×</td><td>5×</td><td>10×</td></tr><tr><th>中等</th><td>0.2×</td><td>3×</td><td>10×</td><td>50×</td></tr><tr><th>困難</th><td>0×</td><td>10×</td><td>100×</td><td>1000×</td></tr></tbody></table><p class="demo-note">Demo 補充設定：三種難度依各自倍率分別校準命中機率，計入 Lucky Hit 每發 10% 機率與 2 倍效果後，各難度理論 RTP 均為 95%。同心環分區、機率、點數與投注限制為示範設定。結果由程式抽取，瞄準動畫不影響結果。</p><button id="rules-done" class="start-button">了解，準備射擊</button></dialog>
+  <dialog id="rules"><div class="dialog-header"><h2>玩法與倍率</h2><button id="rules-close" class="icon-button" aria-label="關閉說明">×</button></div><p>選擇難度、單發投注與子彈數，開始後扣除總投注，自動演出每一發射擊並發放獎勵。</p><p><b>總投注 = 單發投注 × 子彈數</b><br>每發獎勵 = 單發投注 × 最終倍率</p><p><b>Lucky Time｜幸運時間</b><br>射擊前可能有一個倍率圈成為金色 Lucky Zone。射中其他圈時效果會保留；射中金色圈才觸發 Lucky Hit，使該發倍率乘以 2 並留下金色彈孔。若本局結束仍未射中，Lucky Zone 會自然消失。</p><table><thead><tr><th>難度</th><th>外圈</th><th>中圈</th><th>內圈</th><th>靶心</th></tr></thead><tbody><tr><th>簡單</th><td>0.5×</td><td>2×</td><td>5×</td><td>10×</td></tr><tr><th>中等</th><td>0.2×</td><td>3×</td><td>10×</td><td>50×</td></tr><tr><th>困難</th><td>0×</td><td>10×</td><td>100×</td><td>1000×</td></tr></tbody></table><p class="demo-note">Demo 補充設定：Lucky Time 的觸發率會依難度與子彈數使用固定設定，Lucky Zone 依可配置權重選擇，不改變落點或命中率。基礎獎勵與 Lucky Time 額外獎勵合計後，各難度及六種子彈數的理論 RTP 均為 95%。</p><button id="rules-done" class="start-button">了解，準備射擊</button></dialog>
   <dialog id="reward-dialog" aria-labelledby="reward-title">
     <h2 id="reward-title">贏得</h2>
     <strong id="reward-amount">0.00</strong>
