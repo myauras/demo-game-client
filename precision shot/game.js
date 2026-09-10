@@ -143,13 +143,15 @@
     ctx.restore();
   }
   function drawLuckyZone(now){
-    let zone=state.luckyTimeActive?state.luckyZoneId:null,alpha=1,scale=1,burst=false;
-    if(now<state.luckyHitZoneUntil){zone=state.luckyHitZoneId;const progress=1-(state.luckyHitZoneUntil-now)/LUCKY_TIME.hitEffectDurationMs;alpha=1-progress;scale=1-progress*.42;burst=true;}
+    let zone=state.luckyTimeActive?state.luckyZoneId:null,alpha=1,burst=false;
+    if(now<state.luckyHitZoneUntil){zone=state.luckyHitZoneId;const progress=1-(state.luckyHitZoneUntil-now)/LUCKY_TIME.hitEffectDurationMs;alpha=1-progress;burst=true;}
     else if(state.luckyTimeActive&&now<state.luckyExpireUntil){const progress=(now-state.luckyExpireStartedAt)/LUCKY_TIME.expireDurationMs;alpha=Math.max(0,1-progress);}
     if(zone===null||zone===undefined||alpha<=0)return;
-    const radii=[[68,94],[51,70.5],[34,47],[18,25]],radius=radii[zone],intro=now<state.luckyIntroUntil;
+    const radii=[[68,94],[51,70.5],[34,47],[18,25]],radius=radii[zone],inner=zone<3?radii[zone+1]:null,intro=now<state.luckyIntroUntil;
     const pulse=reducedMotion?1:.82+Math.sin(now*.009)*.18;
-    ctx.save();ctx.globalAlpha=alpha;ctx.scale(scale,scale);ctx.shadowColor='#ffc43f';ctx.shadowBlur=burst?22:10+5*pulse;ctx.strokeStyle='#ffd55e';ctx.lineWidth=burst?3.2:2.1;
+    ctx.save();ctx.globalAlpha=alpha;ctx.shadowColor='#ffc43f';ctx.shadowBlur=burst?22:10+5*pulse;
+    ctx.beginPath();ctx.ellipse(0,0,radius[0],radius[1],0,0,Math.PI*2);if(inner)ctx.ellipse(0,0,inner[0],inner[1],0,0,Math.PI*2);ctx.fillStyle=`rgba(255,211,91,${.16+.08*pulse})`;ctx.fill('evenodd');
+    ctx.strokeStyle='#ffd55e';ctx.lineWidth=burst?3.2:2.1;
     ctx.beginPath();ctx.ellipse(0,0,radius[0],radius[1],0,0,Math.PI*2);ctx.stroke();
     if(intro&&!reducedMotion){ctx.setLineDash([18,10]);ctx.lineDashOffset=-now*.08;ctx.strokeStyle='#fff3a2';ctx.lineWidth=3.2;ctx.beginPath();ctx.ellipse(0,0,radius[0]+2,radius[1]+2,0,0,Math.PI*2);ctx.stroke();}
     const markerY=-radius[1]+(zone===3?5:12);ctx.shadowBlur=8;ctx.fillStyle='#2d220cdd';ctx.beginPath();ctx.roundRect(-15,markerY-11,30,17,6);ctx.fill();label(`×${LUCKY_TIME.rewardMultiplier}`,0,markerY+2,'#ffe47e',10);
