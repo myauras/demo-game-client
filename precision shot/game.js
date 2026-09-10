@@ -69,7 +69,7 @@
   async function fireRound(){
     if(state.running||state.settling||$('reward-dialog').open||!validBet()||bet()*state.bullets>state.balance)return;
     const stake=bet(), count=state.bullets, multipliers=[...LEVELS[state.level]], cost=stake*count;
-    const rapidFire=count>=5;
+    const rapidFire=count>=2;
     closePickers();state.running=true;state.balance=Math.round((state.balance-cost)*100)/100;state.reward=0;state.fired=0;state.hits=[];state.hitRewards=[];state.luckyHits=0;state.luckyWeaponUntil=0;state.luckyBannerStartedAt=0;state.luckyBannerUntil=0;state.aimLucky=false;state.showAim=false;
     $('shot-log').innerHTML='';$('summary').textContent=`本局投注 ${money(cost)} · 正在射擊`;$('range-status').textContent='射擊進行中';feedback('正在舉槍','ACQUIRING TARGET',false);if(state.sound)prepareSound();update();
     for(let i=0;i<count;i++){
