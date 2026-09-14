@@ -7,7 +7,7 @@ button{cursor:pointer;color:inherit;transition:filter .16s,box-shadow .16s}
 button:disabled,input:disabled,select:disabled{opacity:.45;cursor:not-allowed}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #0ac8b9;outline-offset:2px}
 button:hover:not(:disabled){filter:brightness(1.25)}
-.game-shell{width:min(100%,440px);height:100svh;min-height:740px;max-height:1000px;margin:0 auto;padding:20px 24px 16px;position:relative;display:flex;flex-direction:column;background:linear-gradient(#03101ba8,#03101b9c),url('assets/background.webp') center/cover no-repeat;box-shadow:0 0 100px #0009,inset 1px 0 #876c3644,inset -1px 0 #876c3644;overflow:hidden}
+.game-shell{width:min(100%,440px);height:min(740px,100svh);min-height:680px;max-height:740px;margin:0 auto;padding:20px 24px 16px;position:relative;display:flex;flex-direction:column;background:linear-gradient(#03101ba8,#03101b9c),url('assets/background.webp') center/cover no-repeat;box-shadow:0 0 100px #0009,inset 1px 0 #876c3644,inset -1px 0 #876c3644;overflow:hidden}
 .game-shell>*{position:relative}
 .topbar{height:43px;flex-shrink:0;display:flex;align-items:center;justify-content:flex-end;margin-bottom:8px}
 .wallet{display:flex;gap:8px;align-items:center;min-height:36px;padding:6px 7px 6px 11px;border:1px solid #9c8450;background:linear-gradient(110deg,#182d37,#07121c);box-shadow:inset 0 0 0 2px #07141d,inset 0 0 15px #92713522;max-width:62%}
@@ -56,7 +56,7 @@ dialog::backdrop{background:#010710cf;backdrop-filter:blur(5px)}dialog h2{font-s
 .odds-details{display:flex;flex-direction:column;gap:8px;font-size:11px;padding:12px;border:1px solid #72613c;color:#a9b8b9}.odds-details strong{color:#dcc692;overflow-wrap:anywhere;margin-left:12px}
 .history-scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;white-space:nowrap;font-size:10px}th,td{padding:11px 9px;text-align:left;border-bottom:1px solid #3b4c4d}th{font-weight:400;color:#8d9e9e}.empty{white-space:normal;line-height:1.9;color:#899d9f}.win-text{color:#d7be7f}.loss-text{color:#e18e9f}
 @keyframes reveal{0%{transform:rotateX(85deg);filter:brightness(2)}100%{transform:rotateX(0)}}@keyframes shake{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
-@media(min-width:600px){body{display:grid;place-items:center;padding:20px}.game-shell{height:calc(100svh - 40px);border:1px solid #77633e;min-height:740px;max-height:940px}}
+@media(min-width:600px){body{display:grid;place-items:center;padding:20px}.game-shell{height:min(740px,calc(100svh - 40px));border:1px solid #77633e;min-height:680px;max-height:740px}}
 @media(max-width:370px){.game-shell{padding-left:15px;padding-right:15px}.wallet{gap:5px}.wallet strong{font-size:14px}.card{gap:5px}.controls label{font-size:10px}.stake-control button{width:21px}.stake-control input{font-size:14px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
-@supports(padding:max(0px)){.game-shell{padding-top:max(18px,env(safe-area-inset-top));padding-bottom:max(10px,env(safe-area-inset-bottom))}}
+@supports(padding:max(0px)){.game-shell{padding-top:max(20px,env(safe-area-inset-top));padding-bottom:max(16px,env(safe-area-inset-bottom))}}
