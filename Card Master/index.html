@@ -4,11 +4,11 @@
 <body>
 <main class="game-shell">
 <header class="topbar"><div class="wallet" aria-label="模擬點數餘額"><span class="coin">◈</span><strong id="balance">10,000.00</strong><button id="reset" aria-label="重設模擬點數">＋</button></div></header>
-<section class="reward-section" aria-label="本局倍率"><div class="reward-box"><strong id="multiplier">1.17<span>×</span></strong></div></section>
+<section class="reward-section" aria-label="本局倍率"><div class="reward-box"><strong id="multiplier">1.19<span>×</span></strong></div></section>
 <section class="arena" aria-label="命運牌陣"><div id="board" class="board" aria-label="52 張撲克牌，梅花、黑桃、方塊、紅心"></div><div class="progress-track"><div id="progress"></div></div></section>
 <section class="controls" aria-label="下注設定"><div class="stake-control"><label for="stake">下注金額</label><input id="stake" type="number" min="1" max="1000000" step="1" value="10" inputmode="numeric" aria-label="下注金額（模擬點數）"><button id="half" aria-label="下注金額減半">½</button><button id="double" aria-label="下注金額加倍">2×</button></div><div class="stake-presets" aria-label="快速下注金額"><button data-stake="10">10</button><button data-stake="50">50</button><button data-stake="100">100</button><button data-stake="200">200</button></div><div class="count-control"><label for="count">卡牌張數</label><select id="count" aria-label="卡牌張數"></select><span class="select-arrow">▾</span></div><button id="play" class="play-button"><span class="button-gem">◆</span>投注</button></section>
 <p id="validation" class="validation" role="status"></p>
 <div id="win-settlement" class="settlement" role="status" aria-live="polite" aria-hidden="true"><div class="settlement-card"><span class="settlement-gem">◆</span><p><span class="settlement-label">贏得</span><strong id="win-amount">0.00</strong></p></div></div>
 </main>
-<script src="game.js"></script><script src="app-settlement.js"></script>
+<script src="game-card-multipliers.js"></script><script src="app-settlement.js"></script>
 </body></html>
