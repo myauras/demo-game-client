@@ -32,7 +32,11 @@ button:hover:not(:disabled){filter:brightness(1.25)}
 .card.duplicate{background:linear-gradient(130deg,#833d55ee,#321e34ee);border-color:#fa859a;box-shadow:0 0 17px #ed5b7866;animation:shake .35s}
 .card.duplicate .suit,.card.duplicate .rank{color:#ffd5dd}
 .badge{display:none;position:absolute;right:-5px;top:-5px;padding:1px 3px;border:1px solid #fc9aab;background:#b64762;font:9px sans-serif;color:white;z-index:2}.duplicate .badge{display:block}
-.progress-track{position:absolute;bottom:0;left:0;right:0;height:1px;background:#6e674b44}.progress-track>div{width:0;height:1px;background:#0ac8b9;box-shadow:0 0 6px #0ac8b9;transition:width .2s}
+.progress-track{position:relative;width:calc(100% - 24px);height:9px;margin:8px auto 0;padding:2px;border:1px solid #8d7848;background:linear-gradient(180deg,#071723,#020a10);box-shadow:inset 0 0 0 1px #02070b,0 2px 8px #0008;overflow:hidden;clip-path:polygon(4px 0,calc(100% - 4px) 0,100% 4px,100% calc(100% - 4px),calc(100% - 4px) 100%,4px 100%,0 calc(100% - 4px),0 4px)}
+.progress-track>div{position:relative;width:0;height:100%;background:linear-gradient(90deg,#075b72,#0ac8b9 62%,#74fff0);box-shadow:0 0 8px #0ac8b9;transition:width .22s ease,background .2s,box-shadow .2s}
+.progress-track>div:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,#ffffff66,transparent);transform:translateX(-100%);animation:progress-shine 1.2s linear infinite}
+.progress-track.failed>div{background:linear-gradient(90deg,#3e484d,#788187 62%,#aeb4b7);box-shadow:0 0 5px #7d878c66}
+.progress-track.failed>div:after{display:none}
 .controls{display:grid;grid-template-columns:1.28fr 1fr;gap:7px;flex-shrink:0}
 .stake-control,.count-control{display:flex;align-items:center;min-width:0;border:1px solid #6d623f;background:linear-gradient(180deg,#132a36,#0b1924);height:36px;padding:0 5px 0 7px;box-shadow:inset 0 0 0 2px #05101a55;gap:3px}
 .controls label{font-size:11px;color:#bfb697;white-space:nowrap;letter-spacing:.2px}
@@ -63,7 +67,7 @@ dialog::backdrop{background:#010710cf;backdrop-filter:blur(5px)}dialog h2{font-s
 .close-dialog:not(.dialog-action){position:absolute;right:10px;top:7px;font-size:26px;background:none;border:0;color:#b4a77e}.dialog-action{width:100%;border:1px solid #c8aa6e;background:linear-gradient(#1b505a,#092d3d);padding:11px;color:#ebd6a4;margin-top:14px}
 .odds-details{display:flex;flex-direction:column;gap:8px;font-size:11px;padding:12px;border:1px solid #72613c;color:#a9b8b9}.odds-details strong{color:#dcc692;overflow-wrap:anywhere;margin-left:12px}
 .history-scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;white-space:nowrap;font-size:10px}th,td{padding:11px 9px;text-align:left;border-bottom:1px solid #3b4c4d}th{font-weight:400;color:#8d9e9e}.empty{white-space:normal;line-height:1.9;color:#899d9f}.win-text{color:#d7be7f}.loss-text{color:#e18e9f}
-@keyframes reveal{0%{transform:rotateX(85deg);filter:brightness(2)}100%{transform:rotateX(0)}}@keyframes shake{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}@keyframes settlement-pop{0%{opacity:0;transform:scale(.45)}12%{opacity:1;transform:scale(1.07)}22%,70%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.05)}}
+@keyframes reveal{0%{transform:rotateX(85deg);filter:brightness(2)}100%{transform:rotateX(0)}}@keyframes shake{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}@keyframes settlement-pop{0%{opacity:0;transform:scale(.45)}12%{opacity:1;transform:scale(1.07)}22%,70%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.05)}}@keyframes progress-shine{to{transform:translateX(100%)}}
 @media(min-width:600px){body{display:grid;place-items:center;padding:20px}.game-shell{height:min(740px,calc(100svh - 40px));border:1px solid #77633e;min-height:680px;max-height:740px}}
 @media(max-width:370px){.game-shell{padding-left:15px;padding-right:15px}.wallet{gap:5px}.wallet strong{font-size:14px}.card{gap:5px}.controls label{font-size:10px}.stake-control button{width:21px}.stake-control input{font-size:14px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
