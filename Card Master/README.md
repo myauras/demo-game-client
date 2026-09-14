@@ -6,14 +6,14 @@
 
 ## 規格來源
 
-[小遊戲草案文件／卡牌大師](https://docs.google.com/spreadsheets/d/1xUDoHdrmYn3xl0gpig5PwZveQumyH6IyaVh-klKL-KA/edit?gid=1390869444#gid=1390869444)，讀取日期 2026-09-11。張數倍率依照[卡牌倍率分頁](https://docs.google.com/spreadsheets/d/1DKcSM26yJXYzpZuIh48iy5-mf1cACXSbudMEUS5VUc0/edit?gid=729969142#gid=729969142)，讀取日期 2026-09-14。
+[小遊戲草案文件／卡牌大師](https://docs.google.com/spreadsheets/d/1xUDoHdrmYn3xl0gpig5PwZveQumyH6IyaVh-klKL-KA/edit?gid=1390869444#gid=1390869444)，讀取日期 2026-09-11。張數範圍沿用[卡牌倍率分頁](https://docs.google.com/spreadsheets/d/1DKcSM26yJXYzpZuIh48iy5-mf1cACXSbudMEUS5VUc0/edit?gid=729969142#gid=729969142)，倍率依 RTP 0.95 重新計算。
 
 實作：完整 52 種撲克牌、選擇翻開 5～36 張、完全相同花色與點數重複即失敗、全數不重複即獲勝。採原創深色金邊奇幻卡牌介面，未使用其他遊戲資料夾或第三方遊戲美術。
 
 ## Demo 假設與操作
 
 - 抽牌為「放回抽樣」，每次均由 52 種牌獨立等機率抽取；否則不會出現原企劃要求的重複牌。
-- 5～36 張的倍率使用「卡牌倍率」分頁所列固定數值；成功機率仍以 `∏(52-i)/52, i=0…n-1` 驗證遊戲規則。
+- 5～36 張的成功機率為 `∏(52-i)/52, i=0…n-1`，倍率使用 `round(0.95 / 成功機率, 2)`，目標 RTP 為 0.95。
 - 開局扣除投入點數，成功回報包含本金；獎勵以小數第 2 位結算。
 - 初始 10,000 模擬點數；右上角「＋」可重設點數並清空紀錄。無金流、帳戶、伺服器或真實獎品。
 - 牌局中鎖定張數、投入點數與重設按鈕；可切換快速翻牌。

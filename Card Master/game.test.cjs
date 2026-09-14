@@ -1,15 +1,16 @@
 const assert = require('node:assert/strict');
 const {probability, multiplier, draw, settle} = require('./game.js');
 const expectedMultipliers = [
-  1.19,1.32,1.49,1.73,2.04,2.47,3.06,3.87,5.04,6.72,9.19,12.92,18.66,27.72,42.40,66.81,
-  108.56,182.10,315.64,565.98,1051.10,2024.34,4048.68,8421.26,18246.06,41251.96,97504.63,
-  241440.04,627744.11,1718036.50,4963216.57,15181603.62
+  1.16,1.28,1.45,1.67,1.98,2.39,2.96,3.76,4.88,6.51,8.91,12.52,18.09,26.87,41.10,64.76,
+  105.24,176.53,305.98,548.65,1018.92,1962.37,3924.74,8163.46,17687.51,39989.14,94519.80,
+  234049.02,608527.45,1665443.55,4811281.37,14716860.65
 ];
 assert.equal(probability(5), (51*50*49*48)/(52**4));
 for(let n=5;n<=36;n++) {
   assert.ok(probability(n)>0 && probability(n)<1);
   if(n>5) { assert.ok(probability(n)<probability(n-1)); assert.ok(multiplier(n)>multiplier(n-1)); }
   assert.equal(multiplier(n),expectedMultipliers[n-5]);
+  assert.ok(Math.abs(probability(n)*multiplier(n)-.95)<.0022);
   const result=settle(100,n,Array.from({length:n},(_,i)=>i));
   assert.ok(result.complete && result.win);
   assert.equal(result.payout,Math.round(100*multiplier(n)*100)/100);
@@ -21,4 +22,4 @@ assert.equal(draw(()=>0),0); assert.equal(draw(()=>.999999),51);
 assert.throws(()=>probability(4)); assert.throws(()=>probability(37));
 assert.throws(()=>settle(-1,5,[1])); assert.throws(()=>settle(1.5,5,[1]));
 assert.throws(()=>settle(100,5,[52]));
-console.log('PASS: all 32 sheet multipliers, monotonic odds/multipliers, payout, same-rank different-suit, duplicate loss, boundaries.');
+console.log('PASS: all 32 RTP 0.95 multipliers, rounding tolerance, payout, duplicates, and boundaries.');
