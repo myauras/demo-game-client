@@ -21,13 +21,13 @@ button:hover:not(:disabled){filter:brightness(1.25)}
 .reward-box strong.large-number{font-size:11px;letter-spacing:-.5px}
 .reward-box strong.large-number span{font-size:9px}
 .arena{flex:none;width:calc(100% - 10px);min-height:0;margin:10px auto 14px;padding:0}
-.board{width:100%;height:auto;aspect-ratio:10/11;padding:7% 1.2% 2%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(13,minmax(0,1fr));gap:0;background:url('assets/suit-panels.webp') center/contain no-repeat}
-.card{position:relative;min-height:0;display:flex;align-items:center;justify-content:center;gap:7px;background:transparent;border:0;color:#a9bdc1;text-shadow:0 1px 2px #000,0 0 7px #69b2c333;isolation:isolate}
+.board{width:100%;height:auto;aspect-ratio:10/11;padding:7% 0 2%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(13,minmax(0,1fr));gap:0;background:url('assets/suit-panels.webp') center/contain no-repeat}
+.card{position:relative;width:100%;min-height:0;display:flex;align-items:center;justify-content:center;justify-self:center;gap:6px;background:transparent;border:0;color:#a9bdc1;text-shadow:0 1px 2px #000,0 0 7px #69b2c333;isolation:isolate}
 .card:before,.card:after{display:none}
 .suit{font:26px Georgia,serif;order:0;line-height:1;color:#91b6b6;filter:drop-shadow(0 2px 1px #0007)}
 .rank{font:600 19px Georgia,serif;order:1;line-height:1;min-width:19px;text-align:center}
 .card.red .suit{color:#bc8390}.card.red .rank{color:#baa2a8}
-.card.drawn{margin:2px 5px;background:linear-gradient(130deg,#e8d9a2f5,#b89957f5 65%,#e1c789f5);border:1px solid #f5df9a;color:#182730;box-shadow:0 0 8px #c8aa6e44,inset 0 0 0 2px #55452655;text-shadow:none;animation:reveal .34s ease}
+.card.drawn{width:calc(100% - 16px);margin:2px 0;background:linear-gradient(130deg,#e8d9a2f5,#b89957f5 65%,#e1c789f5);border:1px solid #f5df9a;color:#182730;box-shadow:0 0 4px #c8aa6e44,inset 0 0 0 2px #55452655;text-shadow:none;animation:reveal .34s ease}
 .card.drawn .rank{color:#101820;font-weight:800;text-shadow:none}.card.drawn .suit{color:#123f47;filter:none;text-shadow:none}.card.red.drawn .suit,.card.red.drawn .rank{color:#6f2038}
 .card.duplicate{background:linear-gradient(130deg,#833d55ee,#321e34ee);border-color:#fa859a;box-shadow:0 0 17px #ed5b7866;animation:shake .35s}
 .card.duplicate .suit,.card.duplicate .rank{color:#ffd5dd}
