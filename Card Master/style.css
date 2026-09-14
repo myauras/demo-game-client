@@ -17,9 +17,9 @@ button:hover:not(:disabled){filter:brightness(1.25)}
 .reward-section{display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:2px 0 6px}
 .reward-box{width:min(100%,230px);aspect-ratio:661/175;position:relative;background:url('assets/multiplier-panel.webp') center/contain no-repeat}
 .reward-box strong{position:absolute;left:38%;right:8%;top:34%;bottom:6%;display:grid;grid-auto-flow:column;align-items:center;justify-content:center;gap:2px;font:600 18px Cinzel,Georgia,serif;color:#f0dfac;text-shadow:0 0 12px #c8aa6e66;text-align:center;white-space:nowrap}
-.reward-box strong span{font-size:14px}
+.reward-box strong span{font-size:22px;font-weight:700}
 .reward-box strong.large-number{font-size:11px;letter-spacing:-.5px}
-.reward-box strong.large-number span{font-size:9px}
+.reward-box strong.large-number span{font-size:14px}
 .arena{flex:none;width:calc(100% - 10px);min-height:0;margin:10px auto 14px;padding:0}
 .board{width:100%;height:auto;aspect-ratio:10/11;padding:7% 0 2%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(13,minmax(0,1fr));gap:0;background:url('assets/suit-panels.webp') center/contain no-repeat}
 .card{position:relative;width:100%;min-height:0;display:flex;align-items:center;justify-content:center;justify-self:center;gap:6px;background:transparent;border:0;color:#a9bdc1;text-shadow:0 1px 2px #000,0 0 7px #69b2c333;isolation:isolate}
