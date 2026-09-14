@@ -41,7 +41,7 @@ $('stake').addEventListener('input', () => { $('validation').textContent = ''; u
 document.querySelectorAll('[data-stake]').forEach(b => b.onclick = () => { if (!running) { $('stake').value = b.dataset.stake; $('validation').textContent = ''; update(); } });
 function adjustStake(factor) { if (!running) { $('stake').value = Math.max(1, Math.min(1000000, Math.floor((Number($('stake').value) || 100)*factor))); update(); } }
 $('half').onclick = () => adjustStake(.5); $('double').onclick = () => adjustStake(2);
-$('reset').onclick = () => { if (running) return; balance = 10000; save(); renderBalance(); $('validation').textContent = '已重設模擬點數。'; };
+$('reset').onclick = () => { if (running) return; balance = 10000; save(); renderBalance(); $('validation').textContent = ''; };
 function lock(value) {
   running = value;
   document.querySelectorAll('.controls input,.controls select,.controls button,#reset').forEach(el => el.disabled = value);
