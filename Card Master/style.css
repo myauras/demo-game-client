@@ -49,13 +49,20 @@ button:hover:not(:disabled){filter:brightness(1.25)}
 .play-button:before,.play-button:after{content:"";position:absolute;top:4px;bottom:4px;width:2px;background:linear-gradient(transparent,#c9aa62,transparent);left:4px}.play-button:after{left:auto;right:4px}
 .button-gem{font-size:8px;display:inline-block;margin-right:10px;color:#40dacb;vertical-align:middle;text-shadow:0 0 8px #0ac8b9}.play-button:disabled{font-size:13px;letter-spacing:1px}
 .validation{font-size:10px;text-align:center;color:#ef9ca5;margin:0;flex-shrink:0}.validation:not(:empty){padding:5px 0}
+.settlement{position:absolute;inset:0;z-index:30;display:grid;place-items:center;visibility:hidden;opacity:0;pointer-events:none;background:radial-gradient(circle,#021a2b35 0,#02080e00 48%)}
+.settlement.show{visibility:visible;opacity:1}
+.settlement-card{min-width:250px;padding:25px 28px 22px;text-align:center;border:1px solid #c8aa6e;background:linear-gradient(145deg,#183a48f5,#061521f7 62%,#102d38f5);box-shadow:inset 0 0 0 3px #03101b,inset 0 0 25px #0ac8b927,0 0 30px #0ac8b947,0 12px 35px #000b;clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px)}
+.settlement.show .settlement-card{animation:settlement-pop 1.8s cubic-bezier(.2,.85,.25,1) forwards}
+.settlement-gem{display:block;margin:0 auto 8px;color:#3fe2d3;font-size:13px;text-shadow:0 0 12px #0ac8b9}
+.settlement p{margin:0;color:#f0e6d2;font-size:18px;font-weight:600;letter-spacing:1px;text-shadow:0 2px 3px #000}
+.settlement strong{margin:0 5px;color:#f3d68a;font:700 25px Georgia,serif;font-variant-numeric:tabular-nums;text-shadow:0 0 12px #c8aa6e66}
 .eyebrow{font:10px Cinzel,Georgia;color:var(--gold);letter-spacing:3px}
 dialog{width:min(540px,94vw);max-height:85svh;border:1px solid #9d8451;background:radial-gradient(ellipse at top,#173b46,#081720);color:#ced8d8;padding:28px 22px;box-shadow:0 15px 80px #000c}
 dialog::backdrop{background:#010710cf;backdrop-filter:blur(5px)}dialog h2{font-size:19px;color:#e6d2a2;font-weight:600;margin-bottom:22px}dialog h2 small{font-size:10px;color:#91a1a4}dialog ol{padding-left:20px;font-size:12px;line-height:1.8}dialog li{margin-bottom:12px}dialog p:not(.eyebrow){font-size:10px;line-height:1.9;color:#8fa4ae}
 .close-dialog:not(.dialog-action){position:absolute;right:10px;top:7px;font-size:26px;background:none;border:0;color:#b4a77e}.dialog-action{width:100%;border:1px solid #c8aa6e;background:linear-gradient(#1b505a,#092d3d);padding:11px;color:#ebd6a4;margin-top:14px}
 .odds-details{display:flex;flex-direction:column;gap:8px;font-size:11px;padding:12px;border:1px solid #72613c;color:#a9b8b9}.odds-details strong{color:#dcc692;overflow-wrap:anywhere;margin-left:12px}
 .history-scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;white-space:nowrap;font-size:10px}th,td{padding:11px 9px;text-align:left;border-bottom:1px solid #3b4c4d}th{font-weight:400;color:#8d9e9e}.empty{white-space:normal;line-height:1.9;color:#899d9f}.win-text{color:#d7be7f}.loss-text{color:#e18e9f}
-@keyframes reveal{0%{transform:rotateX(85deg);filter:brightness(2)}100%{transform:rotateX(0)}}@keyframes shake{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+@keyframes reveal{0%{transform:rotateX(85deg);filter:brightness(2)}100%{transform:rotateX(0)}}@keyframes shake{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}@keyframes settlement-pop{0%{opacity:0;transform:scale(.45)}12%{opacity:1;transform:scale(1.07)}22%,70%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.05)}}
 @media(min-width:600px){body{display:grid;place-items:center;padding:20px}.game-shell{height:min(740px,calc(100svh - 40px));border:1px solid #77633e;min-height:680px;max-height:740px}}
 @media(max-width:370px){.game-shell{padding-left:15px;padding-right:15px}.wallet{gap:5px}.wallet strong{font-size:14px}.card{gap:5px}.controls label{font-size:10px}.stake-control button{width:21px}.stake-control input{font-size:14px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
