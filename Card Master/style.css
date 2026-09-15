@@ -74,9 +74,9 @@ button:hover:not(:disabled){filter:brightness(1.25)}
 .fate-master-art,.card-aura-art{position:absolute;max-width:none;height:auto;opacity:0;will-change:transform,opacity;filter:drop-shadow(0 0 12px #a85dff66)}
 .fate-master-art{z-index:1;width:127%;left:-27%;top:14%}
 .card-aura-art{z-index:2;width:164%;left:-2%;top:15%;filter:drop-shadow(0 0 10px #ffbd61aa)}
-.fate-performance.active .fate-master-art{animation:fate-master-arrive 2.36s cubic-bezier(.18,.82,.24,1) both}
-.fate-performance.show-aura .card-aura-art{animation:card-aura-arrive 1.93s cubic-bezier(.2,.78,.2,1) both}
-.fate-performance.outro{animation:fate-stage-out 430ms ease-in forwards}
+.fate-performance.active .fate-master-art{animation:fate-master-arrive 1.54s cubic-bezier(.18,.82,.24,1) both}
+.fate-performance.show-aura .card-aura-art{animation:card-aura-arrive 1.11s cubic-bezier(.2,.78,.2,1) both}
+.fate-performance.outro{animation:fate-stage-out 260ms ease-in forwards}
 .settlement{position:absolute;inset:0;z-index:30;display:grid;place-items:center;visibility:hidden;opacity:0;pointer-events:none;background:radial-gradient(circle,#021a2b35 0,#02080e00 48%);overflow:hidden}
 .settlement.show{visibility:visible;opacity:1}
 .fireworks{position:absolute;inset:0;z-index:1}
