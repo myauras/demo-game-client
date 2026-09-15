@@ -1,14 +1,14 @@
 <!doctype html>
 <html lang="zh-Hant">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#06141d"><title>卡牌大師 · Card Master</title><link rel="stylesheet" href="style.css?v=20260915-victory-fireworks"></head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#06141d"><title>卡牌大師 · Card Master</title><link rel="stylesheet" href="style.css?v=20260915-suit-flash"></head>
 <body>
 <main class="game-shell">
 <header class="topbar"><div class="wallet" aria-label="模擬點數餘額"><span class="coin">◈</span><strong id="balance">10,000.00</strong><button id="reset" aria-label="重設模擬點數">＋</button></div></header>
 <section class="reward-section" aria-label="本局倍率"><div class="reward-box"><strong id="multiplier">1.16<span>×</span></strong></div></section>
-<section class="arena" aria-label="命運牌陣"><div id="board" class="board" aria-label="52 張撲克牌，梅花、黑桃、方塊、紅心"></div><div id="progress-track" class="progress-track" aria-label="翻牌進度"><div id="progress"></div></div></section>
+<section class="arena" aria-label="命運牌陣"><div class="suit-flashes" aria-hidden="true"><span data-suit-flash="0">♣</span><span data-suit-flash="3">♠</span><span data-suit-flash="1">♦</span><span data-suit-flash="2">♥</span></div><div id="board" class="board" aria-label="52 張撲克牌，梅花、黑桃、方塊、紅心"></div><div id="progress-track" class="progress-track" aria-label="翻牌進度"><div id="progress"></div></div></section>
 <section class="controls" aria-label="下注設定"><div class="stake-control"><label for="stake">下注金額</label><input id="stake" type="number" min="1" max="1000000" step="1" value="10" inputmode="numeric" aria-label="下注金額（模擬點數）"><button id="half" aria-label="下注金額減半">½</button><button id="double" aria-label="下注金額加倍">2×</button></div><div class="stake-presets" aria-label="快速下注金額"><button data-stake="10">10</button><button data-stake="50">50</button><button data-stake="100">100</button><button data-stake="200">200</button></div><div class="count-control"><label id="count-label" for="count">卡牌張數</label><select id="count" aria-label="卡牌張數" tabindex="-1"></select><button id="count-trigger" class="count-trigger" type="button" aria-labelledby="count-label count-value" aria-haspopup="listbox" aria-expanded="false"><span id="count-value">5</span><span class="select-arrow">▾</span></button><div id="count-menu" class="count-menu" role="listbox" aria-labelledby="count-label" hidden></div></div><button id="play" class="play-button"><span class="button-gem">◆</span>投注</button></section>
 <p id="validation" class="validation" role="status"></p>
 <div id="win-settlement" class="settlement" role="status" aria-live="polite" aria-hidden="true"><div id="fireworks" class="fireworks" aria-hidden="true"></div><div class="settlement-card"><span class="settlement-gem">◆</span><p><span class="settlement-label">贏得</span><strong id="win-amount">0.00</strong></p></div></div>
 </main>
-<script src="game-rtp-95.js"></script><script src="app-victory-sync.js"></script>
+<script src="game-rtp-95.js"></script><script src="app-suit-flash.js"></script>
 </body></html>
