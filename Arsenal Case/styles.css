@@ -130,7 +130,7 @@ h1 { margin: 3px 0 0; font: 900 clamp(2rem, 5vw, 3.8rem)/.9 var(--font-head); le
 .card-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .62s cubic-bezier(.2,.7,.2,1); }
 .case-card.revealed .card-inner { transform: rotateY(180deg); }
 .card-face { position: absolute; inset: 0; display: grid; place-items: center; border: 0; background-color: transparent; backface-visibility: hidden; }
-.card-back { background: transparent url("assets/weapon-case.png") center / contain no-repeat; box-shadow: none; }
+.card-back { background: transparent url("assets/weapon-case.webp") center / contain no-repeat; box-shadow: none; }
 .card-back::before { content: none; }
 .card-back::after { content: none; }
 .card-front { padding: 0; transform: rotateY(180deg); background-position: center; background-size: 100% 100%; background-repeat: no-repeat; box-shadow: none; }
