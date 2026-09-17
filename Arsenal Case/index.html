@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#10151b">
+  <meta name="description" content="軍火開箱 H5 互動 Demo">
+  <title>軍火開箱｜Arsenal Case</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%2310151b'/%3E%3Cpath d='M10 24h44v28H10zM18 16h28v8H18z' fill='%23d9972b'/%3E%3Cpath d='M15 30h34v15H15z' fill='none' stroke='%23f4d18b' stroke-width='3'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="game-shell" aria-label="軍火開箱遊戲">
+    <header class="hud">
+      <div class="balance-card" aria-live="polite">
+        <strong id="balance">$ 10000.00</strong>
+        <button id="add-balance" class="add-balance" type="button" aria-label="重置測試資金為 10000">＋</button>
+      </div>
+    </header>
+
+    <section class="paytable" aria-label="獎勵倍率">
+      <article data-pattern="high-card"><div class="pip-row"><i></i><i></i><i></i><i></i><i></i></div><b>0×</b><span>各不相同</span></article>
+      <article data-pattern="pair"><div class="pip-row"><i class="same"></i><i class="same"></i><i></i><i></i><i></i></div><b>0.1×</b><span>一對</span></article>
+      <article data-pattern="two-pair"><div class="pip-row"><i class="same"></i><i class="same"></i><i class="mid"></i><i class="mid"></i><i></i></div><b>2×</b><span>兩對</span></article>
+      <article data-pattern="three"><div class="pip-row"><i class="same"></i><i class="same"></i><i class="same"></i><i></i><i></i></div><b>4×</b><span>三同</span></article>
+      <article data-pattern="full-house"><div class="pip-row"><i class="same"></i><i class="same"></i><i class="same"></i><i class="mid"></i><i class="mid"></i></div><b>6×</b><span>葫蘆</span></article>
+      <article data-pattern="four"><div class="pip-row"><i class="same"></i><i class="same"></i><i class="same"></i><i class="same"></i><i></i></div><b>7×</b><span>四同</span></article>
+      <article data-pattern="five"><div class="pip-row"><i class="same"></i><i class="same"></i><i class="same"></i><i class="same"></i><i class="same"></i></div><b>60×</b><span>五同</span></article>
+    </section>
+
+    <section class="playfield" id="playfield" aria-label="開箱區">
+      <div class="status-line">
+        <span class="status-dot"></span>
+        <p id="status">選擇下注額，啟動本次投放</p>
+        <span id="reveal-count">待命</span>
+      </div>
+      <div class="scan-frame" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+      <div class="cards" id="cards" aria-live="polite"></div>
+      <div class="result-panel" id="result-panel" aria-hidden="true">
+        <strong id="result-multiplier">6×</strong>
+        <p id="result-payout">$ 60.00</p>
+      </div>
+      <svg class="beam-layer" id="beam-layer" aria-hidden="true"></svg>
+    </section>
+
+    <footer class="bet-dock">
+      <div class="bet-info">
+        <label for="bet-input">下注金額</label>
+        <div class="bet-row">
+          <input id="bet-input" type="number" min="1" step="1" value="10" inputmode="decimal" aria-label="下注金額">
+          <button type="button" data-action="half">½</button>
+          <button type="button" data-action="double">2×</button>
+          <button type="button" data-bet="10">10</button>
+          <button type="button" data-bet="50">50</button>
+          <button type="button" data-bet="100">100</button>
+          <button type="button" data-bet="200">200</button>
+        </div>
+      </div>
+      <button class="deploy-button" id="deploy-button" type="button">
+        <span>啟動</span>
+        <b>投放</b>
+      </button>
+    </footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
