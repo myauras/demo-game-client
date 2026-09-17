@@ -97,6 +97,7 @@ h1 { margin: 3px 0 0; font: 900 clamp(2rem, 5vw, 3.8rem)/.9 var(--font-head); le
   overflow: hidden;
   isolation: isolate;
 }
+.playfield.live { touch-action: none; }
 .playfield::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, transparent 49.8%, rgba(105,199,216,.08) 50%, transparent 50.2%); }
 .status-line { position: absolute; z-index: 5; inset: 14px 16px auto; display: flex; gap: 9px; align-items: center; color: var(--muted); font-size: .78rem; letter-spacing: .08em; }
 .status-line p { margin: 0; flex: 1; }
@@ -123,17 +124,17 @@ h1 { margin: 3px 0 0; font: 900 clamp(2rem, 5vw, 3.8rem)/.9 var(--font-head); le
 .empty-mark { grid-column: 1 / -1; justify-self: center; color: rgba(255,255,255,.17); text-align: center; font: 800 clamp(2rem, 6vw, 5.5rem)/1 var(--font-head); letter-spacing: .12em; }
 .empty-mark small { display: block; margin-top: 12px; font: 600 .75rem var(--font-ui); color: rgba(255,255,255,.26); letter-spacing: .24em; }
 
-.case-card { position: relative; width: 100%; aspect-ratio: .72; max-height: 285px; opacity: 0; transform: translateY(40px) scale(.78); transition: opacity .35s, transform .42s cubic-bezier(.2,.8,.2,1); cursor: pointer; touch-action: none; }
+.case-card { appearance: none; -webkit-appearance: none; position: relative; width: 100%; aspect-ratio: 212 / 285; max-height: 285px; margin: 0; padding: 0; border: 0; background: transparent; opacity: 0; transform: translateY(40px) scale(.78); transition: opacity .35s, transform .42s cubic-bezier(.2,.8,.2,1); cursor: pointer; touch-action: none; }
 .case-card.dealt { opacity: 1; transform: none; }
 .case-card.revealed { cursor: default; }
 .card-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .62s cubic-bezier(.2,.7,.2,1); }
 .case-card.revealed .card-inner { transform: rotateY(180deg); }
-.card-face { position: absolute; inset: 0; display: grid; place-items: center; backface-visibility: hidden; clip-path: polygon(0 0, 88% 0, 100% 8%, 100% 100%, 12% 100%, 0 92%); }
-.card-back { border: 2px solid #64818f; background: linear-gradient(145deg, #1c2932, #0b1117 72%); box-shadow: inset 0 0 0 5px #111b22, inset 0 0 0 7px rgba(217,151,43,.34), 0 18px 26px rgba(0,0,0,.45); }
-.card-back::before { content: ""; width: 52%; aspect-ratio: 1; border: 2px solid var(--amber); transform: rotate(45deg); box-shadow: 0 0 0 9px rgba(217,151,43,.08), 0 0 26px rgba(217,151,43,.18); }
+.card-face { position: absolute; inset: 0; display: grid; place-items: center; border: 0; background-color: transparent; backface-visibility: hidden; }
+.card-back { background: transparent url("assets/weapon-case.png") center / contain no-repeat; box-shadow: none; }
+.card-back::before { content: none; }
 .card-back::after { content: none; }
-.card-front { padding: 14px; transform: rotateY(180deg); border: 2px solid var(--rarity); background: linear-gradient(155deg, color-mix(in srgb, var(--rarity) 34%, #171c21), #0c1014 68%); box-shadow: inset 0 0 26px rgba(255,255,255,.06), 0 18px 30px rgba(0,0,0,.5); text-align: center; }
-.card-front::before { content:""; position:absolute; inset:8px; border:1px solid color-mix(in srgb, var(--rarity) 70%, white); opacity:.36; }
+.card-front { padding: 0; transform: rotateY(180deg); background-position: center; background-size: 100% 100%; background-repeat: no-repeat; box-shadow: none; }
+.card-front::before { content: none; }
 .item-symbol { font: 900 clamp(2rem, 4vw, 4rem)/1 var(--font-head); letter-spacing: -.05em; color: #f5f7f8; text-shadow: 0 0 18px var(--rarity); transform: skew(-7deg); }
 .item-meta { position: absolute; inset: auto 13px 13px; text-align: left; }
 .item-meta b { display: block; font: 800 clamp(.8rem, 1.4vw, 1.08rem) var(--font-head); letter-spacing: .03em; }
@@ -305,14 +306,7 @@ h1 { font-size: clamp(1.65rem, 8vw, 2rem); line-height: .92; }
 .case-card:nth-child(4) { grid-column: 2 / span 2; }
 .case-card:nth-child(5) { grid-column: 4 / span 2; }
 .card-back::after { font-size: 2.8rem; }
-.card-front::after {
-  content: "";
-  width: 42%;
-  aspect-ratio: 1;
-  border: 2px solid var(--rarity);
-  transform: rotate(45deg);
-  box-shadow: 0 0 0 8px color-mix(in srgb, var(--rarity) 13%, transparent), 0 0 22px var(--rarity);
-}
+.card-front::after { content: none; }
 
 .result-panel {
   top: 51%;

@@ -1,12 +1,12 @@
 const items = [
-  { code: "AK", name: "AK-47｜夜行", color: "#7a9cff", grade: "限制級" },
-  { code: "AWP", name: "AWP｜冷線", color: "#bd78ff", grade: "機密" },
-  { code: "M4", name: "M4A1-S｜灰燼", color: "#58b7d2", grade: "軍規級" },
-  { code: "USP", name: "USP-S｜靜默", color: "#5d89c7", grade: "軍規級" },
-  { code: "P90", name: "P90｜蜂巢", color: "#d26e8b", grade: "機密" },
-  { code: "DE", name: "沙漠之鷹｜熔核", color: "#e1973e", grade: "隱密" },
-  { code: "K", name: "戰術刀｜琥珀", color: "#f0bd4e", grade: "稀有特殊物品" },
-  { code: "HE", name: "高爆手雷｜警戒", color: "#7fb467", grade: "工業級" }
+  { code: "AK", name: "AK-47｜夜行", color: "#7a9cff", grade: "限制級", image: "assets/card-1.png" },
+  { code: "AWP", name: "AWP｜冷線", color: "#bd78ff", grade: "機密", image: "assets/card-2.png" },
+  { code: "M4", name: "M4A1-S｜灰燼", color: "#58b7d2", grade: "軍規級", image: "assets/card-3.png" },
+  { code: "USP", name: "USP-S｜靜默", color: "#5d89c7", grade: "軍規級", image: "assets/card-4.png" },
+  { code: "P90", name: "P90｜蜂巢", color: "#d26e8b", grade: "機密", image: "assets/card-5.png" },
+  { code: "DE", name: "沙漠之鷹｜熔核", color: "#e1973e", grade: "隱密", image: "assets/card-6.png" },
+  { code: "K", name: "戰術刀｜琥珀", color: "#f0bd4e", grade: "稀有特殊物品", image: "assets/card-7.png" },
+  { code: "HE", name: "高爆手雷｜警戒", color: "#7fb467", grade: "工業級", image: "assets/card-8.png" }
 ];
 
 const patterns = {
@@ -83,7 +83,7 @@ function renderCards() {
     <button class="case-card" data-index="${index}" type="button" aria-label="第 ${index + 1} 個軍火箱，點擊翻開" style="--rarity:${item.color}">
       <span class="card-inner">
         <span class="card-face card-back"></span>
-        <span class="card-face card-front"></span>
+        <span class="card-face card-front" style="background-image:url('${item.image}')"></span>
       </span>
     </button>`).join("");
   requestAnimationFrame(() => document.querySelectorAll(".case-card").forEach((card, index) => {
@@ -243,16 +243,20 @@ function registerAgentTools() {
 }
 
 deployButton.addEventListener("click", startRound);
-cardsEl.addEventListener("pointerdown", event => {
-  const card = event.target.closest(".case-card");
-  if (!card) return;
+function cardAtPointer(event) {
+  return document.elementFromPoint(event.clientX, event.clientY)?.closest(".case-card");
+}
+
+playfield.addEventListener("pointerdown", event => {
+  if (!["WAITING_FOR_REVEAL", "REVEALING"].includes(state)) return;
   dragging = true;
-  cardsEl.setPointerCapture?.(event.pointerId);
-  revealCard(Number(card.dataset.index));
+  playfield.setPointerCapture?.(event.pointerId);
+  const card = cardAtPointer(event);
+  if (card) revealCard(Number(card.dataset.index));
 });
-cardsEl.addEventListener("pointermove", event => {
+playfield.addEventListener("pointermove", event => {
   if (!dragging) return;
-  const card = document.elementFromPoint(event.clientX, event.clientY)?.closest(".case-card");
+  const card = cardAtPointer(event);
   if (card) revealCard(Number(card.dataset.index));
 });
 window.addEventListener("pointerup", () => dragging = false);
