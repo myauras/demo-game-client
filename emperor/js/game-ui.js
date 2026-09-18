@@ -62,13 +62,9 @@ function bannerFade(t){                          // 鎖定節拍：0.3s 淡入
 
 /* ---------- 對決區與手牌 ---------- */
 var slotL = $('slotL'), slotR = $('slotR'), duelZ = $('duelZ'), flashZ = $('flashZ');
-var RM = false;
-try{ RM = matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
+var RM = false;                                  // Demo 定案（2026-09-18）：演出一律全開，不讀系統 prefers-reduced-motion
 if(qs.get('rm') === '1') RM = true;             // 測試用：強制 reduced-motion 降級路徑
-if(qs.get('fx') === '1'){                       // 測試／截圖用：強制開啟演出（覆蓋 reduced-motion）
-  RM = false;
-  document.documentElement.setAttribute('data-fx', '1');
-}
+else document.documentElement.setAttribute('data-fx', '1');   // 讓 CSS 的 reduced-motion 降級規則不生效（?fx=1 保留但已無作用）
 function cls(ch){ return ch==='帝' ? 'demp' : (ch==='奴' ? 'dslv' : 'dmin'); }
 function slot(el, ch, noPop){
   el.className = 'dslot'; el.textContent = '';

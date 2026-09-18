@@ -25,7 +25,7 @@
 | 參數 | 作用 |
 |---|---|
 | `?dev=1` | 顯示導演台（劇本強制本階勝／敗、重置錢包）。**預設網址不帶此參數，正式遊玩看不到導演台。** |
-| `?fx=1` | 強制開啟演出（覆蓋系統的 reduced-motion 偏好），測試與截圖用 |
+| `?fx=1` | （已無作用）Demo 演出一律全開，不讀系統 reduced-motion；保留只為舊連結相容 |
 | `?rm=1` | 強制走 reduced-motion 降級路徑（直接落牌、不切半） |
 | `?shot=…` | 截圖自動駕駛：`slam`／`ladder3`／`full`／`full9`／`adv-flip`／`adv-wait`／`adv-shock`／`adv-slam`／`auto-run`／`auto-modal`／`log-list`／`log-detail`／`log-full` |
 | `?vw=375` | 鎖 app 寬度並靠左（headless 截圖裁圖輔助） |
