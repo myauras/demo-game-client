@@ -124,7 +124,7 @@ h1 { margin: 3px 0 0; font: 900 clamp(2rem, 5vw, 3.8rem)/.9 var(--font-head); le
 .empty-mark { grid-column: 1 / -1; justify-self: center; color: rgba(255,255,255,.17); text-align: center; font: 800 clamp(2rem, 6vw, 5.5rem)/1 var(--font-head); letter-spacing: .12em; }
 .empty-mark small { display: block; margin-top: 12px; font: 600 .75rem var(--font-ui); color: rgba(255,255,255,.26); letter-spacing: .24em; }
 
-.case-card { appearance: none; -webkit-appearance: none; position: relative; width: 100%; aspect-ratio: 212 / 285; max-height: 285px; margin: 0; padding: 0; border: 0; background: transparent; opacity: 1; transform: translateY(40px) scale(.78); transition: transform .42s cubic-bezier(.2,.8,.2,1); cursor: pointer; touch-action: none; }
+.case-card { appearance: none; -webkit-appearance: none; position: relative; width: 100%; aspect-ratio: 212 / 285; max-height: 285px; margin: 0; padding: 0; border: 0; background: transparent; opacity: 0; transform: translateY(40px) scale(.78); transition: opacity .3s ease, transform .42s cubic-bezier(.2,.8,.2,1); cursor: pointer; touch-action: none; }
 .case-card.dealt { opacity: 1; transform: none; }
 .case-card.revealed { cursor: default; }
 .card-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .62s cubic-bezier(.2,.7,.2,1); }
