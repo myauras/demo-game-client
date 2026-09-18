@@ -9,6 +9,16 @@ const items = [
   { code: "HE", name: "高爆手雷｜警戒", color: "#7fb467", grade: "工業級", image: "assets/card-8.webp" }
 ];
 
+const assetsReady = Promise.all([
+  "assets/weapon-case.webp",
+  ...items.map(item => item.image)
+].map(source => new Promise((resolve, reject) => {
+  const image = new Image();
+  image.onload = () => resolve(source);
+  image.onerror = () => reject(new Error(`無法載入圖片：${source}`));
+  image.src = source;
+})));
+
 const patterns = {
   "1,1,1,1,1": { key: "high-card", label: "各不相同", mult: 0 },
   "2,1,1,1": { key: "pair", label: "一對", mult: .1 },
@@ -106,14 +116,25 @@ function drawBeams() {
   setTimeout(() => beamLayer.innerHTML = "", 850);
 }
 
-function startRound() {
+async function startRound() {
   if (state !== "IDLE") return;
+  state = "LOADING";
+  setControls(true);
+  try {
+    await assetsReady;
+  } catch {
+    state = "IDLE";
+    setControls(false);
+    return;
+  }
   currentBet = Math.max(1, Number(betInput.value) || 1);
   if (currentBet > balance) {
     statusEl.textContent = "資金不足，請降低下注額";
     betInput.classList.remove("shake");
     void betInput.offsetWidth;
     betInput.classList.add("shake");
+    state = "IDLE";
+    setControls(false);
     return;
   }
   state = "DEALING";
@@ -216,9 +237,9 @@ function registerAgentTools() {
     description: "使用目前下注額開始一局並產生五張背面朝上的卡牌。",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
     annotations: { readOnlyHint: false, untrustedContentHint: false },
-    execute() {
+    async execute() {
       if (state !== "IDLE") throw new Error("遊戲進行中");
-      startRound();
+      await startRound();
       return { state, bet: currentBet, balance };
     }
   });
