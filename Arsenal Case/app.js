@@ -195,6 +195,7 @@ function showResult() {
 function resetRound() {
   state = "RESET";
   resultPanel.classList.remove("show");
+  document.querySelectorAll(".paytable article.active").forEach(item => item.classList.remove("active"));
   document.querySelectorAll(".case-card").forEach((card, index) => setTimeout(() => {
     card.style.opacity = "0";
     card.style.transform = "translateY(-25px) scale(.8)";
