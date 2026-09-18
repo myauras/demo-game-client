@@ -1,0 +1,214 @@
+/* =========================================================================
+ * 專案E「皇帝牌」E03——普通模式（觀賽機位）樣式
+ * 版面依據：reports/皇帝牌示意稿.html §2 觀賽機位排版標註圖
+ * 效能紅線：所有動畫只用 transform / opacity（合成器層）
+ * ========================================================================= */
+html,body{height:100%;margin:0;overflow:hidden}
+body{background:#0A0D0A;color:#E9E4D2;font-size:14px;line-height:1.5;
+  font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+#app{position:relative;height:100%;max-width:420px;margin:0 auto;
+  display:flex;flex-direction:column;background:#141A16;overflow:hidden}
+button{font:inherit;cursor:pointer}
+
+/* ---------- ①頂欄 ---------- */
+.ptop{flex:none;display:flex;justify-content:space-between;align-items:center;
+  padding:10px 12px;background:#0E120F;border-bottom:1px solid #2C332C}
+.wallet{font-weight:700;color:#E7C86A;font-variant-numeric:tabular-nums;font-size:15px}
+.mseg{display:flex;border:1px solid #E7C86A;border-radius:6px;overflow:hidden}
+.mseg button{border:0;background:transparent;color:#E9E4D2;font-size:13px;padding:4px 12px}
+.mseg button.on{background:#E7C86A;color:#141A16;font-weight:700}
+.mseg button:disabled{color:#6B7568;cursor:default}
+
+/* ---------- ③戰報帶 ---------- */
+.banner{flex:none;height:30px;display:flex;align-items:center;justify-content:center;
+  font-size:13px;color:#E7C86A;letter-spacing:.08em;font-weight:700;
+  transition:opacity .3s;padding:0 8px;text-align:center;white-space:nowrap}
+.banner.dim{opacity:0}
+
+/* ---------- ②左右對局者＋④中央對決區 ---------- */
+.specrow{flex:1;min-height:0;display:flex;align-items:stretch;
+  justify-content:space-between;padding:8px 10px;gap:6px}
+.speccol{flex:none;display:flex;flex-direction:column;align-items:center;gap:6px}
+.avatar{width:40px;height:40px;border-radius:50%;background:#1A1F1A;border:1.5px solid #4A4136;
+  display:flex;align-items:center;justify-content:center;font-size:20px}
+.avatar.aE{border-color:#E7C86A}
+.avatar.aS{border-color:#C9666C}
+/* E05 滿貫／完賭：下注側頭像高光——抬到暗幕之上（z 31 > #grand 30）、只動 transform 脈動；陰影靜態 */
+@keyframes hipulse{0%,100%{transform:scale(1.1)}50%{transform:scale(1.2)}}
+.speccol.hi .avatar{position:relative;z-index:31;border-color:#F5E2A0;background:#2B2413;
+  box-shadow:0 0 0 3px rgba(245,226,160,.4);animation:hipulse 1.2s ease-in-out infinite}
+.speccol.hi .sidename{position:relative;z-index:31;color:#F5E2A0;font-weight:700}
+.sidename{font-size:11px;color:#9AA895}
+.vhand{display:flex;flex-direction:column;gap:5px}
+.gcard{width:34px;height:48px;border-radius:5px;
+  transition:transform .25s,opacity .25s}
+.gcard.back{background:linear-gradient(135deg,#3A2C2C 25%,#2C2020 25%,#2C2020 50%,#3A2C2C 50%,#3A2C2C 75%,#2C2020 75%);
+  background-size:9px 9px;border:1.5px solid #6B4A44}
+.gcard.gone{opacity:.18;transform:scale(.88)}
+.duel{flex:1;min-width:0;margin:0 4px;position:relative;
+  display:flex;gap:14px;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at center,#1D2820 0%,#141A16 75%);border-radius:10px}
+.dslot{width:56px;height:78px;border-radius:6px;border:1.5px dashed #3D4A3D;flex:none;
+  display:flex;align-items:center;justify-content:center;
+  font-family:"Noto Serif TC","Microsoft JhengHei",serif;font-weight:900;font-size:26px}
+.dslot.filled{border-style:solid}
+.dslot.dmin,.cutfx .dmin{background:#EFE7D2;color:#3B3324;border-color:#B7A87E}
+.dslot.demp,.cutfx .demp{background:#3B3016;color:#F0CE6E;border-color:#E7C86A}
+.dslot.dslv,.cutfx .dslv{background:#3A1E20;color:#E58F94;border-color:#C9666C}
+.dslot.ghosted{opacity:0}
+.dslot.dback{background:linear-gradient(135deg,#3A2C2C 25%,#2C2020 25%,#2C2020 50%,#3A2C2C 50%,#3A2C2C 75%,#2C2020 75%);
+  background-size:9px 9px;border-color:#6B4A44;border-style:solid;color:transparent}
+.dvs{color:#5C6B5C;font-size:12px;letter-spacing:.2em;flex:none}
+@keyframes pop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes clash{0%,100%{transform:translateX(0)}30%{transform:translateX(-4px)}60%{transform:translateX(4px)}}
+@keyframes flash{0%{opacity:0}25%{opacity:.9}100%{opacity:0}}
+.dslot.pop{animation:pop .28s ease-out}
+.duel.clash .dslot{animation:clash .3s ease-in-out}
+.flashfx{position:absolute;inset:0;border-radius:10px;background:#F5E2A0;opacity:0;pointer-events:none}
+.flashfx.go{animation:flash .55s ease-out}
+
+/* R3 拋物線出牌：外層直線位移（transition）＋內層垂直起伏（keyframes）合成弧線 */
+.flyx{position:absolute;z-index:20;pointer-events:none;
+  transition:transform .32s cubic-bezier(.3,.1,.7,.9)}
+.flyy{width:100%;height:100%;animation:flyarc .32s}
+@keyframes flyarc{
+  0%{transform:translateY(0);animation-timing-function:ease-out}
+  42%{transform:translateY(-30px);animation-timing-function:ease-in}
+  100%{transform:translateY(0)}}
+.flyy .dslot{width:100%;height:100%;box-sizing:border-box}
+
+/* R3 斬牌：敗方牌斜切兩半（半片＝靜態 clip，動的只有 transform/opacity） */
+.cutfx{position:absolute;z-index:6;pointer-events:none}
+.cutfx .half{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  border-radius:6px;border:1.5px solid;box-sizing:border-box;
+  font-family:"Noto Serif TC","Microsoft JhengHei",serif;font-weight:900;font-size:26px;
+  transition:transform .45s cubic-bezier(.2,.8,.3,1),opacity .45s}
+.cutfx .hT{clip-path:polygon(0 0,100% 0,100% 40%,0 60%)}
+.cutfx .hB{clip-path:polygon(0 60%,100% 40%,100% 100%,0 100%)}
+.cutfx.go .hT{transform:translate(-6px,-13px) rotate(-8deg);opacity:.85}
+.cutfx.go .hB{transform:translate(6px,15px) rotate(6deg);opacity:.5}
+.cutfx .slash{position:absolute;left:-22%;right:-22%;top:50%;height:2px;background:#F5E2A0;
+  transform:rotate(-11deg) scaleX(0);transform-origin:left center;opacity:0}
+.cutfx.go .slash{animation:slashfx .32s ease-out}
+@keyframes slashfx{
+  0%{transform:rotate(-11deg) scaleX(0);opacity:1}
+  55%{transform:rotate(-11deg) scaleX(1);opacity:1}
+  100%{transform:rotate(-11deg) scaleX(1);opacity:0}}
+
+/* ---------- ❸橫式階梯進度條（對數刻度，貼操作面板上緣）
+ * R2：兩行版——上行標籤、下行滿寬軌道。軌道不與文字同列，
+ * 任何狀態長度恆定，只有填充 scaleX 與綠點位置會動。 ---------- */
+.hrail{flex:none;display:block;padding:3px 12px 8px;transition:opacity .3s}
+.hrail.idle{opacity:.35}
+.hrow{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px}
+.phlab{font-size:11px;color:#9AA895;white-space:nowrap;font-variant-numeric:tabular-nums}
+.phlab.cur{color:#E7C86A;font-weight:700}
+.phtrack{position:relative;width:100%;box-sizing:border-box;height:10px;
+  border:1px solid #4A4136;border-radius:5px;background:#10150F;overflow:hidden}
+.phfill{position:absolute;left:0;top:0;bottom:0;width:100%;
+  background:linear-gradient(90deg,#8F6A14,#E7C86A);
+  transform-origin:0 50%;transform:scaleX(0);transition:transform .4s}
+.phdot{position:absolute;top:0;bottom:0;width:2px;background:#8FD49B}
+
+/* ---------- ⑥操作面板（三態互斥輪替） ---------- */
+.panel{flex:none;height:194px;box-sizing:border-box;background:#0E120F;
+  border-top:1px solid #2C332C;padding:12px 12px 10px}
+.siderow{display:flex;gap:8px;margin-bottom:9px}
+.sidebtn{flex:1;border-radius:8px;padding:8px 4px;text-align:center;
+  border:1.5px solid #4A4136;background:#1A1F1A;color:#E9E4D2}
+.sidebtn b{display:block;font-family:"Noto Serif TC","Microsoft JhengHei",serif;font-size:16px}
+.sidebtn small{color:#9AA895;font-size:11.5px}
+.sidebtn.selE{border-color:#E7C86A;background:#2B2413}
+.sidebtn.selS{border-color:#C9666C;background:#2B1517}
+.chiprow{display:flex;gap:8px;align-items:center;margin-bottom:9px}
+.chiplab{font-size:12px;color:#9AA895}
+.chip{border-radius:20px;border:1.5px solid #4A4136;background:#1A1F1A;color:#E9E4D2;
+  font-size:12.5px;padding:3px 13px;font-variant-numeric:tabular-nums}
+.chip.on{border-color:#E7C86A;color:#E7C86A;font-weight:700}
+.gobtn{width:100%;border:0;border-radius:8px;padding:10px;font-weight:700;font-size:14.5px;
+  background:#E7C86A;color:#141A16}
+.gobtn:disabled{opacity:.35;cursor:default}
+.msg{font-size:11.5px;color:#9AA895;min-height:16px;text-align:center;margin-top:6px}
+.lockmsg{margin-top:56px;text-align:center;font-size:13px;color:#9AA895}
+
+/* 階梯態 */
+.ladder{text-align:center;position:relative}
+.ltitle{font-size:12px;color:#9AA895}
+.lm{font-family:"Noto Serif TC","Microsoft JhengHei",serif;font-size:19px;font-weight:900;
+  color:#E7C86A;margin:2px 0 8px;font-variant-numeric:tabular-nums}
+.lrow{display:flex;gap:8px}
+.lrow button{flex:1;border-radius:8px;padding:9px 4px;font-size:12.5px;line-height:1.4;
+  border:1.5px solid}
+.bt-emp{background:#2B2413;border-color:#E7C86A;color:#F0CE6E}
+.bt-slv{background:#2B1517;border-color:#C9666C;color:#E58F94}
+.bt-cash{background:#16281B;border-color:#5FA06B;color:#8FD49B}
+.lnote{font-size:10.5px;color:#9AA895;margin-top:7px}
+/* E05 決策提示：續戰鈕第三行——下一階觸線「→ 滿貫！」／第 10 階「→ 完賭」 */
+.lrow button em{display:block;font-style:normal;font-size:10.5px;line-height:1.3;margin-top:2px;letter-spacing:.04em}
+.lrow button em.slam{color:#F5E2A0;font-weight:700}
+.lrow button em.full{color:#8FD49B;font-weight:700}
+/* E05 本局路徑小條（帝／奴序列，標題行內） */
+.lpath{display:inline-flex;gap:3px;vertical-align:1px;margin-left:6px}
+.lpath i{font-style:normal;font-size:10px;line-height:14px;width:14px;border-radius:3px;text-align:center;
+  font-weight:700;border:1px solid}
+.lpath .pe{background:#3B3016;color:#F0CE6E;border-color:#E7C86A}
+.lpath .ps{background:#3A1E20;color:#E58F94;border-color:#C9666C}
+/* Q2 倒數圈：圓框＋數字＋旋轉指針（指針只動 transform） */
+.cring{position:absolute;right:0;top:-2px;width:34px;height:34px;border-radius:50%;
+  border:2px solid #4A4136;display:flex;align-items:center;justify-content:center}
+.cring .cnum{font-size:13px;font-weight:700;color:#E7C86A;font-variant-numeric:tabular-nums}
+.cring.hurry .cnum{color:#E58F94}
+.chand{position:absolute;left:50%;top:50%;width:2px;height:15px;margin:-15px 0 0 -1px;
+  transform-origin:50% 100%;background:#E7C86A;opacity:.55;border-radius:1px}
+
+/* ---------- 滿貫／完賭大演出 ---------- */
+#grand{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;pointer-events:none;opacity:0;
+  transition:opacity .3s;background:rgba(10,13,10,.72)}
+#grand.show{opacity:1}
+.gflash{position:absolute;inset:0;background:#F5E2A0;opacity:0}
+@keyframes gflash{0%{opacity:0}20%{opacity:.95}100%{opacity:0}}
+#grand.show .gflash{animation:gflash 1.5s ease-out}
+.gtxt{position:relative;text-align:center;transform:scale(.6);opacity:0;
+  transition:transform .45s cubic-bezier(.2,1.6,.4,1),opacity .3s}
+#grand.show .gtxt{transform:scale(1);opacity:1}
+.gtitle{font-family:"Noto Serif TC","Microsoft JhengHei",serif;font-weight:900;
+  font-size:30px;color:#E7C86A;letter-spacing:.1em}
+.gsub{font-size:12px;color:#9AA895;letter-spacing:.06em;margin-top:2px}
+/* E05 三段揭示：一列三格（收手值 → ＋頂端加成 → 實付），.s2/.s3 逐段以 opacity＋translateY 點亮 */
+.grow{display:flex;align-items:flex-end;justify-content:center;gap:4px;margin-top:12px}
+.gstage{display:flex;flex-direction:column;align-items:center;opacity:0;transform:translateY(10px);
+  transition:opacity .3s,transform .4s cubic-bezier(.2,1.4,.4,1)}
+.gstage small{font-size:10.5px;color:#9AA895;letter-spacing:.06em;line-height:1.3}
+.gstage b{font-family:"Noto Serif TC","Microsoft JhengHei",serif;font-weight:900;
+  font-size:19px;color:#EAE2D2;line-height:1.15;font-variant-numeric:tabular-nums}
+.gstage.fin b{color:#F0CE6E;font-size:25px}
+.garr{color:#5C6B5C;font-size:14px;padding-bottom:6px;opacity:0;transition:opacity .3s}
+#grand.show .g1,#grand.s2 .g2,#grand.s3 .g3{opacity:1;transform:none}
+#grand.s2 .a2,#grand.s3 .a3{opacity:1}
+.gpay{font-size:15px;color:#8FD49B;font-weight:700;margin-top:12px;font-variant-numeric:tabular-nums;
+  opacity:0;transform:translateY(6px);transition:opacity .3s,transform .3s}
+#grand.s3 .gpay{opacity:1;transform:none}
+
+/* ---------- 導演台（?dev=1 才顯示） ---------- */
+#director{position:absolute;left:8px;right:8px;top:48px;z-index:40;display:none;
+  gap:8px;align-items:center;justify-content:center;font-size:12px;color:#9AA895;
+  background:rgba(14,18,15,.88);border:1px solid #2C332C;border-radius:7px;padding:4px 8px}
+#director.on{display:flex}
+#director select{font:inherit;font-size:12px;background:#1A1F1A;color:#E9E4D2;
+  border:1px solid #4A4136;border-radius:5px;padding:1px 6px}
+#director button{font-size:11.5px;background:#1A1F1A;color:#9AA895;
+  border:1px solid #4A4136;border-radius:5px;padding:2px 8px}
+
+@media (prefers-reduced-motion: reduce){
+  html:not([data-fx]) .dslot.pop,html:not([data-fx]) .duel.clash .dslot,
+  html:not([data-fx]) .flashfx.go,html:not([data-fx]) #grand.show .gflash,
+  html:not([data-fx]) .flyy,html:not([data-fx]) .cutfx.go .slash{animation:none}
+  html:not([data-fx]) .flashfx.go{opacity:0}
+  html:not([data-fx]) .gcard,html:not([data-fx]) .phfill,
+  html:not([data-fx]) .banner,html:not([data-fx]) .gtxt,html:not([data-fx]) #grand,
+  html:not([data-fx]) .flyx,html:not([data-fx]) .cutfx .half,
+  html:not([data-fx]) .gstage,html:not([data-fx]) .garr,html:not([data-fx]) .gpay{transition:none}
+  html:not([data-fx]) .speccol.hi .avatar{animation:none;transform:scale(1.1)}
+}

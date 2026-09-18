@@ -1,0 +1,120 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>E01 數值驗證頁</title>
+<style>
+:root{
+  --bg:#F6F2E9; --surface:#FFFDF7; --ink:#2A241A; --muted:#75695A;
+  --line:#DDD3BF; --gold:#8F6A14; --gold-soft:#F3E8CB;
+  --crimson:#A03A40; --rec-bg:#FBF4DF; --code-bg:#EFE8D8; --ok:#3C7A46;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1B1712; --surface:#242019; --ink:#EAE2D2; --muted:#A79A85;
+    --line:#453D30; --gold:#D9AC46; --gold-soft:#38301C;
+    --crimson:#D0787D; --rec-bg:#2E2817; --code-bg:#2E2920; --ok:#8FD49B;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1B1712; --surface:#242019; --ink:#EAE2D2; --muted:#A79A85;
+  --line:#453D30; --gold:#D9AC46; --gold-soft:#38301C;
+  --crimson:#D0787D; --rec-bg:#2E2817; --code-bg:#2E2920; --ok:#8FD49B;
+}
+body{background:var(--bg);color:var(--ink);font-family:"Noto Sans TC",system-ui,sans-serif;
+  line-height:1.7;font-size:14px;margin:0;padding:0 16px}
+.wrap{max-width:900px;margin:0 auto;padding-block:32px 64px}
+h1{font-size:24px;margin:6px 0 4px}
+h2{font-size:18px;color:var(--gold);margin:36px 0 8px;padding-bottom:5px;border-bottom:2px solid var(--line)}
+.meta{color:var(--muted);font-size:12.5px}
+.rec{background:var(--rec-bg);border-left:4px solid var(--gold);border-radius:0 8px 8px 0;padding:10px 16px;margin:14px 0}
+code{background:var(--code-bg);padding:1px 6px;border-radius:4px;font-size:12.5px}
+.tablebox{overflow-x:auto}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--gold-soft);font-weight:700}
+td.num{text-align:right}
+.pass{color:var(--ok);font-weight:700}
+.fail{color:var(--crimson);font-weight:700}
+.ctrl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0}
+.ctrl select,.ctrl button{font:inherit;padding:6px 14px;border-radius:8px;border:1.5px solid var(--gold);
+  background:var(--surface);color:var(--ink);cursor:pointer}
+.ctrl button{background:var(--gold);color:var(--bg);font-weight:700;border:0}
+#prog{color:var(--muted);font-size:13px}
+.note{color:var(--muted);font-size:12.5px}
+</style>
+
+<div class="wrap">
+<h1>E01 數值驗證頁（程式反推＋蒙地卡羅）</h1>
+<div class="meta">專案E「皇帝牌」・數值單點：<code>values.js CFG</code>（禁手改單點）・規格：reports/E規格書_v1.html・鐵表：TASKS-E.md「已定案數值」</div>
+
+<h2>反推數值 vs 鐵表對照</h2>
+<p class="note">下表右欄全部由 <code>CFG</code>（RTP 0.93／0.96、p 0.2／0.8、滿貫線 120、完賭 10 階）程式推導，中欄為鐵表原文——兩欄一致即通過人工核對。</p>
+<div class="tablebox"><table>
+<tr><th>項目</th><th>鐵表值</th><th>程式推導值</th></tr>
+<tbody id="tIron"></tbody>
+</table></div>
+
+<h2>純邊階梯表（收手值 M＝0.93×Π(1/p)）</h2>
+<div class="tablebox"><table>
+<tr><th>邊</th><th>階</th><th>收手值 M</th><th>達成機率</th><th>觸頂</th><th>觸頂實付（×1.0323）／收手值</th></tr>
+<tbody id="tLadder"></tbody>
+</table></div>
+
+<h2>換邊路徑枚舉（觸頂終點全集）</h2>
+<div class="rec" id="enumSummary">載入中…</div>
+<div class="tablebox"><table>
+<tr><th>路徑（賠付前 8 高）</th><th>階數</th><th>收手值</th><th>觸頂實付</th><th>達成機率</th><th>觸發</th></tr>
+<tbody id="tTops"></tbody>
+</table></div>
+
+<h2>蒙地卡羅驗證</h2>
+<div class="ctrl">
+  局數 N／項：
+  <select id="selN">
+    <option value="100000">100,000（快速）</option>
+    <option value="1000000" selected>1,000,000（標準）</option>
+    <option value="5000000">5,000,000（高精度）</option>
+  </select>
+  <button id="btnRun">執行全部驗證</button>
+  <span id="prog"></span>
+</div>
+<p class="note">每階勝負皆由<b>完整密封序對局</b>模擬（雙方特殊牌位置各自均勻抽，非直接擲 Bernoulli(p)）——端到端驗證「牌局→機率→階梯→RTP」整條鏈。判定＝MC 均值落在理論值 ±3σ 內。</p>
+
+<h3>① 1/5 定理——玩家任意出牌序不影響機率</h3>
+<div class="tablebox"><table>
+<tr><th>測試</th><th>理論值</th><th>MC 均值</th><th>3σ 半寬</th><th>z</th><th>判定</th></tr>
+<tbody id="t1"></tbody>
+</table></div>
+
+<h3>①b 活原型反應式引擎（行為基準）勝率</h3>
+<div class="tablebox"><table>
+<tr><th>測試</th><th>理論值</th><th>MC 均值</th><th>3σ 半寬</th><th>z</th><th>判定</th></tr>
+<tbody id="t1b"></tbody>
+</table></div>
+<p class="note">決勝回合分佈對照（玩家＝奴隸側、特殊牌固定第 3 張、輸局條件下）——原型的對手時點抽樣與密封序有<b>演出層</b>小偏差，勝率與 EV 不受影響（詳 reports/E01-回報.html 附註 N1）：</p>
+<div class="tablebox"><table>
+<tr><th>決勝回合・判定</th><th>密封序</th><th>活原型</th></tr>
+<tbody id="tDist"></tbody>
+</table></div>
+
+<h3>② 各收手深度 RTP＝0.93</h3>
+<div class="tablebox"><table>
+<tr><th>測試</th><th>理論值</th><th>MC 均值</th><th>3σ 半寬</th><th>z</th><th>判定</th></tr>
+<tbody id="t2"></tbody>
+</table></div>
+
+<h3>③ 各登頂路徑 RTP＝0.96</h3>
+<div class="tablebox"><table>
+<tr><th>測試</th><th>理論值</th><th>MC 均值</th><th>3σ 半寬</th><th>z</th><th>判定</th></tr>
+<tbody id="t3"></tbody>
+</table></div>
+
+<h3>④ 滿貫觸發分佈與最大賠付（隨機換邊玩到頂）</h3>
+<div class="tablebox"><table>
+<tr><th>項目</th><th>值</th><th>判定</th></tr>
+<tbody id="t4"></tbody>
+</table></div>
+
+</div>
+<script src="values.js"></script>
+<script src="sim.js"></script>

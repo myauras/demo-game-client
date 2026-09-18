@@ -1,0 +1,107 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>E02 dev 抽查頁</title>
+<!-- 拋棄式操作頁：只為管理抽查 duel-core 邏輯，非正式 UI（正式呈現＝E03/E04） -->
+<style>
+body{background:#14120E;color:#D8D2C2;font:14px/1.7 system-ui,sans-serif;max-width:720px;margin:0 auto;padding:16px}
+h3{color:#D9AC46;margin:4px 0 10px}
+.bar{margin:6px 0}
+button{background:#2E2920;color:#D8D2C2;border:1px solid #55492F;border-radius:6px;padding:6px 12px;margin:2px;cursor:pointer}
+button:disabled{opacity:.35;cursor:default}
+button.card{font-size:18px;width:46px;height:60px}
+button.card.gone{opacity:.25;text-decoration:line-through}
+select,input{background:#2E2920;color:#D8D2C2;border:1px solid #55492F;border-radius:6px;padding:5px}
+#log{background:#0D0C09;border:1px solid #3A3222;border-radius:8px;padding:10px;height:340px;overflow:auto;font:12px/1.6 Consolas,monospace;white-space:pre-wrap}
+b{color:#EAD9A8}.warn{color:#D0787D}
+</style>
+<h3>E02 對局核心・抽查頁（拋棄式）</h3>
+<div class="bar">錢包 <b id="wal">—</b>｜狀態 <b id="ph">—</b>｜模式 <b id="md">—</b>｜倒數 <b id="cd">—</b>｜階梯 <b id="lad">—</b></div>
+<div class="bar">
+  <button id="mN">普通模式</button><button id="mA">進階模式</button>
+  ｜側 <select id="side"><option value="emp">皇帝側</option><option value="slv">奴隸側</option></select>
+  押額 <input id="stake" value="500" size="6">
+  <button id="go">開局</button>
+  <button id="ackB">ack（演出完成）</button>
+  <button id="clr">清存檔重置</button>
+</div>
+<div class="bar">手牌（進階）：<span id="hand">—</span></div>
+<div class="bar">
+  <button id="lcE">續戰・皇帝側</button>
+  <button id="lcS">續戰・奴隸側</button>
+  <button id="lcC">收手</button>
+  （Q2 逾時 10s 視同收手／Q3 出牌逾時 5s 隨機出）
+</div>
+<pre id="log"></pre>
+<script src="values.js"></script>
+<script src="js/duel-core.js"></script>
+<script>
+(function(){
+var $=function(id){return document.getElementById(id)};
+var NAME={emp:'皇帝側',slv:'奴隸側'};
+var g = DuelCore.createGame();   // 預設 localStorage（ecard.core），重整接回
+
+function log(t){
+  var el=$('log');
+  el.textContent += t + '\n';
+  el.scrollTop = el.scrollHeight;
+}
+function refresh(){
+  var s = g.getState();
+  $('wal').textContent = s.wallet.toLocaleString('en-US');
+  $('ph').textContent  = s.phase;
+  $('md').textContent  = s.mode==='normal'?'普通':'進階';
+  $('lad').textContent = s.st && s.st.won.length
+    ? DuelCore.fmtX(s.st.M)+'x・第'+s.st.rung+'階（'+DuelCore.railPct(s.st.M).toFixed(0)+'%）' : '—';
+  $('mN').disabled = !!s.st; $('mA').disabled = !!s.st;
+  $('go').disabled = s.phase!=='BET';
+  $('ackB').disabled = s.phase!=='ANIM';
+  $('lcE').disabled = $('lcS').disabled = $('lcC').disabled = s.phase!=='LADDER';
+  var h=$('hand'); h.innerHTML='';
+  if(s.mode==='advanced' && s.st && s.st.myCards){
+    s.st.myCards.forEach(function(c,i){
+      var b=document.createElement('button');
+      b.className='card'+(c.used?' gone':''); b.textContent=c.t;
+      b.disabled = c.used || s.phase!=='PLAY';
+      b.onclick=function(){ g.play(i); };
+      h.appendChild(b);
+    });
+  } else h.textContent = s.mode==='advanced' ? '—' : '（普通模式無手牌，開局後 ack 演完腳本）';
+}
+g.on(function(type,d){
+  if(type==='lock'){
+    log('▶ 封盤（'+NAME[d.side]+'・第'+d.rung+'階）勝負已抽定');
+    if(d.script) log('  腳本：'+d.script.map(function(t){return t.p+'/'+t.o+(t.decisive?'★'+t.verdict.reason:'')}).join('　'));
+  }
+  else if(type==='await') log('… 第'+d.trick+'回合，點手牌出牌（5s 逾時隨機出）');
+  else if(type==='trick') log('  第'+d.t+'回合 我:'+d.pc+' 對:'+d.oc+
+    (d.verdict ? ' → '+d.verdict.reason+(d.verdict.win?'（勝）':'（敗）') : '（平手續行）')+
+    (d.timeout?'〔逾時代出〕':''));
+  else if(type==='ladder') log('◆ 第'+d.rung+'階達成 M='+DuelCore.fmtX(d.M)+'x（結算值 '+d.M.toFixed(4)+
+    '）可收 '+d.cash.toLocaleString()+'；續戰→帝 '+DuelCore.fmtX(d.nextEmp)+'x／奴 '+DuelCore.fmtX(d.nextSlv)+'x（10s 逾時收手）');
+  else if(type==='settle'){
+    var k={cash:'收手入袋',slam:'滿貫！',full:'十階完賭',bust:'爆——本階失利'}[d.kind];
+    log('■ '+k+(d.via==='timeout'?'〔逾時〕':'')+' 派彩 '+d.payout.toLocaleString()+
+      (d.boosted?('（'+DuelCore.fmtX(d.M)+'x＋加成→'+DuelCore.fmtX(d.boosted)+'x）'):'')+'\n');
+  }
+  else if(type==='timeout') log('⏰ 逾時（'+(d.which==='decide'?'Q2 階梯決策':'Q3 出牌')+'）');
+  else if(type==='error') log('✖ '+d.msg);
+  refresh();
+});
+$('mN').onclick=function(){ g.setMode('normal'); };
+$('mA').onclick=function(){ g.setMode('advanced'); };
+$('go').onclick=function(){ g.bet($('side').value, +$('stake').value); };
+$('ackB').onclick=function(){ g.ack(); };
+$('lcE').onclick=function(){ g.continueRung('emp'); };
+$('lcS').onclick=function(){ g.continueRung('slv'); };
+$('lcC').onclick=function(){ g.cashOut(); };
+$('clr').onclick=function(){ if(g.clearSaved()) log('（存檔已清、錢包重置）'); refresh(); };
+setInterval(function(){
+  var s=g.getState(), dl = s.st && s.st.deadline;
+  $('cd').textContent = dl ? Math.max(0,(dl-Date.now())/1000).toFixed(1)+'s' : '—';
+},200);
+var s0=g.getState();
+if(s0.st) log('（自 localStorage 接回：phase='+s0.phase+' 第'+s0.st.rung+'階 '+NAME[s0.st.side]+'）');
+refresh();
+})();
+</script>

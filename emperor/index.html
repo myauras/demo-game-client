@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0E120F">
+<title>皇帝牌</title>
+<link rel="stylesheet" href="css/game.css">
+<link rel="stylesheet" href="css/advanced.css">
+<link rel="stylesheet" href="css/atmos.css">
+</head>
+<body>
+<div id="app">
+  <!-- ①頂欄：錢包＋模式切換（普通⇄進階，僅 BET 態可切） -->
+  <div class="ptop">
+    <div class="ptl"><span class="wallet">💰 <span id="wal">10,000</span></span><button id="logBtn" class="iconb" title="勝負紀錄">📜</button><span class="streak" id="streak">連勝 0</span></div>
+    <div class="mseg">
+      <button id="mNormal" class="on">普通</button>
+      <button id="mAdv">進階</button>
+    </div>
+  </div>
+
+  <!-- 導演台（?dev=1 才顯示） -->
+  <div id="director">
+    <label for="scriptSel">劇本</label>
+    <select id="scriptSel">
+      <option value="rand">照真實機率抽</option>
+      <option value="win">強制本階勝</option>
+      <option value="lose">強制本階敗</option>
+    </select>
+    <button id="devReset">重置錢包</button>
+  </div>
+
+  <!-- E04 進階模式・上段：❶立繪半身（1 身體＋6 臉差分）＋❷台詞泡泡＋❸對手反向小扇 -->
+  <div id="advTop">
+    <div class="bustz" id="bust">
+      <div class="bwrap"><div class="bbody">
+        <div class="bshould"></div>
+        <div class="bhead"><span class="face" id="faceA"></span><span class="face" id="faceB"></span></div>
+      </div></div>
+      <div class="bubble" id="bubble"></div>
+      <div class="btag" id="btag">對手・從容</div>
+    </div>
+    <div class="ohand"><div class="ofan" id="ofan"></div></div>
+  </div>
+
+  <!-- ③戰報帶（兩機位共用） -->
+  <div class="banner" id="banner">選邊下注開局</div>
+
+  <!-- ②左右對局者＋④中央對決區 -->
+  <div class="specrow">
+    <div class="speccol" id="colE">
+      <div class="avatar aE">👑</div><div class="sidename">皇帝側</div>
+      <div class="vhand" id="lHand"></div>
+    </div>
+    <div class="duel" id="duelZ">
+      <div class="dslot" id="slotL"></div>
+      <div class="dvs">VS</div>
+      <div class="dslot" id="slotR"></div>
+      <div class="flashfx" id="flashZ"></div>
+    </div>
+    <div class="speccol" id="colS">
+      <div class="avatar aS">⛓️</div><div class="sidename">奴隸側</div>
+      <div class="vhand" id="rHand"></div>
+    </div>
+  </div>
+
+  <!-- ❸橫式階梯進度條（對數刻度，貼操作面板上緣） -->
+  <div class="hrail idle" id="hrail">
+    <div class="hrow">
+      <span class="phlab cur" id="railLab">階梯待命</span>
+      <span class="phlab" id="railTop">滿貫 —</span>
+    </div>
+    <div class="phtrack"><div class="phfill" id="railFill"></div><span id="railDots"></span></div>
+  </div>
+
+  <!-- E04 進階模式・下段：❺透視牌桌＋對決區、❻右緣直式階梯、❼玩家扇形手牌 -->
+  <div id="advMain">
+    <div class="table3d">
+      <div class="tabletop">
+        <div class="tduel" id="tduel">
+          <div class="dslot" id="slotO"></div>
+          <div class="dvs">VS</div>
+          <div class="dslot" id="slotP"></div>
+        </div>
+      </div>
+      <div class="flashfx" id="flashA"></div><!-- 閃光層掛透視容器（螢幕座標），不進 3D 平面 -->
+    </div>
+    <div class="vrail idle" id="vrail">
+      <div class="vlab" id="vTop">滿貫<br>—</div>
+      <div class="vtrack"><div class="vfill" id="vfill"></div><span id="vdots"></span></div>
+      <div class="vlab cur" id="vlab">待命</div>
+      <div class="vlab" id="vrung">—</div>
+    </div>
+    <div class="myhand" id="myhand">
+      <div class="hfan" id="hfan"></div>
+      <div class="hint">點一張牌打出</div>
+    </div>
+  </div>
+
+  <!-- E06-R2 自動下注專屬槽（in-flow 固定高度，貼面板上緣；待命淡化占位、進行中橘條；進階模式不佔位） -->
+  <div class="abar" id="abar"><div class="at" id="abarTxt">⟳ 自動下注待命</div><button class="astop" id="abarStop">■ 停止</button></div>
+
+  <!-- ⑥操作面板（下注 ⇄ 對局中／出牌 ⇄ 階梯，三態輪替；兩機位共用） -->
+  <div class="panel" id="panel"></div>
+
+  <!-- 滿貫／完賭大演出（E05 三段揭示：收手值 → ＋頂端加成 → 實付；.s2/.s3 逐段點亮） -->
+  <div id="grand">
+    <div class="gflash"></div>
+    <div class="gtxt">
+      <div class="gtitle" id="gTitle"></div>
+      <div class="gsub" id="gSub"></div>
+      <div class="grow">
+        <div class="gstage g1"><small>收手值</small><b id="gM"></b></div>
+        <span class="garr a2">→</span>
+        <div class="gstage g2"><small>＋頂端加成</small><b id="gBoost"></b></div>
+        <span class="garr a3">→</span>
+        <div class="gstage g3 fin"><small>實付倍率</small><b id="gFinal"></b></div>
+      </div>
+      <div class="gpay" id="gPay"></div>
+    </div>
+  </div>
+
+  <!-- ⟳ 入口鈕（下注面板右下角；進階模式禁用＋提示） -->
+  <button class="autob" id="autoBtn" title="自動下注">⟳</button>
+  <div id="toast"></div>
+  <!-- ❸底部設定彈窗（押邊／押額／自動爬階／局數／停利停損） -->
+  <div class="veil" id="veil"></div>
+  <div class="sheet" id="sheet">
+    <div class="shead"><b>自動下注設定</b><button class="xb" id="sheetX">×</button></div>
+    <div id="sheetBody"></div>
+  </div>
+  <!-- E06 勝負 log 頁（總覽→詳細；錢包重置含確認） -->
+  <div class="lgm" id="lgm">
+    <div class="lgh"><button id="lgBack" class="hid">‹ 返回</button><b id="lgTitle">勝負紀錄</b><button id="lgX">×</button></div>
+    <div class="lgb" id="lgBody"></div>
+    <div class="lgf"><span id="lgCount"></span><span><button id="lgCancel" class="okb" style="display:none;margin-right:6px">取消</button><button id="lgReset">重置錢包</button></span></div>
+  </div>
+</div>
+<script src="values.js"></script>
+<script src="js/duel-core.js"></script>
+<script src="js/ui-advanced.js"></script>
+<script src="js/game-ui.js"></script>
+<script src="js/ui-atmos.js"></script>
+</body>
+</html>
