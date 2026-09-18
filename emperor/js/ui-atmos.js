@@ -17,8 +17,8 @@ var game = U.game, $ = U.$, fmt = U.fmt, fmtX = U.fmtX, NAME = U.NAME, SHOT = U.
 var PERSIST = !SHOT;                                   // 截圖模式與 game-ui 同步：不落地
 var K = { auto:'ecard.auto', cfg:'ecard.autocfg', log:'ecard.log', cur:'ecard.logcur' };
 var LOG_CAP = 50;
-var SIDE_CH = { emp:'帝', slv:'奴' };
-var KIND = { cash:'收手', slam:'滿貫', full:'完賭', bust:'敗' };
+var SIDE_CH = { emp:t('glyph.emp'), slv:t('glyph.slv') };   // E09：路徑小條徽記走字典
+var KIND = { cash:t('kind.cash'), slam:t('kind.slam'), full:t('kind.full'), bust:t('kind.bust') };
 
 function load(k, d){ if(!PERSIST) return d; try{ var r = localStorage.getItem(k); return r ? JSON.parse(r) : d; }catch(e){ return d; } }
 function save(k, v){ if(!PERSIST) return; try{ if(v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
@@ -54,7 +54,7 @@ function rebuildCur(){                                 // 重整接回：存檔�
   for(var i = 0; i < st.path.length; i++)
     cur.rungs.push({ side:st.path[i], win:(i < st.won.length) ? true : null, M:st.hist[i] || null, v:null });
   var sc = st.script, lt = sc ? sc[sc.length - 1] : null, r = cur.rungs[cur.rungs.length - 1];
-  if(r && lt && lt.verdict) r.v = { p:lt.p, o:lt.o, reason:lt.verdict.reason };
+  if(r && lt && lt.verdict) r.v = { p:lt.p, o:lt.o, reason:lt.verdict.reason, code:lt.verdict.code };
   else if(r && st.lastVerdict) r.v = { p:null, o:null, reason:st.lastVerdict.reason };
   save(K.cur, cur);
 }
@@ -62,13 +62,13 @@ function logLock(d){
   var s = game.getState(), st = s.st;
   if(d.rung === 1 || !cur) cur = { ts:Date.now(), mode:s.mode, stake:st.stake0, rungs:[] };
   var r = { side:d.side, win:null, M:null, v:null };
-  if(d.script){ var lt = d.script[d.script.length - 1]; r.v = { p:lt.p, o:lt.o, reason:lt.verdict.reason }; }
+  if(d.script){ var lt = d.script[d.script.length - 1]; r.v = { p:lt.p, o:lt.o, reason:lt.verdict.reason, code:lt.verdict.code }; }
   cur.rungs.push(r); save(K.cur, cur);
 }
 function logTrick(d){
   if(!cur || !d.verdict) return;
   var r = cur.rungs[cur.rungs.length - 1];
-  if(r){ r.v = { p:d.pc, o:d.oc, reason:d.verdict.reason }; save(K.cur, cur); }
+  if(r){ r.v = { p:d.pc, o:d.oc, reason:d.verdict.reason, code:d.verdict.code }; save(K.cur, cur); }
 }
 function logLadder(d){
   if(!cur) rebuildCur();
@@ -122,55 +122,56 @@ dragScroll($('lgBody')); dragScroll($('sheetBody'));
 var lgOpen = false, lgView = 'ov', lgIdx = -1, resetArmed = false;
 function renderLog(){
   var body = $('lgBody'), back = $('lgBack'), title = $('lgTitle');
-  if(lgView === 'dt' && log[lgIdx]){ back.classList.remove('hid'); title.textContent = '對局詳細'; body.innerHTML = htmlDetail(log[lgIdx]); }
-  else { lgView = 'ov'; back.classList.add('hid'); title.textContent = '勝負紀錄'; body.innerHTML = htmlOverview(); }
-  $('lgCount').textContent = log.length + '／' + LOG_CAP + ' 筆';
+  if(lgView === 'dt' && log[lgIdx]){ back.classList.remove('hid'); title.textContent = t('log.detail'); body.innerHTML = htmlDetail(log[lgIdx]); }
+  else { lgView = 'ov'; back.classList.add('hid'); title.textContent = t('log.title'); body.innerHTML = htmlOverview(); }
+  $('lgCount').textContent = t('log.count', { n:log.length, cap:LOG_CAP });
   var rb = $('lgReset');
-  rb.textContent = resetArmed ? '確認重置？' : '重置錢包';
+  rb.textContent = resetArmed ? t('log.resetAsk') : t('log.reset');
   rb.className = resetArmed ? 'warnb' : '';
   $('lgCancel').style.display = resetArmed ? '' : 'none';
 }
 function htmlOverview(){
-  if(!log.length) return '<div class="lempty">尚無紀錄——選邊下注開局後，每局結果會列在這裡</div>';
+  if(!log.length) return '<div class="lempty">' + t('log.empty') + '</div>';
   var h = '';
   for(var i = log.length - 1; i >= 0; i--){
     var e = log[i], win = e.kind !== 'bust', top = (e.kind === 'slam' || e.kind === 'full');
     h += '<div class="lrowi" data-i="' + i + '">' +
-      '<div class="lt">' + fmtTime(e.ts) + '<i>' + (e.mode === 'advanced' ? '進' : '普') + '</i></div>' +
+      '<div class="lt">' + fmtTime(e.ts) + '<i>' + t(e.mode === 'advanced' ? 'log.tagAdv' : 'log.tagNor') + '</i></div>' +
       '<div class="lp">' + pathChips(e.rungs.map(function(r){ return r.side; })) + '</div>' +
       '<div class="ls">' + fmt(e.stake) + '</div>' +
       '<div class="lk ' + (top ? 'kt' : win ? 'kc' : '') + '">' + KIND[e.kind] + '</div>' +
       '<div class="lv ' + (win ? 'gold' : 'grey') + '">' + signed(e.pnl) + '</div></div>';
   }
-  return h + '<div class="lnotef">損益＝派彩−押額；金＝入袋、灰＝敗。倍率顯示 2 位無條件捨去、結算全精度（規格 §Q1）。</div>';
+  return h;                                            // R2 使用者裁決：總覽底部註解移除
 }
 function htmlDetail(e){
   var win = e.kind !== 'bust', top = (e.kind === 'slam' || e.kind === 'full');
   var h = '<div class="ldh">' +
     '<div class="big ' + (win ? 'gold' : 'grey') + '">' + signed(e.pnl) + '</div>' +
-    '<div class="kv"><span>時間</span><span>' + fmtTime(e.ts) + '</span></div>' +
-    '<div class="kv"><span>模式</span><span>' + (e.mode === 'advanced' ? '進階（親手出牌）' : '普通（觀賽）') + '</span></div>' +
-    '<div class="kv"><span>押額</span><span>' + fmt(e.stake) + '</span></div>' +
-    '<div class="kv"><span>路徑</span><span>' + pathChips(e.rungs.map(function(r){ return r.side; })) + '　' + e.rungs.length + ' 階</span></div>' +
-    '<div class="kv"><span>結果</span><span>' + KIND[e.kind] + (e.via === 'timeout' ? '（逾時自動）' : e.via === 'auto' && e.kind !== 'bust' ? '（系統代收）' : '') + '</span></div>';
+    '<div class="kv"><span>' + t('log.time') + '</span><span>' + fmtTime(e.ts) + '</span></div>' +
+    '<div class="kv"><span>' + t('log.mode') + '</span><span>' + t(e.mode === 'advanced' ? 'log.modeAdv' : 'log.modeNor') + '</span></div>' +
+    '<div class="kv"><span>' + t('log.stake') + '</span><span>' + fmt(e.stake) + '</span></div>' +
+    '<div class="kv"><span>' + t('log.path') + '</span><span>' + pathChips(e.rungs.map(function(r){ return r.side; })) + '　' + t('log.rungs', { n:e.rungs.length }) + '</span></div>' +
+    '<div class="kv"><span>' + t('log.result') + '</span><span>' + KIND[e.kind] + (e.via === 'timeout' ? t('log.viaTo') : e.via === 'auto' && e.kind !== 'bust' ? t('log.viaAuto') : '') + '</span></div>';
   if(win){
     if(top){
-      h += '<div class="kv"><span>收手值</span><span>' + fmtX(e.M) + 'x</span></div>' +
-           '<div class="kv"><span>頂端加成</span><span>×' + EV.TOP_BOOST.toFixed(4) + ' → 實付 ' + fmtX(e.boosted) + 'x</span></div>';
-    } else h += '<div class="kv"><span>收手值</span><span>' + fmtX(e.M) + 'x</span></div>';
-    h += '<div class="kv"><span>實付</span><span>' + fmt(e.payout) + '</span></div>';
-  } else h += '<div class="kv"><span>實付</span><span>0（押額 ' + fmt(e.stake) + ' 沒收）</span></div>';
-  h += '</div><div class="ldt">逐階</div>';
+      h += '<div class="kv"><span>' + t('log.m') + '</span><span>' + fmtX(e.M) + 'x</span></div>' +
+           '<div class="kv"><span>' + t('log.boost') + '</span><span>' + t('log.boostVal', { x:EV.TOP_BOOST.toFixed(4), pay:fmtX(e.boosted) }) + '</span></div>';
+    } else h += '<div class="kv"><span>' + t('log.m') + '</span><span>' + fmtX(e.M) + 'x</span></div>';
+    h += '<div class="kv"><span>' + t('log.pay') + '</span><span>' + fmt(e.payout) + '</span></div>';
+  } else h += '<div class="kv"><span>' + t('log.pay') + '</span><span>' + t('log.payNone', { n:fmt(e.stake) }) + '</span></div>';
+  h += '</div><div class="ldt">' + t('log.byRung') + '</div>';
   for(var i = 0; i < e.rungs.length; i++){
     var r = e.rungs[i], v = r.v;
-    var vt = v ? (v.reason || '—') + (v.p ? '<small>' + v.p + ' vs ' + v.o + '</small>' : '') : '—';
-    h += '<div class="rg"><div class="rn">第 ' + (i + 1) + ' 階</div>' +
+    var vt = v ? (v.code ? t('verdict.' + v.code) : (v.reason || t('rail.dash'))) +          // E09：新紀錄查 code；舊存檔沒有 code 就退回原 reason
+      (v.p ? '<small>' + tch(v.p) + ' vs ' + tch(v.o) + '</small>' : '') : t('rail.dash');
+    h += '<div class="rg"><div class="rn">' + t('log.rung', { n:i + 1 }) + '</div>' +
       '<div>' + NAME[r.side] + '</div>' +
-      '<div class="rw ' + (r.win ? 'w' : 'l') + '">' + (r.win ? '勝' : '敗') + '</div>' +
+      '<div class="rw ' + (r.win ? 'w' : 'l') + '">' + t(r.win ? 'log.win' : 'log.lose') + '</div>' +
       '<div class="rv">' + vt + '</div>' +
       '<div class="rm">' + (r.win && r.M != null ? fmtX(r.M) + 'x' : '—') + '</div></div>';
   }
-  return h + '<div class="lnotef">累積倍率＝收手值 M＝0.93×Π(1/p)；玩到頂（滿貫／完賭）另享頂端加成。</div>';
+  return h + '<div class="lnotef">' + t('log.noteDt') + '</div>';
 }
 function lgShow(on){
   lgOpen = on; resetArmed = false;
@@ -178,12 +179,12 @@ function lgShow(on){
   $('lgm').classList.toggle('show', on);
 }
 function walletReset(){
-  if(game.getState().st){ toast('對局中不可重置'); resetArmed = false; renderLog(); return; }
-  if(A.on) autoEnd('錢包重置');
+  if(game.getState().st){ toast(t('log.noReset')); resetArmed = false; renderLog(); return; }
+  if(A.on) autoEnd(t('auto.endReset'));
   game.clearSaved();
   log = []; saveLog(); cur = null; save(K.cur, null);
   resetArmed = false; lgView = 'ov'; renderLog(); renderStreak();
-  toast('錢包已重置為 ' + fmt(game.getState().wallet) + '，紀錄已清空');
+  toast(t('log.resetDone', { n:fmt(game.getState().wallet) }));
 }
 
 /* =========================================================================
@@ -192,7 +193,7 @@ function walletReset(){
 function renderStreak(){
   var i, streak = 0;
   for(i = log.length - 1; i >= 0 && log[i].kind !== 'bust'; i--) streak++;
-  $('streak').innerHTML = '連勝 <b>' + streak + '</b>';
+  $('streak').innerHTML = t('top.streakHTML', { n:streak });
 }
 
 /* =========================================================================
@@ -209,11 +210,11 @@ function setBtn(){
   b.classList.toggle('show', bet);
   var dis = (s.mode !== 'normal');
   b.classList.toggle('dis', dis);
-  b.title = dis ? '進階模式需親手出牌' : '自動下注';
+  b.title = dis ? t('auto.advOnly') : t('auto.btn');
 }
 $('autoBtn').onclick = function(){
   var s = game.getState();
-  if(s.mode !== 'normal'){ toast('進階模式需親手出牌，自動下注僅限普通模式'); return; }
+  if(s.mode !== 'normal'){ toast(t('auto.advToast')); return; }
   if(s.phase !== 'BET' || s.st || A.on) return;
   sheetShow(true);
 };
@@ -227,20 +228,19 @@ function seg(key, list, labels, onCls){
 function renderSheet(){
   var climbOn = cfg.climb > 0;
   $('sheetBody').innerHTML =
-    '<div class="srow"><span class="slab">押邊</span>' + seg('side', ['emp','slv','alt'], ['皇帝側','奴隸側','每局交替']) + '</div>' +
-    '<div class="srow"><span class="slab">押額</span>' + seg('stake', [100,500,1000], ['100','500','1,000']) + '</div>' +
-    '<div class="srow"><span class="slab">自動爬階</span>' +
-      '<div class="seg" data-k="climbmode"><button data-v="0" class="' + (climbOn ? '' : 'on') + '">不爬</button>' +
-      '<button data-v="1" class="' + (climbOn ? 'onG' : '') + '">爬到第 X 階</button></div>' +
+    '<div class="srow"><span class="slab">' + t('auto.side') + '</span>' + seg('side', ['emp','slv','alt'], [t('side.emp'), t('side.slv'), t('auto.alt')]) + '</div>' +
+    '<div class="srow"><span class="slab">' + t('bet.stake') + '</span>' + seg('stake', [100,500,1000], ['100','500','1,000']) + '</div>' +
+    '<div class="srow"><span class="slab">' + t('auto.climb') + '</span>' +
+      '<div class="seg" data-k="climbmode"><button data-v="0" class="' + (climbOn ? '' : 'on') + '">' + t('auto.noClimb') + '</button>' +
+      '<button data-v="1" class="' + (climbOn ? 'onG' : '') + '">' + t('auto.climbTo') + '</button></div>' +
       '<div class="stepr"><button id="clMinus"' + (climbOn && cfg.climb > 2 ? '' : ' disabled') + '>−</button>' +
-      '<b>' + (climbOn ? '第 ' + cfg.climb + ' 階' : '不爬') + '</b>' +
+      '<b>' + (climbOn ? t('auto.climbN', { n:cfg.climb }) : t('auto.noClimb')) + '</b>' +
       '<button id="clPlus"' + (climbOn && cfg.climb < EV.CFG.MAX_RUNG ? '' : ' disabled') + '>＋</button></div></div>' +
-    '<div class="srow"><span class="slab">局數</span>' + seg('rounds', [10,20,50], ['10','20','50']) + '</div>' +
-    '<div class="srow"><span class="slab">停利</span>' + seg('tp', TP, ['不設','+1,000','+2,000','+5,000'], 'onG') + '</div>' +
-    '<div class="srow"><span class="slab">停損</span>' + seg('sl', SL, ['不設','−500','−1,500','−3,000'], 'onS') + '</div>' +
-    '<div class="snote">「不爬」＝每局單注贏即收；爬階續戰一律同邊、到第 X 階收手；越滿貫線 ' + EV.CFG.SLAM_LINE + 'x 或 ' + EV.CFG.MAX_RUNG + ' 階完賭照常系統代收（享頂端加成）。' +
-      '停利／停損以每次入袋時點的累計損益判定。RTP 明碼兩檔：提早收手 ' + EV.CFG.RTP_CASH + '／玩到頂 ' + EV.CFG.RTP_TOP + '。</div>' +
-    '<button class="sgo" id="sheetGo">開始自動下注</button>';
+    '<div class="srow"><span class="slab">' + t('auto.rounds') + '</span>' + seg('rounds', [10,20,50], ['10','20','50']) + '</div>' +
+    '<div class="srow"><span class="slab">' + t('auto.tp') + '</span>' + seg('tp', TP, [t('auto.off'),'+1,000','+2,000','+5,000'], 'onG') + '</div>' +
+    '<div class="srow"><span class="slab">' + t('auto.sl') + '</span>' + seg('sl', SL, [t('auto.off'),'−500','−1,500','−3,000'], 'onS') + '</div>' +
+    '<div class="snote">' + t('auto.note', { line:EV.CFG.SLAM_LINE, max:EV.CFG.MAX_RUNG, rtpc:EV.CFG.RTP_CASH, rtpt:EV.CFG.RTP_TOP }) + '</div>' +
+    '<button class="sgo" id="sheetGo">' + t('auto.go') + '</button>';
   var segs = $('sheetBody').querySelectorAll('.seg button');
   Array.prototype.forEach.call(segs, function(b){
     b.onclick = function(){
@@ -266,26 +266,26 @@ $('sheetX').onclick = function(){ sheetShow(false); };
 /* R2 自動下注專屬槽（in-flow）：進行中橘條；待命淡化占位「⟳ 自動下注待命」 */
 function barRender(){
   var b = $('abar');
-  $('abarTxt').innerHTML = '⟳ 自動下注中　<span>第 ' + A.n + '/' + A.cfg.rounds + ' 局・累計 ' + signed(A.pnl) +
-    (A.stopping ? '・停止中…' : '') + '</span>';
+  $('abarTxt').innerHTML = t('auto.running', { n:A.n, total:A.cfg.rounds, pnl:signed(A.pnl),
+    tail:A.stopping ? t('auto.stopping') : '' });
   b.classList.toggle('stopping', A.stopping);
 }
 function barShow(on){
   $('abar').classList.toggle('on', on);
-  if(!on) $('abarTxt').textContent = '⟳ 自動下注待命';
+  if(!on) $('abarTxt').textContent = t('auto.idle');
 }
 $('abarStop').onclick = function(){
   if(!A.on || A.stopping) return;
   if(game.getState().st){ A.stopping = true; barRender(); }   // 本局由 core 照常結清（階梯時程式代按收手）
-  else autoEnd('已手動停止');
+  else autoEnd(t('auto.endStop'));
 };
 
 function autoSave(){ save(K.auto, A.on ? { n:A.n, N:A.cfg.rounds, pnl:A.pnl } : null); }
 function autoStart(){
   var s = game.getState();
-  if(s.mode !== 'normal'){ toast('進階模式需親手出牌'); return; }
-  if(s.phase !== 'BET' || s.st){ toast('對局進行中，請稍候'); return; }
-  if(s.wallet < cfg.stake){ toast('餘額不足（' + fmt(s.wallet) + ' < ' + fmt(cfg.stake) + '），無法開始'); return; }
+  if(s.mode !== 'normal'){ toast(t('auto.advOnly')); return; }
+  if(s.phase !== 'BET' || s.st){ toast(t('auto.busy')); return; }
+  if(s.wallet < cfg.stake){ toast(t('auto.noMoney', { have:fmt(s.wallet), need:fmt(cfg.stake) })); return; }
   save(K.cfg, cfg);
   A.on = true; A.stopping = false; A.cfg = merge({}, cfg); A.n = 0; A.pnl = 0; A.side = null;
   sheetShow(false); barRender(); barShow(true); autoSave(); setBtn();
@@ -299,12 +299,12 @@ function nextRound(delay){
     if(!A.on || A.stopping) return;
     var s = game.getState();
     if(s.phase !== 'BET' || s.st){ nextRound(400); return; }             // 面板尚未歸位再等
-    if(A.n >= A.cfg.rounds){ autoEnd('跑滿 ' + A.cfg.rounds + ' 局'); return; }
-    if(s.wallet < A.cfg.stake){ autoEnd('餘額不足（' + fmt(s.wallet) + ' < ' + fmt(A.cfg.stake) + '）'); return; }
+    if(A.n >= A.cfg.rounds){ autoEnd(t('auto.endDone', { n:A.cfg.rounds })); return; }
+    if(s.wallet < A.cfg.stake){ autoEnd(t('auto.noMoney2', { have:fmt(s.wallet), need:fmt(A.cfg.stake) })); return; }
     var side = pickSide();
     A.n++; A.side = side; barRender(); autoSave();
     U.armForce();                                                         // 導演台劇本照常生效（測試用）
-    if(!game.bet(side, A.cfg.stake)){ A.n--; autoEnd('下注失敗'); }
+    if(!game.bet(side, A.cfg.stake)){ A.n--; autoEnd(t('auto.endFail')); }
   }, delay || 0);
 }
 function autoLadder(d){                                                   // Q2 決策由程式代按（不靠逾時）
@@ -320,14 +320,14 @@ function autoLadder(d){                                                   // Q2 
 function autoSettle(d){
   A.pnl += d.payout - A.cfg.stake; barRender(); autoSave();
   var wait = d.kind === 'cash' ? 900 : d.kind === 'bust' ? 2000 : U.GRAND_MS + 500;   // 等 game-ui 收幕再開下一局
-  if(A.stopping){ autoEnd('已手動停止', wait); return; }
-  if(A.cfg.tp > 0 && A.pnl >= A.cfg.tp){ autoEnd('達停利 +' + fmt(A.cfg.tp), wait); return; }
-  if(A.cfg.sl > 0 && A.pnl <= -A.cfg.sl){ autoEnd('達停損 −' + fmt(A.cfg.sl), wait); return; }
-  if(A.n >= A.cfg.rounds){ autoEnd('跑滿 ' + A.cfg.rounds + ' 局', wait); return; }
+  if(A.stopping){ autoEnd(t('auto.endStop'), wait); return; }
+  if(A.cfg.tp > 0 && A.pnl >= A.cfg.tp){ autoEnd(t('auto.endTp', { n:fmt(A.cfg.tp) }), wait); return; }
+  if(A.cfg.sl > 0 && A.pnl <= -A.cfg.sl){ autoEnd(t('auto.endSl', { n:fmt(A.cfg.sl) }), wait); return; }
+  if(A.n >= A.cfg.rounds){ autoEnd(t('auto.endDone', { n:A.cfg.rounds }), wait); return; }
   nextRound(wait);
 }
 function autoEnd(reason, delay){
-  var summary = '自動下注結束：' + reason + '　' + A.n + ' 局・累計 ' + signed(A.pnl);
+  var summary = t('auto.end', { reason:reason, n:A.n, pnl:signed(A.pnl) });
   A.on = false; A.stopping = false;
   if(A.t){ clearTimeout(A.t); A.t = null; }
   autoSave();
@@ -343,7 +343,7 @@ game.on(function(type, d){
   else if(type === 'trick') logTrick(d);
   else if(type === 'ladder'){ logLadder(d); if(A.on) autoLadder(d); }
   else if(type === 'settle'){ logSettle(d); if(A.on) autoSettle(d); }
-  else if(type === 'mode' && A.on && d.mode !== 'normal') autoEnd('切換至進階模式');
+  else if(type === 'mode' && A.on && d.mode !== 'normal') autoEnd(t('auto.endMode'));
   setBtn();
 });
 $('logBtn').onclick = function(){ lgShow(true); };
@@ -360,7 +360,7 @@ $('lgCancel').onclick = function(){ resetArmed = false; renderLog(); };
 (function boot(){
   var ab = load(K.auto, null);
   if(ab){ save(K.auto, null); setTimeout(function(){
-    toast('重整後自動下注已中止（原第 ' + ab.n + '/' + ab.N + ' 局・累計 ' + signed(ab.pnl) + '）', 4200); }, 400); }
+    toast(t('auto.aborted', { n:ab.n, total:ab.N, pnl:signed(ab.pnl) }), 4200); }, 400); }
   if(game.getState().st) rebuildCur(); else if(cur){ cur = null; save(K.cur, null); }
   renderStreak(); setBtn();
   setInterval(setBtn, 500);                            // 面板三態切換無事件可掛（如 timeout 收手），輪詢補位

@@ -38,10 +38,11 @@ function railPct(m){
 function verdict(pc, oc){
   if(pc===CIT && oc===CIT) return null;
   var win, reason;
-  if(pc==='帝'){ if(oc==='奴'){win=false;reason='奴弒帝！';} else {win=true; reason='帝斬民！';} }
-  else if(pc==='奴'){ if(oc==='帝'){win=true; reason='奴弒帝！';} else {win=false;reason='民擒奴！';} }
-  else { if(oc==='帝'){win=false;reason='帝斬民！';} else {win=true; reason='民擒奴！';} }
-  return { win:win, reason:reason };
+  var code;                                          // E09：UI 一律查 code 取字典文案；reason 原字串保留（log／mc-test 相容）
+  if(pc==='帝'){ if(oc==='奴'){win=false;reason='奴弒帝！';code='slv_emp';} else {win=true; reason='帝斬民！';code='emp_cit';} }
+  else if(pc==='奴'){ if(oc==='帝'){win=true; reason='奴弒帝！';code='slv_emp';} else {win=false;reason='民擒奴！';code='cit_slv';} }
+  else { if(oc==='帝'){win=false;reason='帝斬民！';code='emp_cit';} else {win=true; reason='民擒奴！';code='cit_slv';} }
+  return { win:win, reason:reason, code:code };
 }
 
 /* ---------- 普通模式腳本（結果反推編排；決勝回合偏後段＝活原型 2/3/4/4/5/5）

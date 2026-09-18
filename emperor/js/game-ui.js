@@ -10,10 +10,11 @@
 var $ = function(id){ return document.getElementById(id); };
 var fmt = function(n){ return n.toLocaleString('en-US'); };
 var fmtX = DuelCore.fmtX;                       // Q1：面上 2 位無條件捨去
-var NAME = { emp:'皇帝側', slv:'奴隸側' };
+var NAME = { emp:t('side.emp'), slv:t('side.slv') };   // E09：顯示用全稱走字典（cls() 判樣式仍吃核心的 帝／奴／民 字元）
 var qs = new URLSearchParams(location.search);
 var DEV = qs.get('dev') === '1';
 var SHOT = qs.get('shot') || '';                // 截圖自動駕駛：slam／ladder3（連押奴隸）、full／full9（連押皇帝）、adv-*（進階）
+if(qs.get('skin') === 'b') document.documentElement.setAttribute('data-skin','b');      // E09：預設 A 版（只換圖不調色）；?skin=b 切三色語彙版
 if(qs.get('vw')){                               // 截圖輔助：headless 有最小視窗寬，鎖 app 寬靠左供裁圖
   var appEl = document.getElementById('app');
   appEl.style.maxWidth = qs.get('vw') + 'px'; appEl.style.margin = '0';
@@ -67,12 +68,12 @@ if(qs.get('rm') === '1') RM = true;             // 測試用：強制 reduced-mo
 else document.documentElement.setAttribute('data-fx', '1');   // 讓 CSS 的 reduced-motion 降級規則不生效（?fx=1 保留但已無作用）
 function cls(ch){ return ch==='帝' ? 'demp' : (ch==='奴' ? 'dslv' : 'dmin'); }
 function slot(el, ch, noPop){
-  el.className = 'dslot'; el.textContent = '';
+  el.className = 'dslot'; el.innerHTML = '';
   if(ch === null) return;
-  if(ch === '?'){ el.classList.add('filled','dback'); return; }
-  el.classList.add('filled', cls(ch));
+  if(ch === '?'){ el.classList.add('filled','dback'); return; }   // 卡背圖
+  el.classList.add('filled', cls(ch));                            // 卡面圖（CSS background-image）
   if(!noPop) el.classList.add('pop');
-  el.textContent = ch;
+  el.innerHTML = '<i class="rk">' + tch(ch) + '</i>';             // E08 角落徽記；E09：徽記文字走字典（tch）
 }
 function clearDuel(){
   slot(slotL, null); slot(slotR, null);
@@ -127,8 +128,9 @@ function sliceCard(slotEl, ch, host){            // host：對決區容器（E04
   var fx = document.createElement('div'); fx.className = 'cutfx';
   fx.style.left = slotEl.offsetLeft + 'px'; fx.style.top = slotEl.offsetTop + 'px';   // 版面座標（3D 平面內亦正確）
   fx.style.width = slotEl.offsetWidth + 'px'; fx.style.height = slotEl.offsetHeight + 'px';
-  fx.innerHTML = '<div class="half hT ' + cls(ch) + '">' + ch + '</div>' +
-                 '<div class="half hB ' + cls(ch) + '">' + ch + '</div>' +
+  // E08：兩半各自帶卡面圖——半片是「整張大小＋clip-path」，故 background cover 取景自動與原牌對齊
+  fx.innerHTML = '<div class="half hT ' + cls(ch) + '"><i class="rk">' + tch(ch) + '</i></div>' +
+                 '<div class="half hB ' + cls(ch) + '"><i class="rk">' + tch(ch) + '</i></div>' +
                  '<div class="slash"></div>';
   host.appendChild(fx);
   slotEl.classList.add('ghosted');
@@ -154,23 +156,23 @@ function renderHands(used){                      // 每回合雙方各消耗一�
 }
 
 /* ---------- 橫式階梯進度條（對數刻度＝core railPct；填充只動 transform） ---------- */
-$('railTop').textContent = '滿貫 ' + EV.CFG.SLAM_LINE + 'x';
+$('railTop').textContent = t('rail.top', { line:EV.CFG.SLAM_LINE });
 function railWord(st){                          // 兩機位共用語彙：挑戰中／達成／滿貫／完賭
-  if(st.fin) return st.kind === 'slam' ? '滿貫' : '完賭';
-  return st.hist.length < st.rung ? '挑戰中' : '達成';
+  if(st.fin) return st.kind === 'slam' ? t('rail.slam') : t('rail.full');
+  return st.hist.length < st.rung ? t('rail.climbing') : t('rail.reached');
 }
 function railRender(fin){                        // fin：結算快照 {M,rung,hist,fin,kind}——滿貫／完賭演出期間維持滿格、不掉回待命
   var s = game.getState(), st = fin || s.st, rail = $('hrail'), dots = $('railDots');
   if(!st){
     rail.classList.add('idle');
-    $('railLab').textContent = '階梯待命';
+    $('railLab').textContent = t('rail.idle');
     $('railFill').style.transform = 'scaleX(0)';
     dots.innerHTML = '';
     return;
   }
   rail.classList.remove('idle');
   var p = DuelCore.railPct(st.M);
-  $('railLab').textContent = fmtX(st.M) + 'x・' + st.rung + '階' + railWord(st);
+  $('railLab').textContent = t('rail.cur', { m:fmtX(st.M), n:st.rung, word:railWord(st) });
   $('railFill').style.transform = 'scaleX(' + (p / 100).toFixed(4) + ')';
   dots.innerHTML = st.hist.map(function(m){
     return '<span class="phdot" style="left:' + DuelCore.railPct(m).toFixed(1) + '%"></span>';
@@ -189,14 +191,14 @@ function panelBet(){
   var oE = fmtX(EV.baseOdds('emp')), oS = fmtX(EV.baseOdds('slv'));
   panel.innerHTML =
     '<div class="siderow">' +
-      '<button class="sidebtn" id="sbE"><b>皇帝側</b><small>' + oE + 'x・勝率 ' + (EV.CFG.P.emp*100) + '%</small></button>' +
-      '<button class="sidebtn" id="sbS"><b>奴隸側</b><small>' + oS + 'x・勝率 ' + (EV.CFG.P.slv*100) + '%</small></button></div>' +
-    '<div class="chiprow"><span class="chiplab">押額</span>' +
+      '<button class="sidebtn" id="sbE"><b>' + t('side.emp') + '</b><small>' + t('bet.odds', { odds:oE, pct:EV.CFG.P.emp*100 }) + '</small></button>' +
+      '<button class="sidebtn" id="sbS"><b>' + t('side.slv') + '</b><small>' + t('bet.odds', { odds:oS, pct:EV.CFG.P.slv*100 }) + '</small></button></div>' +
+    '<div class="chiprow"><span class="chiplab">' + t('bet.stake') + '</span>' +
       [100,500,1000].map(function(v){
         return '<button class="chip' + (v===pickChip?' on':'') + '" data-v="' + v + '">' + fmt(v) + '</button>';
       }).join('') + '</div>' +
-    '<button class="gobtn" id="goBet" disabled>確認下注</button>' +
-    '<div class="msg" id="pmsg">顯示賠率為保守下限（結算全精度）</div>';
+    '<button class="gobtn" id="goBet" disabled>' + t('bet.go') + '</button>' +
+    '<div class="msg" id="pmsg">' + t('bet.hint') + '</div>';
   $('sbE').onclick = function(){ pickSide='emp'; this.classList.add('selE'); $('sbS').classList.remove('selS'); $('goBet').disabled=false; };
   $('sbS').onclick = function(){ pickSide='slv'; this.classList.add('selS'); $('sbE').classList.remove('selE'); $('goBet').disabled=false; };
   Array.prototype.forEach.call(panel.querySelectorAll('.chip'), function(c){
@@ -213,18 +215,18 @@ function panelBet(){
 }
 function panelLock(side, stake){
   stopCountdown();
-  panel.innerHTML = '<div class="lockmsg">— 對局進行中 —<br>' +
-    '<span style="font-size:11.5px">押 ' + NAME[side] + '・' + fmt(stake) + '</span></div>';
+  panel.innerHTML = '<div class="lockmsg">' + t('lock.title') + '<br>' +
+    '<span style="font-size:11.5px">' + t('lock.sub', { side:NAME[side], stake:fmt(stake) }) + '</span></div>';
 }
 /* E05 決策提示：下一階若觸頂——越滿貫線標「→ 滿貫！」、第 MAX_RUNG 階標「→ 完賭」（皆走 EV.isTop，零硬編碼） */
 function hintTag(next, rung){
   if(!EV.isTop(next, rung + 1)) return '';
-  return next >= EV.CFG.SLAM_LINE ? '<em class="slam">→ 滿貫！</em>' : '<em class="full">→ 完賭</em>';
+  return next >= EV.CFG.SLAM_LINE ? '<em class="slam">' + t('ladder.toSlam') + '</em>' : '<em class="full">' + t('ladder.toFull') + '</em>';
 }
 function pathChips(path){                        // 本局路徑小條：帝／奴序列（選配）
   if(!path || !path.length) return '';
   return '<span class="lpath">' + path.map(function(s){
-    return '<i class="' + (s==='emp' ? 'pe' : 'ps') + '">' + (s==='emp' ? '帝' : '奴') + '</i>'; }).join('') + '</span>';
+    return '<i class="' + (s==='emp' ? 'pe' : 'ps') + '">' + (s==='emp' ? t('glyph.emp') : t('glyph.slv')) + '</i>'; }).join('') + '</span>';
 }
 function shotAuto(rung){                          // 截圖自動駕駛：階梯決策態自動續戰（null＝凍結在決策態）
   if(SHOT === 'slam' || SHOT === 'adv-slam') return 'slv';
@@ -239,14 +241,13 @@ function panelLadder(d){                          // d：{M,rung,cash,nextEmp,ne
   panel.innerHTML =
     '<div class="ladder">' +
       '<div class="cring" id="cring"><span class="cnum" id="cnum"></span><span class="chand" id="chand"></span></div>' +
-      '<div class="ltitle">第 ' + d.rung + ' 階達成' + pathChips(st.path) + '</div>' +
-      '<div class="lm">' + fmtX(d.M) + 'x　→　可收 ' + fmt(d.cash) + '</div>' +
+      '<div class="ltitle">' + t('ladder.title', { n:d.rung }) + pathChips(st.path) + '</div>' +
+      '<div class="lm">' + t('ladder.m', { m:fmtX(d.M), cash:fmt(d.cash) }) + '</div>' +
       '<div class="lrow">' +
-        '<button class="bt-emp" id="lcE">續戰・皇帝側<br>成 ' + fmtX(d.nextEmp) + 'x' + hintTag(d.nextEmp, d.rung) + '</button>' +
-        '<button class="bt-slv" id="lcS">續戰・奴隸側<br>成 ' + fmtX(d.nextSlv) + 'x' + hintTag(d.nextSlv, d.rung) + '</button>' +
-        '<button class="bt-cash" id="lcC">收手入袋<br>+' + fmt(d.cash) + '</button></div>' +
-      '<div class="lnote">滿貫線 ' + EV.CFG.SLAM_LINE + 'x・玩到頂（越線／' + EV.CFG.MAX_RUNG +
-        ' 階完賭）享頂端加成・逾時視同收手</div></div>';
+        '<button class="bt-emp" id="lcE">' + t('ladder.emp') + '<br>' + t('ladder.next', { x:fmtX(d.nextEmp) }) + hintTag(d.nextEmp, d.rung) + '</button>' +
+        '<button class="bt-slv" id="lcS">' + t('ladder.slv') + '<br>' + t('ladder.next', { x:fmtX(d.nextSlv) }) + hintTag(d.nextSlv, d.rung) + '</button>' +
+        '<button class="bt-cash" id="lcC">' + t('ladder.cash') + '<br>+' + fmt(d.cash) + '</button></div>' +
+      '<div class="lnote">' + t('ladder.note', { line:EV.CFG.SLAM_LINE, max:EV.CFG.MAX_RUNG }) + '</div></div>';
   $('lcE').onclick = function(){ armForce(); game.continueRung('emp'); };
   $('lcS').onclick = function(){ armForce(); game.continueRung('slv'); };
   $('lcC').onclick = function(){ game.cashOut(); };
@@ -273,7 +274,7 @@ function beginPlayback(side, rung, script, stake){
   pb = { side:side, script:script, i:0, used:0 };
   clearDuel(); renderHands(0); railRender();
   panelLock(side, stake);
-  bannerFade('封盤・勝負已定（' + NAME[side] + '・第 ' + rung + ' 階）');
+  bannerFade(t('banner.seal', { side:NAME[side], n:rung }));
   setTimeout(step, 1000);                         // 鎖定 0.3s 淡入＋停留
 }
 function step(){
@@ -281,7 +282,7 @@ function step(){
   var tr = pb.script[pb.i];
   var lc = pb.side==='emp' ? tr.p : tr.o;         // 觀賽固定：左＝皇帝側、右＝奴隸側
   var rc = pb.side==='emp' ? tr.o : tr.p;
-  banner('第 ' + (pb.i + 1) + ' 回合');
+  banner(t('banner.trick', { n:pb.i + 1 }));
   if(!tr.decisive){                               // 平手：蓋牌齊飛→落定齊翻→對碰快切
     flyIn(true, slotL, lc); flyIn(false, slotR, rc);
     pb.used++;
@@ -303,7 +304,8 @@ function step(){
       flipTo(later, laterCh, function(){
         if(!pb) return;
         flash(); clash();
-        banner(tr.verdict.reason + '　' + NAME[pb.side] + (tr.verdict.win ? '（你押的）獲勝' : '落敗'));
+        banner(t('banner.verdict', { reason:t('verdict.' + tr.verdict.code), side:NAME[pb.side],
+          res:tr.verdict.win ? t('verdict.win') : t('verdict.lose') }));   // E09：查 core 的 code，不用 reason 原字串
         var loserSlot = tr.verdict.win ? later : first; // 敗方牌：斬切兩半
         var loserCh   = tr.verdict.win ? laterCh : firstCh;
         setTimeout(function(){ if(pb) sliceCard(loserSlot, loserCh); }, 180);
@@ -320,19 +322,19 @@ var grandT = [];
 function grandShow(d){                            // d：{kind:slam|full, M, boosted, payout, wallet}
   var g = $('grand'), slam = (d.kind === 'slam');
   grandT.forEach(clearTimeout); grandT = [];
-  $('gTitle').textContent = slam ? '滿貫達成！' : '十階完賭！';
-  $('gSub').textContent = slam ? '越過滿貫線 ' + EV.CFG.SLAM_LINE + 'x——系統代收、享頂端加成'
-                               : '達 ' + EV.CFG.MAX_RUNG + ' 階上限——系統代收、享頂端加成';
+  $('gTitle').textContent = slam ? t('grand.slam') : t('grand.full');
+  $('gSub').textContent = slam ? t('grand.slamSub', { line:EV.CFG.SLAM_LINE })
+                               : t('grand.fullSub', { max:EV.CFG.MAX_RUNG });
   $('gM').textContent = fmtX(d.M) + 'x';
   $('gBoost').textContent = '×' + EV.TOP_BOOST.toFixed(4);
   $('gFinal').textContent = fmtX(d.M) + 'x';
-  $('gPay').textContent = '+0 自動入袋';
+  $('gPay').textContent = t('grand.pay', { n:0 });
   g.classList.remove('show', 's2', 's3'); void g.offsetWidth; g.classList.add('show');
-  banner(slam ? '越過滿貫線 ' + EV.CFG.SLAM_LINE + 'x——滿貫入袋' : '達 ' + EV.CFG.MAX_RUNG + ' 階上限——完賭入袋');
+  banner(slam ? t('banner.slamIn', { line:EV.CFG.SLAM_LINE }) : t('banner.fullIn', { max:EV.CFG.MAX_RUNG }));
   if(SHOT){                                       // 截圖凍結：直接停在終幕
     g.classList.add('s2', 's3');
     $('gFinal').textContent = fmtX(d.boosted) + 'x';
-    $('gPay').textContent = '+' + fmt(d.payout) + ' 自動入袋';
+    $('gPay').textContent = t('grand.pay', { n:fmt(d.payout) });
     setWallet(d.wallet, false);
     return;
   }
@@ -340,7 +342,7 @@ function grandShow(d){                            // d：{kind:slam|full, M, boo
   grandT.push(setTimeout(function(){                                            // 第三段：實付倍率＋派彩＋錢包同步滾動
     g.classList.add('s3');
     rollText($('gFinal'), d.M, d.boosted, 500, function(v){ return fmtX(v) + 'x'; });
-    rollText($('gPay'), 0, d.payout, 500, function(v){ return '+' + fmt(Math.round(v)) + ' 自動入袋'; });
+    rollText($('gPay'), 0, d.payout, 500, function(v){ return t('grand.pay', { n:fmt(Math.round(v)) }); });
     setWallet(d.wallet, true);
   }, 1300));
 }
@@ -359,7 +361,7 @@ function boardReset(msg){
   pb = null;
   $('colE').classList.remove('hi'); $('colS').classList.remove('hi');
   clearDuel(); renderHands(0); railRender();
-  banner(msg || '選邊下注開局');
+  banner(msg || t('banner.open'));
   panelBet();
 }
 
@@ -382,20 +384,20 @@ game.on(function(type, d){
   else if(type === 'ladder'){
     railRender();
     panelLadder(d);
-    banner('第 ' + d.rung + ' 階達成——續戰或收手？');
+    banner(t('banner.ladder', { n:d.rung }));
   }
   else if(type === 'timeout' && d.which === 'decide'){
-    banner('逾時未選——自動收手');
+    banner(t('banner.timeout'));
   }
   else if(type === 'settle'){
     stopCountdown();
     if(d.kind === 'cash'){
       setWallet(d.wallet, true);                  // 派彩 0.4s 滾動
-      boardReset((d.via === 'timeout' ? '逾時自動收手 +' : '落袋為安 +') + fmt(d.payout) + '。選邊下注開局');   // E05：Q2 逾時收手文案不被重置蓋掉
+      boardReset(t(d.via === 'timeout' ? 'banner.cashTo' : 'banner.cash', { n:fmt(d.payout) }));   // E05：Q2 逾時收手文案不被重置蓋掉
     }else if(d.kind === 'bust'){
       setWallet(d.wallet, false);
-      banner('本階失利，−' + fmt(uiStake) + '。');
-      setTimeout(function(){ boardReset('勝敗兵家常事——選邊下注開局'); }, 1400);
+      banner(t('banner.bust', { n:fmt(uiStake) }));
+      setTimeout(function(){ boardReset(t('banner.bustAgn')); }, 1400);
     }else{                                        // slam｜full：三段揭示大演出（錢包滾動併入第三段）
       var last = game.getState().records.slice(-1)[0] || {};
       railRender({ M:d.M, rung:last.rung || 0, hist:[], fin:true, kind:d.kind });   // 進度條停在終值、標「滿貫／完賭」
@@ -415,9 +417,9 @@ if(DEV){
   document.body.classList.add('dev');
   $('director').classList.add('on');
   $('devReset').onclick = function(){
-    if(game.getState().st){ banner('對局中不可重置'); return; }
+    if(game.getState().st){ banner(t('log.noReset')); return; }
     game.clearSaved();
-    boardReset('已重置。選邊下注開局');
+    boardReset(t('banner.reset'));
   };
 }
 
@@ -428,12 +430,12 @@ function applyMode(m){
   $('mNormal').classList.toggle('on', !adv);
   $('mAdv').classList.toggle('on', adv);
   if(adv){ if(window.EAdv) EAdv.enter(); }
-  else boardReset('觀賽視角——選邊下注開局');
+  else boardReset(t('banner.normal'));
 }
 function switchMode(m){
   var s = game.getState();
   if(s.mode === m) return;
-  if(s.st || s.phase !== 'BET'){ banner('對局中不可切換模式'); return; }
+  if(s.st || s.phase !== 'BET'){ banner(t('toast.noSwitch')); return; }
   game.setMode(m);
 }
 $('mNormal').onclick = function(){ switchMode('normal'); };
@@ -482,7 +484,7 @@ if(window.EAdv) EAdv.init(window.EUI);
     railRender();
     panelLadder({ M:s.st.M, rung:s.st.rung, cash:s.st.cash,
       nextEmp:s.st.M * EV.FAIR.emp, nextSlv:s.st.M * EV.FAIR.slv, deadline:s.st.deadline });
-    banner('第 ' + s.st.rung + ' 階達成——續戰或收手？');
+    banner(t('banner.ladder', { n:s.st.rung }));
   }else{
     panelBet();
   }
