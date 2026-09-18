@@ -1,0 +1,124 @@
+/* =========================================================================
+ * 專案E「皇帝牌」E06——氛圍層樣式（自動下注三件套／勝負 log 頁／連勝標籤）
+ * R2：珠條移除；自動下注槽改 in-flow 專屬槽；z 序定死（見下方順序表）
+ * 版面依據：reports/皇帝牌示意稿.html §2「自動下注 UI 示意」（沿 B10 三件套慣例）
+ * 效能紅線：所有動畫只用 transform / opacity；禁 filter；零依賴
+ * ========================================================================= */
+.ptl{display:flex;align-items:center;gap:8px}
+.iconb{border:1px solid #4A4136;background:#1A1F1A;color:#E9E4D2;border-radius:6px;
+  font-size:13px;line-height:1;padding:4px 7px}
+/* R2 連勝小標籤（頂欄錢包旁；兩機位同位同語彙；連勝＝連續入袋局數） */
+.streak{font-size:11px;color:#9AA895;border:1px solid #3D4A3D;border-radius:10px;padding:1px 8px;
+  white-space:nowrap;font-variant-numeric:tabular-nums;line-height:1.5}
+.streak b{color:#E7C86A}
+
+/* ---------- R2 自動下注專屬槽（in-flow，階梯條下方／面板上緣；固定 28px 不跳版）
+ * 待命：淡化占位；進行中：橘條＋停止鈕。進階模式不提供自動下注，槽不佔位。 ---------- */
+.abar{flex:none;height:28px;box-sizing:border-box;margin:0 8px 4px;padding:0 10px;border-radius:7px;
+  display:flex;align-items:center;gap:8px;position:relative;z-index:33;
+  background:rgba(184,110,30,.85);color:#FFF4DC;font-size:12.5px;font-weight:700;
+  font-variant-numeric:tabular-nums;transition:opacity .25s}
+.abar:not(.on){background:transparent;color:#5C6B5C;font-weight:400;border:1px dashed #2C332C;opacity:.7}
+.abar:not(.on) .astop{display:none}
+.abar .at{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.abar .at span{font-weight:400;opacity:.9}
+.abar .astop{border:1px solid rgba(255,244,220,.7);background:rgba(20,16,10,.35);
+  color:#FFF4DC;border-radius:6px;font-size:12px;padding:2px 10px;font-weight:700;line-height:1.3}
+.abar.stopping .astop{opacity:.5;cursor:default}
+body.adv .abar{display:none}
+
+/* ---------- R2 疊層順序定死：toast(45) ＞ log 頁(36)／設定彈窗(35)＋暗幕(34) ＞ 自動下注槽(33) ＞ 導演台(32) ＞ 滿貫幕層(30)／遊戲主體 ---------- */
+#director.on{z-index:32}
+
+
+/* ---------- ⟳ 入口鈕（下注面板右下角；僅 BET 態顯示） ---------- */
+.autob{position:absolute;right:12px;bottom:10px;z-index:12;width:30px;height:30px;border-radius:50%;
+  border:1.5px solid #E7C86A;background:#1A1F1A;color:#E7C86A;font-size:17px;line-height:1;
+  display:none;align-items:center;justify-content:center;padding:0}
+.autob.show{display:flex}
+.autob.dis{border-color:#4A4136;color:#6B7568;cursor:default}
+
+/* ---------- toast ---------- */
+#toast{position:absolute;left:16px;right:16px;bottom:232px;z-index:45;pointer-events:none;
+  text-align:center;font-size:12.5px;color:#E9E4D2;background:rgba(14,18,15,.94);
+  border:1px solid #4A4136;border-radius:8px;padding:8px 12px;
+  opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s}
+#toast.show{opacity:1;transform:none}
+
+/* ---------- 底部設定彈窗（bottom sheet，只動 transform/opacity） ---------- */
+.veil{position:absolute;inset:0;z-index:34;background:rgba(10,13,10,.55);opacity:0;pointer-events:none;transition:opacity .25s}
+.veil.show{opacity:1;pointer-events:auto}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:35;background:#0E120F;border-top:1px solid #4A4136;
+  border-radius:14px 14px 0 0;padding:10px 14px 14px;box-sizing:border-box;max-height:92%;display:flex;flex-direction:column;
+  transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.9,.3,1)}
+.sheet.show{transform:none}
+.shead{flex:none;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.shead b{font-family:"Noto Serif TC","Microsoft JhengHei",serif;font-size:15px;color:#E7C86A;letter-spacing:.06em}
+.xb{border:0;background:transparent;color:#9AA895;font-size:18px;line-height:1;padding:2px 6px}
+.srow{display:flex;align-items:center;gap:6px;margin:6px 0}
+.slab{flex:none;width:58px;font-size:12px;color:#9AA895}
+.seg{flex:1;display:flex;gap:5px;flex-wrap:wrap}
+.seg button{flex:1;min-width:0;border-radius:6px;border:1.5px solid #4A4136;background:#1A1F1A;color:#E9E4D2;
+  font-size:11.5px;padding:5px 2px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.seg button.on{border-color:#E7C86A;color:#E7C86A;font-weight:700;background:#2B2413}
+.seg button.onS{border-color:#C9666C;color:#E58F94;font-weight:700;background:#2B1517}
+.seg button.onG{border-color:#5FA06B;color:#8FD49B;font-weight:700;background:#16281B}
+.stepr{display:flex;align-items:center;gap:4px;flex:none}
+.stepr button{width:26px;height:28px;border-radius:6px;border:1.5px solid #4A4136;background:#1A1F1A;color:#E9E4D2;font-size:14px;padding:0}
+.stepr button:disabled{opacity:.3}
+.stepr b{min-width:46px;text-align:center;font-size:12px;color:#E7C86A;font-variant-numeric:tabular-nums}
+.snote{font-size:10.5px;color:#9AA895;line-height:1.45;margin:6px 0 8px}
+.sgo{width:100%;border:0;border-radius:8px;padding:10px;font-weight:700;font-size:14.5px;background:#E7C86A;color:#141A16}
+
+/* ---------- 勝負 log 頁（全幅覆蓋；總覽→詳細） ---------- */
+.lgm{position:absolute;inset:0;z-index:36;background:#141A16;display:flex;flex-direction:column;
+  transform:translateX(100%);transition:transform .28s cubic-bezier(.2,.9,.3,1)}
+.lgm.show{transform:none}
+.lgh{flex:none;display:flex;align-items:center;gap:8px;padding:9px 12px;background:#0E120F;border-bottom:1px solid #2C332C}
+.lgh b{flex:1;font-family:"Noto Serif TC","Microsoft JhengHei",serif;font-size:15px;color:#E7C86A;letter-spacing:.06em;text-align:center}
+.lgh button{border:1px solid #4A4136;background:#1A1F1A;color:#E9E4D2;border-radius:6px;font-size:13px;padding:3px 9px;line-height:1.3}
+.lgh button.hid{visibility:hidden}
+/* R3 無原生捲軸＋滑鼠拖曳滾動（B 案 §7.5 慣例）：捲軸兩引擎隱藏、內容仍由容器 scroll 承載；觸控走原生 pan-y */
+.lgb{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;-ms-overflow-style:none;cursor:grab;touch-action:pan-y}
+.lgb::-webkit-scrollbar,#sheetBody::-webkit-scrollbar{display:none;width:0;height:0}
+.lgb.dragging,#sheetBody.dragging{cursor:grabbing;-webkit-user-select:none;user-select:none}
+#sheetBody{overflow-y:auto;min-height:0;scrollbar-width:none;-ms-overflow-style:none;touch-action:pan-y}
+.lgf{flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;
+  background:#0E120F;border-top:1px solid #2C332C;font-size:11.5px;color:#9AA895}
+.lgf button{border:1px solid #4A4136;background:#1A1F1A;color:#9AA895;border-radius:6px;font-size:11.5px;padding:3px 9px}
+.lgf button.warnb{border-color:#C9666C;color:#E58F94}
+.lgf button.okb{border-color:#5FA06B;color:#8FD49B}
+.lrowi{display:grid;grid-template-columns:64px 1fr 42px 34px 66px;gap:4px;align-items:center;
+  padding:8px 12px;border-bottom:1px solid #1F261F;font-size:12px;font-variant-numeric:tabular-nums}
+.lrowi:active{background:#1A1F1A}
+.lrowi .lt{color:#9AA895;font-size:11px;line-height:1.3}
+.lrowi .lt i{font-style:normal;display:inline-block;margin-left:3px;padding:0 3px;border-radius:3px;font-size:9.5px;line-height:13px;
+  border:1px solid #4A4136;color:#9AA895}
+.lrowi .lp{display:flex;gap:3px;flex-wrap:wrap}
+.lrowi .ls{color:#9AA895;text-align:right}
+.lrowi .lk{text-align:center;font-size:11px;color:#9AA895}
+.lrowi .lk.kt{color:#F5E2A0;font-weight:700}
+.lrowi .lk.kc{color:#8FD49B}
+.lrowi .lv{text-align:right;font-weight:700}
+.gold{color:#E7C86A}.grey{color:#6B7568}
+.lempty{padding:40px 16px;text-align:center;color:#5C6B5C;font-size:12.5px}
+.ldh{padding:12px;border-bottom:1px solid #2C332C;font-size:12.5px;line-height:1.7}
+.ldh .big{font-family:"Noto Serif TC","Microsoft JhengHei",serif;font-size:22px;font-weight:900;font-variant-numeric:tabular-nums}
+.ldh .kv{display:flex;justify-content:space-between;gap:8px;color:#9AA895}
+.ldh .kv span:last-child{color:#E9E4D2;font-variant-numeric:tabular-nums}
+.ldt{padding:6px 12px 2px;font-size:11px;color:#9AA895;letter-spacing:.06em}
+.rg{display:grid;grid-template-columns:38px 54px 28px 1fr 66px;gap:6px;align-items:center;
+  padding:7px 12px;border-bottom:1px solid #1F261F;font-size:12px;font-variant-numeric:tabular-nums}
+.rg .rn{color:#9AA895}
+.rg .rw{font-weight:700;text-align:center}
+.rg .rw.w{color:#8FD49B}.rg .rw.l{color:#E58F94}
+.rg .rv{color:#E9E4D2;font-size:11.5px}
+.rg .rv small{color:#9AA895;margin-left:4px}
+.rg .rm{text-align:right;color:#E7C86A}
+.lnotef{padding:10px 12px;font-size:10.5px;color:#5C6B5C;line-height:1.5}
+
+@media (prefers-reduced-motion: reduce){
+  html:not([data-fx]) .abar,html:not([data-fx]) #toast,html:not([data-fx]) .veil,
+  html:not([data-fx]) .sheet,html:not([data-fx]) .lgm{transition:none}
+}

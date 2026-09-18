@@ -1,0 +1,139 @@
+/* =========================================================================
+ * 專案E「皇帝牌」E04——進階模式（第一人稱透視牌桌）樣式
+ * 版面依據：reports/皇帝牌示意稿.html §2 第一人稱排版標註圖（❶立繪／❷泡泡／
+ *   ❸對手手牌／❹戰報帶／❺對決區／❻右緣直式階梯／❼玩家手牌／❽面板）
+ * 透視：只用 CSS 3D transform（perspective＋preserve-3d＋rotateX），屬 transform 家族。
+ * 效能紅線：動畫只動 transform／opacity；陰影全靜態、不參與動畫；禁 filter。
+ * ========================================================================= */
+body.adv .specrow,body.adv .hrail{display:none}
+#advTop,#advMain{display:none}
+body.adv #advTop{display:block}
+body.adv #advMain{display:flex}
+
+/* ---------- ❶ 立繪半身（1 張身體＋6 張臉差分，換臉＝雙層 opacity 交叉淡化） ---------- */
+body.dev.adv #advTop{padding-top:38px}                    /* ?dev=1 導演台讓位：立繪整體下移 */
+#advTop{flex:none;position:relative;
+  background:radial-gradient(ellipse at 50% 16%,#26302A 0%,#141A16 78%)}
+.bustz{position:relative;height:150px;overflow:hidden}
+.bwrap{position:absolute;left:50%;top:0;width:210px;height:150px;margin-left:-105px;
+  transition:transform .25s}
+.bustz.lean .bwrap{transform:translateY(2px)}              /* 決勝前傾 2px */
+.bbody{position:absolute;inset:0;transform-origin:50% 100%;animation:breath 3.4s ease-in-out infinite}
+@keyframes breath{0%,100%{transform:scale(1)}50%{transform:scale(1.022)}}
+.bshould{position:absolute;left:50%;bottom:0;width:206px;height:64px;margin-left:-103px;
+  border-radius:80px 80px 0 0;background:linear-gradient(180deg,#2C3529,#1B231B);
+  border:2px solid #3E4A3A;border-bottom:0;box-sizing:border-box}
+.bshould:before{content:"";position:absolute;left:50%;top:0;width:46px;height:62px;margin-left:-23px;
+  background:linear-gradient(180deg,#EFE7D2,#CDC3A4);clip-path:polygon(18% 0,82% 0,100% 100%,0 100%)}
+.bshould:after{content:"";position:absolute;left:50%;top:10px;width:10px;height:44px;margin-left:-5px;
+  background:linear-gradient(180deg,#9A2F2F,#6E1F1F);border-radius:2px 2px 4px 4px}
+.bhead{position:absolute;left:50%;top:4px;width:94px;height:94px;margin-left:-47px}
+.face{position:absolute;inset:0;opacity:0;transition:opacity .2s}
+.face.on{opacity:1}
+.face svg{width:100%;height:100%;display:block}
+.btag{position:absolute;left:10px;bottom:6px;font-size:10px;color:#9AA895;
+  background:#0E120F;border:1px solid #3E4A3A;border-radius:4px;padding:1px 6px}
+
+/* ---------- ❷ 台詞泡泡（純文字，與差分連動） ---------- */
+.bubble{position:absolute;right:12px;top:14px;max-width:150px;background:#EFE7D2;color:#3B3324;
+  border-radius:10px 10px 2px 10px;padding:5px 10px;font-size:12.5px;line-height:1.35;
+  font-family:"Noto Serif TC","Microsoft JhengHei",serif;
+  opacity:0;transform:translateY(4px);transition:opacity .2s,transform .2s;pointer-events:none}
+.bubble.on{opacity:1;transform:translateY(0)}
+
+/* ---------- ❸ 對手手牌：反向小扇（牌背、略遠略小＝景深） ---------- */
+.ohand{position:relative;height:58px;margin-top:-6px;perspective:420px;z-index:2}
+.ofan{position:absolute;left:0;right:0;top:0;height:52px;transform-origin:50% 0;
+  transform:rotateX(22deg);transform-style:preserve-3d}
+.ow{position:absolute;left:50%;top:0;width:32px;height:46px;margin-left:-16px;
+  transform-origin:50% -30%;transition:opacity .25s}                /* 軸心在牌上方＝倒扇，牌尾向下張開 */
+.ow.gone{opacity:.15}
+.oc{width:100%;height:100%;border-radius:4px;box-sizing:border-box;border:1.5px solid #6B4A44;
+  background:linear-gradient(135deg,#3A2C2C 25%,#2C2020 25%,#2C2020 50%,#3A2C2C 50%,#3A2C2C 75%,#2C2020 75%);
+  background-size:8px 8px;box-shadow:0 1px 0 rgba(0,0,0,.4);transition:transform .25s}
+.ow.gone .oc{transform:scale(.9)}
+
+/* ---------- ❺ 透視牌桌（rotateX 向後倒的平面）＋對決區 ---------- */
+#advMain{flex:1;min-height:0;position:relative;flex-direction:column}
+.table3d{flex:1;min-height:140px;position:relative;perspective:640px;perspective-origin:50% -30%;
+  overflow:hidden}
+.tabletop{position:absolute;left:-10%;right:-10%;top:-4%;bottom:-8%;
+  transform-origin:50% 100%;transform:rotateX(36deg);transform-style:preserve-3d;
+  border-radius:46% 46% 26px 26px / 34% 34% 26px 26px;
+  border:7px solid #4A3320;box-sizing:border-box;
+  background:
+    radial-gradient(ellipse at 50% 42%,rgba(255,235,170,.10) 0%,rgba(255,235,170,0) 55%),
+    radial-gradient(ellipse 70% 62% at 50% 42%,#2F4F38 0%,#24402D 55%,#1B3324 100%);
+  box-shadow:inset 0 0 0 3px #6A4A2A,inset 0 0 46px rgba(0,0,0,.55),0 10px 0 #2E1F12}
+.tduel{position:absolute;left:50%;top:44%;display:flex;gap:18px;align-items:center;
+  transform:translate(-50%,-50%) translateZ(2px);transform-style:preserve-3d}   /* 靜態抬離桌面 2px：避免 3D 情境同平面 z-fighting */
+.tduel .dslot{border-color:#5A6E58;box-shadow:0 2px 0 rgba(0,0,0,.45)}
+.tduel .dslot:not(.filled){box-shadow:none}
+.tduel .dslot.lift{transform:translateZ(12px)}
+.tduel .dvs{color:#7E917C}
+.table3d>.flashfx{border-radius:0;z-index:4}                /* 全桌閃光：掛透視容器、不進 3D 平面（避免同平面遮蔽） */
+.flashfx.hold{opacity:.45;animation:none}                  /* 截圖凍結用 */
+/* 飛牌落桌：內層卡片隨飛行轉成桌面傾角（分層元素，不與拋物線／位移同字串） */
+.flyy.p3d{perspective:640px}
+.flyy.far{animation-name:flyarcFar}                        /* 對面拋來：弧頂較低（遠端拋物線） */
+@keyframes flyarcFar{
+  0%{transform:translateY(0);animation-timing-function:ease-out}
+  42%{transform:translateY(-14px);animation-timing-function:ease-in}
+  100%{transform:translateY(0)}}
+.flyc{width:100%;height:100%;transform:rotateX(0);transition:transform .32s linear}
+
+/* ---------- ❼ 玩家手牌：手持扇形、朝向玩家 ---------- */
+.myhand{flex:none;height:116px;position:relative;perspective:700px;z-index:2}
+.hfan{position:absolute;left:0;right:0;top:12px;height:100px;transform-origin:50% 100%;
+  transform:rotateX(14deg);transform-style:preserve-3d}
+.hcw{position:absolute;left:50%;top:0;width:56px;height:78px;margin-left:-28px;
+  transform-origin:50% 135%;transition:opacity .25s}
+.hcw.gone{opacity:.15;pointer-events:none}
+.hcw.idle{opacity:.35;pointer-events:none}
+.hc{width:100%;height:100%;border-radius:6px;border:1.5px solid;box-sizing:border-box;
+  display:flex;align-items:center;justify-content:center;
+  font-family:"Noto Serif TC","Microsoft JhengHei",serif;font-weight:900;font-size:26px;
+  box-shadow:0 3px 0 rgba(0,0,0,.4);transition:transform .18s}
+.hc.dmin{background:#EFE7D2;color:#3B3324;border-color:#B7A87E}
+.hc.demp{background:#3B3016;color:#F0CE6E;border-color:#E7C86A}
+.hc.dslv{background:#3A1E20;color:#E58F94;border-color:#C9666C}
+.hc.dback{background:linear-gradient(135deg,#3A2C2C 25%,#2C2020 25%,#2C2020 50%,#3A2C2C 50%,#3A2C2C 75%,#2C2020 75%);
+  background-size:9px 9px;border-color:#6B4A44}
+.myhand.turn .hcw:not(.gone):not(.idle){cursor:pointer}
+.myhand.turn .hcw:not(.gone):not(.idle):hover .hc,
+.myhand.turn .hcw:not(.gone):not(.idle):active .hc{transform:translateY(-8px)}
+.myhand .hint{position:absolute;left:0;right:0;bottom:2px;text-align:center;font-size:10.5px;
+  color:#9AA895;opacity:0;transition:opacity .2s}
+.myhand.turn .hint{opacity:1}
+
+/* ---------- ❻ 右緣直式階梯進度條（對數刻度；軌道長度恆定、只動填充 scaleY 與綠點） ---------- */
+.vrail{position:absolute;right:6px;top:4px;width:46px;z-index:3;display:flex;flex-direction:column;
+  align-items:center;gap:3px;transition:opacity .3s}
+.vrail.idle{opacity:.4}
+.vlab{font-size:9.5px;color:#9AA895;text-align:center;line-height:1.25;white-space:nowrap;
+  font-variant-numeric:tabular-nums}
+.vlab.cur{color:#E7C86A;font-weight:700;font-size:10.5px}
+#vrung{line-height:1.2}                                     /* E05：「N階／挑戰中・達成・滿貫・完賭」兩行，語彙同普通機位 */
+.vtrack{position:relative;width:12px;height:112px;border:1px solid #4A4136;border-radius:6px;
+  background:#10150F;overflow:hidden}
+.vfill{position:absolute;left:0;right:0;bottom:0;height:100%;
+  background:linear-gradient(180deg,#E7C86A,#8F6A14);
+  transform-origin:50% 100%;transform:scaleY(0);transition:transform .4s}
+.vdot{position:absolute;left:0;right:0;height:2px;background:#8FD49B}
+
+/* E05 滿貫／完賭大演出：進階機位右緣有直式階梯條，揭示列整體左讓 22px 不與軌道相碰 */
+body.adv #grand .gtxt{padding-right:36px}
+
+/* ---------- ❽ 面板：出牌態（Q3 倒數圈沿用 .cring） ---------- */
+.playp{position:relative;text-align:center}
+.playp .lm{margin:2px 0 4px}
+.playp .lnote{margin-top:4px}
+
+/* ---------- reduced-motion 降級（?fx=1 加 data-fx 可強制開） ---------- */
+@media (prefers-reduced-motion: reduce){
+  html:not([data-fx]) .bbody{animation:none}
+  html:not([data-fx]) .bwrap,html:not([data-fx]) .face,html:not([data-fx]) .bubble,
+  html:not([data-fx]) .ow,html:not([data-fx]) .oc,html:not([data-fx]) .hcw,html:not([data-fx]) .hc,
+  html:not([data-fx]) .flyc,html:not([data-fx]) .vfill,html:not([data-fx]) .vrail,
+  html:not([data-fx]) .myhand .hint{transition:none}
+}
