@@ -11,6 +11,7 @@
 window.EAdv = (function(){
 'use strict';
 var U, game, $, RM = false, SHOT = '';
+var T = window.t;                                // panelPlay() 的參數 t＝回合數會遮住全域取字函式，故備一個別名
 var TILT = 36;                                   // 與 css .tabletop rotateX 同值
 /* R4：進階模式出牌倒數拉長（使用者直接需求「選牌時間加長、對手多講話」）。
  * 走 core 暴露的時間常數物件在 shell 端覆寫，core 檔案零修改；本檔先於 game-ui 載入，故 createGame／restore 皆吃到新值。
@@ -32,32 +33,33 @@ var FACES = {
   proud: svgFace('<path d="M19,20 q5,-3 10,1" '+STK+'/><path d="M45,20 q-5,-3 -10,1" '+STK+'/><path d="M21,29 q4,-4 8,0" '+STK+'/><path d="M35,29 q4,-4 8,0" '+STK+'/><path d="M23,42 q9,11 18,0 q-9,4 -18,0 Z" fill="#3B1F16"/>'),
   shock: svgFace('<path d="M17,17 L28,21" '+STK+'/><path d="M47,17 L36,21" '+STK+'/><circle cx="24" cy="29" r="4" fill="#FFF"/><circle cx="24" cy="29" r="1.8" fill="#2A1E12"/><circle cx="40" cy="29" r="4" fill="#FFF"/><circle cx="40" cy="29" r="1.8" fill="#2A1E12"/><ellipse cx="32" cy="47" rx="5" ry="6" fill="#3B1F16"/><path d="M12,24 l-4,-2 M12,30 h-4 M52,24 l4,-2 M52,30 h4" '+STK+'/>')
 };
-var TAG   = { idle:'從容', think:'審視', smirk:'嗤笑', sweat:'強裝鎮定', proud:'得意', shock:'破防' };
-var LINES = { idle:'願賭服輸？來吧。', think:'哦……？', smirk:'就這種程度？',
-              sweat:'……有趣。', proud:'勝負早已注定。', shock:'不可能──！' };
+/* E09：表情標籤與定型台詞全走字典（tag.* / line.*），face 代號本身是程式識別碼、不翻 */
+var FACE_KEYS = ['idle','think','smirk','sweat','proud','shock'];
+var TAG = {}, LINES = {};
+FACE_KEYS.forEach(function(k){ TAG[k] = t('tag.' + k); LINES[k] = tList('line.' + k)[0]; });
 /* R3 反應池（演出層、零 EV）：對手隨你「亮哪張／出哪張／第幾回合」起不同反應；
  * 決勝懸置那一秒給一個帶虛張聲勢的破綻（誠實率 TELL_HONEST），讀臉是樂趣不是資訊優勢——勝負在下注時已鎖定。 */
-var POOL = {
-  wait:    ['哦……？', '還不出那張？', '拖得夠久了。', '只剩最後機會了。', '最後一張——來吧。'],   // 依回合 1..5
-  selMin:  ['就這種程度？', '保守啊。', '試探我？', '哼，民啊？'],
-  selSp:   ['……那張？', '哦？你敢。', '終於忍不住了？'],
-  playMin: ['哼。', '無趣。', '慢慢來。'],
-  playSp:  ['來了。', '……好。'],
-  tellWin: ['……不會吧。', '……有趣。'],          // 他要輸（你贏）→ 強裝鎮定
-  tellLose:['就等你這張。', '太天真。'],           // 他要贏（你輸）→ 續嗤笑
-  tie:     ['無趣。', '再來。', '……'],
-  chat: [                                          // 等待期閒聊（每 CHAT_MS 換一句，表情跟著換）
-    { f:'idle',  l:'慢慢想，我不急。' }, { f:'smirk', l:'猶豫這麼久，手在抖？' },
-    { f:'think', l:'你那張特殊牌……藏得挺深。' }, { f:'sweat', l:'……別一直盯著我。' },
-    { f:'smirk', l:'我猜你會出民。' }, { f:'idle',  l:'願賭服輸，記得吧？' },
-    { f:'think', l:'換我的話，早就出了。' }, { f:'smirk', l:'你的表情全寫在臉上。' } ],
-  hurry: [ { f:'think', l:'時間不多了。' }, { f:'smirk', l:'再拖就替你出了。' } ],
-  declTrue:  ['說了吧？', '我從不說謊……這次。'],
-  declLie:   ['騙你的。', '你還真信？'],
-  shock:   ['不可能──！', '……運氣罷了。', '再、再來一次！'],
-  slam:    ['全部……全被你拿走了？！', '滿貫……？不可能──！'],   // E05 滿貫：破防鎖定台詞
-  full:    ['十階……你居然走完了。', '……輸得徹底。'],             // E05 完賭：破防鎖定台詞
-  proud:   ['勝負早已注定。', '早說了。', '回去練練吧。']
+function pair(faces, key){        // 表情＋台詞成對（等待期閒聊／催促）
+  var L = tList(key);
+  return faces.map(function(f, i){ return { f:f, l:L[i] }; });
+}
+var POOL = {                                     // E09：台詞全走字典 tList('pool.*')；表情代號留在程式碼裡
+  wait:     tList('pool.wait'),                  // 依回合 1..5
+  selMin:   tList('pool.selMin'),
+  selSp:    tList('pool.selSp'),
+  playMin:  tList('pool.playMin'),
+  playSp:   tList('pool.playSp'),
+  tellWin:  tList('pool.tellWin'),               // 他要輸（你贏）→ 強裝鎮定
+  tellLose: tList('pool.tellLose'),              // 他要贏（你輸）→ 續嗤笑
+  tie:      tList('pool.tie'),
+  chat:     pair(['idle','smirk','think','sweat','smirk','idle','think','smirk'], 'pool.idleChat'),
+  hurry:    pair(['think','smirk'], 'pool.hurry'),
+  declTrue: tList('pool.declTrue'),
+  declLie:  tList('pool.declLie'),
+  shock:    tList('pool.shock'),
+  slam:     tList('pool.slam'),                  // E05 滿貫：破防鎖定台詞
+  full:     tList('pool.full'),                  // E05 完賭：破防鎖定台詞
+  proud:    tList('pool.proud')
 };
 var TELL_HONEST = 0.75;                          // 破綻誠實率（演出層常數，非賠率）
 function pick(arr){ return SHOT ? arr[0] : arr[Math.floor(Math.random() * arr.length)]; }
@@ -74,7 +76,7 @@ function setFace(k, line){
     show.innerHTML = FACES[k]; show.classList.add('on'); hide.classList.remove('on');
     curFace = k;
     $('bust').setAttribute('data-face', k);
-    $('btag').textContent = '對手・' + TAG[k];
+    $('btag').textContent = t('adv.oppTag', { tag:TAG[k] });
   }
   bubble(line === undefined ? LINES[k] : line);
 }
@@ -103,8 +105,9 @@ function buildHands(){
 function renderMy(cards){
   for(var i = 0; i < myW.length; i++){
     var w = myW[i], c = cards ? cards[i] : null, inner = w.firstChild;
-    if(!c){ w.className = 'hcw idle'; inner.className = 'hc dback'; inner.textContent = ''; }
-    else { w.className = 'hcw' + (c.used ? ' gone' : ''); inner.className = 'hc ' + U.cls(c.t); inner.textContent = c.t; }
+    if(!c){ w.className = 'hcw idle'; inner.className = 'hc dback'; inner.innerHTML = ''; }
+    else { w.className = 'hcw' + (c.used ? ' gone' : ''); inner.className = 'hc ' + U.cls(c.t);
+           inner.innerHTML = '<i class="rk">' + tch(c.t) + '</i>'; }                  // E08 卡面圖＋角落徽記；E09 徽記走字典
   }
 }
 function renderOpp(used){
@@ -130,7 +133,7 @@ function startChat(trick, deadline){
     if(remain <= 3200){ var h = SHOT ? POOL.hurry[0] : pick(POOL.hurry); setFace(h.f, h.l); return; }
     if(n === 1){                                   // 宣言：偏向說「民」（他多半真的出民），偶爾放話特殊牌
       decl = (SHOT || Math.random() < 0.65) ? '民' : opSp;
-      setFace(SHOT ? 'smirk' : (Math.random() < 0.5 ? 'smirk' : 'idle'), '這回合我出「' + decl + '」。');
+      setFace(SHOT ? 'smirk' : (Math.random() < 0.5 ? 'smirk' : 'idle'), t('adv.declare', { ch:tch(decl) }));
       return;
     }
     var k, tries = 0;                              // 不重複的閒聊句
@@ -191,13 +194,13 @@ function railRender(fin){                        // fin：結算快照（滿貫�
   var s = game.getState(), st = fin || s.st, rail = $('vrail');
   if(!st){
     rail.classList.add('idle');
-    $('vlab').textContent = '待命'; $('vrung').textContent = '—';
+    $('vlab').textContent = t('rail.waiting'); $('vrung').textContent = t('rail.dash');
     $('vfill').style.transform = 'scaleY(0)'; $('vdots').innerHTML = '';
     return;
   }
   rail.classList.remove('idle');
   $('vlab').textContent = U.fmtX(st.M) + 'x';
-  $('vrung').innerHTML = st.rung + '階<br>' + U.railWord(st);
+  $('vrung').innerHTML = t('rail.rung', { n:st.rung }) + '<br>' + U.railWord(st);
   $('vfill').style.transform = 'scaleY(' + (DuelCore.railPct(st.M) / 100).toFixed(4) + ')';
   $('vdots').innerHTML = st.hist.map(function(m){
     return '<span class="vdot" style="bottom:' + DuelCore.railPct(m).toFixed(1) + '%"></span>';
@@ -211,10 +214,10 @@ function panelPlay(t, deadline, st){
   $('panel').innerHTML =
     '<div class="playp">' +
       '<div class="cring" id="cring"><span class="cnum" id="cnum"></span><span class="chand" id="chand"></span></div>' +
-      '<div class="ltitle">第 ' + t + ' 回合・輪你出牌</div>' +
-      '<div class="lm">' + U.NAME[st.side] + '・押 ' + U.fmt(st.stake0) + '</div>' +
-      '<div class="lnote">點下方手牌出牌；倒數歸零自動隨機出一張——出牌順序不影響勝率（1/5 定理）</div>' +
-      '<div class="lnote">第 ' + st.rung + ' 階・累積 ' + U.fmtX(st.M) + 'x・滿貫線 ' + EV.CFG.SLAM_LINE + 'x</div>' +
+      '<div class="ltitle">' + T('adv.turn', { t:t }) + '</div>' +
+      '<div class="lm">' + T('adv.turnSub', { side:U.NAME[st.side], stake:U.fmt(st.stake0) }) + '</div>' +
+      '<div class="lnote">' + T('adv.turnNote1') + '</div>' +
+      '<div class="lnote">' + T('adv.turnNote2', { n:st.rung, m:U.fmtX(st.M), line:EV.CFG.SLAM_LINE }) + '</div>' +
     '</div>';
   var total = DuelCore.TIMING.PLAY_MS;   // 進階模式＝PLAY_MS_ADV（12s）
   function cd(){
@@ -235,7 +238,7 @@ function resetBoard(msg){
   if(idleT){ clearTimeout(idleT); idleT = null; }
   renderMy(null); renderOpp(0); clearDuel(); railRender(); setTurn(false);
   setFace('idle');
-  U.banner(msg || '第一人稱——選邊下注開局');
+  U.banner(msg || t('banner.adv'));
   U.panelBet();
 }
 
@@ -253,7 +256,7 @@ function onAwait(d){
   busy = false;
   renderMy(st.myCards); renderOpp(st.oppUsed); clearDuel();
   setTurn(true);
-  U.banner('第 ' + d.trick + ' 回合——點你的手牌出牌');
+  U.banner(t('adv.banTrick', { t:d.trick }));
   panelPlay(d.trick, d.deadline, st);
   if(idleT){ clearTimeout(idleT); idleT = null; }
   var waitLine = POOL.wait[Math.min(d.trick, POOL.wait.length) - 1];
@@ -262,7 +265,7 @@ function onAwait(d){
   }else setFace('think', waitLine);
   startChat(d.trick, d.deadline);
   if(SHOT === 'adv-flip' || SHOT === 'adv-shock' || SHOT === 'adv-slam') setTimeout(autoPick, 250);
-  if(SHOT === 'adv-wait') setTimeout(function(){ decl = '民'; setFace('smirk', '這回合我出「民」。'); }, 700);   // 截圖：宣言句
+  if(SHOT === 'adv-wait') setTimeout(function(){ decl = '民'; setFace('smirk', t('adv.declare', { ch:tch('民') })); }, 700);   // 截圖：宣言句
 }
 function onTrick(d){                             // d：{t,pc,oc,verdict,timeout}
   var st = game.getState().st, i, idx = -1;
@@ -273,7 +276,7 @@ function onTrick(d){                             // d：{t,pc,oc,verdict,timeout
   if(idx < 0) idx = 0;
   var src = myW[idx], osrc = opW[Math.max(0, st.oppUsed - 1)];
   src.classList.add('gone'); osrc.classList.add('gone');   // 起飛即暗＝牌已打出（牌數自洽）
-  U.banner(d.timeout ? '逾時——自動隨機出牌（第 ' + d.t + ' 回合）' : '第 ' + d.t + ' 回合');
+  U.banner(d.timeout ? t('adv.banTimeout', { t:d.t }) : t('banner.trick', { n:d.t }));
   if(d.pc === '民') setFace('smirk', pick(POOL.playMin)); else setFace('think', pick(POOL.playSp));
   var slotP = $('slotP'), slotO = $('slotO'), tduel = $('tduel');
   if(!d.verdict){                                // 平手（民民）快進：齊飛齊翻→對碰→清場
@@ -295,7 +298,8 @@ function onTrick(d){                             // d：{t,pc,oc,verdict,timeout
     U.flipTo(slotO, d.oc, function(){           // 懸念後翻面→閃光震動→表情→斬敗方牌
       var win = d.verdict.win;
       U.flash($('flashA')); U.clash(tduel);
-      U.banner(d.verdict.reason + '　' + U.NAME[st.side] + (win ? '（你押的）獲勝' : '落敗'));
+      U.banner(t('banner.verdict', { reason:t('verdict.' + d.verdict.code), side:U.NAME[st.side],
+        res:win ? t('verdict.win') : t('verdict.lose') }));   // E09：查 core 的 code
       $('bust').classList.remove('lean');
       var dl = declLine(d.oc);                 // 他贏且有宣言→回馬槍；他輸→破防台詞
       setFace(win ? 'shock' : 'proud', win ? pick(POOL.shock) : (dl || pick(POOL.proud)));
@@ -309,18 +313,18 @@ function onTrick(d){                             // d：{t,pc,oc,verdict,timeout
 function onLadder(d){
   stopCd(); stopChat(); railRender();
   U.panelLadder(d);
-  U.banner('第 ' + d.rung + ' 階達成——續戰或收手？');
-  setFace('shock', pick(POOL.shock) + '……還要繼續？');   // 破防鎖定至階梯決策
+  U.banner(t('banner.ladder', { n:d.rung }));
+  setFace('shock', pick(POOL.shock) + t('adv.stillGo'));   // 破防鎖定至階梯決策
 }
 function onSettle(d){
   stopCd();
   if(d.kind === 'cash'){
     U.setWallet(d.wallet, true);
-    resetBoard((d.via === 'timeout' ? '逾時自動收手 +' : '落袋為安 +') + U.fmt(d.payout) + '。選邊下注開局');   // E05：同普通機位
+    resetBoard(t(d.via === 'timeout' ? 'banner.cashTo' : 'banner.cash', { n:U.fmt(d.payout) }));   // E05：同普通機位
   }else if(d.kind === 'bust'){
     U.setWallet(d.wallet, false);
-    U.banner('本階失利，−' + U.fmt(uiStake) + '。');
-    setTimeout(function(){ resetBoard('勝敗兵家常事——選邊下注開局'); }, 1400);
+    U.banner(t('banner.bust', { n:U.fmt(uiStake) }));
+    setTimeout(function(){ resetBoard(t('banner.bustAgn')); }, 1400);
   }else{                                         // slam｜full：共用三段揭示大演出（錢包滾動併入第三段）；對手破防幀＋台詞鎖定至收幕
     var last = game.getState().records.slice(-1)[0] || {};
     railRender({ M:d.M, rung:last.rung || 0, hist:[], fin:true, kind:d.kind });
@@ -336,7 +340,7 @@ function onEvent(type, d){
   else if(type === 'await') onAwait(d);
   else if(type === 'trick') onTrick(d);
   else if(type === 'ladder') onLadder(d);
-  else if(type === 'timeout' && d.which === 'decide') U.banner('逾時未選——自動收手');
+  else if(type === 'timeout' && d.which === 'decide') U.banner(t('banner.timeout'));
   else if(type === 'settle') onSettle(d);
   else if(type === 'error'){ var m = $('pmsg'); if(m) m.textContent = d.msg; else U.banner(d.msg); }
 }
@@ -353,10 +357,10 @@ function autoPick(){
 /* ---------- 開機／模式切換 ---------- */
 function init(eui){
   U = eui; game = U.game; $ = U.$; RM = U.RM; SHOT = U.SHOT;
-  $('vTop').innerHTML = '滿貫<br>' + EV.CFG.SLAM_LINE + 'x';
+  $('vTop').innerHTML = t('adv.vTop', { line:EV.CFG.SLAM_LINE });
   buildHands();
   $('faceA').innerHTML = FACES.idle; $('faceA').classList.add('on'); curFace = 'idle';
-  $('bust').setAttribute('data-face', 'idle'); $('btag').textContent = '對手・從容';
+  $('bust').setAttribute('data-face', 'idle'); $('btag').textContent = t('adv.oppTag', { tag:TAG.idle });
 }
 function enter(){ resetBoard(); }              // 由普通切進（BET 態）
 function boot(s){                                // 重整接回（mode=advanced）

@@ -29,6 +29,7 @@
 | `?rm=1` | 強制走 reduced-motion 降級路徑（直接落牌、不切半） |
 | `?shot=…` | 截圖自動駕駛：`slam`／`ladder3`／`full`／`full9`／`adv-flip`／`adv-wait`／`adv-shock`／`adv-slam`／`auto-run`／`auto-modal`／`log-list`／`log-detail`／`log-full` |
 | `?vw=375` | 鎖 app 寬度並靠左（headless 截圖裁圖輔助） |
+| `?skin=b` | 卡片配色切到 B 版「三色語彙對齊卡面」（**預設為 A 版：只換圖不調色**，2026-09-18 使用者驗收選定）。色值集中在 `css/game.css` 開頭 `:root`／`html[data-skin="b"]` 變數區塊，調色只改變數 |
 
 導演台是開發參數，只改「本階勝負」那一次隨機抽樣（包一層 rng），不動核心程式、不影響賠率與 RTP。
 
@@ -48,9 +49,21 @@
 | `css/game.css` | 拋棄式：普通機位版面與演出（拋物線出牌、斬牌、滿貫幕層） | E03／E05 | 重做 |
 | `css/advanced.css` | 拋棄式：進階機位 3D 舞台、立繪、扇形手牌 | E04 | 重做 |
 | `css/atmos.css` | 拋棄式：自動下注槽、log 頁、彈窗、toast、z 序定義 | E06 | 重做 |
+| `img/`（4 張 JPEG） | 半可移植：卡背／皇帝／奴隸／冒險者卡面，300×454、合計 142KB；來源為公司 Unity 專案 `Assets/Resource/Atlas/Cards/` 原檔（907×1373 PNG）縮圖 | E08 | 原檔直接沿用 |
+| `js/strings.js` | **可移植**：字串字典＋取字函式 `t()`——所有面向玩家的文案集中於此，含語言選取（`?lang=`／localStorage）與偽語系 `?lang=xx`（每字串加長 30%，版面壓力測試） | E09 | 文案整包照搬，只換取字介面 |
+| `js/ui-onboard.js` | 拋棄式：新手帶入層——剋制環常駐小三角圖＋首次三步引導覆蓋層＋「重看教學」入口 | E09 | 畫面重做；引導步驟與文案可沿用 |
+| `css/onboard.css` | 拋棄式：剋制環兩種版位、引導覆蓋層與聚光洞 | E09 | 重做 |
 | `index.html` | 拋棄式：骨架與掛點 | E03 起累加 | 重做 |
 
-**script 載入順序固定**：`values.js → js/duel-core.js → js/ui-advanced.js → js/game-ui.js → js/ui-atmos.js`。`ui-advanced` 必須早於 `game-ui`（它要在 `createGame` 之前覆寫進階模式的出牌秒數 `DuelCore.TIMING.PLAY_MS`＝12s，並註冊 `window.EAdv` 供 `game-ui` 初始化）；`ui-atmos` 最後載入（依賴 `window.EUI`）。
+**script 載入順序固定**：`js/strings.js → values.js → js/duel-core.js → js/ui-advanced.js → js/game-ui.js → js/ui-atmos.js → js/ui-onboard.js`。`strings.js` 必須第一支（其餘 UI 檔在載入當下就取字，且它要先把骨架的 `data-t` 掛點填好）。`ui-advanced` 必須早於 `game-ui`（它要在 `createGame` 之前覆寫進階模式的出牌秒數 `DuelCore.TIMING.PLAY_MS`＝12s，並註冊 `window.EAdv` 供 `game-ui` 初始化）；`ui-atmos` 最後載入（依賴 `window.EUI`）。`ui-onboard` 依賴 `window.EUI` 與 `window.EAtmos`，故排在全部之後。
+
+### 網址參數（E09 新增）
+
+| 參數 | 作用 |
+|---|---|
+| `?lang=` | 介面語言；`?lang=xx` 為偽語系（每字串加長 30%），用來抓寫死寬度的版面 |
+| `?ring=a｜b` | 剋制環版位比稿：`a` 獨立說明列、`b` 零高度徽章（會記進 localStorage） |
+| `?tut=1｜0` | 強制重播／關閉首次三步引導（截圖與驗收用） |
 
 ## 數值與紀律（改東西前先讀）
 
@@ -69,5 +82,8 @@
 | `ecard.log` | 勝負紀錄（UI 層，封頂 50 筆） |
 | `ecard.logcur` | 進行中一局的逐階細節 |
 | `ecard.autocfg` / `ecard.auto` | 自動下注設定／進行中旗標（重整即中止並提示） |
+| `ecard.tut` | 首次三步引導看完或跳過的旗標（`'done'`）；清掉即恢復首次進場引導，或在勝負紀錄頁按「重看教學」 |
+| `ecard.lang` | 介面語言代號（預設 `zh-TW`；`?lang=` 會覆蓋並記住，偽語系 `xx` 供版面壓力測試） |
+| `ecard.ringpos` | 剋制環常駐版位（`a` 獨立說明列／`b` 零高度徽章）；比稿期用 `?ring=a｜b` 切換 |
 
 錢包重置在勝負紀錄頁（📜）內，二段確認；`?dev=1` 導演台也有一顆。

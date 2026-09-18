@@ -48,9 +48,10 @@ body.dev.adv #advTop{padding-top:38px}                    /* ?dev=1 導演台讓
 .ow{position:absolute;left:50%;top:0;width:32px;height:46px;margin-left:-16px;
   transform-origin:50% -30%;transition:opacity .25s}                /* 軸心在牌上方＝倒扇，牌尾向下張開 */
 .ow.gone{opacity:.15}
-.oc{width:100%;height:100%;border-radius:4px;box-sizing:border-box;border:1.5px solid #6B4A44;
-  background:linear-gradient(135deg,#3A2C2C 25%,#2C2020 25%,#2C2020 50%,#3A2C2C 50%,#3A2C2C 75%,#2C2020 75%);
-  background-size:8px 8px;box-shadow:0 1px 0 rgba(0,0,0,.4);transition:transform .25s}
+/* E08：對手倒扇改卡背圖 */
+.oc{width:100%;height:100%;border-radius:4px;box-sizing:border-box;border:1px solid var(--cedge);
+  background-image:var(--img-back);background-size:cover;background-position:center;background-repeat:no-repeat;
+  overflow:hidden;box-shadow:0 1px 0 rgba(0,0,0,.4);transition:transform .25s}
 .ow.gone .oc{transform:scale(.9)}
 
 /* ---------- ❺ 透視牌桌（rotateX 向後倒的平面）＋對決區 ---------- */
@@ -90,15 +91,15 @@ body.dev.adv #advTop{padding-top:38px}                    /* ?dev=1 導演台讓
   transform-origin:50% 135%;transition:opacity .25s}
 .hcw.gone{opacity:.15;pointer-events:none}
 .hcw.idle{opacity:.35;pointer-events:none}
+/* E08：手牌改卡面圖＋角落徽記（.rk 定義在 game.css） */
 .hc{width:100%;height:100%;border-radius:6px;border:1.5px solid;box-sizing:border-box;
-  display:flex;align-items:center;justify-content:center;
-  font-family:"Noto Serif TC","Microsoft JhengHei",serif;font-weight:900;font-size:26px;
+  position:relative;overflow:hidden;
+  background-size:cover;background-position:center;background-repeat:no-repeat;
   box-shadow:0 3px 0 rgba(0,0,0,.4);transition:transform .18s}
-.hc.dmin{background:#EFE7D2;color:#3B3324;border-color:#B7A87E}
-.hc.demp{background:#3B3016;color:#F0CE6E;border-color:#E7C86A}
-.hc.dslv{background:#3A1E20;color:#E58F94;border-color:#C9666C}
-.hc.dback{background:linear-gradient(135deg,#3A2C2C 25%,#2C2020 25%,#2C2020 50%,#3A2C2C 50%,#3A2C2C 75%,#2C2020 75%);
-  background-size:9px 9px;border-color:#6B4A44}
+.hc.dmin{background-image:var(--img-min);border-color:var(--min)}
+.hc.demp{background-image:var(--img-emp);border-color:var(--emp)}
+.hc.dslv{background-image:var(--img-slv);border-color:var(--slv)}
+.hc.dback{background-image:var(--img-back);border-color:var(--cedge);border-width:1px}
 .myhand.turn .hcw:not(.gone):not(.idle){cursor:pointer}
 .myhand.turn .hcw:not(.gone):not(.idle):hover .hc,
 .myhand.turn .hcw:not(.gone):not(.idle):active .hc{transform:translateY(-8px)}
@@ -110,9 +111,9 @@ body.dev.adv #advTop{padding-top:38px}                    /* ?dev=1 導演台讓
 .vrail{position:absolute;right:6px;top:4px;width:46px;z-index:3;display:flex;flex-direction:column;
   align-items:center;gap:3px;transition:opacity .3s}
 .vrail.idle{opacity:.4}
-.vlab{font-size:9.5px;color:#9AA895;text-align:center;line-height:1.25;white-space:nowrap;
+.vlab{font-size:9.5px;color:#9AA895;text-align:center;line-height:1.25;overflow-wrap:anywhere;
   font-variant-numeric:tabular-nums}
-.vlab.cur{color:#E7C86A;font-weight:700;font-size:10.5px}
+.vlab.cur{color:var(--emp);font-weight:700;font-size:10.5px}
 #vrung{line-height:1.2}                                     /* E05：「N階／挑戰中・達成・滿貫・完賭」兩行，語彙同普通機位 */
 .vtrack{position:relative;width:12px;height:112px;border:1px solid #4A4136;border-radius:6px;
   background:#10150F;overflow:hidden}

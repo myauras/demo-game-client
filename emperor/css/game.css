@@ -3,17 +3,40 @@
  * 版面依據：reports/皇帝牌示意稿.html §2 觀賽機位排版標註圖
  * 效能紅線：所有動畫只用 transform / opacity（合成器層）
  * ========================================================================= */
+/* E08 卡面美術＋三色語彙變數層
+ * 預設＝A 版「只換圖不調色」（2026-09-18 使用者驗收選定：顏色對比較夠）
+ * 一鍵切到 B 版（三色語彙對齊卡面）：網址加 ?skin=b，或 html 加 data-skin="b" */
+:root{
+  --img-back:url(../img/back.jpg);
+  --img-emp:url(../img/emperor.jpg);
+  --img-slv:url(../img/slave.jpg);
+  --img-min:url(../img/citizen.jpg);
+  --emp:#E7C86A;  --emp-t:#F0CE6E; --emp-p:#2B2413; --emp-c:#3B3016;
+  --slv:#C9666C;  --slv-t:#E58F94; --slv-p:#2B1517; --slv-c:#3A1E20;
+  --min:#B7A87E;  --min-t:#EFE7D2;
+  --appbg:#141A16; --panel:#0E120F; --line:#2C332C; --felt:#1D2820;
+  --cedge:#6E5F3A;
+}
+html[data-skin="b"]{                 /* B 版：三色語彙對齊卡面（奴棕紅／民藏藍／底色往藏青） */
+  --slv:#B06A4E;  --slv-t:#E0A17F; --slv-p:#34211A; --slv-c:#3B251B;
+  --min:#5E86BE;  --min-t:#A9C9EE;
+  --appbg:#131A21; --panel:#0B1018; --line:#2A3442;
+}
 html,body{height:100%;margin:0;overflow:hidden}
 body{background:#0A0D0A;color:#E9E4D2;font-size:14px;line-height:1.5;
   font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
   -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 #app{position:relative;height:100%;max-width:420px;margin:0 auto;
-  display:flex;flex-direction:column;background:#141A16;overflow:hidden}
+  display:flex;flex-direction:column;background:var(--appbg);overflow:hidden}
 button{font:inherit;cursor:pointer}
+/* E08 卡圖預載槽：離屏 1px，不佔版面、不可點 */
+.imgpre{position:fixed;left:-99px;top:0;width:1px;height:1px;overflow:hidden;
+  opacity:0;pointer-events:none}
+.imgpre img{width:1px;height:1px}
 
 /* ---------- ①頂欄 ---------- */
 .ptop{flex:none;display:flex;justify-content:space-between;align-items:center;
-  padding:10px 12px;background:#0E120F;border-bottom:1px solid #2C332C}
+  padding:10px 12px;background:var(--panel);border-bottom:1px solid var(--line)}
 .wallet{font-weight:700;color:#E7C86A;font-variant-numeric:tabular-nums;font-size:15px}
 .mseg{display:flex;border:1px solid #E7C86A;border-radius:6px;overflow:hidden}
 .mseg button{border:0;background:transparent;color:#E9E4D2;font-size:13px;padding:4px 12px}
@@ -21,9 +44,11 @@ button{font:inherit;cursor:pointer}
 .mseg button:disabled{color:#6B7568;cursor:default}
 
 /* ---------- ③戰報帶 ---------- */
-.banner{flex:none;height:30px;display:flex;align-items:center;justify-content:center;
+/* E09 多語紀律：改 block＋單行省略號——換成長字的語言時截斷收尾，不會把字推出畫面 */
+.banner{flex:none;height:30px;line-height:30px;
   font-size:13px;color:#E7C86A;letter-spacing:.08em;font-weight:700;
-  transition:opacity .3s;padding:0 8px;text-align:center;white-space:nowrap}
+  transition:opacity .3s;padding:0 8px;text-align:center;box-sizing:border-box;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .banner.dim{opacity:0}
 
 /* ---------- ②左右對局者＋④中央對決區 ---------- */
@@ -32,34 +57,47 @@ button{font:inherit;cursor:pointer}
 .speccol{flex:none;display:flex;flex-direction:column;align-items:center;gap:6px}
 .avatar{width:40px;height:40px;border-radius:50%;background:#1A1F1A;border:1.5px solid #4A4136;
   display:flex;align-items:center;justify-content:center;font-size:20px}
-.avatar.aE{border-color:#E7C86A}
-.avatar.aS{border-color:#C9666C}
+.avatar.aE{border-color:var(--emp)}
+.avatar.aS{border-color:var(--slv)}
 /* E05 滿貫／完賭：下注側頭像高光——抬到暗幕之上（z 31 > #grand 30）、只動 transform 脈動；陰影靜態 */
 @keyframes hipulse{0%,100%{transform:scale(1.1)}50%{transform:scale(1.2)}}
 .speccol.hi .avatar{position:relative;z-index:31;border-color:#F5E2A0;background:#2B2413;
   box-shadow:0 0 0 3px rgba(245,226,160,.4);animation:hipulse 1.2s ease-in-out infinite}
 .speccol.hi .sidename{position:relative;z-index:31;color:#F5E2A0;font-weight:700}
 .sidename{font-size:11px;color:#9AA895}
-.vhand{display:flex;flex-direction:column;gap:5px}
-.gcard{width:34px;height:48px;border-radius:5px;
+/* E08：五張改疊放（露出約 60%），卡面加大到 60×91＝原尺寸的 1.8 倍 */
+.vhand{display:flex;flex-direction:column}
+.gcard{width:60px;height:91px;border-radius:7px;box-sizing:border-box;overflow:hidden;
+  background-size:cover;background-position:center;background-repeat:no-repeat;
   transition:transform .25s,opacity .25s}
-.gcard.back{background:linear-gradient(135deg,#3A2C2C 25%,#2C2020 25%,#2C2020 50%,#3A2C2C 50%,#3A2C2C 75%,#2C2020 75%);
-  background-size:9px 9px;border:1.5px solid #6B4A44}
+.vhand .gcard+.gcard{margin-top:-36px}
+.gcard.back{background-image:var(--img-back);border:1px solid var(--cedge)}
 .gcard.gone{opacity:.18;transform:scale(.88)}
 .duel{flex:1;min-width:0;margin:0 4px;position:relative;
-  display:flex;gap:14px;align-items:center;justify-content:center;
-  background:radial-gradient(ellipse at center,#1D2820 0%,#141A16 75%);border-radius:10px}
+  display:flex;gap:8px;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at center,var(--felt) 0%,var(--appbg) 75%);border-radius:10px}
+/* E08：卡面改 300×454 圖（JPEG 無 alpha → border-radius＋overflow 裁角）；
+ * 基準尺寸 56×78 沿用給進階桌面與飛行牌，普通機位在 .duel 內加大 */
 .dslot{width:56px;height:78px;border-radius:6px;border:1.5px dashed #3D4A3D;flex:none;
-  display:flex;align-items:center;justify-content:center;
-  font-family:"Noto Serif TC","Microsoft JhengHei",serif;font-weight:900;font-size:26px}
+  box-sizing:border-box;position:relative;overflow:hidden;
+  background-size:cover;background-position:center;background-repeat:no-repeat}
+.duel .dslot{width:90px;height:136px;border-radius:9px}
 .dslot.filled{border-style:solid}
-.dslot.dmin,.cutfx .dmin{background:#EFE7D2;color:#3B3324;border-color:#B7A87E}
-.dslot.demp,.cutfx .demp{background:#3B3016;color:#F0CE6E;border-color:#E7C86A}
-.dslot.dslv,.cutfx .dslv{background:#3A1E20;color:#E58F94;border-color:#C9666C}
+.dslot.dmin,.cutfx .dmin{background-image:var(--img-min);border-color:var(--min)}
+.dslot.demp,.cutfx .demp{background-image:var(--img-emp);border-color:var(--emp)}
+.dslot.dslv,.cutfx .dslv{background-image:var(--img-slv);border-color:var(--slv)}
 .dslot.ghosted{opacity:0}
-.dslot.dback{background:linear-gradient(135deg,#3A2C2C 25%,#2C2020 25%,#2C2020 50%,#3A2C2C 50%,#3A2C2C 75%,#2C2020 75%);
-  background-size:9px 9px;border-color:#6B4A44;border-style:solid;color:transparent}
-.dvs{color:#5C6B5C;font-size:12px;letter-spacing:.2em;flex:none}
+.dslot.dback{background-image:var(--img-back);border-color:var(--cedge);border-style:solid}
+/* 角落徽記：小尺寸下卡面英文（EMPEROR／SLAVE／ADVENTURER）不可讀，補 帝／奴／民 字元 */
+.rk{position:absolute;left:0;top:0;min-width:17px;height:17px;padding:0 3px;box-sizing:border-box;
+  border-radius:6px 0 7px 0;background:rgba(8,10,14,.82);font-style:normal;
+  font-family:"Noto Serif TC","Microsoft JhengHei",serif;font-weight:900;
+  font-size:12px;line-height:17px;text-align:center;letter-spacing:0}
+.duel .rk{min-width:21px;height:21px;font-size:14.5px;line-height:21px;border-radius:8px 0 8px 0}
+.demp>.rk{color:var(--emp-t)}
+.dslv>.rk{color:var(--slv-t)}
+.dmin>.rk{color:var(--min-t)}
+.dvs{color:#5C6B5C;font-size:11px;letter-spacing:.12em;flex:none}
 @keyframes pop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
 @keyframes clash{0%,100%{transform:translateX(0)}30%{transform:translateX(-4px)}60%{transform:translateX(4px)}}
 @keyframes flash{0%{opacity:0}25%{opacity:.9}100%{opacity:0}}
@@ -80,10 +118,11 @@ button{font:inherit;cursor:pointer}
 
 /* R3 斬牌：敗方牌斜切兩半（半片＝靜態 clip，動的只有 transform/opacity） */
 .cutfx{position:absolute;z-index:6;pointer-events:none}
-.cutfx .half{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+.cutfx .half{position:absolute;inset:0;overflow:hidden;
   border-radius:6px;border:1.5px solid;box-sizing:border-box;
-  font-family:"Noto Serif TC","Microsoft JhengHei",serif;font-weight:900;font-size:26px;
+  background-size:cover;background-position:center;background-repeat:no-repeat;
   transition:transform .45s cubic-bezier(.2,.8,.3,1),opacity .45s}
+.duel .cutfx .half{border-radius:9px}
 .cutfx .hT{clip-path:polygon(0 0,100% 0,100% 40%,0 60%)}
 .cutfx .hB{clip-path:polygon(0 60%,100% 40%,100% 100%,0 100%)}
 .cutfx.go .hT{transform:translate(-6px,-13px) rotate(-8deg);opacity:.85}
@@ -112,15 +151,17 @@ button{font:inherit;cursor:pointer}
 .phdot{position:absolute;top:0;bottom:0;width:2px;background:#8FD49B}
 
 /* ---------- ⑥操作面板（三態互斥輪替） ---------- */
-.panel{flex:none;height:194px;box-sizing:border-box;background:#0E120F;
-  border-top:1px solid #2C332C;padding:12px 12px 10px}
+/* E09 多語紀律：高度改「最少 194」而非鎖死——換成長字的語言時面板往上長，
+ * 不會把提示列擠出畫面（觀賽列 .specrow 是 flex:1，會自動讓出這幾像素） */
+.panel{flex:none;min-height:194px;box-sizing:border-box;background:var(--panel);
+  border-top:1px solid var(--line);padding:12px 12px 10px}
 .siderow{display:flex;gap:8px;margin-bottom:9px}
 .sidebtn{flex:1;border-radius:8px;padding:8px 4px;text-align:center;
   border:1.5px solid #4A4136;background:#1A1F1A;color:#E9E4D2}
 .sidebtn b{display:block;font-family:"Noto Serif TC","Microsoft JhengHei",serif;font-size:16px}
 .sidebtn small{color:#9AA895;font-size:11.5px}
-.sidebtn.selE{border-color:#E7C86A;background:#2B2413}
-.sidebtn.selS{border-color:#C9666C;background:#2B1517}
+.sidebtn.selE{border-color:var(--emp);background:var(--emp-p)}
+.sidebtn.selS{border-color:var(--slv);background:var(--slv-p)}
 .chiprow{display:flex;gap:8px;align-items:center;margin-bottom:9px}
 .chiplab{font-size:12px;color:#9AA895}
 .chip{border-radius:20px;border:1.5px solid #4A4136;background:#1A1F1A;color:#E9E4D2;
@@ -129,7 +170,8 @@ button{font:inherit;cursor:pointer}
 .gobtn{width:100%;border:0;border-radius:8px;padding:10px;font-weight:700;font-size:14.5px;
   background:#E7C86A;color:#141A16}
 .gobtn:disabled{opacity:.35;cursor:default}
-.msg{font-size:11.5px;color:#9AA895;min-height:16px;text-align:center;margin-top:6px}
+.msg{font-size:11.5px;color:#9AA895;min-height:16px;max-height:36px;overflow:hidden;
+  text-align:center;margin-top:5px;line-height:1.45}   /* 至多兩行，超過的語言截斷而非破版 */
 .lockmsg{margin-top:56px;text-align:center;font-size:13px;color:#9AA895}
 
 /* 階梯態 */
@@ -140,8 +182,8 @@ button{font:inherit;cursor:pointer}
 .lrow{display:flex;gap:8px}
 .lrow button{flex:1;border-radius:8px;padding:9px 4px;font-size:12.5px;line-height:1.4;
   border:1.5px solid}
-.bt-emp{background:#2B2413;border-color:#E7C86A;color:#F0CE6E}
-.bt-slv{background:#2B1517;border-color:#C9666C;color:#E58F94}
+.bt-emp{background:var(--emp-p);border-color:var(--emp);color:var(--emp-t)}
+.bt-slv{background:var(--slv-p);border-color:var(--slv);color:var(--slv-t)}
 .bt-cash{background:#16281B;border-color:#5FA06B;color:#8FD49B}
 .lnote{font-size:10.5px;color:#9AA895;margin-top:7px}
 /* E05 決策提示：續戰鈕第三行——下一階觸線「→ 滿貫！」／第 10 階「→ 完賭」 */
@@ -152,13 +194,13 @@ button{font:inherit;cursor:pointer}
 .lpath{display:inline-flex;gap:3px;vertical-align:1px;margin-left:6px}
 .lpath i{font-style:normal;font-size:10px;line-height:14px;width:14px;border-radius:3px;text-align:center;
   font-weight:700;border:1px solid}
-.lpath .pe{background:#3B3016;color:#F0CE6E;border-color:#E7C86A}
-.lpath .ps{background:#3A1E20;color:#E58F94;border-color:#C9666C}
+.lpath .pe{background:var(--emp-c);color:var(--emp-t);border-color:var(--emp)}
+.lpath .ps{background:var(--slv-c);color:var(--slv-t);border-color:var(--slv)}
 /* Q2 倒數圈：圓框＋數字＋旋轉指針（指針只動 transform） */
 .cring{position:absolute;right:0;top:-2px;width:34px;height:34px;border-radius:50%;
   border:2px solid #4A4136;display:flex;align-items:center;justify-content:center}
 .cring .cnum{font-size:13px;font-weight:700;color:#E7C86A;font-variant-numeric:tabular-nums}
-.cring.hurry .cnum{color:#E58F94}
+.cring.hurry .cnum{color:var(--slv-t)}
 .chand{position:absolute;left:50%;top:50%;width:2px;height:15px;margin:-15px 0 0 -1px;
   transform-origin:50% 100%;background:#E7C86A;opacity:.55;border-radius:1px}
 
