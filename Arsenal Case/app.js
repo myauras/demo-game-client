@@ -97,7 +97,7 @@ function renderCards() {
       </span>
     </button>`).join("");
   requestAnimationFrame(() => document.querySelectorAll(".case-card").forEach((card, index) => {
-    setTimeout(() => card.classList.add("dealt"), index * 90);
+    setTimeout(() => card.classList.add("dealt"), index * 140);
   }));
 }
 
