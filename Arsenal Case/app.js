@@ -163,7 +163,7 @@ async function startRound() {
   setBalance(balance - currentBet);
   setControls(true);
   playfield.classList.add("live");
-  resultPanel.classList.remove("show");
+  resultPanel.classList.remove("show", "jackpot");
   resultPanel.setAttribute("aria-hidden", "true");
   document.querySelectorAll(".paytable article").forEach(item => item.classList.remove("active"));
   revealed.clear();
@@ -203,6 +203,7 @@ function showResult() {
   document.querySelector(`[data-pattern="${result.key}"]`).classList.add("active");
   $("#result-multiplier").textContent = `${result.mult}×`;
   $("#result-payout").textContent = money(payout).replace(" ", "\u00a0");
+  resultPanel.classList.toggle("jackpot", result.mult === 60);
   resultPanel.classList.add("show");
   fitResultPayout();
   resultPanel.setAttribute("aria-hidden", "false");
@@ -219,7 +220,7 @@ function showResult() {
 
 function resetRound() {
   state = "RESET";
-  resultPanel.classList.remove("show");
+  resultPanel.classList.remove("show", "jackpot");
   document.querySelectorAll(".paytable article.active").forEach(item => item.classList.remove("active"));
   document.querySelectorAll(".case-card").forEach((card, index) => setTimeout(() => {
     card.style.opacity = "0";
