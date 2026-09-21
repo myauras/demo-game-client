@@ -29,6 +29,22 @@ const patterns = {
   "5": { key: "five", label: "五同", mult: 60 }
 };
 
+const outcomeDistribution = [
+  { structure: [5], probability: .0024, mult: 60 },
+  { structure: [4, 1], probability: .0126, mult: 7 },
+  { structure: [3, 2], probability: .03, mult: 6 },
+  { structure: [3, 1, 1], probability: .063, mult: 4 },
+  { structure: [2, 2, 1], probability: .132, mult: 2 },
+  { structure: [2, 1, 1, 1], probability: .218, mult: .1 },
+  { structure: [1, 1, 1, 1, 1], probability: .542, mult: 0 }
+];
+
+const theoreticalRtp = outcomeDistribution.reduce(
+  (total, outcome) => total + outcome.probability * outcome.mult,
+  0
+);
+console.assert(Math.abs(theoreticalRtp - .95) < Number.EPSILON, "RTP must remain 0.95");
+
 const $ = (selector) => document.querySelector(selector);
 const cardsEl = $("#cards");
 const playfield = $("#playfield");
@@ -67,14 +83,15 @@ function emptyField() {
 
 function weightedRound() {
   const roll = Math.random();
-  let structure;
-  if (roll < .004) structure = [5];
-  else if (roll < .025) structure = [4, 1];
-  else if (roll < .075) structure = [3, 2];
-  else if (roll < .18) structure = [3, 1, 1];
-  else if (roll < .4) structure = [2, 2, 1];
-  else if (roll < .76) structure = [2, 1, 1, 1];
-  else structure = [1, 1, 1, 1, 1];
+  let threshold = 0;
+  let structure = outcomeDistribution.at(-1).structure;
+  for (const outcome of outcomeDistribution) {
+    threshold += outcome.probability;
+    if (roll < threshold) {
+      structure = outcome.structure;
+      break;
+    }
+  }
   const pool = [...items].sort(() => Math.random() - .5);
   const result = [];
   structure.forEach((count, index) => { for (let i = 0; i < count; i++) result.push(pool[index]); });
