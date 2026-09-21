@@ -129,7 +129,7 @@ h1 { margin: 3px 0 0; font: 900 clamp(2rem, 5vw, 3.8rem)/.9 var(--font-head); le
 .case-card.revealed { cursor: default; }
 .case-card::before,
 .case-card::after { content: ""; position: absolute; pointer-events: none; opacity: 0; }
-.case-card.revealed::before {
+.case-card.win::before {
   z-index: 1;
   inset: -14%;
   border-radius: 18px;
@@ -137,7 +137,7 @@ h1 { margin: 3px 0 0; font: 900 clamp(2rem, 5vw, 3.8rem)/.9 var(--font-head); le
   filter: blur(7px);
   animation: card-reveal-glow .9s ease-out both;
 }
-.case-card.revealed::after {
+.case-card.win::after {
   z-index: 3;
   inset: -28%;
   background:
@@ -159,7 +159,7 @@ h1 { margin: 3px 0 0; font: 900 clamp(2rem, 5vw, 3.8rem)/.9 var(--font-head); le
 .card-back::after { content: none; }
 .card-front { padding: 0; transform: rotateY(180deg); background-position: center; background-size: 100% 100%; background-repeat: no-repeat; box-shadow: none; }
 .card-front::before { content: none; }
-.case-card.revealed .card-front { animation: card-front-flare .9s ease-out both; }
+.case-card.win .card-front { animation: card-front-flare .9s ease-out both; }
 .item-symbol { font: 900 clamp(2rem, 4vw, 4rem)/1 var(--font-head); letter-spacing: -.05em; color: #f5f7f8; text-shadow: 0 0 18px var(--rarity); transform: skew(-7deg); }
 .item-meta { position: absolute; inset: auto 13px 13px; text-align: left; }
 .item-meta b { display: block; font: 800 clamp(.8rem, 1.4vw, 1.08rem) var(--font-head); letter-spacing: .03em; }
