@@ -348,7 +348,7 @@ h1 { font-size: clamp(1.65rem, 8vw, 2rem); line-height: .92; }
 .scan-frame { inset: 9px; }
 
 .cards {
-  inset: 13px 6%;
+  inset: 13px 10%;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   grid-template-rows: repeat(2, minmax(0, 1fr));
   align-items: center;
