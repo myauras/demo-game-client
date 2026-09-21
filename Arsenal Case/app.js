@@ -96,6 +96,20 @@ function getWinningIndexes() {
     .filter(index => index !== -1);
 }
 
+function fitResultPayout() {
+  const payoutEl = $("#result-payout");
+  const panelStyle = getComputedStyle(resultPanel);
+  const availableWidth = resultPanel.clientWidth
+    - parseFloat(panelStyle.paddingLeft)
+    - parseFloat(panelStyle.paddingRight);
+  payoutEl.style.fontSize = "";
+  let fontSize = parseFloat(getComputedStyle(payoutEl).fontSize);
+  while (payoutEl.scrollWidth > availableWidth && fontSize > 26) {
+    fontSize -= 1;
+    payoutEl.style.fontSize = `${fontSize}px`;
+  }
+}
+
 function renderCards() {
   cardsEl.innerHTML = round.map((item, index) => `
     <button class="case-card" data-index="${index}" type="button" aria-label="第 ${index + 1} 個軍火箱，點擊翻開" style="--rarity:${item.color}">
@@ -188,8 +202,9 @@ function showResult() {
   state = "PAYOUT";
   document.querySelector(`[data-pattern="${result.key}"]`).classList.add("active");
   $("#result-multiplier").textContent = `${result.mult}×`;
-  $("#result-payout").textContent = money(payout);
+  $("#result-payout").textContent = money(payout).replace(" ", "\u00a0");
   resultPanel.classList.add("show");
+  fitResultPayout();
   resultPanel.setAttribute("aria-hidden", "false");
   statusEl.textContent = `${result.label}｜本局結算完成`;
   revealCount.textContent = `${result.mult}×`;
