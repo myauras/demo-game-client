@@ -215,7 +215,7 @@ function showResult() {
     });
     setBalance(balance + payout);
   }
-  setTimeout(resetRound, result.mult >= 6 ? 3600 : 2800);
+  setTimeout(resetRound, result.mult === 60 ? 2600 : 1800);
 }
 
 function resetRound() {
