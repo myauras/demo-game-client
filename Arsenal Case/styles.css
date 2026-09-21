@@ -127,7 +127,31 @@ h1 { margin: 3px 0 0; font: 900 clamp(2rem, 5vw, 3.8rem)/.9 var(--font-head); le
 .case-card { appearance: none; -webkit-appearance: none; position: relative; width: 100%; aspect-ratio: 212 / 285; max-height: 285px; margin: 0; padding: 0; border: 0; background: transparent; opacity: 0; transform: translateY(40px) scale(.78); transition: opacity .3s ease, transform .42s cubic-bezier(.2,.8,.2,1); cursor: pointer; touch-action: none; }
 .case-card.dealt { opacity: 1; transform: none; }
 .case-card.revealed { cursor: default; }
-.card-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .62s cubic-bezier(.2,.7,.2,1); }
+.case-card::before,
+.case-card::after { content: ""; position: absolute; pointer-events: none; opacity: 0; }
+.case-card.revealed::before {
+  z-index: 1;
+  inset: -14%;
+  border-radius: 18px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--rarity) 76%, white) 0 9%, color-mix(in srgb, var(--rarity) 46%, transparent) 28%, transparent 68%);
+  filter: blur(7px);
+  animation: card-reveal-glow .9s ease-out both;
+}
+.case-card.revealed::after {
+  z-index: 3;
+  inset: -28%;
+  background:
+    radial-gradient(circle at 12% 24%, #fff 0 1px, #ffd56e 2px 4px, transparent 5px),
+    radial-gradient(circle at 82% 16%, #fff 0 1px, var(--rarity) 2px 4px, transparent 5px),
+    radial-gradient(circle at 94% 54%, #fff 0 1px, #ffd56e 2px 3px, transparent 4px),
+    radial-gradient(circle at 72% 88%, #fff 0 1px, var(--rarity) 2px 4px, transparent 5px),
+    radial-gradient(circle at 22% 82%, #fff 0 1px, #ffd56e 2px 3px, transparent 4px),
+    radial-gradient(circle at 4% 56%, #fff 0 1px, var(--rarity) 2px 4px, transparent 5px),
+    conic-gradient(from 45deg at 50% 50%, transparent 0 12%, rgba(255,219,126,.82) 12.5% 13%, transparent 13.5% 37%, rgba(255,255,255,.82) 37.5% 38%, transparent 38.5% 62%, rgba(255,219,126,.72) 62.5% 63%, transparent 63.5% 87%, rgba(255,255,255,.72) 87.5% 88%, transparent 88.5%);
+  mix-blend-mode: screen;
+  animation: card-sparkles 1s cubic-bezier(.16,.72,.2,1) both;
+}
+.card-inner { position: absolute; z-index: 2; inset: 0; transform-style: preserve-3d; transition: transform .62s cubic-bezier(.2,.7,.2,1); }
 .case-card.revealed .card-inner { transform: rotateY(180deg); }
 .card-face { position: absolute; inset: 0; display: grid; place-items: center; border: 0; background-color: transparent; backface-visibility: hidden; }
 .card-back { background: transparent url("assets/weapon-case.webp") center / contain no-repeat; box-shadow: none; }
@@ -135,6 +159,7 @@ h1 { margin: 3px 0 0; font: 900 clamp(2rem, 5vw, 3.8rem)/.9 var(--font-head); le
 .card-back::after { content: none; }
 .card-front { padding: 0; transform: rotateY(180deg); background-position: center; background-size: 100% 100%; background-repeat: no-repeat; box-shadow: none; }
 .card-front::before { content: none; }
+.case-card.revealed .card-front { animation: card-front-flare .9s ease-out both; }
 .item-symbol { font: 900 clamp(2rem, 4vw, 4rem)/1 var(--font-head); letter-spacing: -.05em; color: #f5f7f8; text-shadow: 0 0 18px var(--rarity); transform: skew(-7deg); }
 .item-meta { position: absolute; inset: auto 13px 13px; text-align: left; }
 .item-meta b { display: block; font: 800 clamp(.8rem, 1.4vw, 1.08rem) var(--font-head); letter-spacing: .03em; }
@@ -186,6 +211,22 @@ h1 { margin: 3px 0 0; font: 900 clamp(2rem, 5vw, 3.8rem)/.9 var(--font-head); le
 @keyframes blink { 50% { opacity: .35; } }
 @keyframes winning-card { 50% { transform: translateY(-14px) scale(1.03); } }
 @keyframes shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+@keyframes card-reveal-glow {
+  0% { opacity: 0; transform: scale(.54); }
+  24% { opacity: 1; transform: scale(.92); }
+  58% { opacity: .78; }
+  100% { opacity: 0; transform: scale(1.34); }
+}
+@keyframes card-sparkles {
+  0% { opacity: 0; transform: scale(.58) rotate(-8deg); filter: brightness(1.8); }
+  20% { opacity: 1; }
+  72% { opacity: .82; }
+  100% { opacity: 0; transform: scale(1.18) rotate(7deg); filter: brightness(1); }
+}
+@keyframes card-front-flare {
+  0%, 42% { filter: brightness(2.15) saturate(1.55); box-shadow: 0 0 0 1px rgba(255,255,255,.9), 0 0 30px 10px var(--rarity); }
+  100% { filter: brightness(1) saturate(1); box-shadow: 0 0 0 0 transparent, 0 0 0 0 transparent; }
+}
 
 @media (max-width: 760px) {
   .game-shell { padding: 15px 10px 142px; grid-template-rows: auto auto minmax(490px, 1fr); gap: 12px; }
