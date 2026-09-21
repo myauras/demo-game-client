@@ -129,15 +129,15 @@ h1 { margin: 3px 0 0; font: 900 clamp(2rem, 5vw, 3.8rem)/.9 var(--font-head); le
 .case-card.revealed { cursor: default; }
 .case-card::before,
 .case-card::after { content: ""; position: absolute; pointer-events: none; opacity: 0; }
-.case-card.win::before {
+.case-card.revealed::before {
   z-index: 1;
   inset: -14%;
   border-radius: 18px;
   background: radial-gradient(circle, color-mix(in srgb, var(--rarity) 76%, white) 0 9%, color-mix(in srgb, var(--rarity) 46%, transparent) 28%, transparent 68%);
   filter: blur(7px);
-  animation: card-reveal-glow .9s ease-out both;
+  animation: card-reveal-glow .6s ease-out both;
 }
-.case-card.win::after {
+.case-card.revealed::after {
   z-index: 3;
   inset: -28%;
   background:
@@ -149,7 +149,7 @@ h1 { margin: 3px 0 0; font: 900 clamp(2rem, 5vw, 3.8rem)/.9 var(--font-head); le
     radial-gradient(circle at 4% 56%, #fff 0 1px, var(--rarity) 2px 4px, transparent 5px),
     conic-gradient(from 45deg at 50% 50%, transparent 0 12%, rgba(255,219,126,.82) 12.5% 13%, transparent 13.5% 37%, rgba(255,255,255,.82) 37.5% 38%, transparent 38.5% 62%, rgba(255,219,126,.72) 62.5% 63%, transparent 63.5% 87%, rgba(255,255,255,.72) 87.5% 88%, transparent 88.5%);
   mix-blend-mode: screen;
-  animation: card-sparkles 1s cubic-bezier(.16,.72,.2,1) both;
+  animation: card-sparkles .62s cubic-bezier(.16,.72,.2,1) both;
 }
 .card-inner { position: absolute; z-index: 2; inset: 0; transform-style: preserve-3d; transition: transform .62s cubic-bezier(.2,.7,.2,1); }
 .case-card.revealed .card-inner { transform: rotateY(180deg); }
@@ -159,12 +159,17 @@ h1 { margin: 3px 0 0; font: 900 clamp(2rem, 5vw, 3.8rem)/.9 var(--font-head); le
 .card-back::after { content: none; }
 .card-front { padding: 0; transform: rotateY(180deg); background-position: center; background-size: 100% 100%; background-repeat: no-repeat; box-shadow: none; }
 .card-front::before { content: none; }
-.case-card.win .card-front { animation: card-front-flare .9s ease-out both; }
+.case-card.revealed .card-front { animation: card-front-flare .6s ease-out both; }
 .item-symbol { font: 900 clamp(2rem, 4vw, 4rem)/1 var(--font-head); letter-spacing: -.05em; color: #f5f7f8; text-shadow: 0 0 18px var(--rarity); transform: skew(-7deg); }
 .item-meta { position: absolute; inset: auto 13px 13px; text-align: left; }
 .item-meta b { display: block; font: 800 clamp(.8rem, 1.4vw, 1.08rem) var(--font-head); letter-spacing: .03em; }
 .item-meta span { color: var(--rarity); font-size: .59rem; font-weight: 800; letter-spacing: .15em; }
-.case-card.win { animation: winning-card .85s ease-in-out 2; filter: drop-shadow(0 0 16px var(--amber)); }
+.case-card.win {
+  z-index: 4;
+  animation: winning-card .8s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 16px var(--rarity)) drop-shadow(0 0 22px var(--amber));
+  will-change: transform, filter;
+}
 
 .beam-layer { position: absolute; z-index: 4; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .beam { fill: none; stroke: var(--amber-hi); stroke-width: 2; filter: drop-shadow(0 0 5px var(--amber-hi)); stroke-dasharray: 8 13; animation: beam-shot .66s ease-out forwards; }
@@ -209,7 +214,10 @@ h1 { margin: 3px 0 0; font: 900 clamp(2rem, 5vw, 3.8rem)/.9 var(--font-head); le
 
 @keyframes beam-shot { from { stroke-dashoffset: 90; opacity: 0; } 30% { opacity: 1; } to { stroke-dashoffset: 0; opacity: 0; } }
 @keyframes blink { 50% { opacity: .35; } }
-@keyframes winning-card { 50% { transform: translateY(-14px) scale(1.03); } }
+@keyframes winning-card {
+  from { transform: translateY(0) scale(1); }
+  to { transform: translateY(-14px) scale(1.035); }
+}
 @keyframes shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
 @keyframes card-reveal-glow {
   0% { opacity: 0; transform: scale(.54); }
