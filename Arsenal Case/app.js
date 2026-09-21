@@ -88,6 +88,14 @@ function getResult() {
   return patterns[signature];
 }
 
+function getWinningIndexes() {
+  const counts = {};
+  round.forEach(item => counts[item.code] = (counts[item.code] || 0) + 1);
+  return round
+    .map((item, index) => counts[item.code] > 1 ? index : -1)
+    .filter(index => index !== -1);
+}
+
 function renderCards() {
   cardsEl.innerHTML = round.map((item, index) => `
     <button class="case-card" data-index="${index}" type="button" aria-label="第 ${index + 1} 個軍火箱，點擊翻開" style="--rarity:${item.color}">
@@ -186,7 +194,9 @@ function showResult() {
   statusEl.textContent = `${result.label}｜本局結算完成`;
   revealCount.textContent = `${result.mult}×`;
   if (result.mult > 0) {
-    document.querySelectorAll(".case-card").forEach(card => card.classList.add("win"));
+    getWinningIndexes().forEach(index => {
+      document.querySelector(`.case-card[data-index="${index}"]`)?.classList.add("win");
+    });
     setBalance(balance + payout);
   }
   setTimeout(resetRound, result.mult >= 6 ? 3600 : 2800);
