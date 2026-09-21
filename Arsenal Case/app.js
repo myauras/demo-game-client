@@ -146,13 +146,32 @@ function drawBeams() {
   const startX = buttonRect.left + buttonRect.width / 2 - fieldRect.left;
   const startY = fieldRect.height;
   beamLayer.setAttribute("viewBox", `0 0 ${fieldRect.width} ${fieldRect.height}`);
-  beamLayer.innerHTML = [...document.querySelectorAll(".case-card")].map(card => {
+  const beams = [...document.querySelectorAll(".case-card")].map((card, index) => {
     const rect = card.getBoundingClientRect();
     const x = rect.left + rect.width / 2 - fieldRect.left;
     const y = rect.top + rect.height / 2 - fieldRect.top;
-    return `<path class="beam" d="M ${startX} ${startY} Q ${(startX+x)/2} ${Math.min(startY,y)+80} ${x} ${y}"/>`;
+    const path = `M ${startX} ${startY} Q ${(startX + x) / 2} ${Math.min(startY, y) + 80} ${x} ${y}`;
+    const delay = index * .045;
+    return `
+      <g class="beam-group" style="--beam-delay:${delay}s">
+        <path class="beam beam-halo" d="${path}"/>
+        <path class="beam beam-ribbon" d="${path}"/>
+        <path class="beam beam-core" d="${path}"/>
+        <circle class="beam-particle" r="4">
+          <animateMotion path="${path}" begin="${delay}s" dur=".7s" fill="freeze"/>
+        </circle>
+        <circle class="beam-particle beam-particle-small" r="2.2">
+          <animateMotion path="${path}" begin="${delay + .1}s" dur=".76s" fill="freeze"/>
+        </circle>
+        <circle class="beam-impact-ring" cx="${x}" cy="${y}" r="10"/>
+        <circle class="beam-impact-core" cx="${x}" cy="${y}" r="3.5"/>
+      </g>`;
   }).join("");
-  setTimeout(() => beamLayer.innerHTML = "", 850);
+  beamLayer.innerHTML = `
+    <circle class="beam-origin-pulse" cx="${startX}" cy="${startY}" r="12"/>
+    <circle class="beam-origin-core" cx="${startX}" cy="${startY}" r="4"/>
+    ${beams}`;
+  setTimeout(() => beamLayer.innerHTML = "", 1150);
 }
 
 async function startRound() {
