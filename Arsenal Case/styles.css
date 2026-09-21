@@ -166,7 +166,7 @@ h1 { margin: 3px 0 0; font: 900 clamp(2rem, 5vw, 3.8rem)/.9 var(--font-head); le
 .item-meta span { color: var(--rarity); font-size: .59rem; font-weight: 800; letter-spacing: .15em; }
 .case-card.win {
   z-index: 4;
-  animation: winning-card .8s ease-in-out infinite alternate;
+  animation: winning-card 1s ease-in-out 1;
   filter: drop-shadow(0 0 16px var(--rarity)) drop-shadow(0 0 22px var(--amber));
   will-change: transform, filter;
 }
@@ -176,9 +176,16 @@ h1 { margin: 3px 0 0; font: 900 clamp(2rem, 5vw, 3.8rem)/.9 var(--font-head); le
 
 .result-panel { position: absolute; z-index: 9; left: 50%; top: 52%; width: min(340px, 82%); transform: translate(-50%, -50%) scale(.7); opacity: 0; pointer-events: none; text-align: center; padding: 20px; border: 1px solid var(--amber); background: rgba(9,13,17,.94); box-shadow: 0 0 60px rgba(217,151,43,.32); transition: .35s; }
 .result-panel.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.result-panel.jackpot { border-color: #ffe199; box-shadow: 0 0 72px rgba(255,190,67,.58), inset 0 0 24px rgba(255,199,95,.15); }
 .result-panel span { color: var(--amber-hi); font-size: .72rem; letter-spacing: .2em; }
-.result-panel #result-payout { display: block; max-width: 100%; color: #f5f7f8; font: 900 clamp(2.3rem, 7vw, 3.8rem)/.95 var(--font-head); font-variant-numeric: tabular-nums; letter-spacing: -.04em; white-space: nowrap; word-break: keep-all; overflow-wrap: normal; }
-.result-panel #result-multiplier { margin: 9px 0 0; color: var(--amber-hi); font: 800 clamp(1rem, 2.4vw, 1.45rem)/1 var(--font-head); letter-spacing: .08em; }
+.result-panel #result-payout { position: relative; z-index: 2; display: block; max-width: 100%; color: #f5f7f8; font: 900 clamp(2.3rem, 7vw, 3.8rem)/.95 var(--font-head); font-variant-numeric: tabular-nums; letter-spacing: -.04em; white-space: nowrap; word-break: keep-all; overflow-wrap: normal; }
+.result-panel #result-multiplier { position: relative; z-index: 2; margin: 9px 0 0; color: var(--amber-hi); font: 800 clamp(1rem, 2.4vw, 1.45rem)/1 var(--font-head); letter-spacing: .08em; }
+.fireworks { display: none; position: absolute; z-index: 1; inset: -70px -46px; pointer-events: none; overflow: visible; }
+.result-panel.jackpot .fireworks { display: block; }
+.fireworks i { position: absolute; width: 5px; height: 5px; border-radius: 50%; color: #ffd568; opacity: 0; box-shadow: 0 -38px currentColor, 27px -27px currentColor, 38px 0 currentColor, 27px 27px currentColor, 0 38px currentColor, -27px 27px currentColor, -38px 0 currentColor, -27px -27px currentColor; animation: firework-burst 1.12s ease-out 2; }
+.fireworks i:nth-child(1) { left: 20%; top: 35%; color: #ffbd45; }
+.fireworks i:nth-child(2) { left: 80%; top: 25%; color: #7ee6ff; animation-delay: .3s; }
+.fireworks i:nth-child(3) { left: 52%; top: 72%; color: #ff6f70; animation-delay: .62s; }
 
 .bet-dock {
   position: fixed;
@@ -215,8 +222,14 @@ h1 { margin: 3px 0 0; font: 900 clamp(2rem, 5vw, 3.8rem)/.9 var(--font-head); le
 @keyframes beam-shot { from { stroke-dashoffset: 90; opacity: 0; } 30% { opacity: 1; } to { stroke-dashoffset: 0; opacity: 0; } }
 @keyframes blink { 50% { opacity: .35; } }
 @keyframes winning-card {
-  from { transform: translateY(0) scale(1); }
-  to { transform: translateY(-14px) scale(1.035); }
+  0%, 100% { transform: translateY(0) scale(1); }
+  52% { transform: translateY(-14px) scale(1.035); }
+}
+@keyframes firework-burst {
+  0% { opacity: 0; transform: scale(.18); filter: brightness(2); }
+  18% { opacity: 1; }
+  72% { opacity: .9; }
+  100% { opacity: 0; transform: scale(1.45); filter: brightness(1); }
 }
 @keyframes shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
 @keyframes card-reveal-glow {
