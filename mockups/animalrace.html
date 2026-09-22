@@ -18,7 +18,7 @@ body{background:#11151a;color:#e8e6df;font:15px/1.6 "Noto Sans TC",-apple-system
 .sechd{max-width:1120px;margin:40px auto 0;padding:22px 20px 10px;border-top:1px solid #2a3139}
 .sechd h2{font-size:20px;margin:0 0 4px;color:#ffd166}
 .sechd p{color:#98a1ab;font-size:13.5px;margin:0}
-.sec{max-width:1120px;margin:0 auto;padding:4px 20px 8px;border-radius:12px;overflow:hidden}
+.sec{max-width:1120px;margin:0 auto;border-radius:12px;overflow:hidden}
 .pgft{max-width:1120px;margin:44px auto 60px;padding:16px 20px 0;border-top:1px solid #2a3139;color:#98a1ab;font-size:13px}
 .pgft a{color:#7bc24a}
 /* ---------- 各示意稿原樣式（已限縮到各自區塊，彼此不互相汙染） ---------- */
@@ -26,7 +26,7 @@ body{background:#11151a;color:#e8e6df;font:15px/1.6 "Noto Sans TC",-apple-system
 /* ===== 主題比較：動物大賽跑 vs 無人機競速 ===== */
 
   #s1 *{ box-sizing: border-box; }
-  #s1{ margin: 0; padding: 40px 24px 80px; background: #f4f2ee;
+  #s1{; padding: 40px 24px 80px; background: #f4f2ee;
          font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif; color: #23201c; }
   #s1 .wrap{ max-width: 1120px; margin: 0 auto; }
   #s1 h1{ font-size: 26px; letter-spacing: .04em; margin: 0 0 6px; }
@@ -48,7 +48,7 @@ body{background:#11151a;color:#e8e6df;font:15px/1.6 "Noto Sans TC",-apple-system
 /* ===== 路子總覽與心情疊加 ===== */
 
   #s2 *{ box-sizing: border-box; }
-  #s2{ margin: 0; padding: 40px 24px 80px; background: #f4f2ee;
+  #s2{; padding: 40px 24px 80px; background: #f4f2ee;
          font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif; color: #23201c; }
   #s2 .wrap{ max-width: 1080px; margin: 0 auto; }
   #s2 h1{ font-size: 26px; margin: 0 0 6px; }
@@ -67,7 +67,7 @@ body{background:#11151a;color:#e8e6df;font:15px/1.6 "Noto Sans TC",-apple-system
     --green:#5CA65C; --ink:#333; --mut:#8A8578;
   }
   #s3 *{box-sizing:border-box}
-  #s3{margin:0;background:#F2EDE3;color:var(--ink);font:15px/1.75 "Microsoft JhengHei",system-ui,sans-serif;padding:24px 16px 64px}
+  #s3{;background:#F2EDE3;color:var(--ink);font:15px/1.75 "Microsoft JhengHei",system-ui,sans-serif;padding:24px 16px 64px}
   #s3 .wrap{max-width:960px;margin:0 auto}
   #s3 h1{font-size:24px;color:var(--navy);margin:0 0 4px}
   #s3 .sub{color:var(--mut);font-size:13px;margin-bottom:24px}
@@ -128,6 +128,8 @@ body{background:#11151a;color:#e8e6df;font:15px/1.6 "Noto Sans TC",-apple-system
   #s3 .go{background:var(--orange);color:#fff;text-align:center;border-radius:10px;padding:9px 0;font-weight:700;margin-top:10px}
   #s3 .ghost{opacity:.45}
 
+/* 各稿原本的 body margin 已移除，確保區塊置中 */
+#s1,#s2,#s3{margin-left:auto;margin-right:auto}
 </style>
 </head>
 <body>
