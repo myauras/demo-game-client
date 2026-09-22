@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>押路與自動下注示意</title>
+<style>
+  :root{
+    --navy:#1F3A56; --navy2:#2C4E72; --cream:#FFF9EF; --line:#E5DCC9;
+    --orange:#F08A24; --blue:#4A90CB; --gold:#D4A017; --red:#D9534F;
+    --green:#5CA65C; --ink:#333; --mut:#8A8578;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#F2EDE3;color:var(--ink);font:15px/1.75 "Microsoft JhengHei",system-ui,sans-serif;padding:24px 16px 64px}
+  .wrap{max-width:960px;margin:0 auto}
+  h1{font-size:24px;color:var(--navy);margin:0 0 4px}
+  .sub{color:var(--mut);font-size:13px;margin-bottom:24px}
+  h2{font-size:19px;color:var(--navy);border-left:5px solid var(--orange);padding-left:10px;margin:40px 0 12px}
+  h3{font-size:16px;color:var(--navy2);margin:22px 0 8px}
+  p{margin:8px 0}
+  .note{background:#FBF3DF;border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:13.5px}
+  .warn{background:#FDEEEC;border:1px solid #EFC7C4;border-radius:8px;padding:10px 14px;font-size:13.5px}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;background:#fff;border-radius:8px;overflow:hidden}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:var(--navy);color:#fff;font-weight:600}
+  .mono{font-family:Consolas,monospace;font-size:12.5px}
+
+  /* ── 手機示意框 ── */
+  .row{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;margin:16px 0}
+  .phone{width:340px;background:#EAF4EA;border:10px solid #23262B;border-radius:28px;padding:10px;flex:none}
+  .cap{width:340px;flex:none}
+  @media(max-width:760px){.cap{width:auto}}
+  .cap ul{margin:6px 0;padding-left:20px;font-size:13.5px}
+  .cap li{margin:6px 0}
+  .tag{display:inline-block;background:var(--orange);color:#fff;border-radius:10px;font-size:11px;padding:1px 8px;margin-right:6px;vertical-align:1px}
+
+  /* 遊戲元件模擬 */
+  .topbar{background:var(--navy);color:#fff;border-radius:10px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;font-size:12px}
+  .topbar b{font-size:14px}
+  .cd{background:#8DBB44;color:#fff;border-radius:14px;padding:2px 12px;font-weight:700}
+  .tabs{display:flex;gap:5px;margin:10px 0 8px}
+  .tab{flex:1;text-align:center;background:#fff;border:1px solid var(--line);border-radius:9px;padding:6px 0;font-size:12.5px;color:#666}
+  .tab.on{background:var(--navy);color:#fff;font-weight:700}
+  .panel{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:12px;margin:8px 0;box-shadow:0 2px 0 rgba(0,0,0,.05)}
+  .duo{display:flex;gap:10px;align-items:center;margin:8px 0}
+  .duo .lbl{flex:none;width:56px;font-weight:700;color:var(--navy);font-size:14px;text-align:center}
+  .bbtn{flex:1;border-radius:12px;padding:9px 4px;text-align:center;color:#fff;font-weight:700;font-size:14px;
+        border:2px solid #fff;box-shadow:0 3px 0 rgba(0,0,0,.18), inset 0 -3px 0 rgba(0,0,0,.12)}
+  .bbtn small{display:block;font-weight:400;font-size:11px;opacity:.9}
+  .bo{background:var(--orange)} .bb{background:var(--blue)}
+  .bh{background:var(--red)} .bc{background:var(--navy2)}
+  .picked{outline:3px solid var(--gold)}
+  .mini{font-size:11.5px;color:var(--mut);text-align:center;margin-top:6px}
+  .slip{background:#EFF7EF;border:1px dashed var(--green);border-radius:10px;padding:6px 10px;font-size:12px;margin-top:8px}
+  .chiprow{display:flex;gap:8px;margin-top:10px}
+  .chip{flex:1;text-align:center;background:#fff;border:1px solid var(--line);border-radius:10px;padding:7px 0;font-size:13px}
+  .chip.on{background:var(--navy);color:#F5C518;font-weight:700}
+  .confirm{flex:2.2;background:#ccc;color:#fff;border-radius:10px;text-align:center;padding:7px 0;font-size:13px}
+  .confirm.hot{background:var(--orange)}
+
+  /* 自動下注元件 */
+  .autopill{display:flex;justify-content:space-between;align-items:center;background:#FFF4E2;border:1.5px solid var(--orange);border-radius:12px;padding:8px 12px;font-size:12.5px;margin:8px 0}
+  .autopill b{color:var(--orange)}
+  .stopbtn{background:var(--red);color:#fff;border-radius:9px;padding:3px 12px;font-size:12px;font-weight:700}
+  .modal{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+  .modal h4{margin:0 0 10px;font-size:15px;color:var(--navy)}
+  .fld{display:flex;align-items:center;gap:8px;margin:9px 0;font-size:13px}
+  .fld .k{flex:none;width:74px;color:var(--mut)}
+  .seg{display:flex;gap:6px;flex:1}
+  .seg span{flex:1;text-align:center;border:1px solid var(--line);border-radius:8px;padding:4px 0;font-size:12.5px;color:#666}
+  .seg span.on{background:var(--navy);color:#fff;font-weight:700}
+  .go{background:var(--orange);color:#fff;text-align:center;border-radius:10px;padding:9px 0;font-weight:700;margin-top:10px}
+  .ghost{opacity:.45}
+</style>
+</head>
+<body><div class="wrap">
+
+<h1>押路（大小／奇偶／冷熱）與自動下注｜設計示意</h1>
+<div class="sub">2026-09-03・管理對話出稿・供決策用（未動任何程式碼）｜對應備忘：TASKS-B.md 2026-09-03 條</div>
+
+<div class="note">看完只需要決定一件事：<b>兩項各要「排進 Demo」還是「留正式版」</b>。文末有成本與建議。</div>
+
+<!-- ═══════════ 一、押路 ═══════════ -->
+<h2>一、「特殊」頁籤（大小・奇偶・熱門度・零出包）｜v2 改稿</h2>
+<p>核心閉環：路子讓玩家「看到規律」→ 押路讓玩家「押這個規律」。<b>v2 依裁決改版</b>：零出包一併搬進來（它本來就不需要動物卡標籤），頁籤改名<b>「特殊」</b>——注別頁籤總數維持四個不變（冠軍／前二連／出包／特殊）；冷熱改稱<b>熱門度</b>並拆三選項。</p>
+
+<div class="row">
+  <div class="phone">
+    <div class="topbar"><span><b>第 2648 靴・局 187</b><br>總局號 529,587</span><span class="cd">18 下注</span><span>餘額<br><b style="color:#F5C518">102,112</b></span></span></div>
+    <div class="tabs">
+      <div class="tab">冠軍</div><div class="tab">前二連</div><div class="tab">出包</div><div class="tab on">特殊</div>
+    </div>
+    <div class="panel">
+      <div class="duo"><div class="lbl">大小</div>
+        <div class="bbtn bo">大 5–8<small>1.92x</small></div>
+        <div class="bbtn bb">小 1–4<small>1.87x</small></div>
+      </div>
+      <div class="duo"><div class="lbl">奇偶</div>
+        <div class="bbtn bo picked">奇<small>1.90x ✓已選</small></div>
+        <div class="bbtn bb">偶<small>1.89x</small></div>
+      </div>
+      <div class="duo"><div class="lbl">熱門度</div>
+        <div class="bbtn bh">熱門<small>1.58x</small></div>
+        <div class="bbtn bc">冷門<small>3.39x</small></div>
+        <div class="bbtn" style="background:var(--gold)">爆冷門<small>11.9x</small></div>
+      </div>
+      <div class="duo"><div class="lbl">零出包</div>
+        <div class="bbtn" style="background:var(--green)">🛡 8 隻全數平安完賽<small>4.17x</small></div>
+      </div>
+      <div class="mini">定義與路子頁籤同源：大＝冠軍編號 5–8・奇＝冠軍編號奇數・熱門＝前三熱門奪冠／爆冷門＝勝率末二奪冠／冷門＝其餘三隻奪冠（三分互斥）</div>
+    </div>
+    <div class="slip">✓ 🛣 奇 100　<span style="color:#999">（與其他注別可複押並存）</span></div>
+    <div class="chiprow"><div class="chip">10</div><div class="chip">50</div><div class="chip on">100</div><div class="chip">500</div><div class="confirm hot">確認下注（1注/100）</div></div>
+  </div>
+  <div class="cap">
+    <h3>互動規格（沿用既有手勢語言）</h3>
+    <ul>
+      <li><span class="tag">手勢</span>點大按鈕＝以當前籌碼成注（沿用原零出包面板手勢），✓ 脈衝＋藥丸飛入注單列照舊；動物卡轉純資訊（同原零出包模式）。原「零出包」獨立頁籤與主打面板移除。</li>
+      <li><span class="tag">賠率</span><b>公式定價（裁決 1-a）</b>：機率直接取 roads.js 既有的 2⁸ 解析勝率加總（大＝5–8 號勝率和、熱門＝前三熱門勝率和…），<code>賠率＝0.95／機率</code> 向下取兩位——零 MC、跨裝置決定性天生成立；每局隨屬性/心情自然浮動。正式版再做 MC 複驗與防套利精算。</li>
+      <li><span class="tag">結算</span>只看「冠軍編號屬於哪組」＋零出包沿用——轉接層純函數即可判（B05 先例：settle 本就在 adapter 實作），<b>mock-server-b 維持凍結不動</b>。</li>
+      <li><span class="tag">連動</span>路子區正在看「大小」頁籤時切到特殊，對應那組微微發光提示（看哪路押哪路）。</li>
+      <li><span class="tag">結算頁</span>log 詳細頁注單直接多注別名，其餘沿用。</li>
+    </ul>
+    <div class="note"><b>工程代價（v2 重估）</b>：公式定價＋轉接層結算＋面板 UI，<b>不解凍任何檔案</b>，估 <b>半天</b>。備選 1-b（按鈕半透明純展示、標「正式版開放」）約 1 小時，但既然公式版這麼便宜，建議直上可玩版。RTP 未經 MC 複驗一事在規格 §12 記一筆，正式版補驗。</div>
+  </div>
+</div>
+
+<!-- ═══════════ 二、自動下注 ═══════════ -->
+<h2>二、自動下注（續押）</h2>
+<p>觀賽型遊戲的掛機需求：設好一次，接下來 N 局自動照押，人只看戲。純 UI 層實作——每局開盤時把「範本注單」自動送引擎，<b>不碰任何凍結檔</b>。</p>
+<div class="note"><b>回答您的問題（popup 還是擺在 UI 中）</b>：示意採<b>兩態混合</b>——「設定」是點 ⟳ 鈕才彈出的<b>底部彈窗</b>（下注區已經很密，四個欄位常駐會擠壓動物卡；手機慣例也是 bottom sheet），設完即收；「進行中」則是<b>常駐嵌在 UI 裡的橘色浮條</b>（進度／損益／停止鈕直接可見，不用再開窗）。若您偏好全程不彈窗，備案＝設定欄位收進注單列展開區，代價是選注空間變小——預設建議照示意做。</div>
+
+<div class="row">
+  <div class="phone">
+    <div class="topbar"><span><b>第 2648 靴・局 188</b></span><span class="cd">22 下注</span><span>餘額 <b style="color:#F5C518">101,912</b></span></div>
+    <div class="autopill"><span>⟳ <b>自動下注中</b>　第 3/10 局・累計 <b style="color:var(--green)">+1,240</b></span><span class="stopbtn">停止</span></div>
+    <div class="modal">
+      <h4>⟳ 自動下注設定</h4>
+      <div class="fld"><div class="k">注單範本</div><div>本局注單：🏆#2 100・🛡 零出包 100 <span style="color:var(--mut)">（以當前注單為準）</span></div></div>
+      <div class="fld"><div class="k">局數</div><div class="seg"><span>5</span><span class="on">10</span><span>20</span><span>∞</span></div></div>
+      <div class="fld"><div class="k">停利</div><div class="seg"><span>關</span><span class="on">+2,000</span><span>+5,000</span></div></div>
+      <div class="fld"><div class="k">停損</div><div class="seg"><span>關</span><span class="on">−1,000</span><span>−3,000</span></div></div>
+      <div class="go">開始自動下注</div>
+    </div>
+    <div class="mini ghost">入口：注單列旁「⟳ 自動」鈕（有已確認注單時亮起）</div>
+  </div>
+  <div class="cap">
+    <h3>行為規則</h3>
+    <ul>
+      <li><span class="tag">範本</span>以「本局已確認的注單」為範本逐局重押（注別＋金額原樣）；賠率照每局新盤浮動。</li>
+      <li><span class="tag">停止</span>四種停法：跑滿局數／觸及停利／觸及停損／手動點停止。餘額不足當局自動終止＋跑馬燈提示。</li>
+      <li><span class="tag">狀態</span>進行中頂部常駐橘色浮條（第 n/N 局＋累計損益＋停止鈕）；每局結算照常走派彩動畫與 log 記錄，order id 照發。</li>
+      <li><span class="tag">邊界</span>手動加注會併入當局但不改範本；重整頁面自動狀態由 localStorage 接回（同局重整不重複下單）。</li>
+    </ul>
+    <div class="note"><b>工程代價</b>：純拋棄層（game.js＋小面板），凍結檔零接觸，估 <b>半天</b>。風險低，展示「掛機觀賽」的產品感很划算。</div>
+  </div>
+</div>
+
+<!-- ═══════════ 三、決策 ═══════════ -->
+<h2>三、成本彙總與建議</h2>
+<table>
+<tr><th>項目</th><th>估時</th><th>動凍結檔</th><th>風險</th><th>管理建議</th></tr>
+<tr><td><b>自動下注</b></td><td>半天</td><td>否</td><td>低（純 UI 層）</td><td><b>建議排進 Demo</b>——觀賽掛機感和跑馬燈/下注流是同一套氛圍敘事</td></tr>
+<tr><td><b>特殊頁籤（v2 公式版）</b></td><td>半天</td><td><b>否</b>（公式定價＋轉接層結算）</td><td>低（RTP 未 MC 複驗，正式版補）</td><td><b>v2 後改為建議排進 Demo</b>——不解凍、成本砍半，看路押路閉環完整呈現給評審</td></tr>
+</table>
+<p class="note">兩個都要合計 <b>1 天</b>（可併成一張卡一次派工）；也可只挑一個或都留正式版——示意稿已存檔，任何時候開工都照這份做。</p>
+
+</div></body>
+</html>

@@ -1,0 +1,805 @@
+<title>皇帝牌示意稿</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#F6F2E9; --surface:#FFFDF7; --ink:#2A241A; --muted:#75695A;
+  --line:#DDD3BF; --gold:#8F6A14; --gold-soft:#F3E8CB;
+  --crimson:#A03A40; --rec-bg:#FBF4DF; --code-bg:#EFE8D8;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1B1712; --surface:#242019; --ink:#EAE2D2; --muted:#A79A85;
+    --line:#453D30; --gold:#D9AC46; --gold-soft:#38301C;
+    --crimson:#D0787D; --rec-bg:#2E2817; --code-bg:#2E2920;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1B1712; --surface:#242019; --ink:#EAE2D2; --muted:#A79A85;
+  --line:#453D30; --gold:#D9AC46; --gold-soft:#38301C;
+  --crimson:#D0787D; --rec-bg:#2E2817; --code-bg:#2E2920;
+}
+body{background:var(--bg);color:var(--ink);font-family:"Noto Sans TC",system-ui,sans-serif;
+  line-height:1.8;font-size:15px;margin:0;padding:0 16px}
+.wrap{max-width:900px;margin:0 auto;padding-block:36px 64px}
+h1,h2,h3{font-family:"Noto Serif TC",serif;text-wrap:balance;line-height:1.4}
+h1{font-size:28px;font-weight:900;margin:6px 0 4px}
+h2{font-size:20px;font-weight:700;color:var(--gold);margin:44px 0 10px;
+  padding-bottom:6px;border-bottom:2px solid var(--line)}
+h3{font-size:15.5px;font-weight:700;margin:20px 0 6px}
+.eyebrow{font-size:12px;letter-spacing:.24em;color:var(--muted)}
+.meta{color:var(--muted);font-size:13px}
+p{margin:10px 0}
+.note{color:var(--muted);font-size:13px}
+.rec{background:var(--rec-bg);border-left:4px solid var(--gold);border-radius:0 8px 8px 0;
+  padding:10px 16px;margin:14px 0}
+code{background:var(--code-bg);padding:1px 6px;border-radius:4px;font-size:13px}
+.tablebox{overflow-x:auto}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:13.5px;font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--line);padding:7px 11px;text-align:left;vertical-align:top}
+th{background:var(--gold-soft);font-weight:700}
+ul{padding-left:22px;margin:8px 0}
+li{margin:4px 0}
+.cols{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+.col{flex:1 1 300px;min-width:0}
+
+/* ============ 手機外框（框內固定深色遊戲皮，雙主題皆同） ============ */
+.phone{width:320px;max-width:100%;border-radius:22px;border:3px solid #4A4136;
+  background:#141A16;box-shadow:0 8px 26px rgba(0,0,0,.28);overflow:hidden;
+  margin:14px auto;color:#E9E4D2;font-size:13px;line-height:1.5}
+.phone *{box-sizing:border-box}
+.ptop{display:flex;justify-content:space-between;align-items:center;
+  padding:9px 12px;background:#0E120F;border-bottom:1px solid #2C332C}
+.wallet{font-weight:700;color:#E7C86A;font-variant-numeric:tabular-nums}
+.mseg{display:flex;border:1px solid #E7C86A;border-radius:6px;overflow:hidden}
+.mseg button{border:0;background:transparent;color:#E9E4D2;font:inherit;font-size:12px;
+  padding:3px 10px;cursor:pointer}
+.mseg button.on{background:#E7C86A;color:#141A16;font-weight:700}
+.zlabel{font-size:11px;color:#8FA08D;letter-spacing:.15em;text-align:center}
+.hand{display:flex;gap:5px;justify-content:center}
+.gcard{width:40px;height:56px;border-radius:5px;display:flex;align-items:center;justify-content:center;
+  font-family:"Noto Serif TC",serif;font-weight:900;font-size:18px;
+  transition:transform .25s,opacity .25s;user-select:none}
+.gcard.back{background:linear-gradient(135deg,#3A2C2C 25%,#2C2020 25%,#2C2020 50%,#3A2C2C 50%,#3A2C2C 75%,#2C2020 75%);
+  background-size:9px 9px;border:1.5px solid #6B4A44;color:transparent}
+.gcard.min{background:#EFE7D2;color:#3B3324;border:1.5px solid #B7A87E}
+.gcard.emp{background:#3B3016;color:#F0CE6E;border:1.5px solid #E7C86A}
+.gcard.slv{background:#3A1E20;color:#E58F94;border:1.5px solid #C9666C}
+.gcard.gone{opacity:.18;transform:scale(.88)}
+.gcard.pick{cursor:pointer}
+.gcard.pick:not(.gone):hover{transform:translateY(-5px)}
+.banner{height:26px;display:flex;align-items:center;justify-content:center;font-size:12.5px;
+  color:#E7C86A;letter-spacing:.1em;font-weight:700}
+.duel{display:flex;gap:18px;align-items:center;justify-content:center;position:relative;
+  background:radial-gradient(ellipse at center,#1D2820 0%,#141A16 75%)}
+.dslot{width:52px;height:74px;border-radius:6px;border:1.5px dashed #3D4A3D;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  font-family:"Noto Serif TC",serif;font-weight:900;font-size:24px}
+.dslot.filled{border-style:solid}
+.dslot.dmin{background:#EFE7D2;color:#3B3324;border-color:#B7A87E}
+.dslot.demp{background:#3B3016;color:#F0CE6E;border-color:#E7C86A}
+.dslot.dslv{background:#3A1E20;color:#E58F94;border-color:#C9666C}
+.dslot.dback{background:#2C2020;border-color:#6B4A44;border-style:solid}
+.dvs{color:#5C6B5C;font-size:12px;letter-spacing:.2em}
+@keyframes pop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes clash{0%,100%{transform:translateX(0)}30%{transform:translateX(-4px)}60%{transform:translateX(4px)}}
+@keyframes flash{0%{opacity:0}25%{opacity:.9}100%{opacity:0}}
+.dslot.pop{animation:pop .28s ease-out}
+.duel.clash .dslot{animation:clash .3s ease-in-out}
+.flashfx{position:absolute;inset:0;background:#F5E2A0;opacity:0;pointer-events:none}
+.flashfx.go{animation:flash .55s ease-out}
+
+/* --- 普通模式：觀賽視角（左右對局者） --- */
+.specrow{display:flex;align-items:stretch;justify-content:space-between;padding:8px 10px;gap:6px}
+.speccol{display:flex;flex-direction:column;align-items:center;gap:6px}
+.avatar{width:38px;height:38px;border-radius:50%;background:#1A1F1A;border:1.5px solid #4A4136;
+  display:flex;align-items:center;justify-content:center;font-size:19px}
+.avatar.aE{border-color:#E7C86A}
+.avatar.aS{border-color:#C9666C}
+.sidename{font-size:10.5px;color:#9AA895}
+.vhand{display:flex;flex-direction:column;gap:4px}
+.vhand .gcard{width:30px;height:42px;font-size:13px}
+.duelmid{flex:1;min-height:264px}
+
+/* --- 進階模式：第一人稱＋對手立繪 --- */
+.charzone{padding:8px 12px 4px;text-align:center}
+.charface{width:74px;height:74px;margin:0 auto 4px;border-radius:50%;
+  background:radial-gradient(circle at 38% 32%,#2A332A,#171D18 70%);
+  border:2px solid #4A4136;display:flex;align-items:center;justify-content:center;font-size:40px}
+@keyframes breath{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+.charface{animation:breath 3.2s ease-in-out infinite}
+#faceCur{transition:opacity .18s}
+.duelfp{height:96px}
+.selfzone{padding:4px 12px 8px;text-align:center}
+@media (prefers-reduced-motion: reduce){
+  .dslot.pop,.duel.clash .dslot,.flashfx.go,.charface{animation:none}
+  .flashfx.go{opacity:0}
+}
+
+/* 面板 */
+.panel{background:#0E120F;border-top:1px solid #2C332C;padding:10px 12px;min-height:118px}
+.siderow{display:flex;gap:8px;margin-bottom:8px}
+.sidebtn{flex:1;border-radius:8px;padding:7px 4px;text-align:center;cursor:pointer;font:inherit;
+  border:1.5px solid #4A4136;background:#1A1F1A;color:#E9E4D2}
+.sidebtn b{display:block;font-family:"Noto Serif TC",serif;font-size:15px}
+.sidebtn small{color:#9AA895;font-size:11px}
+.sidebtn.selE{border-color:#E7C86A;background:#2B2413}
+.sidebtn.selS{border-color:#C9666C;background:#2B1517}
+.chiprow{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.chip{border-radius:20px;border:1.5px solid #4A4136;background:#1A1F1A;color:#E9E4D2;
+  font:inherit;font-size:12px;padding:3px 12px;cursor:pointer;font-variant-numeric:tabular-nums}
+.chip.on{border-color:#E7C86A;color:#E7C86A;font-weight:700}
+.gobtn{width:100%;border:0;border-radius:8px;padding:9px;font:inherit;font-weight:700;font-size:14px;
+  background:#E7C86A;color:#141A16;cursor:pointer}
+.gobtn:disabled{opacity:.35;cursor:default}
+.ladder{text-align:center}
+.ladder .lm{font-family:"Noto Serif TC",serif;font-size:20px;font-weight:900;color:#E7C86A;margin:2px 0}
+.lrow{display:flex;gap:8px;margin-top:8px}
+.lrow button{flex:1;border-radius:8px;padding:8px 4px;font:inherit;font-size:12.5px;cursor:pointer;border:1.5px solid}
+.bt-emp{background:#2B2413;border-color:#E7C86A;color:#F0CE6E}
+.bt-slv{background:#2B1517;border-color:#C9666C;color:#E58F94}
+.bt-cash{background:#16281B;border-color:#5FA06B;color:#8FD49B}
+.msg{font-size:12px;color:#9AA895;min-height:18px;text-align:center;margin-top:6px}
+
+/* 導演台 */
+.director{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;
+  margin:0 auto 4px;font-size:13px;color:var(--muted)}
+.director select{font:inherit;font-size:13px;background:var(--surface);color:var(--ink);
+  border:1px solid var(--line);border-radius:6px;padding:2px 8px}
+
+/* ============ 版面分區示意 ============ */
+.zoneframe{width:236px;max-width:100%;border-radius:18px;border:3px solid #4A4136;background:#141A16;
+  overflow:hidden;margin:14px auto;color:#E9E4D2;font-size:11px}
+.zoneframe h4{margin:8px 10px 2px;font-size:12px;color:#E7C86A;font-family:"Noto Serif TC",serif}
+.zone{margin:6px;border:1.5px dashed #5C6B5C;border-radius:8px;padding:6px 9px;
+  display:flex;gap:8px;align-items:center}
+.zone .zn{flex-shrink:0;width:19px;height:19px;border-radius:50%;background:#E7C86A;color:#141A16;
+  font-weight:700;display:flex;align-items:center;justify-content:center;font-size:11.5px}
+.zonelist{font-size:13.5px}
+.zonelist b{color:var(--gold)}
+
+/* ============ 第一人稱全屏排版（靜態標註圖） ============ */
+.phone{position:relative}
+.fpwrap{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+.fpframe{width:272px;max-width:100%;border-radius:20px;border:3px solid #4A4136;background:#141A16;
+  overflow:hidden;margin:14px auto;color:#E9E4D2;font-size:11px;position:relative;flex-shrink:0}
+.fptop{display:flex;justify-content:space-between;padding:8px 10px;background:#0E120F;
+  border-bottom:1px solid #2C332C;font-size:11px}
+.fpbust{position:relative;height:148px;background:radial-gradient(ellipse at 50% 20%,#232E24,#141A16 80%)}
+.bhead{position:absolute;left:50%;top:16px;transform:translateX(-50%);width:64px;height:64px;border-radius:50%;
+  background:#2A332A;border:2px solid #4A4136;display:flex;align-items:center;justify-content:center;font-size:36px}
+.bshould{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:150px;height:50px;
+  border-radius:60px 60px 0 0;background:#20281F;border:2px solid #3A4436;border-bottom:0}
+.btag{position:absolute;left:10px;bottom:8px;background:#0E120F;border:1px solid #4A4136;
+  border-radius:4px;padding:1px 6px;font-size:10px;color:#9AA895}
+.bubble{position:absolute;right:10px;top:14px;background:#EFE7D2;color:#3B3324;
+  border-radius:8px 8px 0 8px;padding:3px 8px;font-size:10px}
+.fpopp{display:flex;gap:4px;justify-content:center;padding:6px 0 2px}
+.fpopp .gcard{width:26px;height:36px}
+.fpban{height:20px;display:flex;align-items:center;justify-content:center;color:#E7C86A;
+  font-size:10.5px;font-weight:700}
+.fpduel{height:78px;display:flex;gap:14px;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at center,#1D2820 0%,#141A16 75%)}
+.fpduel .dslot{width:40px;height:56px;font-size:18px}
+.fpmy{display:flex;gap:4px;justify-content:center;padding:8px 0}
+.fpmy .gcard{width:32px;height:45px;font-size:14px}
+.fppanel{background:#0E120F;border-top:1px solid #2C332C;padding:8px;font-size:10px}
+.fppanel .lm{font-size:14px}
+.fppanel .lrow button{padding:5px 2px;font-size:10px;border-radius:6px}
+/* 階梯軌 */
+.railbox{position:absolute;right:5px;width:48px;display:flex;flex-direction:column;gap:3px;z-index:2}
+.rnode{border:1px solid #4A4136;border-radius:5px;background:#10150F;color:#9AA895;text-align:center;
+  padding:2px 1px;font-size:9px;line-height:1.3;font-variant-numeric:tabular-nums}
+.rnode.rt{border:0;background:transparent;color:#8FA08D;letter-spacing:.12em}
+.rnode.done{border-color:#5FA06B;color:#8FD49B}
+.rnode.cur{border-color:#E7C86A;color:#E7C86A;font-weight:700}
+.rnode.ghost{border-style:dashed;opacity:.7}
+.callout{position:absolute;width:17px;height:17px;border-radius:50%;background:#E7C86A;color:#141A16;
+  font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:3}
+/* 立繪差分表 */
+.bustrow{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin:14px 0}
+.bust{width:106px;text-align:center;font-size:12.5px;color:var(--ink)}
+.bustart{position:relative;height:112px;border-radius:10px;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 25%,#232E24,#141A16 85%);border:2px solid #4A4136}
+.bustart .bhead{width:48px;height:48px;top:12px;font-size:27px}
+.bustart .bshould{width:104px;height:36px}
+.bustart .acc{position:absolute;right:14px;top:8px;font-size:15px}
+.bust b{display:block;margin-top:4px}
+.bust small{color:var(--muted);font-size:11px;line-height:1.45;display:block}
+.bust .quote{color:var(--crimson);font-size:11px;display:block;font-family:"Noto Serif TC",serif}
+[data-face] svg{width:100%;height:100%;display:block}
+#faceCur{display:block;width:58px;height:58px}
+#faceCur svg{width:100%;height:100%;display:block}
+/* 階梯進度條（對數刻度：0→滿貫線 120x） */
+.hrail{display:block;padding:0 4px 4px}
+.pv{display:flex;flex-direction:column;align-items:center;gap:4px}
+.pvtrack{position:relative;width:12px;height:126px;border:1px solid #4A4136;border-radius:6px;
+  background:#10150F;overflow:hidden}
+.pvfill{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(180deg,#E7C86A,#8F6A14);
+  transition:height .4s}
+.pvdot{position:absolute;left:0;right:0;height:2px;background:#8FD49B}
+.pvlab{font-size:9px;color:#9AA895;text-align:center;line-height:1.25}
+.pvlab.cur{color:#E7C86A;font-weight:700;font-size:10px}
+.ph{display:flex;align-items:center;gap:7px;padding:5px 8px 7px}
+.phlab{font-size:9.5px;color:#9AA895;white-space:nowrap}
+.phlab.cur{color:#E7C86A;font-weight:700;font-size:10.5px}
+.phtrack{position:relative;flex:1;height:10px;border:1px solid #4A4136;border-radius:5px;
+  background:#10150F;overflow:hidden}
+.phfill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#8F6A14,#E7C86A);
+  transition:width .4s}
+.phdot{position:absolute;top:0;bottom:0;width:2px;background:#8FD49B}
+/* 自動下注示意 */
+.fab{position:absolute;left:8px;right:8px;top:8px;background:#B25A1B;color:#FFF;border-radius:7px;
+  padding:4px 9px;font-size:10px;display:flex;justify-content:space-between;align-items:center}
+.sheet{background:#0E120F;border-top:2px solid #E7C86A;border-radius:12px 12px 0 0;padding:10px 12px;font-size:10.5px}
+.shtitle{color:#E7C86A;font-weight:700;text-align:center;margin-bottom:4px}
+.shrow{display:flex;align-items:center;gap:6px;margin:6px 0;flex-wrap:wrap}
+.shlab{color:#9AA895;min-width:48px;flex-shrink:0}
+.shchip{border:1px solid #4A4136;border-radius:10px;padding:1px 8px;color:#E9E4D2}
+.shchip.on{border-color:#E7C86A;color:#E7C86A;font-weight:700}
+footer{margin-top:48px;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padding-top:12px}
+</style>
+
+<div class="wrap">
+<div class="eyebrow">示意稿・未立項・活原型</div>
+<h1>皇帝牌示意稿</h1>
+<div class="meta">2026-09-16 初版、09-17 修訂至 v7（兩機位排版標註圖、狡詐紳士 SVG 立繪差分、階梯進度條、滿貫線 120x、自動下注 UI、兩檔 RTP 定案：收手 0.93／玩到頂 0.96 加成）｜UI 版面分區＋可操作活原型＋演出節拍表。配套：reports/皇帝牌改造提案.html</div>
+
+<h2>§1　版面分區——兩模式兩種機位</h2>
+<p><b>普通模式＝觀賽機位</b>：你是下注的觀眾，看左右兩名對局者出牌對決（與動物大賽跑的觀賽語彙一致）；<b>進階模式＝第一人稱</b>：你坐上牌桌親手出牌，正前方是對手立繪，讀他的表情。</p>
+<div class="cols">
+  <div class="col">
+    <div class="zoneframe">
+      <h4>普通模式・觀賽視角</h4>
+      <div class="zone"><span class="zn">1</span>頂欄：錢包＋模式切換</div>
+      <div class="zone"><span class="zn">3</span>戰報帶：回合／鎖定／勝負橫幅</div>
+      <div class="zone" style="min-height:96px"><span class="zn">2</span>左右對局者：頭像＋直列背面手牌（皇帝側左・奴隸側右）；<span class="zn" style="width:auto;border-radius:10px;padding:0 5px">4</span>中央對決區夾在兩列之間</div>
+      <div class="zone" style="min-height:60px"><span class="zn">6</span>操作面板：下注 ⇄ 階梯（三態輪替）</div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="zoneframe">
+      <h4>進階模式・第一人稱</h4>
+      <div class="zone"><span class="zn">1</span>頂欄：錢包＋模式切換</div>
+      <div class="zone" style="min-height:44px"><span class="zn">7</span>對手立繪：表情差分（呼吸微動）</div>
+      <div class="zone"><span class="zn">2</span>對手手牌：5 張背面</div>
+      <div class="zone"><span class="zn">3</span>戰報帶＋<span class="zn" style="width:auto;border-radius:10px;padding:0 5px">4</span>對決區</div>
+      <div class="zone"><span class="zn">5</span>你的手牌：可點出牌</div>
+      <div class="zone" style="min-height:44px"><span class="zn">6</span>操作面板（同左）</div>
+    </div>
+  </div>
+</div>
+<ul class="zonelist">
+  <li><b>①頂欄</b>：模式切換只在「未下注」時可按；切換不動錢包與階梯規則，只換機位。</li>
+  <li><b>②對局者／對手手牌</b>：觀賽視角雙方都是背面（觀眾本來就不該看到牌序，與結果反推劇場自洽）；第一人稱只有自己的牌是正面。</li>
+  <li><b>③戰報帶</b>：狀態一句話（「封盤・勝負已定」「奴弒帝！」），新手動線指路位。</li>
+  <li><b>④對決區</b>：唯一演出焦點；觀賽視角橫置於兩列之間、第一人稱置中。</li>
+  <li><b>⑦對手立繪（進階限定）</b>：心理戰的戲眼——效能對策見 §3，成本可壓到趨近零。</li>
+  <li><b>⑥操作面板</b>：三態互斥輪替（下注／對局中／階梯），不疊窗。</li>
+</ul>
+
+<h2>§2　第一人稱排版與立繪差分</h2>
+<p>進階模式的完整排版（下圖取「第 2 階達成、正在抉擇」的瞬間）。<b>階梯放哪裡：狀態與決策分離</b>——「爬到第幾階」做成右緣常駐<b>階梯軌</b>❻，全程可見、養張力；「續戰／收手」的決策鈕留在底部操作面板❽，只在決策點出現，與下注面板三態輪替、不疊窗。</p>
+<div class="fpwrap">
+  <div class="fpframe">
+    <div class="fptop"><span style="color:#E7C86A;font-weight:700">💰 9,500</span><span>普通｜<b style="color:#E7C86A">進階</b></span></div>
+    <div class="fpbust">
+      <div class="bubble">……有趣。還要繼續嗎？</div>
+      <div class="bhead" data-face="sweat"></div>
+      <div class="bshould"></div>
+      <div class="btag">對手・差分「強裝鎮定」</div>
+      <div class="callout" style="left:8px;top:8px">1</div>
+      <div class="callout" style="right:78px;top:10px">2</div>
+    </div>
+    <div class="fpopp">
+      <div class="gcard back gone"></div><div class="gcard back gone"></div>
+      <div class="gcard back"></div><div class="gcard back"></div><div class="gcard back"></div>
+      <div class="callout" style="left:34px;top:192px">3</div>
+    </div>
+    <div class="fpban">帝斬民！　皇帝側（你押的）獲勝</div>
+    <div class="callout" style="left:8px;top:228px">4</div>
+    <div class="fpduel">
+      <div class="dslot filled demp">帝</div><div class="dvs">VS</div><div class="dslot filled dmin">民</div>
+    </div>
+    <div class="callout" style="left:52px;top:268px">5</div>
+    <div class="railbox" style="top:150px;align-items:center">
+      <div class="pv">
+        <div class="pvlab">滿貫<br>120x</div>
+        <div class="pvtrack"><div class="pvfill" style="height:9.2%"></div>
+          <div class="pvdot" style="bottom:4.6%"></div><div class="pvdot" style="bottom:9.2%"></div></div>
+        <div class="pvlab cur">1.45x</div>
+        <div class="pvlab">2階</div>
+      </div>
+      <div class="callout" style="right:-4px;top:-8px">6</div>
+    </div>
+    <div class="fpmy">
+      <div class="gcard emp gone">帝</div><div class="gcard min gone">民</div>
+      <div class="gcard min">民</div><div class="gcard min">民</div><div class="gcard min">民</div>
+      <div class="callout" style="left:24px;top:336px">7</div>
+    </div>
+    <div class="fppanel">
+      <div class="ladder"><div style="font-size:10px;color:#9AA895">第 2 階達成・累積倍率</div>
+      <div class="lm">1.4531x　→　可收 726</div>
+      <div class="lrow">
+        <button class="bt-emp">續戰・皇帝側<br>成 1.8164x</button>
+        <button class="bt-slv">續戰・奴隸側<br>成 7.27x</button>
+        <button class="bt-cash">收手入袋<br>+726</button>
+      </div></div>
+      <div class="callout" style="right:8px;top:398px">8</div>
+    </div>
+  </div>
+  <div class="col zonelist">
+    <ul>
+      <li><b>❶ 立繪半身</b>：上 1/3 版位、置中；差分只換臉、身體不換張；決勝時整體 transform 前傾 2px。</li>
+      <li><b>❷ 台詞泡泡（選配）</b>：罐頭挑釁／心虛語，與差分連動出現——純文字零成本，戲味加倍。</li>
+      <li><b>❸ 對手手牌</b>：緊貼立繪下緣，視線動線「臉→牌」一直線；已出的變暗。</li>
+      <li><b>❹ 戰報帶＋❺ 對決區</b>：與觀賽視角共用元件，只換位置。</li>
+      <li><b>❻ 階梯進度條（常駐）</b>：直式<b>對數刻度</b>條，0→頂端滿貫線 120x——對數刻度讓每一段續戰佔固定寬度（皇帝一步窄、奴隸一步跨約 1/3 條），填充高度＝當前累積倍率、已達階打綠點、下方標當前倍率與階數。掛右緣立繪與對決區的空檔、不壓臉不壓牌；<b>觀賽視角改橫式</b>貼操作面板上緣（右緣直條會壓右列手牌——驗收回饋）。這是階梯的「<b>狀態</b>」半邊。</li>
+      <li><b>❼ 你的手牌</b>：可點出牌，出過變暗。</li>
+      <li><b>❽ 操作面板＝決策位</b>：下注⇄對局中⇄階梯三態輪替；「續戰（可換邊）／收手」只在這裡、在拇指熱區。這是階梯的「<b>決策</b>」半邊——軌看得到、鈕按得到，兩者不重複出現同一資訊以外的東西。</li>
+    </ul>
+  </div>
+</div>
+
+<h3>觀賽機位（普通模式）排版——階梯改橫式、永不壓牌</h3>
+<div class="fpwrap">
+  <div class="fpframe">
+    <div class="fptop"><span style="color:#E7C86A;font-weight:700">💰 9,500</span><span><b style="color:#E7C86A">普通</b>｜進階</span></div>
+    <div class="fpban">第 2 階・第 3 回合</div>
+    <div class="specrow">
+      <div class="speccol">
+        <div class="avatar aE">👑</div><div class="sidename">皇帝側</div>
+        <div class="vhand">
+          <div class="gcard back gone"></div><div class="gcard back gone"></div>
+          <div class="gcard back"></div><div class="gcard back"></div><div class="gcard back"></div>
+        </div>
+      </div>
+      <div class="duel" style="flex:1;min-height:210px;margin:0 4px">
+        <div class="dslot filled dmin">民</div><div class="dvs">VS</div><div class="dslot filled dmin">民</div>
+      </div>
+      <div class="speccol">
+        <div class="avatar aS">⛓️</div><div class="sidename">奴隸側</div>
+        <div class="vhand">
+          <div class="gcard back gone"></div><div class="gcard back gone"></div>
+          <div class="gcard back"></div><div class="gcard back"></div><div class="gcard back"></div>
+        </div>
+      </div>
+    </div>
+    <div class="hrail">
+      <div class="ph"><span class="phlab cur">1.16x・2階挑戰中</span>
+        <div class="phtrack"><div class="phfill" style="width:4.6%"></div><div class="phdot" style="left:4.6%"></div></div>
+        <span class="phlab">滿貫 120x</span></div>
+    </div>
+    <div class="fppanel"><div class="msg" style="margin-top:8px">— 對局進行中 —</div></div>
+    <div class="callout" style="left:6px;top:66px">1</div>
+    <div class="callout" style="left:120px;top:170px">2</div>
+    <div class="callout" style="left:8px;top:352px">3</div>
+    <div class="callout" style="right:8px;top:396px">4</div>
+  </div>
+  <div class="col zonelist">
+    <ul>
+      <li><b>❶ 左右對局者</b>：直列背面手牌是畫面主角，<b>兩側邊緣不放任何常駐元件</b>——右緣直軌在這個機位會壓到奴隸側手牌（驗收回饋），故不採。</li>
+      <li><b>❷ 對決區</b>：與第一人稱共用元件與特效。</li>
+      <li><b>❸ 橫式階梯進度條</b>：貼操作面板上緣、對決區正下方——左端當前累積倍率與階數、右端滿貫 120x，對數刻度填充＋已達階綠點；掛自動下注時掃一眼就知道爬到哪，任何解析度都不與手牌重疊。</li>
+      <li><b>❹ 操作面板</b>：三態輪替同第一人稱；階梯決策鈕同樣只出現在這裡。</li>
+    </ul>
+  </div>
+</div>
+
+<h3>自動下注 UI 示意（沿 B10 三件套慣例）</h3>
+<p>普通模式掛機的配套，三件套全沿動物大賽跑 B10 的既有慣例（⟳ 入口鈕→底部設定彈窗→進行中橘色浮條），玩家零學習成本。E-card 專屬新增一項「<b>自動爬階</b>」——因每一階定價公平，任何爬階設定 EV 中性，數學上可放心開放。下圖左半＝設定彈窗、上緣＝進行中浮條：</p>
+<div class="fpwrap">
+  <div class="fpframe">
+    <div class="fptop"><span style="color:#E7C86A;font-weight:700">💰 9,920</span><span><b style="color:#E7C86A">普通</b>｜進階</span></div>
+    <div style="position:relative;height:96px;background:#141A16">
+      <div class="fab"><span>⟳ 自動下注中　3/10 局・累計 +420</span><span style="font-weight:700">■ 停止</span></div>
+      <div style="position:absolute;left:0;right:0;bottom:6px;text-align:center;color:#5C6B5C;font-size:10px">（觀賽對局進行中，畫面照常）</div>
+    </div>
+    <div class="hrail">
+      <div class="ph"><span class="phlab cur">4.65x・2階挑戰中</span>
+        <div class="phtrack"><div class="phfill" style="width:33.3%"></div><div class="phdot" style="left:33.3%"></div></div>
+        <span class="phlab">滿貫 120x</span></div>
+    </div>
+    <div class="sheet">
+      <div class="shtitle">自動下注設定</div>
+      <div class="shrow"><span class="shlab">押邊</span><span class="shchip">皇帝側</span><span class="shchip on">奴隸側</span><span class="shchip">每局交替</span></div>
+      <div class="shrow"><span class="shlab">押額</span><span class="shchip">100</span><span class="shchip on">500</span><span class="shchip">1,000</span></div>
+      <div class="shrow"><span class="shlab">自動爬階</span><span class="shchip">不爬</span><span class="shchip on">爬到第 2 階收手</span><span class="shchip">第 3 階</span></div>
+      <div class="shrow"><span class="shlab">局數</span><span class="shchip on">10</span><span class="shchip">20</span><span class="shchip">50</span></div>
+      <div class="shrow"><span class="shlab">停利／停損</span><span class="shchip on">+2,000</span><span class="shchip on">−1,500</span></div>
+      <button class="gobtn" style="margin-top:4px;font-size:12px;padding:7px">開始自動下注</button>
+    </div>
+    <div class="callout" style="left:8px;top:44px">1</div>
+    <div class="callout" style="left:152px;top:140px">2</div>
+    <div class="callout" style="right:8px;top:186px">3</div>
+    <div class="callout" style="left:8px;top:252px">4</div>
+  </div>
+  <div class="col zonelist">
+    <ul>
+      <li><b>❶ 進行中浮條</b>：第 n/N 局＋累計損益＋停止鈕，半透明疊層、pointer-events 穿透不擋點擊（沿 B10 裁決）。</li>
+      <li><b>❷ 階梯進度條照常運作</b>：自動爬階時玩家看著條自動往滿貫線走，是掛機時的主要觀賞點。</li>
+      <li><b>❸ 底部設定彈窗</b>：⟳ 鈕（平時在下注面板角落）喚出；局數／押邊／押額／停利停損四件沿 B10。</li>
+      <li><b>❹ 自動爬階（E-card 專屬）</b>：贏後自動續押<b>同一邊</b>至第 X 階收手（越滿貫線照常自動滿貫）；「不爬」＝每局單注贏即收。停利／停損以每次「入袋時點」的累計損益判定；RTP 明碼兩檔——提早收手設定＝0.93、爬到頂＝0.96，各深度之間無隱藏差、無暗改機率，兩檔數字寫進規則頁即是公平性賣點。</li>
+    </ul>
+  </div>
+</div>
+
+<h3>立繪差分一覽（6 幀，即全部美術需求）——狡詐紳士定調</h3>
+<p>對手人設走「利根川式」的<b>狡詐從容</b>：平時居高臨下、贏你時理所當然——所以他<b>破防的那一幀才值錢</b>，玩家的成就感來自把這張撲克臉打碎。台詞泡泡（選配）跟著差分連動：</p>
+<div class="bustrow">
+  <div class="bust"><div class="bustart"><div class="bhead" data-face="idle"></div><div class="bshould"></div></div><b>從容</b><span class="quote">「願賭服輸？來吧。」</span><small>待機；呼吸微循環</small></div>
+  <div class="bust"><div class="bustart"><div class="bhead" data-face="think"></div><div class="bshould"></div></div><b>審視</b><span class="quote">「哦……？」</span><small>輪你出牌、瞇眼盯著你</small></div>
+  <div class="bust"><div class="bustart"><div class="bhead" data-face="smirk"></div><div class="bshould"></div></div><b>嗤笑</b><span class="quote">「就這種程度？」</span><small>你出牌的瞬間</small></div>
+  <div class="bust"><div class="bustart"><div class="bhead" data-face="sweat"></div><div class="bshould"></div></div><b>強裝鎮定</b><span class="quote">「……有趣。」</span><small>決勝前停頓、掀牌前</small></div>
+  <div class="bust"><div class="bustart"><div class="bhead" data-face="proud"></div><div class="bshould"></div></div><b>得意</b><span class="quote">「勝負早已注定。」</span><small>你落敗時</small></div>
+  <div class="bust"><div class="bustart"><div class="bhead" data-face="shock"></div><div class="bshould"></div></div><b>破防</b><span class="quote">「不可能──！」</span><small>你獲勝時（＋全區閃光）</small></div>
+</div>
+<p class="note"><b>佔位美術的三個選項</b>（emoji 表現力不足，已裁決棄用）：<b>(a) SVG 線稿</b>——本頁現況，向量零資源、表情可控、狡詐感畫得出來，<b>Demo 建議就用這版</b>；(b) AI 生成概念立繪定調氣質，移植期由美術清稿成正式差分；(c) 商用素材庫買斷寫實立繪。三者共用同一套差分機制（一張身體＋6 張臉、opacity 交叉淡化 0.2s、呼吸/前傾走 transform），換圖不換機制；正式版外皮須原創（IP 風險見提案 §7）。</p>
+
+<h2>§3　活原型（可操作）</h2>
+<p>直接玩：選邊→選籌碼→確認下注。切「普通」看觀賽機位（左右對局者自動對決）；切「進階」進第一人稱——輪到你就點自己的手牌，順便看對手表情變化（出牌、決勝、勝敗各有差分）。贏了進階梯，續戰可換邊、隨時收手；累積倍率越<b>滿貫線 120x</b>（或達 10 階）自動滿貫入袋＋演出，並享頂端加成（派彩補至 0.96×公平值；提早收手檔 0.93）。</p>
+<div class="director">
+  導演台（僅示意用）：<label for="scriptSel">劇本</label>
+  <select id="scriptSel">
+    <option value="rand">照真實機率抽</option>
+    <option value="win">強制本階勝（看勝演出）</option>
+    <option value="lose">強制本階敗（看敗演出）</option>
+  </select>
+</div>
+
+<div class="phone" id="game">
+  <div class="ptop">
+    <span class="wallet">💰 <span id="wal">10,000</span></span>
+    <div class="mseg">
+      <button id="mAuto" class="on">普通</button>
+      <button id="mMan">進階</button>
+    </div>
+  </div>
+  <div class="banner" id="banner">選邊下注開局</div>
+
+  <!-- 普通模式：觀賽視角 -->
+  <div id="stSpec">
+    <div class="specrow">
+      <div class="speccol">
+        <div class="avatar aE">👑</div><div class="sidename">皇帝側</div>
+        <div class="vhand" id="lHand"></div>
+      </div>
+      <div class="duel duelmid" id="duelS">
+        <div class="dslot" id="slotL"></div>
+        <div class="dvs">VS</div>
+        <div class="dslot" id="slotR"></div>
+        <div class="flashfx" id="flashS"></div>
+      </div>
+      <div class="speccol">
+        <div class="avatar aS">⛓️</div><div class="sidename">奴隸側</div>
+        <div class="vhand" id="rHand"></div>
+      </div>
+    </div>
+    <div class="hrail" id="railTop" hidden></div>
+  </div>
+
+  <!-- 進階模式：第一人稱 -->
+  <div id="stFp" hidden>
+    <div class="charzone">
+      <div class="charface"><span id="faceCur"></span></div>
+      <div class="zlabel">對手（立繪差分示意）</div>
+      <div class="hand" id="oppHand" style="margin-top:6px"></div>
+    </div>
+    <div class="duel duelfp" id="duelF">
+      <div class="dslot" id="slotO"></div>
+      <div class="dvs">VS</div>
+      <div class="dslot" id="slotP"></div>
+      <div class="flashfx" id="flashF"></div>
+    </div>
+    <div class="selfzone">
+      <div class="hand" id="myHand"></div>
+      <div class="zlabel" style="margin-top:4px">你的手牌</div>
+    </div>
+  </div>
+
+  <div class="railbox" id="railLive" style="top:150px" hidden></div>
+  <div class="panel" id="panel"></div>
+</div>
+
+<div class="rec"><b>看點自查清單：</b>①普通模式的觀賽機位——左右兩列背面手牌逐回合消耗、雙牌飛到中央對決；②進階模式對手表情——你出牌時嗤笑、決勝前強裝鎮定、你贏他破防、你輸他得意（狡詐紳士 SVG 差分、全是 opacity 淡化）；⑤階梯進度條——進階右緣直式、普通橫式貼面板上緣，對數刻度往滿貫線 120x 填充（連贏兩把就看得到）；③兩模式數學同一套：導演台切「照真實機率抽」，進階模式把特殊牌留到不同回合出，勝率體感不變；④階梯續戰換邊倍率累乘、收手取整入袋；⑥滿貫演出——導演台切「強制勝」連押奴隸側四把（4.65→23.25→116.25→581.25x 越線、加成後實付 600x）最快看到。</div>
+
+<h2>§4　演出節拍表</h2>
+<div class="tablebox"><table>
+<tr><th>節拍</th><th>時長</th><th>演出內容</th><th>備註</th></tr>
+<tr><td>鎖定</td><td>0.3s</td><td>戰報帶「封盤・勝負已定」淡入</td><td>勝負此刻抽定（結果反推起點）</td></tr>
+<tr><td>平手回合</td><td>~0.7s／回</td><td>雙民滑入對碰（clash 震動）後彈開、手牌變暗</td><td>普通模式快切；進階模式等玩家點牌</td></tr>
+<tr><td>決勝前停頓</td><td>0.4s</td><td>對決區聚焦；進階模式對手表情轉「緊張」</td><td>進階模式＝玩家出關鍵牌瞬間自然觸發</td></tr>
+<tr><td>決勝翻牌</td><td>1.2s</td><td>後翻的一張<b>延遲 0.5s</b> 翻出＋全區閃光</td><td>勝負揭曉記憶點，兩模式共用</td></tr>
+<tr><td>表情差分（進階）</td><td>0.2s／次</td><td>出牌「挑眉」→決勝「緊張」→勝敗「驚愕／得意」</td><td>交叉淡化，見下方效能對策</td></tr>
+<tr><td>派彩</td><td>0.4s</td><td>錢包數字滾動</td><td>沿 B08 派彩節奏</td></tr>
+<tr><td>階梯提示</td><td>—</td><td>續戰（可換邊）／收手雙鈕＋下一階倍率預告＋滿貫線標示</td><td>倒數 N 秒未選視同收手（時長待決）</td></tr>
+<tr><td>滿貫演出</td><td>1.5s</td><td>越線自動入袋：全區金色閃光＋「滿貫達成 ◯◯x ＋加成→◯◯x」大字＋派彩；對手「破防」幀鎖定</td><td>累積倍率 ≥120x 或 10 階完賭觸發；玩到頂派彩補至 RTP 0.96（收手檔 0.93）</td></tr>
+</table></div>
+
+<h3>對手立繪的效能對策（回應「有點吃效能」的疑慮）</h3>
+<ul>
+  <li><b>用視覺小說式「差分立繪」，不用動畫系統</b>：一張底圖＋3～4 張表情差分（平常／思考／緊張／勝敗），切換＝兩張圖 <code>opacity</code> 交叉淡化 0.2s；「活著」的感覺全靠 transform 微動——呼吸（scale 1↔1.035 慢循環）、決勝時輕微前傾（translateY 2px）。以上全走合成器，零 layout／零重繪，就是本組舊機紅線內的招式，一張 512px PNG×6 幀對舊機是零負擔（本原型的 SVG 線稿臉即這套機制的驗證）。</li>
+  <li><b>明確不用的東西</b>：Live2D／骨骼動畫（吃 CPU）、逐幀序列圖（吃記憶體與解碼）、CSS filter／大面積陰影動畫（吃 GPU 頻寬）。皇帝牌的心理戰靠「表情在對的節拍換」就成立，不靠幀數。</li>
+  <li><b>觀賽視角不放立繪</b>：普通模式左右只給小頭像——觀眾機位的戲在牌桌不在臉，也天然省掉一半資源；立繪只在進階模式載入（惰性載入，切模式才抓圖）。</li>
+</ul>
+<ul>
+  <li><b>決勝回合位置</b>：普通模式屬演出自由度，建議偏後段——但受<b>牌數自洽</b>約束（E03-R4 實玩勘誤）：錯開局（帝斬民／民擒奴）決勝有一側出民，第 5 回合就會出到第 5 張民，故<b>錯開局上限第 4 回合</b>、只有帝奴對撞可落第 5 回合（本原型：對撞局 2/3/4/4/5/5、錯開局封頂 4）；進階模式由特殊牌實際對上的回合決定，不可調。</li>
+  <li><b>對手反應式翻牌（進階模式）</b>：鎖定時已抽定勝負，對手每回合的牌是「看你出什麼、照抽定結果反應」——條件分佈與密封隨機序全等（提案 §5），表情演出同理只是戲，讀不出資訊。</li>
+</ul>
+
+<footer>2026-09-16・管理對話產出・未立項備忘。原型內數值即提案定價：兩檔 RTP（收手 0.93／玩到頂 0.96）——皇帝 1.1625x／奴隸 4.65x／收手值 0.93×Π公平倍率取整、滿貫線 120x／10 階完賭、頂端派彩 0.96×公平值。相關：reports/皇帝牌改造提案.html。</footer>
+</div>
+
+<script>
+(function(){
+var FAIR={emp:1.25,slv:5}, P={emp:0.8,slv:0.2};
+var NAME={emp:'皇帝側',slv:'奴隸側'};
+var wallet=10000, mode='auto'; // auto=普通觀賽 man=進階第一人稱
+var st=null; // {side,stake0,M,rung,win,myCards,opCards,trick,u,d,busy}
+var $=function(id){return document.getElementById(id)};
+var fmt=function(n){return n.toLocaleString('en-US')};
+
+function setWallet(v){wallet=v;$('wal').textContent=fmt(v)}
+function banner(t){$('banner').textContent=t}
+
+// 狡詐紳士 SVG 差分（一顆頭共用、只換五官圖層——與正式立繪同一套機制）
+var HEAD='<ellipse cx="32" cy="34" rx="17" ry="20" fill="#C9A87A"/>'+
+  '<path d="M13,32 Q11,6 32,6 Q53,6 51,32 Q51,14 32,13 Q13,14 13,32 Z" fill="#241A12"/>'+
+  '<path d="M32,31 l3,7 h-6 Z" fill="#B08F60"/>';
+var STK='stroke="#2A1E12" stroke-width="2.4" fill="none" stroke-linecap="round"';
+function svgFace(inner){return '<svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true">'+HEAD+inner+'</svg>'}
+var FACES={
+  idle: svgFace('<path d="M19,22 L29,25" '+STK+'/><path d="M45,22 L35,25" '+STK+'/><path d="M21,30 q4,2 8,0" '+STK+'/><path d="M35,30 q4,2 8,0" '+STK+'/><path d="M26,45 q7,4 12,-2" '+STK+'/>'),
+  think: svgFace('<path d="M19,23 L29,26" '+STK+'/><path d="M45,23 L35,26" '+STK+'/><path d="M21,30 h9" '+STK+'/><path d="M34,30 h9" '+STK+'/><path d="M27,46 h10" '+STK+'/>'),
+  smirk: svgFace('<path d="M18,19 L29,23" '+STK+'/><path d="M45,24 L35,26" '+STK+'/><path d="M21,29 q4,3 8,0" '+STK+'/><path d="M35,31 q4,1 8,-1" '+STK+'/><path d="M24,44 q9,6 15,-4" '+STK+'/>'),
+  sweat: svgFace('<path d="M20,25 L29,22" '+STK+'/><path d="M44,25 L35,22" '+STK+'/><path d="M21,30 h8" '+STK+'/><path d="M35,30 h8" '+STK+'/><path d="M26,46 q6,-3 12,0" '+STK+'/><path d="M52,18 q4,6 0,9 q-4,-3 0,-9" fill="#7FB6D9"/>'),
+  proud: svgFace('<path d="M19,20 q5,-3 10,1" '+STK+'/><path d="M45,20 q-5,-3 -10,1" '+STK+'/><path d="M21,29 q4,-4 8,0" '+STK+'/><path d="M35,29 q4,-4 8,0" '+STK+'/><path d="M23,42 q9,11 18,0 q-9,4 -18,0 Z" fill="#3B1F16"/>'),
+  shock: svgFace('<path d="M17,17 L28,21" '+STK+'/><path d="M47,17 L36,21" '+STK+'/><circle cx="24" cy="29" r="4" fill="#FFF"/><circle cx="24" cy="29" r="1.8" fill="#2A1E12"/><circle cx="40" cy="29" r="4" fill="#FFF"/><circle cx="40" cy="29" r="1.8" fill="#2A1E12"/><ellipse cx="32" cy="47" rx="5" ry="6" fill="#3B1F16"/><path d="M12,24 l-4,-2 M12,30 h-4 M52,24 l4,-2 M52,30 h4" '+STK+'/>')
+};
+Array.prototype.forEach.call(document.querySelectorAll('[data-face]'),function(el){el.innerHTML=FACES[el.dataset.face]});
+var curFace=null;
+function setFace(k){
+  if(curFace===k)return; curFace=k;
+  var f=$('faceCur');
+  f.style.opacity=0;
+  setTimeout(function(){f.innerHTML=FACES[k];f.style.opacity=1},180);
+}
+function mkCard(cls,txt){var d=document.createElement('div');d.className='gcard '+cls;d.textContent=txt||'';return d}
+
+function ui(){
+  return mode==='auto'
+    ? {A:$('slotL'),B:$('slotR'),duel:$('duelS'),flash:$('flashS')}
+    : {A:$('slotO'),B:$('slotP'),duel:$('duelF'),flash:$('flashF')};
+}
+function slot(el,ch){
+  el.className='dslot'; el.textContent='';
+  if(ch===null)return;
+  if(ch==='?'){el.classList.add('filled','dback');return}
+  el.classList.add('filled','pop', ch==='帝'?'demp':(ch==='奴'?'dslv':'dmin'));
+  el.textContent=ch;
+}
+function clearDuel(){var u=ui();slot(u.A,null);slot(u.B,null)}
+// 對數刻度：0%＝起點 0.95、100%＝滿貫線 120x（每段續戰佔固定寬度）
+function pctOf(m){return Math.max(0,Math.min(100,Math.log(m/0.93)/Math.log(120/0.93)*100))}
+function renderRail(){
+  var v=$('railLive'), t=$('railTop');
+  if(!st){v.hidden=true;t.hidden=true;return}
+  var p=pctOf(st.M).toFixed(1);
+  var lab=st.M.toFixed(2)+'x・'+st.rung+'階'+(st.hist.length<st.rung?'挑戰中':'達成');
+  // 進階＝右緣直式；普通＝橫式貼面板上緣（右緣直條會壓右列手牌）
+  if(mode==='man'){
+    var dv=st.hist.map(function(m){return '<div class="pvdot" style="bottom:'+pctOf(m).toFixed(1)+'%"></div>'}).join('');
+    v.innerHTML='<div class="pv"><div class="pvlab">滿貫<br>120x</div>'+
+      '<div class="pvtrack"><div class="pvfill" style="height:'+p+'%"></div>'+dv+'</div>'+
+      '<div class="pvlab cur">'+st.M.toFixed(2)+'x</div><div class="pvlab">'+st.rung+'階</div></div>';
+    v.hidden=false;t.hidden=true;
+  }else{
+    var dh=st.hist.map(function(m){return '<div class="phdot" style="left:'+pctOf(m).toFixed(1)+'%"></div>'}).join('');
+    t.innerHTML='<div class="ph"><span class="phlab cur">'+lab+'</span>'+
+      '<div class="phtrack"><div class="phfill" style="width:'+p+'%"></div>'+dh+'</div>'+
+      '<span class="phlab">滿貫 120x</span></div>';
+    t.hidden=false;v.hidden=true;
+  }
+}
+
+function renderHands(clickable){
+  if(mode==='auto'){
+    var l=$('lHand'), r=$('rHand'); l.innerHTML='';r.innerHTML='';
+    var eC = st ? (st.side==='emp'?st.myCards:st.opCards) : [0,0,0,0,0];
+    var sC = st ? (st.side==='emp'?st.opCards:st.myCards) : [0,0,0,0,0];
+    eC.forEach(function(c){var el=mkCard('back');if(c&&c.used)el.classList.add('gone');l.appendChild(el)});
+    sC.forEach(function(c){var el=mkCard('back');if(c&&c.used)el.classList.add('gone');r.appendChild(el)});
+  }else{
+    var oh=$('oppHand'), mh=$('myHand'); oh.innerHTML='';mh.innerHTML='';
+    if(!st){for(var i=0;i<5;i++){oh.appendChild(mkCard('back'));mh.appendChild(mkCard('min','民'))}return}
+    st.opCards.forEach(function(c){var el=mkCard('back');if(c.used)el.classList.add('gone');oh.appendChild(el)});
+    st.myCards.forEach(function(c,i){
+      var el=mkCard(c.t==='帝'?'emp':(c.t==='奴'?'slv':'min'),c.t);
+      if(c.used)el.classList.add('gone');
+      if(clickable&&!c.used){el.classList.add('pick');el.onclick=function(){playerPick(i)}}
+      mh.appendChild(el);
+    });
+  }
+}
+
+// ------- 面板三態 -------
+var pickSide=null, pickChip=500;
+function panelBet(){
+  var p=$('panel');
+  p.innerHTML='<div class="siderow">'+
+    '<button class="sidebtn" id="sbE"><b>皇帝側</b><small>1.1625x・勝率 4/5</small></button>'+
+    '<button class="sidebtn" id="sbS"><b>奴隸側</b><small>4.65x・勝率 1/5</small></button></div>'+
+    '<div class="chiprow"><span class="note" style="color:#9AA895">押額</span>'+
+    '<button class="chip" data-v="100">100</button><button class="chip on" data-v="500">500</button>'+
+    '<button class="chip" data-v="1000">1,000</button></div>'+
+    '<button class="gobtn" id="goBet" disabled>確認下注</button><div class="msg" id="pmsg"></div>';
+  $('sbE').onclick=function(){pickSide='emp';$('sbE').classList.add('selE');$('sbS').classList.remove('selS');$('goBet').disabled=false};
+  $('sbS').onclick=function(){pickSide='slv';$('sbS').classList.add('selS');$('sbE').classList.remove('selE');$('goBet').disabled=false};
+  Array.prototype.forEach.call(p.querySelectorAll('.chip'),function(c){
+    c.onclick=function(){Array.prototype.forEach.call(p.querySelectorAll('.chip'),function(x){x.classList.remove('on')});
+      c.classList.add('on');pickChip=+c.dataset.v};
+  });
+  $('goBet').onclick=function(){
+    if(!pickSide)return;
+    if(wallet<pickChip){$('pmsg').textContent='餘額不足（示意原型可重整重置）';return}
+    setWallet(wallet-pickChip);
+    startRung(pickSide,pickChip,0.93,0,[]);
+  };
+}
+function panelLock(){$('panel').innerHTML='<div class="msg" style="margin-top:40px">— 對局進行中 —</div>'}
+function panelLadder(){
+  var cash=Math.floor(st.stake0*st.M);
+  var p=$('panel');
+  p.innerHTML='<div class="ladder"><div style="font-size:12px;color:#9AA895">第 '+st.rung+' 階達成・累積倍率</div>'+
+    '<div class="lm">'+st.M.toFixed(4)+'x　→　可收 '+fmt(cash)+'</div>'+
+    '<div class="lrow">'+
+    '<button class="bt-emp" id="lcE">續戰・皇帝側<br>成 '+(st.M*FAIR.emp).toFixed(4)+'x</button>'+
+    '<button class="bt-slv" id="lcS">續戰・奴隸側<br>成 '+(st.M*FAIR.slv).toFixed(2)+'x</button>'+
+    '<button class="bt-cash" id="lcC">收手入袋<br>+'+fmt(cash)+'</button></div>'+
+    '<div style="font-size:10px;color:#9AA895;margin-top:5px">滿貫線 120x・玩到頂（越線／10 階）派彩加成 ×1.0323</div></div>';
+  $('lcE').onclick=function(){startRung('emp',st.stake0,st.M,st.rung,st.hist)};
+  $('lcS').onclick=function(){startRung('slv',st.stake0,st.M,st.rung,st.hist)};
+  $('lcC').onclick=function(){setWallet(wallet+cash);st=null;clearDuel();renderHands(false);renderRail();
+    if(mode==='man')setFace('idle');banner('落袋為安。選邊下注開局');panelBet()};
+}
+
+// ------- 對局 -------
+function drawOutcome(side){
+  var s=$('scriptSel').value;
+  if(s==='win')return true; if(s==='lose')return false;
+  return Math.random()<P[side];
+}
+function mkHand(sp){
+  var arr=[{t:'民'},{t:'民'},{t:'民'},{t:'民'}];
+  arr.splice(Math.floor(Math.random()*5),0,{t:sp});
+  return arr.map(function(c){c.used=false;return c});
+}
+function startRung(side,stake0,Mprev,rungPrev,hist){
+  st={side:side,stake0:stake0,M:Mprev,rung:rungPrev+1,win:drawOutcome(side),hist:hist||[],
+      myCards:mkHand(side==='emp'?'帝':'奴'),opCards:mkHand(side==='emp'?'奴':'帝'),
+      trick:0,u:1+Math.floor(Math.random()*5),d:[2,3,4,4,5,5][Math.floor(Math.random()*6)],busy:false};
+  clearDuel();renderHands(false);panelLock();renderRail();
+  if(mode==='man')setFace('idle');
+  banner('封盤・勝負已定（'+NAME[side]+'・第 '+st.rung+' 階）');
+  setTimeout(function(){ mode==='auto'?autoTrick():manualWait(); },700);
+}
+function useCard(cards,ch){
+  for(var i=0;i<cards.length;i++){if(!cards[i].used&&cards[i].t===ch){cards[i].used=true;return}}
+}
+function verdict(pc,oc){
+  if(pc==='民'&&oc==='民')return null;
+  var win,reason;
+  if(pc==='帝'&&oc==='奴'){win=false;reason='奴弒帝！'}
+  else if(pc==='奴'&&oc==='帝'){win=true;reason='奴弒帝！'}
+  else if(pc==='帝'&&oc==='民'){win=true;reason='帝斬民！'}
+  else if(pc==='民'&&oc==='帝'){win=false;reason='帝斬民！'}
+  else if(pc==='奴'&&oc==='民'){win=false;reason='民擒奴！'}
+  else{win=true;reason='民擒奴！'}
+  return {win:win,reason:reason};
+}
+// pc=下注側出的牌、oc=對面出的牌。觀賽視角固定左＝皇帝側、右＝奴隸側。
+function showTrick(pc,oc,decisive,done){
+  st.trick++; banner('第 '+st.trick+' 回合');
+  var u=ui(), pcSlot, ocSlot;
+  if(mode==='auto'){
+    var pcIsEmp=(st.side==='emp');
+    pcSlot = pcIsEmp?u.A:u.B; ocSlot = pcIsEmp?u.B:u.A;
+  }else{ pcSlot=u.B; ocSlot=u.A; }
+  slot(pcSlot,pc);
+  useCard(st.myCards,pc);useCard(st.opCards,oc);
+  renderHands(false);
+  if(decisive){
+    slot(ocSlot,'?');
+    if(mode==='man')setFace('sweat');
+    setTimeout(function(){
+      slot(ocSlot,oc);
+      u.flash.classList.remove('go');void u.flash.offsetWidth;u.flash.classList.add('go');
+      u.duel.classList.add('clash');setTimeout(function(){u.duel.classList.remove('clash')},350);
+      setTimeout(done,900);
+    },500);
+  }else{
+    slot(ocSlot,oc);
+    u.duel.classList.add('clash');setTimeout(function(){u.duel.classList.remove('clash')},350);
+    setTimeout(done,700);
+  }
+}
+// 普通模式：結果反推編排
+function autoTrick(){
+  // 牌數自洽（E03-R4 勘誤）：錯開局決勝有一側出民，第 5 回合會出到第 5 張民——上限 4；只有帝奴對撞可落第 5 回合
+  var collide=(st.side==='slv')?st.win:!st.win;
+  var d=collide?st.d:Math.min(st.d,4);
+  if(st.trick<d-1){ showTrick('民','民',false,function(){clearDuel();autoTrick()}); return }
+  var pc,oc;
+  if(st.side==='slv'){ if(st.win){pc='奴';oc='帝'}else{ if(Math.random()<0.5){pc='奴';oc='民'}else{pc='民';oc='帝'} } }
+  else{ if(st.win){ if(Math.random()<0.5){pc='帝';oc='民'}else{pc='民';oc='奴'} } else{pc='帝';oc='奴'} }
+  showTrick(pc,oc,true,function(){settle(verdict(pc,oc))});
+}
+// 進階模式：玩家點牌、對手反應式
+function manualWait(){ banner('第 '+(st.trick+1)+' 回合——點你的手牌出牌'); setFace('think'); renderHands(true) }
+function playerPick(i){
+  if(st.busy)return; st.busy=true;
+  setFace('smirk');
+  var pc=st.myCards[i].t, t=st.trick+1, oc;
+  if(st.side==='slv'){
+    if(st.win){ oc=(pc==='奴')?'帝':'民' }
+    else{ if(pc==='奴')oc='民'; else oc=(t===st.u)?'帝':'民' }
+  }else{
+    if(st.win){ if(pc==='帝')oc='民'; else oc=(t===st.u)?'奴':'民' }
+    else{ oc=(pc==='帝')?'奴':'民' }
+  }
+  var v=verdict(pc,oc);
+  showTrick(pc,oc,!!v,function(){
+    st.busy=false;
+    if(v)settle(v); else {setFace('idle');clearDuel();manualWait()}
+  });
+}
+function settle(v){
+  banner(v.reason+'　'+NAME[st.side]+(v.win?'（你押的）獲勝':'落敗'));
+  if(mode==='man')setFace(v.win?'shock':'proud');
+  renderHands(false);
+  if(v.win){
+    st.M*=FAIR[st.side]; st.hist.push(st.M); renderRail();
+    if(st.M>=120||st.rung>=10){ setTimeout(grandSlam,700) }
+    else setTimeout(panelLadder,600);
+  }
+  else{
+    setTimeout(function(){
+      banner('本階失利，−'+fmt(st.stake0)+'。選邊下注開局');
+      st=null;clearDuel();renderHands(false);renderRail();
+      if(mode==='man')setFace('idle');
+      panelBet();
+    },1400);
+  }
+}
+// 滿貫：越線（120x）或 10 階完賭——自動入袋＋演出，強制收手 EV 中性
+function grandSlam(){
+  var boosted=st.M/0.93*0.96;              // 玩到頂：派彩補至 0.96×公平值
+  var cash=Math.floor(st.stake0*boosted), slam=(st.M>=120), u=ui();
+  u.flash.classList.remove('go');void u.flash.offsetWidth;u.flash.classList.add('go');
+  banner((slam?'滿貫達成！':'十階完賭！')+st.M.toFixed(2)+'x ＋頂端加成 → '+boosted.toFixed(2)+'x，+'+fmt(cash)+' 自動入袋');
+  setWallet(wallet+cash);
+  $('panel').innerHTML='<div class="ladder"><div class="lm">🏆 '+boosted.toFixed(2)+'x</div>'+
+    '<div class="msg">'+(slam?'越過滿貫線 120x':'達 10 階上限')+'——含頂端加成派彩、本局自動結束</div></div>';
+  setTimeout(function(){
+    st=null;clearDuel();renderHands(false);renderRail();
+    if(mode==='man')setFace('idle');
+    banner('選邊下注開局');panelBet();
+  },2600);
+}
+// 模式切換（未開局才可切）＝機位切換
+function setMode(m){
+  if(st)return;
+  mode=m;
+  $('mAuto').classList.toggle('on',m==='auto');
+  $('mMan').classList.toggle('on',m==='man');
+  $('stSpec').hidden=(m!=='auto');
+  $('stFp').hidden=(m!=='man');
+  clearDuel();renderHands(false);renderRail();
+  banner(m==='auto'?'觀賽視角——選邊下注開局':'第一人稱——選邊下注開局');
+}
+$('mAuto').onclick=function(){setMode('auto')};
+$('mMan').onclick=function(){setMode('man')};
+// 開機
+$('faceCur').innerHTML=FACES.idle; curFace='idle';
+renderHands(false);panelBet();
+})();
+</script>

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>專案B主題比較｜動物大賽跑 vs 無人機競速</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 40px 24px 80px; background: #f4f2ee;
+         font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif; color: #23201c; }
+  .wrap { max-width: 1120px; margin: 0 auto; }
+  h1 { font-size: 26px; letter-spacing: .04em; margin: 0 0 6px; }
+  .sub { color: #7c766c; font-size: 13px; margin-bottom: 40px; }
+  h2 { font-size: 15px; letter-spacing: .12em; color: #8a8377; border-bottom: 1px solid #ddd8ce;
+       padding-bottom: 8px; margin: 52px 0 20px; font-weight: 600; }
+  .card { background: #fff; border: 1px solid #e3ded4; border-radius: 4px; padding: 22px; margin-bottom: 20px; }
+  .card h3 { margin: 0 0 4px; font-size: 17px; }
+  .card .cap { color: #7c766c; font-size: 12.5px; margin: 0 0 18px; line-height: 1.7; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  svg { display: block; width: 100%; height: auto; }
+  .note { font-size: 12px; color: #7c766c; line-height: 1.75; border-left: 2px solid #ddd8ce;
+          padding-left: 12px; margin-top: 16px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { border: 1px solid #e3ded4; padding: 8px 12px; text-align: left; }
+  th { background: #efece6; font-weight: 600; }
+  @media (max-width: 820px) { .row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>專案 B 主題比較示意</h1>
+<div class="sub">v2 ／ 2026-09-01 ／ 同一套機制（8 參賽者・三屬性・每局環境變數・招牌出局事件・多注別）套兩種主題皮 ／ v2 更新：動物版加入心情機制、路子總攬套件、卡面個體統計</div>
+
+<!-- ═══════════════ 主題一：動物大賽跑 ═══════════════ -->
+<h2>主題一 ── 動物大賽跑（Q 版動物障礙賽）</h2>
+
+<div class="card">
+<h3>色板與調性</h3>
+<svg viewBox="0 0 1020 150" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1020" height="150" fill="#fbfaf8"/>
+  <g>
+    <rect x="24" y="24" width="80" height="80" rx="6" fill="#8ED4F2"/><text x="24" y="122" font-size="10" fill="#7c766c">#8ED4F2 晴空</text>
+    <rect x="114" y="24" width="80" height="80" rx="6" fill="#7BC24A"/><text x="114" y="122" font-size="10" fill="#7c766c">#7BC24A 草地</text>
+    <rect x="204" y="24" width="80" height="80" rx="6" fill="#9A6B3F"/><text x="204" y="122" font-size="10" fill="#7c766c">#9A6B3F 泥沼</text>
+    <rect x="294" y="24" width="80" height="80" rx="6" fill="#5BC8DE"/><text x="294" y="122" font-size="10" fill="#7c766c">#5BC8DE 淺灘</text>
+    <rect x="384" y="24" width="80" height="80" rx="6" fill="#FF8A3D"/><text x="384" y="122" font-size="10" fill="#7c766c">#FF8A3D 出包！</text>
+  </g>
+  <text x="540" y="46" font-size="12" fill="#8a8377" letter-spacing="1">情緒關鍵字</text>
+  <text x="540" y="76" font-size="17" fill="#23201c">歡樂 · 爆笑 · 全民看得懂</text>
+  <text x="540" y="102" font-size="12" fill="#7c766c">圓潤 Q 版、粗描邊、誇張表情；出包事件走喜劇路線</text>
+  <text x="540" y="122" font-size="12" fill="#7c766c">避免：寫實動物、血腥、賭場金碧輝煌感</text>
+</svg>
+</div>
+
+<div class="card">
+<h3>下注畫面（直式・演出區顯示路子總攬）＆賽事演出</h3>
+<p class="cap">下注階段（15 秒）演出區閒置，直接拿來放路子總攬——一打開就看到全紀錄，開賽自動切回賽事畫面，不用多一層導航。</p>
+<div class="row">
+<div>
+<svg viewBox="0 0 400 700" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="700" fill="#fbfaf8"/>
+  <rect x="40" y="16" width="320" height="668" rx="18" fill="#EAF6FD" stroke="#c9c2b6" stroke-width="1.5"/>
+  <!-- top bar -->
+  <rect x="52" y="28" width="296" height="30" rx="6" fill="#2E6B8A"/>
+  <text x="62" y="48" font-size="11" fill="#BFE9FF">第 207 屆動物運動會</text>
+  <rect x="212" y="34" width="88" height="18" rx="9" fill="#194A63"/>
+  <rect x="212" y="34" width="50" height="18" rx="9" fill="#FFD02F"/>
+  <text x="306" y="48" font-size="10" fill="#fff">下注 09s</text>
+  <!-- 賽道組成 -->
+  <rect x="52" y="64" width="296" height="40" rx="6" fill="#fff" stroke="#d8d2c6"/>
+  <text x="62" y="78" font-size="9" fill="#8a8377">本局賽道（每局重抽 · 屬性身價跟著變）</text>
+  <rect x="62" y="84" width="118" height="12" rx="3" fill="#7BC24A"/>
+  <rect x="180" y="84" width="70" height="12" rx="3" fill="#9A6B3F"/>
+  <rect x="250" y="84" width="88" height="12" rx="3" fill="#5BC8DE"/>
+  <text x="70" y="94" font-size="8.5" fill="#fff">草地 40%</text>
+  <text x="186" y="94" font-size="8.5" fill="#fff">泥沼 25%</text>
+  <text x="258" y="94" font-size="8.5" fill="#fff">淺灘 35%</text>
+
+  <!-- ★ 路子總攬（下注階段的演出區） -->
+  <rect x="52" y="110" width="296" height="158" rx="6" fill="#fff" stroke="#2E6B8A"/>
+  <g font-size="8.5">
+    <rect x="58" y="116" width="52" height="16" rx="4" fill="#2E6B8A"/><text x="66" y="127" fill="#fff">珠盤路</text>
+    <text x="122" y="127" fill="#8a8377">出包路</text>
+    <text x="166" y="127" fill="#8a8377">大小</text>
+    <text x="198" y="127" fill="#8a8377">冷熱</text>
+    <text x="240" y="127" fill="#2E6B8A">點珠看該局詳情 ›</text>
+  </g>
+  <!-- 珠盤 6col × 5row -->
+  <g font-size="8" text-anchor="middle">
+    <!-- col1 -->
+    <circle cx="76" cy="146" r="8" fill="#FFD02F"/><text x="76" y="149" fill="#5a4a10">3</text>
+    <circle cx="76" cy="166" r="8" fill="#FFD02F"/><text x="76" y="169" fill="#5a4a10">3</text>
+    <circle cx="76" cy="186" r="8" fill="#F2F2F0" stroke="#c9c2b6"/><text x="76" y="189" fill="#5a5a5a">1</text>
+    <circle cx="76" cy="206" r="8" fill="#E8B14C"/><text x="76" y="209" fill="#fff">5</text>
+    <circle cx="76" cy="226" r="8" fill="#C98B5B"/><text x="76" y="229" fill="#fff">2</text>
+    <circle cx="82" cy="152" r="2.6" fill="#FF8A3D"/>
+    <circle cx="82" cy="212" r="2.6" fill="#FF8A3D"/><circle cx="82" cy="219" r="2.6" fill="#FF8A3D"/>
+    <!-- col2 -->
+    <circle cx="112" cy="146" r="8" fill="#7FA65A"/><text x="112" y="149" fill="#fff">7</text>
+    <circle cx="112" cy="166" r="8" fill="#F2F2F0" stroke="#c9c2b6"/><text x="112" y="169" fill="#5a5a5a">1</text>
+    <circle cx="112" cy="186" r="8" fill="#FFD02F"/><text x="112" y="189" fill="#5a4a10">3</text>
+    <circle cx="112" cy="206" r="8" fill="#D97BA6"/><text x="112" y="209" fill="#fff">8</text>
+    <circle cx="112" cy="226" r="8" fill="#FFD02F"/><text x="112" y="229" fill="#5a4a10">3</text>
+    <circle cx="118" cy="172" r="2.6" fill="#FF8A3D"/>
+    <!-- col3 -->
+    <circle cx="148" cy="146" r="8" fill="#C98B5B"/><text x="148" y="149" fill="#fff">2</text>
+    <circle cx="148" cy="166" r="8" fill="#E8B14C"/><text x="148" y="169" fill="#fff">5</text>
+    <circle cx="148" cy="186" r="8" fill="#F2F2F0" stroke="#c9c2b6"/><text x="148" y="189" fill="#5a5a5a">1</text>
+    <circle cx="148" cy="206" r="8" fill="#FFD02F"/><text x="148" y="209" fill="#5a4a10">3</text>
+    <circle cx="148" cy="226" r="8" fill="#AEB6BF"/><text x="148" y="229" fill="#fff">4</text>
+    <circle cx="154" cy="192" r="2.6" fill="#FF8A3D"/><circle cx="154" cy="199" r="2.6" fill="#FF8A3D"/>
+    <!-- col4 -->
+    <circle cx="184" cy="146" r="8" fill="#D9814C"/><text x="184" y="149" fill="#fff">6</text>
+    <circle cx="184" cy="166" r="8" fill="#FFD02F"/><text x="184" y="169" fill="#5a4a10">3</text>
+    <circle cx="184" cy="186" r="8" fill="#7FA65A"/><text x="184" y="189" fill="#fff">7</text>
+    <circle cx="184" cy="206" r="8" fill="#F2F2F0" stroke="#c9c2b6"/><text x="184" y="209" fill="#5a5a5a">1</text>
+    <circle cx="184" cy="226" r="8" fill="#C98B5B"/><text x="184" y="229" fill="#fff">2</text>
+    <!-- col5 -->
+    <circle cx="220" cy="146" r="8" fill="#FFD02F"/><text x="220" y="149" fill="#5a4a10">3</text>
+    <circle cx="220" cy="166" r="8" fill="#D97BA6"/><text x="220" y="169" fill="#fff">8</text>
+    <circle cx="220" cy="186" r="8" fill="#E8B14C"/><text x="220" y="189" fill="#fff">5</text>
+    <circle cx="220" cy="206" r="8" fill="#FFD02F"/><text x="220" y="209" fill="#5a4a10">3</text>
+    <circle cx="220" cy="226" r="8" fill="#F2F2F0" stroke="#c9c2b6"/><text x="220" y="229" fill="#5a5a5a">1</text>
+    <circle cx="226" cy="152" r="2.6" fill="#FF8A3D"/>
+    <circle cx="226" cy="232" r="2.6" fill="#FF8A3D"/>
+    <!-- col6 目前局（高亮示意「點珠看詳情」） -->
+    <circle cx="256" cy="146" r="8" fill="#7FA65A"/><text x="256" y="149" fill="#fff">7</text>
+    <circle cx="256" cy="166" r="8" fill="#FFD02F"/><text x="256" y="169" fill="#5a4a10">3</text>
+    <circle cx="256" cy="166" r="11.5" fill="none" stroke="#FF8A3D" stroke-width="2"/>
+    <!-- 詳情小卡 -->
+    <rect x="268" y="150" width="74" height="72" rx="5" fill="#194A63"/>
+    <text x="274" y="163" font-size="8" fill="#BFE9FF">#1482 詳情</text>
+    <text x="274" y="176" font-size="8" fill="#fff">冠軍：鴨鴨</text>
+    <text x="274" y="188" font-size="8" fill="#fff">名次 3-5-2-7…</text>
+    <text x="274" y="200" font-size="8" fill="#FFB08A">出包：兔(草)</text>
+    <text x="274" y="211" font-size="8" fill="#FFB08A">　　　豬(泥)</text>
+    <text x="274" y="222" font-size="8" fill="#9FD7EA">賽段 40/25/35</text>
+  </g>
+  <g font-size="8" fill="#8a8377">
+    <text x="62" y="248">珠色＝冠軍動物　·　角標橘點＝該局出包隻數</text>
+    <text x="62" y="260">開賽自動切回賽事畫面，賽後回到總攬</text>
+  </g>
+
+  <!-- bet tabs -->
+  <rect x="52" y="274" width="296" height="24" rx="6" fill="#DDEEDD"/>
+  <rect x="54" y="276" width="70" height="20" rx="5" fill="#2E6B8A"/>
+  <text x="70" y="290" font-size="9.5" fill="#fff">冠軍</text>
+  <text x="142" y="290" font-size="9.5" fill="#7c766c">前二連</text>
+  <text x="212" y="290" font-size="9.5" fill="#7c766c">出包</text>
+  <text x="272" y="290" font-size="9.5" fill="#7c766c">零出包</text>
+
+  <!-- animal cards（含心情 + 個體統計） -->
+  <g font-size="8">
+    <!-- 鴨鴨：無心情（中性不顯示） -->
+    <rect x="52" y="304" width="144" height="84" rx="8" fill="#fff" stroke="#FFD02F" stroke-width="2"/>
+    <circle cx="72" cy="324" r="12" fill="#FFD02F"/><circle cx="68" cy="321" r="2" fill="#23201c"/>
+    <polygon points="82,324 91,321 91,327" fill="#FF8A3D"/>
+    <text x="96" y="320" font-size="9.5" fill="#23201c" font-weight="700">03 鴨鴨</text>
+    <text x="96" y="331" font-size="7.5" fill="#1c7c40">水段大熱 ▲</text>
+    <rect x="62" y="342" width="60" height="4.5" rx="2" fill="#FF8A3D"/><text x="126" y="347" fill="#8a8377">爆發</text>
+    <rect x="62" y="350" width="88" height="4.5" rx="2" fill="#5BC8DE"/><text x="154" y="355" fill="#8a8377">地形</text>
+    <rect x="62" y="358" width="72" height="4.5" rx="2" fill="#7BC24A"/><text x="138" y="363" fill="#8a8377">專注</text>
+    <text x="62" y="374" fill="#8a8377">近20局：勝 5 · 包 1</text>
+    <rect x="62" y="378" width="56" height="8" rx="2" fill="#2E6B8A"/><text x="66" y="385" font-size="7" fill="#fff">勝 3.20x</text>
+    <rect x="122" y="378" width="64" height="8" rx="2" fill="#FBE9DA"/><text x="126" y="385" font-size="7" fill="#C9631E">出包 11.5x</text>
+
+    <!-- 小兔：心情 😪 想睡 → 專注↓、出包賠率下修 -->
+    <rect x="204" y="304" width="144" height="84" rx="8" fill="#fff" stroke="#d8d2c6"/>
+    <circle cx="224" cy="326" r="11" fill="#F2F2F0" stroke="#d8d2c6"/>
+    <ellipse cx="219" cy="312" rx="3.5" ry="8" fill="#F2F2F0"/><ellipse cx="229" cy="312" rx="3.5" ry="8" fill="#F2F2F0"/>
+    <path d="M 220 326 q 3 2.5 6 0" stroke="#23201c" stroke-width="1.2" fill="none"/>
+    <rect x="238" y="308" width="42" height="14" rx="7" fill="#FFF1DC" stroke="#FF8A3D"/>
+    <text x="243" y="318" font-size="8.5" fill="#C9631E">😪 想睡</text>
+    <text x="286" y="318" font-size="9.5" fill="#23201c" font-weight="700">01 小兔</text>
+    <rect x="214" y="342" width="100" height="4.5" rx="2" fill="#FF8A3D"/><text x="318" y="347" fill="#8a8377">爆發</text>
+    <rect x="214" y="350" width="52" height="4.5" rx="2" fill="#5BC8DE"/><text x="270" y="355" fill="#8a8377">地形</text>
+    <rect x="214" y="358" width="40" height="4.5" rx="2" fill="#E45B5B"/><text x="258" y="363" fill="#C9631E">專注 ▼</text>
+    <text x="214" y="374" fill="#8a8377">近20局：勝 3 · 包 7</text>
+    <rect x="214" y="378" width="56" height="8" rx="2" fill="#2E6B8A"/><text x="218" y="385" font-size="7" fill="#fff">勝 2.35x</text>
+    <rect x="274" y="378" width="64" height="8" rx="2" fill="#FBE9DA"/><text x="278" y="385" font-size="7" fill="#C9631E">出包 3.1x ▼</text>
+
+    <!-- 獵豹：心情 🔥 亢奮 → 爆發↑、勝賠下修 -->
+    <rect x="52" y="394" width="144" height="84" rx="8" fill="#fff" stroke="#d8d2c6"/>
+    <circle cx="72" cy="416" r="11" fill="#E8B14C"/><circle cx="68" cy="413" r="2" fill="#23201c"/>
+    <rect x="86" y="398" width="42" height="14" rx="7" fill="#FFE9E0" stroke="#E45B5B"/>
+    <text x="91" y="408" font-size="8.5" fill="#C0392B">🔥 亢奮</text>
+    <text x="134" y="408" font-size="9.5" fill="#23201c" font-weight="700">05 獵豹</text>
+    <rect x="62" y="432" width="112" height="4.5" rx="2" fill="#E45B5B"/><text x="62" y="428" font-size="7" fill="#C0392B">爆發 ▲</text>
+    <rect x="62" y="440" width="66" height="4.5" rx="2" fill="#5BC8DE"/>
+    <rect x="62" y="448" width="58" height="4.5" rx="2" fill="#7BC24A"/>
+    <text x="62" y="464" fill="#8a8377">近20局：勝 4 · 包 4</text>
+    <rect x="62" y="468" width="56" height="8" rx="2" fill="#2E6B8A"/><text x="66" y="475" font-size="7" fill="#fff">勝 2.60x ▼</text>
+    <rect x="122" y="468" width="64" height="8" rx="2" fill="#FBE9DA"/><text x="126" y="475" font-size="7" fill="#C9631E">出包 6.2x</text>
+
+    <!-- 其餘 5 隻（中性心情不顯示徽章） -->
+    <rect x="204" y="394" width="144" height="84" rx="8" fill="#fff" stroke="#e3ded4" stroke-dasharray="4 3"/>
+    <circle cx="224" cy="420" r="11" fill="#D97BA6"/>
+    <text x="244" y="424" fill="#c9c2b6" font-size="9">08 小豬…（其餘 5 隻）</text>
+    <text x="214" y="452" fill="#c9c2b6" font-size="8">中性心情不顯示徽章</text>
+    <text x="214" y="464" fill="#c9c2b6" font-size="8">每局僅 2–3 隻有心情</text>
+  </g>
+
+  <!-- bet bar -->
+  <rect x="52" y="486" width="296" height="36" rx="6" fill="#fff" stroke="#d8d2c6"/>
+  <rect x="60" y="493" width="38" height="22" rx="5" fill="#EFF5EA"/><text x="72" y="508" font-size="9" fill="#7c766c">10</text>
+  <rect x="102" y="493" width="38" height="22" rx="5" fill="#2E6B8A"/><text x="110" y="508" font-size="9" fill="#fff">100</text>
+  <rect x="144" y="493" width="38" height="22" rx="5" fill="#EFF5EA"/><text x="152" y="508" font-size="9" fill="#7c766c">500</text>
+  <rect x="190" y="493" width="150" height="22" rx="5" fill="#EFF5EA"/><text x="200" y="508" font-size="9" fill="#7c766c">已押 2 注 / 150</text>
+  <rect x="52" y="530" width="296" height="42" rx="8" fill="#FF8A3D"/>
+  <text x="200" y="556" font-size="14" fill="#fff" text-anchor="middle" font-weight="700">確 認 下 注</text>
+  <rect x="52" y="580" width="296" height="22" rx="6" fill="#2E6B8A"/>
+  <text x="62" y="595" font-size="9.5" fill="#FFD02F">🏆 大滿貫獎池 1,284,900　·　跑馬燈</text>
+
+  <text x="52" y="624" font-size="8.5" fill="#8a8377">心情三守則：①已折算進屬性條與賠率（▲▼標示）②每局僅 2–3 隻</text>
+  <text x="52" y="638" font-size="8.5" fill="#8a8377">③一種心情只動一條屬性。玩家仍只掃三條屬性條，負擔不變</text>
+  <text x="52" y="656" font-size="8.5" fill="#8a8377">個體統計「勝 x · 包 y」印在卡上——側注資訊出現在做決策的位置</text>
+</svg>
+</div>
+<div>
+<svg viewBox="0 0 400 700" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="700" fill="#fbfaf8"/>
+  <text x="16" y="26" font-size="13" fill="#23201c" font-weight="700">賽事演出（10 秒 · 側視跟拍）</text>
+  <rect x="16" y="40" width="368" height="260" rx="10" fill="#8ED4F2"/>
+  <circle cx="330" cy="76" r="18" fill="#FFE9A8"/>
+  <ellipse cx="90" cy="70" rx="26" ry="10" fill="#fff" opacity=".8"/>
+  <ellipse cx="200" cy="56" rx="20" ry="8" fill="#fff" opacity=".7"/>
+  <rect x="16" y="210" width="150" height="90" fill="#7BC24A"/>
+  <rect x="166" y="210" width="100" height="90" fill="#9A6B3F"/>
+  <rect x="266" y="210" width="118" height="90" fill="#5BC8DE"/>
+  <text x="30" y="292" font-size="9" fill="#fff">草地段</text>
+  <text x="180" y="292" font-size="9" fill="#fff">泥沼段（地形差的在這掉速）</text>
+  <text x="280" y="292" font-size="9" fill="#fff">淺灘段</text>
+  <circle cx="300" cy="212" r="15" fill="#FFD02F"/><circle cx="296" cy="208" r="2" fill="#23201c"/>
+  <polygon points="313,212 322,209 322,215" fill="#FF8A3D"/>
+  <text x="286" y="192" font-size="9" fill="#194A63" font-weight="700">鴨鴨（水段起飛！）</text>
+  <circle cx="216" cy="226" r="14" fill="#E8B14C"/><circle cx="212" cy="222" r="2" fill="#23201c"/>
+  <g stroke="#fff" stroke-width="2" opacity=".7"><line x1="190" y1="222" x2="202" y2="222"/><line x1="186" y1="230" x2="198" y2="230"/></g>
+  <text x="196" y="206" font-size="9" fill="#C0392B">🔥獵豹（亢奮衝刺）</text>
+  <circle cx="150" cy="230" r="13" fill="#C98B5B"/><circle cx="146" cy="226" r="2" fill="#23201c"/>
+  <circle cx="90" cy="234" r="12" fill="#7FA65A"/>
+  <g>
+    <circle cx="58" cy="252" r="13" fill="#F2F2F0"/>
+    <ellipse cx="50" cy="240" rx="4" ry="9" fill="#F2F2F0" transform="rotate(-30 50 240)"/>
+    <ellipse cx="62" cy="238" rx="4" ry="9" fill="#F2F2F0" transform="rotate(15 62 238)"/>
+    <path d="M 52 250 q 3 3 6 0" stroke="#23201c" stroke-width="1.5" fill="none"/>
+    <rect x="72" y="222" width="58" height="22" rx="6" fill="#fff" stroke="#FF8A3D" stroke-width="2"/>
+    <text x="80" y="237" font-size="11" fill="#C9631E" font-weight="700">Zzz…</text>
+  </g>
+  <rect x="26" y="52" width="150" height="24" rx="6" fill="#FF8A3D"/>
+  <text x="36" y="68" font-size="11" fill="#fff" font-weight="700">出包！😪小兔睡著了</text>
+  <text x="180" y="68" font-size="9" fill="#194A63">→ 心情是伏筆，押出包的中獎</text>
+  <rect x="16" y="316" width="368" height="112" rx="4" fill="#fff" stroke="#e3ded4"/>
+  <rect x="16" y="316" width="5" height="112" fill="#FF8A3D"/>
+  <text x="32" y="338" font-size="12" fill="#23201c" font-weight="600">出包 = 爆缸的喜劇化，心情 = 出包的伏筆</text>
+  <text x="32" y="358" font-size="11" fill="#7c766c">每種動物有專屬出包演出：兔子打瞌睡、狗追蝴蝶衝出場、</text>
+  <text x="32" y="374" font-size="11" fill="#7c766c">烏龜縮殼罷工、豬滾泥坑——輸也有笑點，是傳播素材。</text>
+  <text x="32" y="390" font-size="11" fill="#7c766c">下注時看到「😪想睡」再看牠真的睡著＝「我就知道！」的</text>
+  <text x="32" y="406" font-size="11" fill="#7c766c">讀盤成就感。機率上心情計入權重與賠率、計入 RTP。</text>
+  <rect x="16" y="440" width="368" height="96" rx="4" fill="#fff" stroke="#e3ded4"/>
+  <rect x="16" y="440" width="5" height="96" fill="#5BC8DE"/>
+  <text x="32" y="462" font-size="12" fill="#23201c" font-weight="600">賽段 = 每局的新題目</text>
+  <text x="32" y="482" font-size="11" fill="#7c766c">開局亮出賽段組成，玩家掃一眼「這局水多 → 鴨子有戲」</text>
+  <text x="32" y="498" font-size="11" fill="#7c766c">——讀盤門檻比看車輛三圍更低。三種賽段組成檔位同 RTP</text>
+  <text x="32" y="514" font-size="11" fill="#7c766c">（風向數學沿用），賠率隨局變。</text>
+  <rect x="16" y="548" width="368" height="70" rx="4" fill="#fff" stroke="#e3ded4"/>
+  <rect x="16" y="548" width="5" height="70" fill="#7BC24A"/>
+  <text x="32" y="570" font-size="12" fill="#23201c" font-weight="600">與其他專案的區隔</text>
+  <text x="32" y="590" font-size="11" fill="#7c766c">畫面調性（日光卡通）與霓虹賽車、LoL 競技場零重疊；</text>
+  <text x="32" y="606" font-size="11" fill="#7c766c">虛擬動物賽事是 iGaming 正統品類（賽狗/賽馬的精神續作）。</text>
+</svg>
+</div>
+</div>
+</div>
+
+<!-- ═══ 路子總攬與心情機制詳解 ═══ -->
+<div class="card">
+<h3>路子總攬套件與心情機制（詳解）</h3>
+<p class="cap">冠軍是 8 選 1 無法直接套百家樂路，但把賽果做「二元投影」後，出包路／大小路／冷熱路都是標準二元流——大路、大眼仔、小路、蟑螂路演算法原封不動套用，符合既有產品「總攬先行」的規範。</p>
+<svg viewBox="0 0 1020 380" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1020" height="380" fill="#fbfaf8"/>
+
+  <!-- 左：珠盤路 -->
+  <text x="24" y="30" font-size="12" fill="#23201c" font-weight="700">① 珠盤路（所有紀錄）</text>
+  <rect x="24" y="42" width="300" height="200" rx="6" fill="#fff" stroke="#e3ded4"/>
+  <g font-size="9" text-anchor="middle">
+    <circle cx="52" cy="68" r="10" fill="#FFD02F"/><text x="52" y="72" fill="#5a4a10">3</text>
+    <circle cx="52" cy="94" r="10" fill="#F2F2F0" stroke="#c9c2b6"/><text x="52" y="98" fill="#5a5a5a">1</text>
+    <circle cx="52" cy="120" r="10" fill="#C98B5B"/><text x="52" y="124" fill="#fff">2</text>
+    <circle cx="52" cy="146" r="10" fill="#FFD02F"/><text x="52" y="150" fill="#5a4a10">3</text>
+    <circle cx="52" cy="172" r="10" fill="#7FA65A"/><text x="52" y="176" fill="#fff">7</text>
+    <circle cx="52" cy="198" r="10" fill="#E8B14C"/><text x="52" y="202" fill="#fff">5</text>
+    <circle cx="60" cy="76" r="3" fill="#FF8A3D"/>
+    <circle cx="60" cy="154" r="3" fill="#FF8A3D"/><circle cx="60" cy="162" r="3" fill="#FF8A3D"/>
+    <circle cx="90" cy="68" r="10" fill="#D97BA6"/><text x="90" y="72" fill="#fff">8</text>
+    <circle cx="90" cy="94" r="10" fill="#FFD02F"/><text x="90" y="98" fill="#5a4a10">3</text>
+    <circle cx="90" cy="120" r="10" fill="#AEB6BF"/><text x="90" y="124" fill="#fff">4</text>
+    <circle cx="90" cy="146" r="10" fill="#F2F2F0" stroke="#c9c2b6"/><text x="90" y="150" fill="#5a5a5a">1</text>
+    <circle cx="90" cy="172" r="10" fill="#FFD02F"/><text x="90" y="176" fill="#5a4a10">3</text>
+    <circle cx="90" cy="198" r="10" fill="#C98B5B"/><text x="90" y="202" fill="#fff">2</text>
+    <circle cx="98" cy="102" r="3" fill="#FF8A3D"/>
+    <circle cx="128" cy="68" r="10" fill="#E8B14C"/><text x="128" y="72" fill="#fff">5</text>
+    <circle cx="128" cy="94" r="10" fill="#7FA65A"/><text x="128" y="98" fill="#fff">7</text>
+    <circle cx="128" cy="120" r="10" fill="#FFD02F"/><text x="128" y="124" fill="#5a4a10">3</text>
+    <circle cx="128" cy="146" r="10" fill="#D9814C"/><text x="128" y="150" fill="#fff">6</text>
+    <circle cx="136" cy="128" r="3" fill="#FF8A3D"/><circle cx="136" cy="136" r="3" fill="#FF8A3D"/>
+  </g>
+  <!-- 點珠詳情 -->
+  <circle cx="128" cy="120" r="14" fill="none" stroke="#FF8A3D" stroke-width="2.5"/>
+  <line x1="142" y1="120" x2="170" y2="104" stroke="#FF8A3D" stroke-width="1.5" stroke-dasharray="3 3"/>
+  <rect x="170" y="60" width="140" height="120" rx="6" fill="#194A63"/>
+  <text x="182" y="80" font-size="10" fill="#BFE9FF">第 1482 局詳情</text>
+  <text x="182" y="98" font-size="9.5" fill="#fff">冠軍：03 鴨鴨（水段多）</text>
+  <text x="182" y="114" font-size="9.5" fill="#fff">名次：3-5-2-7-4-6-1-8</text>
+  <text x="182" y="132" font-size="9.5" fill="#FFB08A">出包：01 小兔（草地段）</text>
+  <text x="182" y="146" font-size="9.5" fill="#FFB08A">　　　08 小豬（泥沼段）</text>
+  <text x="182" y="164" font-size="9.5" fill="#9FD7EA">賽段：草40 / 泥25 / 灘35</text>
+  <text x="24" y="260" font-size="10" fill="#7c766c">珠色＝冠軍動物（8 色固定）· 角標橘點＝出包隻數 · 點珠彈詳情</text>
+
+  <!-- 中：出包路 + 衍生路 -->
+  <text x="360" y="30" font-size="12" fill="#23201c" font-weight="700">② 出包路（二元流 → 正統路子套件）</text>
+  <rect x="360" y="42" width="300" height="120" rx="6" fill="#fff" stroke="#e3ded4"/>
+  <text x="372" y="60" font-size="9" fill="#8a8377">大路（🔴 有出包 ／ 🔵 零出包，同結果下疊、變則換列）</text>
+  <g>
+    <circle cx="386" cy="78" r="8" fill="none" stroke="#E45B5B" stroke-width="2.5"/>
+    <circle cx="386" cy="98" r="8" fill="none" stroke="#E45B5B" stroke-width="2.5"/>
+    <circle cx="386" cy="118" r="8" fill="none" stroke="#E45B5B" stroke-width="2.5"/>
+    <circle cx="408" cy="78" r="8" fill="none" stroke="#3D74C7" stroke-width="2.5"/>
+    <circle cx="430" cy="78" r="8" fill="none" stroke="#E45B5B" stroke-width="2.5"/>
+    <circle cx="430" cy="98" r="8" fill="none" stroke="#E45B5B" stroke-width="2.5"/>
+    <circle cx="452" cy="78" r="8" fill="none" stroke="#3D74C7" stroke-width="2.5"/>
+    <circle cx="452" cy="98" r="8" fill="none" stroke="#3D74C7" stroke-width="2.5"/>
+    <circle cx="452" cy="118" r="8" fill="none" stroke="#3D74C7" stroke-width="2.5"/>
+    <circle cx="474" cy="78" r="8" fill="none" stroke="#E45B5B" stroke-width="2.5"/>
+    <circle cx="496" cy="78" r="8" fill="none" stroke="#3D74C7" stroke-width="2.5"/>
+    <circle cx="496" cy="98" r="8" fill="none" stroke="#3D74C7" stroke-width="2.5"/>
+  </g>
+  <g font-size="9" fill="#8a8377">
+    <text x="530" y="82">← 押「零出包 2.6x」</text>
+    <text x="530" y="96">與「出包」的人看這張</text>
+    <text x="530" y="116">連紅＝出包潮</text>
+  </g>
+  <rect x="360" y="172" width="300" height="70" rx="6" fill="#fff" stroke="#e3ded4"/>
+  <g font-size="9" fill="#8a8377">
+    <text x="372" y="190">大眼仔</text><text x="472" y="190">小路</text><text x="562" y="190">蟑螂路</text>
+  </g>
+  <g>
+    <circle cx="378" cy="204" r="4" fill="none" stroke="#E45B5B" stroke-width="1.8"/>
+    <circle cx="378" cy="216" r="4" fill="none" stroke="#3D74C7" stroke-width="1.8"/>
+    <circle cx="390" cy="204" r="4" fill="none" stroke="#3D74C7" stroke-width="1.8"/>
+    <circle cx="402" cy="204" r="4" fill="none" stroke="#E45B5B" stroke-width="1.8"/>
+    <circle cx="402" cy="216" r="4" fill="none" stroke="#E45B5B" stroke-width="1.8"/>
+    <circle cx="478" cy="204" r="4" fill="#E45B5B"/>
+    <circle cx="478" cy="216" r="4" fill="#3D74C7"/>
+    <circle cx="490" cy="204" r="4" fill="#3D74C7"/>
+    <circle cx="502" cy="204" r="4" fill="#E45B5B"/>
+    <line x1="564" y1="200" x2="572" y2="208" stroke="#E45B5B" stroke-width="2"/>
+    <line x1="576" y1="200" x2="584" y2="208" stroke="#3D74C7" stroke-width="2"/>
+    <line x1="588" y1="200" x2="596" y2="208" stroke="#3D74C7" stroke-width="2"/>
+  </g>
+  <text x="372" y="236" font-size="8.5" fill="#8a8377">演算法與百家樂完全相同——規範要求的衍生路全數可供</text>
+  <text x="360" y="262" font-size="10" fill="#7c766c">同法可生成：大小路（冠軍 1-4／5-8）、冷熱路（冠軍是否前二熱門）</text>
+
+  <!-- 右：心情機制 -->
+  <text x="696" y="30" font-size="12" fill="#23201c" font-weight="700">③ 心情機制（每局 2–3 隻）</text>
+  <rect x="696" y="42" width="300" height="200" rx="6" fill="#fff" stroke="#e3ded4"/>
+  <g font-size="10">
+    <rect x="708" y="56" width="52" height="18" rx="9" fill="#FFE9E0" stroke="#E45B5B"/><text x="714" y="69" fill="#C0392B">🔥 亢奮</text>
+    <text x="770" y="69" fill="#23201c">爆發 ▲</text><text x="830" y="69" fill="#7c766c">勝賠下修・出包微升</text>
+    <rect x="708" y="86" width="52" height="18" rx="9" fill="#FFF1DC" stroke="#FF8A3D"/><text x="714" y="99" fill="#C9631E">😪 想睡</text>
+    <text x="770" y="99" fill="#23201c">專注 ▼</text><text x="830" y="99" fill="#7c766c">出包賠率下修（易中）</text>
+    <rect x="708" y="116" width="52" height="18" rx="9" fill="#E8F0FA" stroke="#3D74C7"/><text x="714" y="129" fill="#2B5E9E">😰 怯場</text>
+    <text x="770" y="129" fill="#23201c">地形 ▼</text><text x="830" y="129" fill="#7c766c">泥水段掉速</text>
+    <rect x="708" y="146" width="52" height="18" rx="9" fill="#EFF5EA" stroke="#7BC24A"/><text x="716" y="159" fill="#4a7c2e">— 中性</text>
+    <text x="770" y="159" fill="#7c766c">不顯示徽章（多數動物的常態）</text>
+  </g>
+  <g font-size="9.5" fill="#7c766c">
+    <text x="708" y="192">守則：①已折算進屬性條與賠率（▲▼標示），玩家不心算</text>
+    <text x="708" y="208">②每局僅 2–3 隻有心情，稀疏才是線索　③一種心情只動</text>
+    <text x="708" y="224">一條屬性。伺服端＝權重公式多一項，計入 RTP 照驗</text>
+  </g>
+  <text x="696" y="262" font-size="10" fill="#7c766c">心情 → 演出呼應：想睡的兔子真的在賽中打瞌睡（出包伏筆）</text>
+
+  <!-- 底部：個體統計 -->
+  <rect x="24" y="284" width="972 " height="72" rx="6" fill="#fff" stroke="#e3ded4"/>
+  <text x="40" y="308" font-size="12" fill="#23201c" font-weight="700">④ 個體統計（印在下注卡上）</text>
+  <text x="40" y="330" font-size="10.5" fill="#7c766c">每張動物卡常駐「近 20 局：勝 x · 包 y」——押「小兔出包」的人要的是小兔的出包頻率，不是全場的。側注決策資訊出現在做決策的位置，</text>
+  <text x="40" y="346" font-size="10.5" fill="#7c766c">不必去路子裡翻。點卡可展開該動物的近期走勢（勝/包/名次折線）。</text>
+</svg>
+</div>
+
+<!-- ═══════════════ 主題二：無人機競速 ═══════════════ -->
+<h2>主題二 ── 無人機競速（科幻夜航）</h2>
+
+<div class="card">
+<h3>色板與調性</h3>
+<svg viewBox="0 0 1020 150" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1020" height="150" fill="#fbfaf8"/>
+  <g>
+    <rect x="24" y="24" width="80" height="80" rx="6" fill="#0B1026"/><text x="24" y="122" font-size="10" fill="#7c766c">#0B1026 深空</text>
+    <rect x="114" y="24" width="80" height="80" rx="6" fill="#1B2450"/><text x="114" y="122" font-size="10" fill="#7c766c">#1B2450 峽谷</text>
+    <rect x="204" y="24" width="80" height="80" rx="6" fill="#00E5FF"/><text x="204" y="122" font-size="10" fill="#7c766c">#00E5FF 霓虹青</text>
+    <rect x="294" y="24" width="80" height="80" rx="6" fill="#B14CFF"/><text x="294" y="122" font-size="10" fill="#7c766c">#B14CFF 霓虹紫</text>
+    <rect x="384" y="24" width="80" height="80" rx="6" fill="#FF6B1A"/><text x="384" y="122" font-size="10" fill="#7c766c">#FF6B1A 炸機</text>
+  </g>
+  <text x="540" y="46" font-size="12" fill="#8a8377" letter-spacing="1">情緒關鍵字</text>
+  <text x="540" y="76" font-size="17" fill="#23201c">冷冽 · 科技 · 電競轉播感</text>
+  <text x="540" y="102" font-size="12" fill="#7c766c">HUD 介面、等寬數字、光軌殘影；炸機走火花爆裂路線</text>
+  <text x="540" y="122" font-size="12" fill="#7c766c">風險：暗色霓虹調性與「決勝圈」高度相似</text>
+</svg>
+</div>
+
+<div class="card">
+<h3>下注畫面（直式）＆賽事演出</h3>
+<div class="row">
+<div>
+<svg viewBox="0 0 400 700" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="700" fill="#fbfaf8"/>
+  <rect x="40" y="16" width="320" height="668" rx="18" fill="#0B1026" stroke="#c9c2b6" stroke-width="1.5"/>
+  <rect x="52" y="30" width="296" height="32" rx="6" fill="#101838"/>
+  <text x="62" y="51" font-size="11" fill="#00E5FF" font-family="monospace">DRONE GP · R-1482</text>
+  <rect x="210" y="37" width="90" height="18" rx="9" fill="#060a18"/>
+  <rect x="210" y="37" width="52" height="18" rx="9" fill="#00E5FF"/>
+  <text x="306" y="51" font-size="10" fill="#e8e6e1">封盤 09s</text>
+  <rect x="52" y="68" width="296" height="46" rx="6" fill="#101838" stroke="#1B2450"/>
+  <text x="62" y="84" font-size="9" fill="#5b6b82">本局航道（每局重抽）</text>
+  <rect x="62" y="90" width="150" height="14" rx="3" fill="#1B4A6B"/>
+  <rect x="212" y="90" width="126" height="14" rx="3" fill="#4A2B7A"/>
+  <text x="70" y="101" font-size="9" fill="#00E5FF">直線峽谷 55%</text>
+  <text x="220" y="101" font-size="9" fill="#D9B3FF">繞塔技術段 45%</text>
+  <rect x="52" y="122" width="296" height="26" rx="6" fill="#101838"/>
+  <rect x="54" y="124" width="72" height="22" rx="5" fill="#00E5FF"/>
+  <text x="70" y="139" font-size="10" fill="#062030">冠軍</text>
+  <text x="146" y="139" font-size="10" fill="#5b6b82">前二連</text>
+  <text x="216" y="139" font-size="10" fill="#5b6b82">炸機</text>
+  <text x="278" y="139" font-size="10" fill="#5b6b82">零炸機</text>
+  <g font-size="9">
+    <rect x="52" y="156" width="144" height="88" rx="8" fill="#101838" stroke="#00E5FF" stroke-width="1.5"/>
+    <rect x="64" y="168" width="24" height="18" rx="4" fill="#1B2450" stroke="#00E5FF"/>
+    <circle cx="64" cy="168" r="5" fill="none" stroke="#00E5FF"/><circle cx="88" cy="168" r="5" fill="none" stroke="#00E5FF"/>
+    <circle cx="64" cy="186" r="5" fill="none" stroke="#00E5FF"/><circle cx="88" cy="186" r="5" fill="none" stroke="#00E5FF"/>
+    <text x="100" y="172" font-size="10" fill="#e8e6e1" font-weight="700" font-family="monospace">VX-03</text>
+    <text x="100" y="184" font-size="8" fill="#00E5FF">直線大熱 ▲</text>
+    <rect x="62" y="200" width="104" height="5" rx="2" fill="#00E5FF"/><text x="170" y="205" fill="#5b6b82">極速</text>
+    <rect x="62" y="209" width="52" height="5" rx="2" fill="#B14CFF"/><text x="118" y="214" fill="#5b6b82">靈活</text>
+    <rect x="62" y="218" width="46" height="5" rx="2" fill="#3cff9b"/><text x="112" y="223" fill="#5b6b82">電池</text>
+    <rect x="62" y="228" width="58" height="13" rx="3" fill="#00E5FF"/><text x="68" y="238" fill="#062030" font-family="monospace">勝 2.85x</text>
+    <rect x="126" y="228" width="62" height="13" rx="3" fill="#2A1508"/><text x="131" y="238" fill="#FF6B1A" font-family="monospace">炸 4.2x</text>
+    <rect x="204" y="156" width="144" height="88" rx="8" fill="#101838" stroke="#1B2450" stroke-dasharray="4 3"/>
+    <text x="256" y="204" fill="#2a3560" font-size="10" font-family="monospace">VX-01…</text>
+    <rect x="52" y="252" width="144" height="88" rx="8" fill="#101838" stroke="#1B2450" stroke-dasharray="4 3"/>
+    <text x="104" y="300" fill="#2a3560" font-size="10" font-family="monospace">VX-05…</text>
+    <rect x="204" y="252" width="144" height="88" rx="8" fill="#101838" stroke="#1B2450" stroke-dasharray="4 3"/>
+    <text x="256" y="300" fill="#2a3560" font-size="10" font-family="monospace">VX-07…</text>
+    <rect x="52" y="348" width="144" height="88" rx="8" fill="#101838" stroke="#1B2450" stroke-dasharray="4 3"/>
+    <text x="104" y="396" fill="#2a3560" font-size="10" font-family="monospace">VX-02…</text>
+    <rect x="204" y="348" width="144" height="88" rx="8" fill="#101838" stroke="#1B2450" stroke-dasharray="4 3"/>
+    <text x="256" y="396" fill="#2a3560" font-size="10" font-family="monospace">VX-08…</text>
+  </g>
+  <rect x="52" y="448" width="296" height="38" rx="6" fill="#101838"/>
+  <text x="60" y="462" font-size="9" fill="#5b6b82">近 20 局（橘 = 該局有炸機）</text>
+  <g font-size="9" text-anchor="middle" font-family="monospace">
+    <circle cx="70" cy="474" r="8" fill="#1B2450"/><text x="70" y="477" fill="#00E5FF">3</text>
+    <circle cx="90" cy="474" r="8" fill="#FF6B1A"/><text x="90" y="477" fill="#fff">1</text>
+    <circle cx="110" cy="474" r="8" fill="#1B2450"/><text x="110" y="477" fill="#00E5FF">5</text>
+    <circle cx="130" cy="474" r="8" fill="#1B2450"/><text x="130" y="477" fill="#00E5FF">2</text>
+  </g>
+  <rect x="52" y="494" width="296" height="40" rx="6" fill="#101838"/>
+  <rect x="60" y="502" width="40" height="24" rx="5" fill="#1B2450"/><text x="72" y="518" font-size="10" fill="#5b6b82">10</text>
+  <rect x="106" y="502" width="40" height="24" rx="5" fill="#00E5FF"/><text x="114" y="518" font-size="10" fill="#062030">100</text>
+  <rect x="152" y="502" width="40" height="24" rx="5" fill="#1B2450"/><text x="160" y="518" font-size="10" fill="#5b6b82">500</text>
+  <rect x="52" y="542" width="296" height="44" rx="8" fill="#00E5FF"/>
+  <text x="200" y="569" font-size="14" fill="#062030" text-anchor="middle" font-weight="700">確 認 下 注</text>
+  <rect x="52" y="594" width="296" height="24" rx="6" fill="#101838"/>
+  <text x="62" y="610" font-size="10" fill="#B14CFF" font-family="monospace">JACKPOT 1,284,900 · 跑馬燈</text>
+  <text x="52" y="646" font-size="9" fill="#8a8377">三屬性：極速（直線段）／靈活（繞塔段）／電池（不炸機）</text>
+  <text x="52" y="662" font-size="9" fill="#8a8377">機制映射與動物版完全相同，僅換語意（路子/心情套件同樣適用）</text>
+</svg>
+</div>
+<div>
+<svg viewBox="0 0 400 700" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="700" fill="#fbfaf8"/>
+  <text x="16" y="26" font-size="13" fill="#23201c" font-weight="700">賽事演出（10 秒 · 峽谷夜航）</text>
+  <rect x="16" y="40" width="368" height="260" rx="10" fill="#0B1026"/>
+  <polygon points="16,300 90,120 130,300" fill="#141B3E"/>
+  <polygon points="200,300 260,90 330,300" fill="#10162f"/>
+  <polygon points="330,300 384,150 384,300" fill="#141B3E"/>
+  <path d="M 100 250 A 45 45 0 0 1 190 250" fill="none" stroke="#00E5FF" stroke-width="3"/>
+  <path d="M 230 230 A 38 38 0 0 1 306 230" fill="none" stroke="#B14CFF" stroke-width="3"/>
+  <g>
+    <line x1="120" y1="200" x2="170" y2="196" stroke="#00E5FF" stroke-width="2" opacity=".5"/>
+    <rect x="170" y="190" width="18" height="12" rx="3" fill="#1B2450" stroke="#00E5FF" stroke-width="1.5"/>
+    <circle cx="170" cy="190" r="4" fill="none" stroke="#00E5FF"/><circle cx="188" cy="190" r="4" fill="none" stroke="#00E5FF"/>
+    <line x1="60" y1="230" x2="106" y2="226" stroke="#B14CFF" stroke-width="2" opacity=".5"/>
+    <rect x="106" y="220" width="16" height="11" rx="3" fill="#1B2450" stroke="#B14CFF" stroke-width="1.5"/>
+    <line x1="40" y1="258" x2="80" y2="256" stroke="#3cff9b" stroke-width="2" opacity=".4"/>
+    <rect x="80" y="250" width="15" height="10" rx="3" fill="#1B2450" stroke="#3cff9b" stroke-width="1.5"/>
+  </g>
+  <g>
+    <circle cx="290" cy="180" r="14" fill="#FF6B1A" opacity=".95"/>
+    <circle cx="306" cy="172" r="8" fill="#FFB547" opacity=".7"/>
+    <circle cx="316" cy="166" r="5" fill="#e8e6e1" opacity=".4"/>
+    <g stroke="#FF6B1A" stroke-width="2"><line x1="276" y1="166" x2="266" y2="156"/><line x1="304" y1="194" x2="314" y2="204"/><line x1="300" y1="160" x2="308" y2="150"/></g>
+  </g>
+  <rect x="222" y="52" width="150" height="24" rx="6" fill="#FF6B1A"/>
+  <text x="232" y="68" font-size="11" fill="#fff" font-weight="700" font-family="monospace">VX-06 SIGNAL LOST</text>
+  <rect x="16" y="316" width="368" height="100" rx="4" fill="#fff" stroke="#e3ded4"/>
+  <rect x="16" y="316" width="5" height="100" fill="#00E5FF"/>
+  <text x="32" y="338" font-size="12" fill="#23201c" font-weight="600">機制映射最工整</text>
+  <text x="32" y="358" font-size="11" fill="#7c766c">炸機＝爆缸（電池過載，火花爆裂+訊號中斷）；航道組成</text>
+  <text x="32" y="374" font-size="11" fill="#7c766c">＝賽道變數（直線峽谷吃極速、繞塔段吃靈活）；HUD 等寬</text>
+  <text x="32" y="390" font-size="11" fill="#7c766c">數字自帶「精密感」，賠率閱讀氛圍與電競轉播一致。</text>
+  <rect x="16" y="428" width="368" height="100" rx="4" fill="#fff" stroke="#e3ded4"/>
+  <rect x="16" y="428" width="5" height="100" fill="#FF6B1A"/>
+  <text x="32" y="450" font-size="12" fill="#23201c" font-weight="600">風險：撞題「決勝圈」</text>
+  <text x="32" y="470" font-size="11" fill="#7c766c">暗底 + 霓虹 + 速度感 + 交通工具——與決勝圈的視覺語言</text>
+  <text x="32" y="486" font-size="11" fill="#7c766c">高度重疊，評審並排看兩張截圖時容易歸為同類。機制不</text>
+  <text x="32" y="502" font-size="11" fill="#7c766c">同（觀賽下注 vs 親自超車）需要口頭解釋才能傳達。</text>
+</svg>
+</div>
+</div>
+</div>
+
+<!-- ═══════════════ 對照 ═══════════════ -->
+<h2>對照總表</h2>
+<div class="card">
+<table>
+<tr><th></th><th>動物大賽跑</th><th>無人機競速</th></tr>
+<tr><td>與決勝圈的截圖區隔</td><td><b>零重疊</b>（日光卡通 vs 霓虹夜賽）</td><td>低（同為暗底霓虹速度感）</td></tr>
+<tr><td>與競技場的區隔</td><td>零重疊</td><td>零重疊</td></tr>
+<tr><td>讀盤直觀度</td><td><b>極高</b>（鴨子會游泳是常識＋心情圖示）</td><td>中（需理解屬性與航道關係）</td></tr>
+<tr><td>出局事件的情緒</td><td>喜劇（輸了也想截圖分享），心情＝伏筆</td><td>酷炫（爽但不好笑）</td></tr>
+<tr><td>iGaming 品類血統</td><td>正統（虛擬賽狗/賽馬精神續作＋標準路子套件）</td><td>新興（電競投注感）</td></tr>
+<tr><td>美術製作量</td><td>較高（8 隻動物 × 跑姿 + 各自出包演出）</td><td>較低（機體換色 + 通用爆炸）</td></tr>
+<tr><td>機制映射</td><td>完整（語意稍作轉換）</td><td>完整（最工整）</td></tr>
+</table>
+<div class="note">兩案數學層完全相同：權重內積定勝率（心情為權重公式之一項）、出局與名次聯合分佈定賠率、防套利蒙地卡羅驗證、同 RTP 賽段/航道檔位——全部沿用企畫書 §3 與 chainfire 驗證器。路子總攬與心情機制兩款皆適用，本示意以動物版呈現。</div>
+</div>
+
+</div>
+</body>
+</html>
