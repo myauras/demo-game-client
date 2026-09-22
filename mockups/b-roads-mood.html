@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>路子總覽與心情疊加示意</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 40px 24px 80px; background: #f4f2ee;
+         font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif; color: #23201c; }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 26px; margin: 0 0 6px; }
+  .sub { color: #7c766c; font-size: 13px; margin-bottom: 36px; }
+  h2 { font-size: 15px; letter-spacing: .12em; color: #8a8377; border-bottom: 1px solid #ddd8ce;
+       padding-bottom: 8px; margin: 48px 0 18px; font-weight: 600; }
+  .card { background: #fff; border: 1px solid #e3ded4; border-radius: 4px; padding: 22px; margin-bottom: 20px; }
+  .card .cap { color: #7c766c; font-size: 12.5px; margin: 0 0 16px; line-height: 1.7; }
+  svg { display: block; width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>路子總覽與心情疊加｜獨立示意</h1>
+<div class="sub">2026-09-01 ／ 動物大賽跑（機制同樣適用無人機版）／ 放大版，僅此兩主題</div>
+
+<!-- ════════ PART 1 路子總覽 ════════ -->
+<h2>Part 1 ── 路子總覽（下注階段的預設畫面）</h2>
+
+<div class="card">
+<p class="cap">下注 15 秒期間，演出區顯示此總覽。預設頁籤是「珠盤路」（所有紀錄）；讀法：<b>一局一珠、由上往下填，滿六珠換下一列</b>（與百家樂珠盤相同）。</p>
+<svg viewBox="0 0 1020 520" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1020" height="520" fill="#fbfaf8"/>
+
+  <!-- 頁籤列 -->
+  <rect x="24" y="20" width="700" height="40" rx="8" fill="#EAF0F5"/>
+  <rect x="30" y="25" width="110" height="30" rx="6" fill="#2E6B8A"/>
+  <text x="56" y="45" font-size="14" fill="#fff">珠盤路</text>
+  <text x="168" y="45" font-size="14" fill="#8a8377">出包路</text>
+  <text x="268" y="45" font-size="14" fill="#8a8377">大小路</text>
+  <text x="368" y="45" font-size="14" fill="#8a8377">冷熱路</text>
+  <text x="470" y="45" font-size="12" fill="#b0a99c">← 頁籤切換，各注別的人看各自的路</text>
+
+  <!-- 珠盤路面板 -->
+  <rect x="24" y="72" width="700" height="360" rx="8" fill="#fff" stroke="#c9c2b6"/>
+
+  <!-- 讀取順序箭頭 -->
+  <g stroke="#b0a99c" stroke-width="2" fill="none">
+    <line x1="52" y1="100" x2="52" y2="380"/>
+    <polygon points="52,388 46,376 58,376" fill="#b0a99c" stroke="none"/>
+    <line x1="46" y1="410" x2="330" y2="410"/>
+    <polygon points="338,410 326,404 326,416" fill="#b0a99c" stroke="none"/>
+  </g>
+  <text x="60" y="406" font-size="11" fill="#b0a99c">由上往下</text>
+  <text x="350" y="414" font-size="11" fill="#b0a99c">滿列換行（時間往右）</text>
+
+  <!-- 珠盤 8col x 6row, r=17, x from 100 step 76, y from 112 step 52 -->
+  <g font-size="14" text-anchor="middle" font-weight="700">
+    <!-- col1 -->
+    <circle cx="108" cy="112" r="17" fill="#FFD02F"/><text x="108" y="117" fill="#5a4a10">3</text>
+    <circle cx="108" cy="164" r="17" fill="#F2F2F0" stroke="#b8b2a6"/><text x="108" y="169" fill="#5a5a5a">1</text>
+    <circle cx="108" cy="216" r="17" fill="#C98B5B"/><text x="108" y="221" fill="#fff">2</text>
+    <circle cx="108" cy="268" r="17" fill="#FFD02F"/><text x="108" y="273" fill="#5a4a10">3</text>
+    <circle cx="108" cy="320" r="17" fill="#7FA65A"/><text x="108" y="325" fill="#fff">7</text>
+    <circle cx="108" cy="372" r="17" fill="#E8B14C"/><text x="108" y="377" fill="#fff">5</text>
+    <circle cx="121" cy="176" r="5" fill="#FF8A3D"/>
+    <circle cx="121" cy="332" r="5" fill="#FF8A3D"/><circle cx="121" cy="344" r="5" fill="#FF8A3D"/>
+    <!-- col2 -->
+    <circle cx="184" cy="112" r="17" fill="#D97BA6"/><text x="184" y="117" fill="#fff">8</text>
+    <circle cx="184" cy="164" r="17" fill="#FFD02F"/><text x="184" y="169" fill="#5a4a10">3</text>
+    <circle cx="184" cy="216" r="17" fill="#AEB6BF"/><text x="184" y="221" fill="#fff">4</text>
+    <circle cx="184" cy="268" r="17" fill="#F2F2F0" stroke="#b8b2a6"/><text x="184" y="273" fill="#5a5a5a">1</text>
+    <circle cx="184" cy="320" r="17" fill="#FFD02F"/><text x="184" y="325" fill="#5a4a10">3</text>
+    <circle cx="184" cy="372" r="17" fill="#C98B5B"/><text x="184" y="377" fill="#fff">2</text>
+    <circle cx="197" cy="124" r="5" fill="#FF8A3D"/>
+    <!-- col3 -->
+    <circle cx="260" cy="112" r="17" fill="#E8B14C"/><text x="260" y="117" fill="#fff">5</text>
+    <circle cx="260" cy="164" r="17" fill="#7FA65A"/><text x="260" y="169" fill="#fff">7</text>
+    <circle cx="260" cy="216" r="17" fill="#FFD02F"/><text x="260" y="221" fill="#5a4a10">3</text>
+    <circle cx="260" cy="268" r="17" fill="#D9814C"/><text x="260" y="273" fill="#fff">6</text>
+    <circle cx="260" cy="320" r="17" fill="#F2F2F0" stroke="#b8b2a6"/><text x="260" y="325" fill="#5a5a5a">1</text>
+    <circle cx="260" cy="372" r="17" fill="#FFD02F"/><text x="260" y="377" fill="#5a4a10">3</text>
+    <circle cx="273" cy="228" r="5" fill="#FF8A3D"/><circle cx="273" cy="240" r="5" fill="#FF8A3D"/>
+    <circle cx="273" cy="332" r="5" fill="#FF8A3D"/>
+    <!-- col4 -->
+    <circle cx="336" cy="112" r="17" fill="#C98B5B"/><text x="336" y="117" fill="#fff">2</text>
+    <circle cx="336" cy="164" r="17" fill="#FFD02F"/><text x="336" y="169" fill="#5a4a10">3</text>
+    <circle cx="336" cy="216" r="17" fill="#F2F2F0" stroke="#b8b2a6"/><text x="336" y="221" fill="#5a5a5a">1</text>
+    <circle cx="336" cy="268" r="17" fill="#7FA65A"/><text x="336" y="273" fill="#fff">7</text>
+    <circle cx="336" cy="320" r="17" fill="#E8B14C"/><text x="336" y="325" fill="#fff">5</text>
+    <circle cx="336" cy="372" r="17" fill="#D97BA6"/><text x="336" y="377" fill="#fff">8</text>
+    <!-- col5 -->
+    <circle cx="412" cy="112" r="17" fill="#FFD02F"/><text x="412" y="117" fill="#5a4a10">3</text>
+    <circle cx="412" cy="164" r="17" fill="#D9814C"/><text x="412" y="169" fill="#fff">6</text>
+    <circle cx="412" cy="216" r="17" fill="#C98B5B"/><text x="412" y="221" fill="#fff">2</text>
+    <circle cx="412" cy="268" r="17" fill="#FFD02F"/><text x="412" y="273" fill="#5a4a10">3</text>
+    <circle cx="412" cy="320" r="17" fill="#AEB6BF"/><text x="412" y="325" fill="#fff">4</text>
+    <circle cx="412" cy="372" r="17" fill="#F2F2F0" stroke="#b8b2a6"/><text x="412" y="377" fill="#5a5a5a">1</text>
+    <circle cx="425" cy="124" r="5" fill="#FF8A3D"/>
+    <circle cx="425" cy="384" r="5" fill="#FF8A3D"/>
+    <!-- col6（最新局 高亮） -->
+    <circle cx="488" cy="112" r="17" fill="#7FA65A"/><text x="488" y="117" fill="#fff">7</text>
+    <circle cx="488" cy="164" r="17" fill="#FFD02F"/><text x="488" y="169" fill="#5a4a10">3</text>
+    <circle cx="488" cy="164" r="23" fill="none" stroke="#FF8A3D" stroke-width="3"/>
+    <circle cx="501" cy="176" r="5" fill="#FF8A3D"/><circle cx="501" cy="188" r="5" fill="#FF8A3D"/>
+  </g>
+  <text x="520" y="150" font-size="12" fill="#C9631E">← 最新一局（點任一珠</text>
+  <text x="532" y="166" font-size="12" fill="#C9631E">　 開啟詳情，見 Part 3）</text>
+
+  <!-- 右側圖例 -->
+  <rect x="748" y="20" width="248" height="412" rx="8" fill="#fff" stroke="#e3ded4"/>
+  <text x="766" y="48" font-size="14" fill="#23201c" font-weight="700">圖例</text>
+  <text x="766" y="74" font-size="12" fill="#8a8377">珠色 = 該局冠軍（8 色固定）</text>
+  <g font-size="12">
+    <circle cx="780" cy="96" r="10" fill="#F2F2F0" stroke="#b8b2a6"/><text x="798" y="100" fill="#55503f">1 小兔</text>
+    <circle cx="780" cy="122" r="10" fill="#C98B5B"/><text x="798" y="126" fill="#55503f">2 阿汪</text>
+    <circle cx="780" cy="148" r="10" fill="#FFD02F"/><text x="798" y="152" fill="#55503f">3 鴨鴨</text>
+    <circle cx="780" cy="174" r="10" fill="#AEB6BF"/><text x="798" y="178" fill="#55503f">4 山羊</text>
+    <circle cx="890" cy="96" r="10" fill="#E8B14C"/><text x="908" y="100" fill="#55503f">5 獵豹</text>
+    <circle cx="890" cy="122" r="10" fill="#D9814C"/><text x="908" y="126" fill="#55503f">6 袋鼠</text>
+    <circle cx="890" cy="148" r="10" fill="#7FA65A"/><text x="908" y="152" fill="#55503f">7 烏龜</text>
+    <circle cx="890" cy="174" r="10" fill="#D97BA6"/><text x="908" y="178" fill="#55503f">8 小豬</text>
+  </g>
+  <line x1="766" y1="198" x2="980" y2="198" stroke="#efece6" stroke-width="2"/>
+  <text x="766" y="224" font-size="12" fill="#8a8377">角標橘點 = 該局出包「隻數」</text>
+  <g>
+    <circle cx="790" cy="258" r="17" fill="#FFD02F"/><text x="790" y="263" font-size="14" fill="#5a4a10" text-anchor="middle" font-weight="700">3</text>
+    <circle cx="803" cy="270" r="5" fill="#FF8A3D"/><circle cx="803" cy="282" r="5" fill="#FF8A3D"/>
+    <text x="822" y="258" font-size="12" fill="#55503f">冠軍＝鴨鴨</text>
+    <text x="822" y="276" font-size="12" fill="#C9631E">此局有 2 隻出包</text>
+    <text x="822" y="294" font-size="11" fill="#8a8377">（誰出包 → 點珠看詳情）</text>
+  </g>
+  <line x1="766" y1="312" x2="980" y2="312" stroke="#efece6" stroke-width="2"/>
+  <text x="766" y="336" font-size="12" fill="#8a8377">為什麼不在珠上記「誰」出包？</text>
+  <text x="766" y="356" font-size="11.5" fill="#55503f">出包可能 0～多隻，塞進一顆珠會爆</text>
+  <text x="766" y="373" font-size="11.5" fill="#55503f">炸。總覽只答「多不多」，「是誰」放</text>
+  <text x="766" y="390" font-size="11.5" fill="#55503f">詳情；個別動物的出包頻率直接印在</text>
+  <text x="766" y="407" font-size="11.5" fill="#55503f">下注卡上（近20局：勝x·包y）。</text>
+
+  <text x="24" y="470" font-size="12" fill="#7c766c">・全服輪次不論是否下注均記錄；珠盤保留近 120 局，左右可滑動</text>
+  <text x="24" y="492" font-size="12" fill="#7c766c">・開賽自動切回賽事畫面，賽後回到本總覽並落下新珠（有落珠動畫）</text>
+</svg>
+</div>
+
+<div class="card">
+<p class="cap">「出包路」頁籤——把每局壓成二元（有出包／零出包）後，就是標準百家樂路：<b>同結果往下疊、結果改變換新列</b>。大眼仔／小路／蟑螂路演算法原封不動。</p>
+<svg viewBox="0 0 1020 400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1020" height="400" fill="#fbfaf8"/>
+
+  <!-- 輸入序列 -->
+  <text x="24" y="34" font-size="13" fill="#23201c" font-weight="700">最近 12 局的出包序列（時間 →）</text>
+  <g font-size="11" text-anchor="middle">
+    <circle cx="44" cy="62" r="13" fill="#E45B5B"/><text x="44" y="66" fill="#fff">包</text>
+    <circle cx="76" cy="62" r="13" fill="#E45B5B"/><text x="76" y="66" fill="#fff">包</text>
+    <circle cx="108" cy="62" r="13" fill="#E45B5B"/><text x="108" y="66" fill="#fff">包</text>
+    <circle cx="140" cy="62" r="13" fill="#3D74C7"/><text x="140" y="66" fill="#fff">無</text>
+    <circle cx="172" cy="62" r="13" fill="#E45B5B"/><text x="172" y="66" fill="#fff">包</text>
+    <circle cx="204" cy="62" r="13" fill="#E45B5B"/><text x="204" y="66" fill="#fff">包</text>
+    <circle cx="236" cy="62" r="13" fill="#3D74C7"/><text x="236" y="66" fill="#fff">無</text>
+    <circle cx="268" cy="62" r="13" fill="#3D74C7"/><text x="268" y="66" fill="#fff">無</text>
+    <circle cx="300" cy="62" r="13" fill="#3D74C7"/><text x="300" y="66" fill="#fff">無</text>
+    <circle cx="332" cy="62" r="13" fill="#E45B5B"/><text x="332" y="66" fill="#fff">包</text>
+    <circle cx="364" cy="62" r="13" fill="#3D74C7"/><text x="364" y="66" fill="#fff">無</text>
+    <circle cx="396" cy="62" r="13" fill="#3D74C7"/><text x="396" y="66" fill="#fff">無</text>
+  </g>
+
+  <!-- 轉成大路 -->
+  <g stroke="#b0a99c" stroke-width="2" fill="none">
+    <path d="M 220 86 L 220 116"/>
+    <polygon points="220,124 214,112 226,112" fill="#b0a99c" stroke="none"/>
+  </g>
+  <text x="232" y="112" font-size="12" fill="#b0a99c">排進大路：同色往下疊，變色換新列</text>
+
+  <rect x="24" y="132" width="440" height="200" rx="8" fill="#fff" stroke="#c9c2b6"/>
+  <g font-size="1">
+    <!-- col1 包包包 -->
+    <circle cx="60" cy="162" r="14" fill="none" stroke="#E45B5B" stroke-width="4"/>
+    <circle cx="60" cy="198" r="14" fill="none" stroke="#E45B5B" stroke-width="4"/>
+    <circle cx="60" cy="234" r="14" fill="none" stroke="#E45B5B" stroke-width="4"/>
+    <!-- col2 無 -->
+    <circle cx="98" cy="162" r="14" fill="none" stroke="#3D74C7" stroke-width="4"/>
+    <!-- col3 包包 -->
+    <circle cx="136" cy="162" r="14" fill="none" stroke="#E45B5B" stroke-width="4"/>
+    <circle cx="136" cy="198" r="14" fill="none" stroke="#E45B5B" stroke-width="4"/>
+    <!-- col4 無無無 -->
+    <circle cx="174" cy="162" r="14" fill="none" stroke="#3D74C7" stroke-width="4"/>
+    <circle cx="174" cy="198" r="14" fill="none" stroke="#3D74C7" stroke-width="4"/>
+    <circle cx="174" cy="234" r="14" fill="none" stroke="#3D74C7" stroke-width="4"/>
+    <!-- col5 包 -->
+    <circle cx="212" cy="162" r="14" fill="none" stroke="#E45B5B" stroke-width="4"/>
+    <!-- col6 無無 -->
+    <circle cx="250" cy="162" r="14" fill="none" stroke="#3D74C7" stroke-width="4"/>
+    <circle cx="250" cy="198" r="14" fill="none" stroke="#3D74C7" stroke-width="4"/>
+  </g>
+  <text x="290" y="170" font-size="12" fill="#8a8377">🔴 有出包</text>
+  <text x="290" y="192" font-size="12" fill="#8a8377">🔵 零出包</text>
+  <text x="290" y="226" font-size="12" fill="#55503f">連紅＝出包潮（押出包）</text>
+  <text x="290" y="246" font-size="12" fill="#55503f">連藍＝安全潮（押零出包 2.6x）</text>
+  <text x="40" y="312" font-size="12" fill="#7c766c">押「出包／零出包」注別的人看這張，讀法與百家樂大路完全一致</text>
+
+  <!-- 衍生路 -->
+  <rect x="496" y="132" width="500" height="200" rx="8" fill="#fff" stroke="#e3ded4"/>
+  <text x="514" y="160" font-size="13" fill="#23201c" font-weight="700">衍生路（演算法照搬百家樂，規範要求全數可供）</text>
+  <g font-size="12" fill="#8a8377">
+    <text x="514" y="188">大眼仔路</text><text x="678" y="188">小路</text><text x="828" y="188">蟑螂路</text>
+  </g>
+  <g>
+    <circle cx="524" cy="210" r="8" fill="none" stroke="#E45B5B" stroke-width="2.5"/>
+    <circle cx="524" cy="232" r="8" fill="none" stroke="#3D74C7" stroke-width="2.5"/>
+    <circle cx="546" cy="210" r="8" fill="none" stroke="#3D74C7" stroke-width="2.5"/>
+    <circle cx="568" cy="210" r="8" fill="none" stroke="#E45B5B" stroke-width="2.5"/>
+    <circle cx="568" cy="232" r="8" fill="none" stroke="#E45B5B" stroke-width="2.5"/>
+    <circle cx="590" cy="210" r="8" fill="none" stroke="#3D74C7" stroke-width="2.5"/>
+    <circle cx="688" cy="210" r="8" fill="#E45B5B"/>
+    <circle cx="688" cy="232" r="8" fill="#3D74C7"/>
+    <circle cx="710" cy="210" r="8" fill="#3D74C7"/>
+    <circle cx="732" cy="210" r="8" fill="#E45B5B"/>
+    <circle cx="732" cy="232" r="8" fill="#E45B5B"/>
+    <line x1="838" y1="204" x2="854" y2="218" stroke="#E45B5B" stroke-width="3"/>
+    <line x1="862" y1="204" x2="878" y2="218" stroke="#3D74C7" stroke-width="3"/>
+    <line x1="886" y1="204" x2="902" y2="218" stroke="#3D74C7" stroke-width="3"/>
+    <line x1="838" y1="228" x2="854" y2="242" stroke="#E45B5B" stroke-width="3"/>
+  </g>
+  <text x="514" y="278" font-size="12" fill="#7c766c">另兩個頁籤同理由二元投影生成：</text>
+  <text x="514" y="300" font-size="12" fill="#55503f">大小路＝冠軍編號 1–4（小）／5–8（大）　·　冷熱路＝冠軍是否為賠率前二熱門</text>
+
+  <text x="24" y="368" font-size="12" fill="#7c766c">總覽版面：手機直式下「珠盤路」為預設整版，其餘路以頁籤切換；平板/橫式可並排兩張。</text>
+</svg>
+</div>
+
+<!-- ════════ PART 3 詳情 ════════ -->
+<h2>Part 2 ── 點珠詳情（彈窗）</h2>
+
+<div class="card">
+<p class="cap">點珠盤任一珠彈出該局完整紀錄——總覽答「趨勢」，詳情答「這局到底發生什麼」。</p>
+<svg viewBox="0 0 1020 560" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1020" height="560" fill="#fbfaf8"/>
+  <!-- 背景壓暗示意 -->
+  <rect x="24" y="20" width="560" height="520" rx="14" fill="#1a2733" opacity=".92"/>
+
+  <!-- 彈窗 -->
+  <rect x="60" y="48" width="488" height="464" rx="12" fill="#fff"/>
+  <rect x="60" y="48" width="488" height="54" rx="12" fill="#2E6B8A"/>
+  <rect x="60" y="90" width="488" height="12" fill="#2E6B8A"/>
+  <text x="84" y="82" font-size="17" fill="#fff" font-weight="700">第 1482 局</text>
+  <text x="200" y="82" font-size="12" fill="#BFE9FF">2026-09-01 14:32</text>
+  <rect x="502" y="60" width="30" height="30" rx="6" fill="#194A63"/>
+  <text x="511" y="81" font-size="14" fill="#8fb8cc">✕</text>
+
+  <!-- 賽段組成 -->
+  <text x="84" y="130" font-size="12" fill="#8a8377">本局賽段</text>
+  <rect x="84" y="138" width="176" height="18" rx="4" fill="#7BC24A"/>
+  <rect x="260" y="138" width="110" height="18" rx="4" fill="#9A6B3F"/>
+  <rect x="370" y="138" width="154" height="18" rx="4" fill="#5BC8DE"/>
+  <text x="94" y="152" font-size="11" fill="#fff">草地 40%</text>
+  <text x="270" y="152" font-size="11" fill="#fff">泥沼 25%</text>
+  <text x="380" y="152" font-size="11" fill="#fff">淺灘 35%</text>
+
+  <!-- 名次表 -->
+  <text x="84" y="184" font-size="12" fill="#8a8377">最終名次（含當局心情與出包）</text>
+  <g font-size="13">
+    <rect x="84" y="194" width="440" height="30" rx="5" fill="#FFF8E1" stroke="#FFD02F"/>
+    <text x="96" y="214" fill="#8a8377" font-size="12">🏆 1</text>
+    <circle cx="136" cy="209" r="10" fill="#FFD02F"/><text x="132" y="214" fill="#5a4a10" font-weight="700">3</text>
+    <text x="156" y="214" fill="#23201c" font-weight="700">鴨鴨</text>
+    <text x="230" y="214" fill="#1c7c40" font-size="11">水段起飛</text>
+    <text x="424" y="214" fill="#2E6B8A" font-size="12" text-anchor="end">勝賠 3.20x</text>
+    <g fill="#55503f">
+      <text x="96" y="244" font-size="12">2</text><circle cx="136" cy="239" r="9" fill="#E8B14C"/><text x="130" y="243" fill="#fff" font-size="11">5</text><text x="156" y="243">獵豹</text><text x="230" y="243" font-size="11" fill="#C0392B">🔥亢奮（爆發+15）</text>
+      <text x="96" y="272" font-size="12">3</text><circle cx="136" cy="267" r="9" fill="#C98B5B"/><text x="131" y="271" fill="#fff" font-size="11">2</text><text x="156" y="271">阿汪</text>
+      <text x="96" y="300" font-size="12">4</text><circle cx="136" cy="295" r="9" fill="#7FA65A"/><text x="131" y="299" fill="#fff" font-size="11">7</text><text x="156" y="299">烏龜</text>
+      <text x="96" y="328" font-size="12">5</text><circle cx="136" cy="323" r="9" fill="#AEB6BF"/><text x="131" y="327" fill="#fff" font-size="11">4</text><text x="156" y="327">山羊</text>
+      <text x="96" y="356" font-size="12">6</text><circle cx="136" cy="351" r="9" fill="#D9814C"/><text x="131" y="355" fill="#fff" font-size="11">6</text><text x="156" y="355">袋鼠</text>
+    </g>
+    <!-- 出包者列（沉底、橘標） -->
+    <rect x="84" y="368" width="440" height="30" rx="5" fill="#FFF1E6" stroke="#FF8A3D"/>
+    <text x="96" y="388" fill="#C9631E" font-size="12">出包</text>
+    <circle cx="136" cy="383" r="9" fill="#F2F2F0" stroke="#b8b2a6"/><text x="132" y="387" fill="#5a5a5a" font-size="11">1</text>
+    <text x="156" y="388" fill="#23201c">小兔</text>
+    <text x="200" y="388" fill="#C9631E" font-size="11">😪想睡 → 草地段睡著</text>
+    <text x="424" y="388" fill="#C9631E" font-size="12" text-anchor="end">出包賠 3.1x ✓</text>
+    <rect x="84" y="404" width="440" height="30" rx="5" fill="#FFF1E6" stroke="#FF8A3D"/>
+    <text x="96" y="424" fill="#C9631E" font-size="12">出包</text>
+    <circle cx="136" cy="419" r="9" fill="#D97BA6"/><text x="131" y="423" fill="#fff" font-size="11">8</text>
+    <text x="156" y="424" fill="#23201c">小豬</text>
+    <text x="200" y="424" fill="#C9631E" font-size="11">泥沼段滾泥坑不走了</text>
+    <text x="424" y="424" fill="#C9631E" font-size="12" text-anchor="end">出包賠 7.8x</text>
+  </g>
+  <text x="84" y="464" font-size="11.5" fill="#8a8377">出包者一律沉底排序（依出包時間倒序）· ✓＝有玩家中此注</text>
+  <text x="84" y="490" font-size="11.5" fill="#8a8377">滑動可看上一局／下一局；點動物名可看牠的近期走勢</text>
+
+  <!-- 右側說明 -->
+  <g font-size="13" fill="#55503f">
+    <text x="628" y="92" font-size="15" fill="#23201c" font-weight="700">詳情要回答的三件事</text>
+    <text x="628" y="126">① 這局的「題目」是什麼？→ 賽段組成條</text>
+    <text x="628" y="150">② 誰贏、大家跑第幾？→ 完整名次</text>
+    <text x="628" y="174">③ 出包的是誰、為什麼？→ 沉底橘列，</text>
+    <text x="644" y="194">含出包地點與當局心情（伏筆回收）</text>
+    <text x="628" y="240" font-size="15" fill="#23201c" font-weight="700">層級原則</text>
+    <text x="628" y="272">總覽（珠盤）＝掃趨勢，一珠一色一數字</text>
+    <text x="628" y="296">詳情（彈窗）＝查因果，資訊再多也不擠</text>
+    <text x="628" y="320">回總覽的路（點外圍或 ✕）永遠一步</text>
+  </g>
+</svg>
+</div>
+
+<!-- ════════ PART 4 心情疊加 ════════ -->
+<h2>Part 3 ── 心情疊加條（增減量直接畫在屬性條上）</h2>
+
+<div class="card">
+<p class="cap">依您的方向修改：不再只給圖示——<b>加成疊在原條後面（亮色延伸段）、下降蓋在原條上（斜紋損失段）</b>，增減幅一眼可見，並與賠率變動（▲▼）對應。</p>
+<svg viewBox="0 0 1020 500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="loss" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="#F3D9D2"/>
+      <line x1="0" y1="0" x2="0" y2="8" stroke="#D96B5B" stroke-width="3"/>
+    </pattern>
+  </defs>
+  <rect width="1020" height="500" fill="#fbfaf8"/>
+
+  <!-- 左：獵豹卡（加成） -->
+  <rect x="24" y="24" width="470" height="210" rx="12" fill="#fff" stroke="#d8d2c6"/>
+  <circle cx="70" cy="70" r="24" fill="#E8B14C"/><circle cx="62" cy="63" r="4" fill="#23201c"/>
+  <text x="106" y="64" font-size="17" fill="#23201c" font-weight="700">05 獵豹</text>
+  <rect x="196" y="48" width="76" height="26" rx="13" fill="#FFE9E0" stroke="#E45B5B" stroke-width="1.5"/>
+  <text x="206" y="66" font-size="13" fill="#C0392B">🔥 亢奮</text>
+  <text x="284" y="66" font-size="12" fill="#8a8377">近20局：勝 4 · 包 4</text>
+  <!-- 爆發：原值 + 加成延伸段 -->
+  <text x="48" y="112" font-size="12" fill="#55503f">爆發</text>
+  <rect x="92" y="102" width="230" height="14" rx="4" fill="#FF8A3D"/>
+  <rect x="322" y="102" width="52" height="14" fill="#E43D2E"/>
+  <rect x="322" y="100" width="2.5" height="18" fill="#fff"/>
+  <text x="382" y="114" font-size="12" fill="#C0392B" font-weight="700">▲ +15</text>
+  <!-- 地形（不受影響） -->
+  <text x="48" y="142" font-size="12" fill="#55503f">地形</text>
+  <rect x="92" y="132" width="150" height="14" rx="4" fill="#5BC8DE"/>
+  <!-- 專注（不受影響） -->
+  <text x="48" y="172" font-size="12" fill="#55503f">專注</text>
+  <rect x="92" y="162" width="128" height="14" rx="4" fill="#7BC24A"/>
+  <rect x="48" y="192" width="130" height="26" rx="6" fill="#2E6B8A"/>
+  <text x="60" y="210" font-size="13" fill="#fff">勝 2.60x ▼</text>
+  <rect x="188" y="192" width="130" height="26" rx="6" fill="#FBE9DA"/>
+  <text x="200" y="210" font-size="13" fill="#C9631E">出包 6.2x</text>
+  <text x="330" y="210" font-size="11.5" fill="#8a8377">變強 → 勝賠下修</text>
+
+  <!-- 右：小兔卡（下降） -->
+  <rect x="526" y="24" width="470" height="210" rx="12" fill="#fff" stroke="#d8d2c6"/>
+  <circle cx="572" cy="72" r="22" fill="#F2F2F0" stroke="#b8b2a6"/>
+  <ellipse cx="562" cy="44" rx="7" ry="17" fill="#F2F2F0" stroke="#b8b2a6"/>
+  <ellipse cx="582" cy="44" rx="7" ry="17" fill="#F2F2F0" stroke="#b8b2a6"/>
+  <path d="M 564 74 q 6 5 12 0" stroke="#23201c" stroke-width="2" fill="none"/>
+  <text x="608" y="64" font-size="17" fill="#23201c" font-weight="700">01 小兔</text>
+  <rect x="698" y="48" width="76" height="26" rx="13" fill="#FFF1DC" stroke="#FF8A3D" stroke-width="1.5"/>
+  <text x="708" y="66" font-size="13" fill="#C9631E">😪 想睡</text>
+  <text x="786" y="66" font-size="12" fill="#8a8377">近20局：勝 3 · 包 7</text>
+  <!-- 爆發（不受影響） -->
+  <text x="550" y="112" font-size="12" fill="#55503f">爆發</text>
+  <rect x="594" y="102" width="300" height="14" rx="4" fill="#FF8A3D"/>
+  <!-- 地形（不受影響） -->
+  <text x="550" y="142" font-size="12" fill="#55503f">地形</text>
+  <rect x="594" y="132" width="140" height="14" rx="4" fill="#5BC8DE"/>
+  <!-- 專注：當前值 + 損失斜紋段（合計為原長度） -->
+  <text x="550" y="172" font-size="12" fill="#55503f">專注</text>
+  <rect x="594" y="162" width="96" height="14" rx="4" fill="#7BC24A"/>
+  <rect x="690" y="162" width="64" height="14" fill="url(#loss)"/>
+  <rect x="690" y="160" width="2.5" height="18" fill="#fff"/>
+  <text x="762" y="174" font-size="12" fill="#C0392B" font-weight="700">▼ −20</text>
+  <rect x="550" y="192" width="130" height="26" rx="6" fill="#2E6B8A"/>
+  <text x="562" y="210" font-size="13" fill="#fff">勝 2.35x ▲</text>
+  <rect x="690" y="192" width="140" height="26" rx="6" fill="#FBE9DA"/>
+  <text x="702" y="210" font-size="13" fill="#C9631E">出包 3.1x ▼</text>
+  <text x="842" y="210" font-size="11.5" fill="#8a8377">易出包 → 賠率下修</text>
+
+  <!-- 圖例 -->
+  <rect x="24" y="262" width="972" height="112" rx="8" fill="#fff" stroke="#e3ded4"/>
+  <text x="44" y="292" font-size="14" fill="#23201c" font-weight="700">條形圖例</text>
+  <rect x="44" y="308" width="120" height="14" rx="4" fill="#FF8A3D"/>
+  <text x="174" y="320" font-size="12.5" fill="#55503f">實色＝本局實際生效值</text>
+  <rect x="360" y="308" width="46" height="14" fill="#E43D2E"/>
+  <text x="416" y="320" font-size="12.5" fill="#55503f">亮紅延伸段＝心情加成（接在原條後）</text>
+  <rect x="672" y="308" width="46" height="14" fill="url(#loss)"/>
+  <text x="728" y="320" font-size="12.5" fill="#55503f">斜紋段＝心情損失（原值輪廓仍在）</text>
+  <text x="44" y="354" font-size="12" fill="#7c766c">損失段保留在原長度位置＝玩家同時看到「原本多強」與「掉了多少」；加成段用更亮的色階＝一眼看出是額外的。分隔白線標出基準點。</text>
+
+  <!-- 守則 -->
+  <rect x="24" y="394" width="972" height="82" rx="8" fill="#fff" stroke="#e3ded4"/>
+  <text x="44" y="424" font-size="14" fill="#23201c" font-weight="700">不變的三守則</text>
+  <text x="44" y="450" font-size="12.5" fill="#55503f">① 增減已折算進賠率（▲▼跟著動），玩家不心算　② 每局僅 2–3 隻有心情，其餘中性不顯示　③ 一種心情只動一條屬性</text>
+  <text x="44" y="470" font-size="12" fill="#7c766c">伺服端：心情＝權重公式的一個項，計入 RTP，模擬器照驗。</text>
+</svg>
+</div>
+
+</div>
+</body>
+</html>
