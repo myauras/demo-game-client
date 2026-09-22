@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#05070c" />
+    <title>上樓梯｜Climb Up</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="phone-shell" aria-label="上樓梯遊戲 Demo">
+      <div class="game-bg" aria-hidden="true"></div>
+      <div class="vignette" aria-hidden="true"></div>
+      <div class="particles" aria-hidden="true"></div>
+
+      <div class="balance-chip" aria-label="目前餘額">
+        <strong id="balanceValue">$ 3000.00</strong>
+        <button id="addBalanceButton" type="button" aria-label="增加測試餘額">＋</button>
+      </div>
+
+      <section id="gameStage" class="game-stage" aria-live="polite">
+        <div class="altitude-line left"><span></span><span></span><span></span><span></span></div>
+        <div class="altitude-line right"><span></span><span></span><span></span><span></span></div>
+        <div id="platformLayer" class="platform-layer"></div>
+        <div id="player" class="player-cube" aria-label="玩家方塊">
+          <i class="cube-face front"></i><i class="cube-face top"></i><i class="cube-face side"></i>
+          <span class="cube-core"></span><span class="thruster"></span>
+        </div>
+        <div id="statusToast" class="status-toast">設定下注金額後開始挑戰</div>
+      </section>
+
+      <footer class="control-panel">
+        <div id="roundMessage" class="round-message" aria-live="polite"></div>
+        <div class="setting-row">
+          <label class="bet-setting">
+            <span>下注金額</span>
+            <div class="bet-input-row">
+              <input id="betInput" type="number" min="1" step="1" value="10" inputmode="decimal" aria-label="下注金額" />
+              <button id="halfBetButton" type="button" aria-label="下注金額減半">½</button>
+              <button id="doubleBetButton" type="button" aria-label="下注金額加倍">2X</button>
+            </div>
+          </label>
+          <label class="difficulty-setting">
+            <span>難度</span>
+            <select id="difficultySelect" aria-label="選擇難度">
+              <option value="easy">簡單</option>
+              <option value="normal">普通</option>
+              <option value="hard">困難</option>
+            </select>
+          </label>
+        </div>
+
+        <div id="idleActions" class="action-row single">
+          <button id="betButton" class="game-button primary" type="button">投注</button>
+        </div>
+        <div id="playActions" class="action-row hidden">
+          <button id="cashoutButton" class="game-button" type="button" disabled>提現</button>
+          <button id="jumpButton" class="game-button primary" type="button">跳躍</button>
+        </div>
+        <div id="endActions" class="action-row single hidden">
+          <button id="replayButton" class="game-button primary" type="button">再玩一次</button>
+        </div>
+      </footer>
+    </main>
+    <script src="./game.js"></script>
+  </body>
+</html>

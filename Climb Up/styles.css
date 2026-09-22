@@ -1,0 +1,78 @@
+:root{color-scheme:dark;font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;--blue:#328cff;--cyan:#2cf4ff;--orange:#ff8a2b;--gold:#ffd36b;--panel-height:156px}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#01040e}
+body{display:grid;place-items:center;overflow:hidden}
+.phone-shell{position:relative;width:min(100vw,430px);height:100dvh;max-height:932px;overflow:hidden;background:#03091b;color:#fff;isolation:isolate;box-shadow:0 0 70px #000}
+.game-bg,.vignette,.particles{position:absolute;inset:0;pointer-events:none}
+.game-bg{z-index:-4;background:url('./assets/abyss-bg.png') center/cover;filter:saturate(.95) brightness(.66) contrast(1.08)}
+.vignette{z-index:-3;background:linear-gradient(180deg,rgba(0,5,22,.5),transparent 20%,transparent 62%,rgba(0,4,18,.82)),radial-gradient(ellipse at center,transparent 35%,rgba(0,3,18,.55) 100%)}
+.particles{z-index:-2;opacity:.85;background-image:radial-gradient(circle,#8eeaff 0 1.2px,transparent 1.8px),radial-gradient(circle,#ffad5e 0 1px,transparent 1.5px);background-size:91px 113px,137px 181px;background-position:17px 6px,73px 61px;animation:drift 13s linear infinite}
+.balance-chip{position:absolute;z-index:30;right:13px;top:calc(15px + env(safe-area-inset-top));height:42px;display:flex;align-items:center;border:1px solid rgba(76,177,255,.75);border-radius:11px;background:linear-gradient(180deg,rgba(8,31,72,.96),rgba(3,13,34,.96));color:var(--gold);box-shadow:inset 0 1px rgba(146,225,255,.16),0 0 18px rgba(30,126,255,.28),0 8px 20px rgba(0,0,0,.35);font-size:16px}
+.balance-chip strong{padding:0 10px;white-space:nowrap;text-shadow:0 0 10px rgba(255,193,64,.34)}
+.balance-chip button{height:32px;width:32px;margin-right:4px;border:1px solid #67d9ff;border-radius:8px;background:linear-gradient(180deg,#128cf4,#06429e);color:#e9ffff;box-shadow:inset 0 0 10px rgba(107,244,255,.4);font-size:23px;font-weight:1000;line-height:1}
+.game-stage{position:absolute;inset:0 0 var(--panel-height);overflow:hidden;perspective:720px}
+.platform-layer{position:absolute;inset:0;transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+.platform{--glow:var(--blue);position:absolute;left:50%;width:242px;height:66px;transform:translateX(-50%) perspective(380px) rotateX(51deg) scale(var(--scale,1));transform-origin:center bottom;transition:top .68s cubic-bezier(.2,.82,.25,1),opacity .35s,filter .2s;filter:drop-shadow(0 0 13px color-mix(in srgb,var(--glow) 78%,transparent));border:2px solid var(--glow);border-radius:8px;background:linear-gradient(180deg,rgba(55,114,223,.5),rgba(5,19,53,.94) 72%);box-shadow:inset 0 0 19px color-mix(in srgb,var(--glow) 45%,transparent),0 0 17px color-mix(in srgb,var(--glow) 54%,transparent)}
+.platform::before{content:"";position:absolute;inset:7px;border:1px solid color-mix(in srgb,var(--glow) 45%,transparent);background:linear-gradient(135deg,transparent 43%,color-mix(in srgb,var(--glow) 35%,transparent) 49%,transparent 55%);opacity:.75}
+.platform::after{content:attr(data-multiplier);position:absolute;top:61px;left:50%;transform:translateX(-50%) rotateX(-51deg);font-weight:1000;font-size:20px;letter-spacing:.02em;color:#d9edff;text-shadow:0 0 10px var(--glow),0 2px 2px #000;white-space:nowrap}
+.platform.current{width:284px;--scale:1.06}
+.platform.next{width:262px;filter:drop-shadow(0 0 23px var(--glow)) brightness(1.15);animation:nextPulse 1s ease-in-out infinite alternate}
+.platform.spring{--glow:var(--orange);background:linear-gradient(180deg,rgba(255,150,67,.7),rgba(72,27,8,.94))}
+.platform.flight{--glow:var(--cyan);background:linear-gradient(180deg,rgba(59,226,255,.68),rgba(5,51,83,.94))}
+.platform .platform-symbol{position:absolute;inset:0;display:grid;place-items:center;font-size:28px;font-weight:1000;color:#fff;text-shadow:0 0 11px var(--glow);transform:translateZ(1px)}
+.platform.spring .platform-symbol{animation:springArrow .52s ease-in-out infinite alternate}
+.platform.flight .platform-symbol{letter-spacing:4px;animation:energyRise .68s linear infinite}
+.player-cube{position:absolute;z-index:8;left:50%;bottom:102px;width:48px;height:48px;transform:translateX(-50%) rotate(-4deg);filter:drop-shadow(0 0 18px #22e7ff);transition:bottom .55s cubic-bezier(.2,.75,.2,1),left .55s,opacity .3s}
+.cube-face{position:absolute;background:linear-gradient(145deg,#bfffff,#1b6eff 75%);border:2px solid #d9ffff;box-shadow:inset 0 0 14px #53f4ff,0 0 11px #178dff}
+.cube-face.front{inset:5px 1px 0 6px;clip-path:polygon(0 12%,76% 0,100% 22%,92% 87%,25% 100%,0 73%)}
+.cube-face.top{left:6px;top:-6px;width:40px;height:18px;clip-path:polygon(50% 0,100% 50%,72% 100%,0 82%,0 28%)}
+.cube-face.side{right:-3px;top:4px;width:15px;height:39px;clip-path:polygon(0 0,100% 14%,78% 100%,0 88%)}
+.cube-core{position:absolute;left:17px;top:15px;width:13px;height:13px;background:#efffff;border-radius:2px;box-shadow:0 0 14px 6px #31e8ff}
+.thruster{display:none;position:absolute;left:11px;top:40px;width:27px;height:100px;background:linear-gradient(#fff,#27eaff 22%,rgba(25,100,255,.24) 70%,transparent);clip-path:polygon(20% 0,42% 0,48% 100%,58% 0,80% 0,100% 100%,0 100%);filter:blur(1px)}
+.player-cube.jumping{animation:cubeJump .58s cubic-bezier(.2,.65,.3,1)}
+.player-cube.springing{animation:cubeBoost .9s ease-in-out}
+.player-cube.flying{animation:cubeFly 1.25s ease-in-out}
+.player-cube.flying .thruster{display:block;animation:thrusterPulse .18s infinite alternate}
+.player-cube.failing{animation:cubeFail 1.05s ease-in forwards}
+.altitude-line{position:absolute;top:40px;bottom:85px;width:1px;background:linear-gradient(transparent,rgba(49,132,234,.32),transparent)}
+.altitude-line.left{left:28px}.altitude-line.right{right:28px}
+.altitude-line span{display:block;width:8px;height:1px;margin-top:105px;background:#4289d8}
+.altitude-line.right span{margin-left:-7px}
+.status-toast{position:absolute;z-index:14;left:50%;top:70px;transform:translate(-50%,-8px);padding:7px 13px;border:1px solid rgba(70,178,255,.55);border-radius:99px;background:rgba(3,15,42,.82);color:#c9eaff;font-size:11px;font-weight:700;letter-spacing:.04em;opacity:0;transition:.25s;white-space:nowrap}
+.status-toast.show{opacity:1;transform:translate(-50%,0)}
+.status-toast.accent{border-color:#ffab54;color:#ffe2ba;box-shadow:0 0 18px rgba(255,126,32,.3)}
+.control-panel{position:absolute;z-index:25;left:8px;right:8px;bottom:0;height:var(--panel-height);padding:14px 32px calc(13px + env(safe-area-inset-bottom));border:1px solid rgba(68,164,255,.7);border-bottom:0;border-radius:24px 24px 0 0;background:linear-gradient(180deg,rgba(7,27,65,.97),rgba(2,10,29,.98));color:#eaf6ff;box-shadow:inset 0 1px rgba(116,218,255,.16),inset 0 0 28px rgba(24,91,190,.13),0 -8px 28px rgba(0,8,30,.72),0 0 18px rgba(27,109,255,.18)}
+.control-panel::before{content:"";position:absolute;left:20%;right:20%;top:0;height:1px;background:linear-gradient(90deg,transparent,#70ddff,transparent);box-shadow:0 0 10px #278cff}
+.setting-row{display:grid;grid-template-columns:2.1fr 1fr;gap:13px}
+.setting-row label{display:block;min-width:0}
+.setting-row label>span{display:block;height:22px;font-size:16px;line-height:22px;font-weight:900;letter-spacing:.06em;color:#b8dcff;text-shadow:0 0 9px rgba(51,153,255,.35)}
+.bet-input-row{display:grid;grid-template-columns:1fr 38px 38px;height:37px}
+.bet-input-row input,.bet-input-row button,.difficulty-setting select{border:1px solid rgba(52,125,216,.48);border-radius:8px;background:rgba(2,12,34,.9);color:#f6fbff;font:inherit;font-size:20px;font-weight:900;min-width:0}
+.bet-input-row input{width:100%;padding:3px 9px;appearance:textfield;box-shadow:inset 0 0 12px rgba(33,105,219,.14)}
+.bet-input-row input::-webkit-inner-spin-button{display:none}
+.bet-input-row button{padding:0;margin-left:4px;color:#c8edff;background:linear-gradient(180deg,#164d91,#082852);box-shadow:inset 0 0 8px rgba(56,190,255,.2)}
+.difficulty-setting select{width:100%;height:37px;padding:2px 7px;font-size:17px;appearance:auto;background-color:#071a3b}
+.action-row{display:grid;grid-template-columns:1fr 1.4fr;gap:9px;margin-top:10px}
+.action-row.single{grid-template-columns:1fr}
+.action-row.hidden{display:none}
+.game-button{height:38px;border:1px solid #70e7ff;border-radius:10px;background:linear-gradient(180deg,#137ff3,#0742ad);color:#fff;font-size:20px;font-weight:1000;line-height:1;letter-spacing:.08em;box-shadow:inset 0 0 13px rgba(113,245,255,.34),0 0 12px rgba(22,123,255,.34),0 4px 8px rgba(0,0,0,.35)}
+.game-button.primary{background:linear-gradient(180deg,#168df9,#0640b0)}
+#cashoutButton{border-color:#f8c867;background:linear-gradient(180deg,#8b5a11,#3d2508);color:#ffe59d;box-shadow:inset 0 0 12px rgba(255,210,93,.28),0 0 10px rgba(255,151,35,.2)}
+.game-button:disabled{filter:saturate(.25);opacity:.38}
+.round-message{position:absolute;left:31px;right:31px;top:-32px;height:31px;display:none;align-items:center;justify-content:center;border:1px solid #e8ae4f;border-bottom:0;border-radius:12px 12px 0 0;background:linear-gradient(180deg,#4b3212,#171006);color:#ffe39b;box-shadow:0 -4px 14px rgba(255,153,33,.18);font-size:14px;font-weight:900}
+.round-message.show{display:flex}
+.screen-shake{animation:shake .45s linear}
+.flash::after{content:"";position:absolute;inset:0;z-index:40;background:#fff;animation:flash .35s forwards;pointer-events:none}
+@keyframes drift{to{background-position:17px 119px,73px 242px}}
+@keyframes nextPulse{to{filter:drop-shadow(0 0 30px var(--glow)) brightness(1.35)}}
+@keyframes springArrow{to{transform:translateY(-8px)}}
+@keyframes energyRise{0%{transform:translateY(6px);opacity:.38}100%{transform:translateY(-9px);opacity:1}}
+@keyframes cubeJump{0%{transform:translateX(-50%) scaleY(.86) scaleX(1.08)}45%{bottom:260px;transform:translateX(-50%) rotate(84deg)}100%{bottom:102px;transform:translateX(-50%) rotate(94deg) scaleY(.9)}}
+@keyframes cubeBoost{0%{transform:translateX(-50%) scaleY(.72)}30%{bottom:350px;filter:drop-shadow(0 0 28px #ff8a2b)}100%{bottom:102px;transform:translateX(-50%) rotate(180deg)}}
+@keyframes cubeFly{0%{transform:translateX(-50%) scale(.9)}22%{bottom:230px}65%{bottom:69%;transform:translateX(-50%) scale(.76) rotate(270deg)}100%{bottom:102px;transform:translateX(-50%) rotate(360deg)}}
+@keyframes thrusterPulse{to{height:115px;opacity:.62}}
+@keyframes cubeFail{0%{bottom:102px}38%{bottom:265px;left:63%;transform:rotate(110deg)}100%{bottom:-100px;left:83%;transform:rotate(260deg);opacity:0}}
+@keyframes flash{from{opacity:.72}to{opacity:0}}
+@keyframes shake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+@media(max-width:360px){.control-panel{padding-left:22px;padding-right:22px}.round-message{left:23px;right:23px}.setting-row label>span{font-size:15px}.difficulty-setting select{font-size:16px}}
+@media(max-height:740px){:root{--panel-height:143px}.control-panel{padding-top:8px}.setting-row label>span{height:19px;line-height:19px;font-size:15px}.bet-input-row,.difficulty-setting select{height:34px}.action-row{margin-top:7px}.game-button{height:35px}.platform::after{font-size:18px}.status-toast{top:60px}}
