@@ -6,11 +6,13 @@ const CONFIG = {
   },
   platformMultipliers: [1.00, 1.30, 1.70, 2.20, 3.00, 4.00, 6.00, 8.00, 10.00, 12.00, 15.00, 18.00, 22.00],
   platformSwitchInterval: 800,
+  specialCycleChance: 0.35,
   platformTypes: ['normal', 'spring', 'flight'],
   springJumpDistance: 2,
   flightJumpDistance: 4,
   jumpDuration: 580,
-  animationDuration: 850
+  cameraStepDuration: 390,
+  boostLiftDuration: 270
 };
 
 const TYPE_INFO = {
@@ -23,7 +25,8 @@ const state = {
   status: 'idle', difficulty: 'easy', currentFloor: 0, currentMultiplier: 1,
   previewPlatformType: 'normal', lockedPlatformType: null, isJumping: false,
   isAutoMoving: false, canCashout: false, gameOver: false, cycleIndex: 0,
-  cycleTimer: null, balance: 3000, currentBet: 10
+  cycleTimer: null, specialCycleActive: false, platformGap: 118,
+  balance: 3000, currentBet: 10
 };
 
 const $ = (id) => document.getElementById(id);
@@ -53,13 +56,15 @@ function renderPlatforms() {
   const viewportHeight = els.stage.clientHeight || 700;
   const baseY = viewportHeight - 102;
   const gap = Math.max(103, Math.min(132, viewportHeight * .18));
+  state.platformGap = gap;
+  els.player.style.setProperty('--platform-gap', `${gap}px`);
   for (let offset = -1; offset <= 6; offset += 1) {
     const floor = state.currentFloor + offset;
     if (floor < 0) continue;
     const platform = document.createElement('div');
     const isCurrent = offset === 0;
     const isNext = offset === 1;
-    const type = isNext ? state.previewPlatformType : 'normal';
+    const type = isNext && !state.isAutoMoving ? state.previewPlatformType : 'normal';
     platform.className = `platform ${type}${isCurrent ? ' current' : ''}${isNext ? ' next' : ''}`;
     platform.dataset.multiplier = formatMultiplier(multiplierAt(floor));
     platform.style.top = `${baseY - (offset + .42) * gap}px`;
@@ -89,7 +94,7 @@ function updateUI() {
 }
 
 function cyclePlatform() {
-  if (state.status !== 'playing' || state.isJumping || state.isAutoMoving) return;
+  if (!state.specialCycleActive || state.status !== 'playing' || state.isJumping || state.isAutoMoving) return;
   state.cycleIndex = (state.cycleIndex + 1) % CONFIG.platformTypes.length;
   state.previewPlatformType = CONFIG.platformTypes[state.cycleIndex];
   renderPlatforms();
@@ -97,10 +102,22 @@ function cyclePlatform() {
 
 function startCycle() {
   stopCycle();
+  if (!state.specialCycleActive) return;
   state.cycleTimer = setInterval(cyclePlatform, CONFIG.platformSwitchInterval);
 }
 
 function stopCycle() { clearInterval(state.cycleTimer); state.cycleTimer = null; }
+
+function prepareNextPlatform() {
+  stopCycle();
+  state.cycleIndex = 0;
+  state.previewPlatformType = 'normal';
+  state.specialCycleActive = Math.random() < CONFIG.specialCycleChance;
+  renderPlatforms();
+  startCycle();
+}
+
+function wait(duration) { return new Promise((resolve) => setTimeout(resolve, duration)); }
 
 function toast(message, accent = false, hold = 950) {
   els.toast.textContent = message;
@@ -114,10 +131,12 @@ function resetBoard() {
   stopCycle();
   Object.assign(state, {
     status: 'idle', currentFloor: 0, previewPlatformType: 'normal', lockedPlatformType: null,
-    isJumping: false, isAutoMoving: false, canCashout: false, gameOver: false, cycleIndex: 0
+    isJumping: false, isAutoMoving: false, canCashout: false, gameOver: false, cycleIndex: 0,
+    specialCycleActive: false
   });
   state.currentMultiplier = multiplierAt(0);
   els.player.className = 'player-cube';
+  els.player.removeAttribute('style');
   els.stage.classList.remove('screen-shake', 'flash');
   setActionMode('idle');
   setSettingsLocked(false);
@@ -137,13 +156,15 @@ function startBet() {
   state.balance = Number((state.balance - amount).toFixed(2));
   Object.assign(state, {
     status: 'playing', currentFloor: 0, previewPlatformType: 'normal', lockedPlatformType: null,
-    isJumping: false, isAutoMoving: false, canCashout: false, gameOver: false, cycleIndex: 0
+    isJumping: false, isAutoMoving: false, canCashout: false, gameOver: false, cycleIndex: 0,
+    specialCycleActive: false
   });
   state.currentMultiplier = multiplierAt(0);
   els.player.className = 'player-cube';
+  els.player.removeAttribute('style');
   setActionMode('playing');
   setSettingsLocked(true);
-  renderPlatforms(); updateUI(); startCycle();
+  prepareNextPlatform(); updateUI();
   toast(`已投注 ${formatMoney(amount)} · 抓準時機跳躍`, false, 1300);
 }
 
@@ -156,38 +177,80 @@ function jump() {
   els.player.classList.add('jumping');
   const success = Math.random() <= CONFIG.difficultyConfig[state.difficulty].successRate;
   setTimeout(() => {
-    els.player.classList.remove('jumping');
-    if (!success) { failRun(); return; }
-    if (state.lockedPlatformType === 'normal') landAt(state.currentFloor + 1);
-    else boost(state.lockedPlatformType);
+    if (!success) {
+      els.player.classList.remove('jumping');
+      failRun();
+      return;
+    }
+    advanceFloors(locked.distance, state.lockedPlatformType);
   }, CONFIG.jumpDuration);
 }
 
-function boost(type) {
-  const distance = TYPE_INFO[type].distance;
-  state.status = type === 'spring' ? 'springBoost' : 'flightBoost';
-  state.isAutoMoving = true;
-  els.player.classList.add(type === 'spring' ? 'springing' : 'flying');
-  els.stage.classList.add('flash');
-  toast(type === 'spring' ? '彈射啟動 · 上升 2 格' : '飛行啟動 · 上升 4 格', true, 1200);
-  setTimeout(() => {
-    els.player.classList.remove('springing', 'flying');
-    els.stage.classList.remove('flash');
-    landAt(state.currentFloor + distance);
-  }, type === 'spring' ? CONFIG.animationDuration : CONFIG.animationDuration + 420);
+async function liftToNextStep(type) {
+  const upperBottom = 102 + state.platformGap;
+  els.player.classList.toggle('boost-flight', type === 'flight');
+  els.player.classList.toggle('boost-spring', type === 'spring');
+  els.player.style.transition = `bottom ${CONFIG.boostLiftDuration}ms cubic-bezier(.18,.8,.25,1), transform ${CONFIG.boostLiftDuration}ms ease`;
+  els.player.style.bottom = `${upperBottom}px`;
+  els.player.style.transform = `translateX(-50%) rotate(${type === 'flight' ? 120 : 70}deg)`;
+  await wait(CONFIG.boostLiftDuration + 25);
 }
 
-function landAt(targetFloor) {
-  state.currentFloor = targetFloor;
-  state.currentMultiplier = multiplierAt(targetFloor);
-  state.isJumping = false; state.isAutoMoving = false; state.canCashout = true;
-  state.status = 'playing'; state.lockedPlatformType = null;
-  state.cycleIndex = 0; state.previewPlatformType = 'normal';
-  renderPlatforms(); updateUI();
-  els.stage.classList.add('screen-shake');
-  setTimeout(() => els.stage.classList.remove('screen-shake'), 470);
-  toast(`抵達 ${targetFloor} 樓 · ${formatMultiplier(state.currentMultiplier)}`, false, 1150);
-  startCycle();
+async function scrollOneFloor() {
+  const upperBottom = 102 + state.platformGap;
+  els.player.style.animation = 'none';
+  els.player.style.bottom = `${upperBottom}px`;
+  els.player.classList.remove('jumping');
+  void els.player.offsetHeight;
+
+  const duration = CONFIG.cameraStepDuration;
+  els.layer.style.transition = `transform ${duration}ms cubic-bezier(.2,.82,.25,1)`;
+  els.player.style.transition = `bottom ${duration}ms cubic-bezier(.2,.82,.25,1), transform ${duration}ms ease`;
+  requestAnimationFrame(() => {
+    els.layer.style.transform = `translateY(${state.platformGap}px)`;
+    els.player.style.bottom = '102px';
+    els.player.style.transform = 'translateX(-50%) rotate(0deg)';
+  });
+  await wait(duration + 25);
+
+  state.currentFloor += 1;
+  state.currentMultiplier = multiplierAt(state.currentFloor);
+  els.layer.style.transition = 'none';
+  els.layer.style.transform = 'none';
+  els.player.style.transition = 'none';
+  els.player.style.bottom = '102px';
+  els.player.style.animation = 'none';
+  renderPlatforms();
+  void els.layer.offsetHeight;
+}
+
+async function advanceFloors(distance, type) {
+  state.isAutoMoving = true;
+  state.previewPlatformType = 'normal';
+  state.specialCycleActive = false;
+  if (type !== 'normal') {
+    els.stage.classList.add('flash');
+    toast(type === 'spring' ? '彈射啟動 · 逐階上升 2 格' : '飛行啟動 · 逐階上升 4 格', true, 1250);
+  }
+
+  for (let step = 0; step < distance; step += 1) {
+    if (step > 0) await liftToNextStep(type);
+    await scrollOneFloor();
+    els.stage.classList.add('screen-shake');
+    setTimeout(() => els.stage.classList.remove('screen-shake'), 250);
+  }
+
+  els.player.classList.remove('boost-flight', 'boost-spring');
+  els.stage.classList.remove('flash');
+  els.player.removeAttribute('style');
+  state.isJumping = false;
+  state.isAutoMoving = false;
+  state.canCashout = true;
+  state.status = 'playing';
+  state.lockedPlatformType = null;
+  prepareNextPlatform();
+  updateUI();
+  toast(`抵達 ${state.currentFloor} 樓 · ${formatMultiplier(state.currentMultiplier)}`, false, 1150);
 }
 
 function failRun() {

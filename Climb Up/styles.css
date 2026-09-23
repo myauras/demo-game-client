@@ -29,10 +29,9 @@ body{display:grid;place-items:center;overflow:hidden}
 .cube-face.side{right:-3px;top:4px;width:15px;height:39px;clip-path:polygon(0 0,100% 14%,78% 100%,0 88%)}
 .cube-core{position:absolute;left:17px;top:15px;width:13px;height:13px;background:#efffff;border-radius:2px;box-shadow:0 0 14px 6px #31e8ff}
 .thruster{display:none;position:absolute;left:11px;top:40px;width:27px;height:100px;background:linear-gradient(#fff,#27eaff 22%,rgba(25,100,255,.24) 70%,transparent);clip-path:polygon(20% 0,42% 0,48% 100%,58% 0,80% 0,100% 100%,0 100%);filter:blur(1px)}
-.player-cube.jumping{animation:cubeJump .58s cubic-bezier(.2,.65,.3,1)}
-.player-cube.springing{animation:cubeBoost .9s ease-in-out}
-.player-cube.flying{animation:cubeFly 1.25s ease-in-out}
-.player-cube.flying .thruster{display:block;animation:thrusterPulse .18s infinite alternate}
+.player-cube.jumping{animation:cubeJump .58s cubic-bezier(.2,.65,.3,1) forwards}
+.player-cube.boost-flight .thruster{display:block;animation:thrusterPulse .18s infinite alternate}
+.player-cube.boost-spring{filter:drop-shadow(0 0 24px var(--orange))}
 .player-cube.failing{animation:cubeFail 1.05s ease-in forwards}
 .altitude-line{position:absolute;top:40px;bottom:85px;width:1px;background:linear-gradient(transparent,rgba(49,132,234,.32),transparent)}
 .altitude-line.left{left:28px}.altitude-line.right{right:28px}
@@ -65,9 +64,7 @@ body{display:grid;place-items:center;overflow:hidden}
 @keyframes nextPulse{to{filter:drop-shadow(0 0 30px var(--glow)) brightness(1.35)}}
 @keyframes springArrow{to{transform:translateY(-8px)}}
 @keyframes energyRise{0%{transform:translateY(6px);opacity:.38}100%{transform:translateY(-9px);opacity:1}}
-@keyframes cubeJump{0%{transform:translateX(-50%) scaleY(.86) scaleX(1.08)}45%{bottom:260px;transform:translateX(-50%) rotate(84deg)}100%{bottom:102px;transform:translateX(-50%) rotate(94deg) scaleY(.9)}}
-@keyframes cubeBoost{0%{transform:translateX(-50%) scaleY(.72)}30%{bottom:350px;filter:drop-shadow(0 0 28px #ff8a2b)}100%{bottom:102px;transform:translateX(-50%) rotate(180deg)}}
-@keyframes cubeFly{0%{transform:translateX(-50%) scale(.9)}22%{bottom:230px}65%{bottom:69%;transform:translateX(-50%) scale(.76) rotate(270deg)}100%{bottom:102px;transform:translateX(-50%) rotate(360deg)}}
+@keyframes cubeJump{0%{bottom:102px;transform:translateX(-50%) scaleY(.86) scaleX(1.08)}52%{bottom:calc(102px + var(--platform-gap) + 30px);transform:translateX(-50%) rotate(84deg)}100%{bottom:calc(102px + var(--platform-gap));transform:translateX(-50%) rotate(94deg) scaleY(.94)}}
 @keyframes thrusterPulse{to{height:115px;opacity:.62}}
 @keyframes cubeFail{0%{bottom:102px}38%{bottom:265px;left:63%;transform:rotate(110deg)}100%{bottom:-100px;left:83%;transform:rotate(260deg);opacity:0}}
 @keyframes flash{from{opacity:.72}to{opacity:0}}
