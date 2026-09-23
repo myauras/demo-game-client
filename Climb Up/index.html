@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
     <meta name="theme-color" content="#05070c" />
     <title>上樓梯｜Climb Up</title>
-    <link rel="stylesheet" href="./styles.css?v=20260923-5" />
+    <link rel="stylesheet" href="./styles.css?v=20260923-6" />
   </head>
   <body>
     <main class="phone-shell" aria-label="上樓梯遊戲 Demo">
@@ -27,6 +27,13 @@
           <span class="thruster"></span>
         </div>
       </section>
+
+      <div id="resultModal" class="result-modal" aria-live="polite" aria-hidden="true">
+        <div class="result-card">
+          <strong id="resultTitle" class="result-title"></strong>
+          <span id="resultSubtitle" class="result-subtitle"></span>
+        </div>
+      </div>
 
       <footer class="control-panel">
         <div class="setting-row">
@@ -57,6 +64,6 @@
         </div>
       </footer>
     </main>
-    <script src="./game.js?v=20260923-5"></script>
+    <script src="./game.js?v=20260923-6"></script>
   </body>
 </html>
