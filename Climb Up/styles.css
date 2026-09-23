@@ -22,13 +22,24 @@ body{display:grid;place-items:center;overflow:hidden}
 .platform .platform-symbol{position:absolute;inset:0;display:grid;place-items:center;font-size:28px;font-weight:1000;color:#fff;text-shadow:0 0 11px var(--glow);transform:translateZ(1px)}
 .platform.spring .platform-symbol{animation:springArrow .52s ease-in-out infinite alternate}
 .platform.flight .platform-symbol{letter-spacing:4px;animation:energyRise .68s linear infinite}
+.crack-overlay{position:absolute;z-index:5;inset:-3px;opacity:0;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 262 66'%3E%3Cg fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M132 0 123 13 136 22 124 34 133 43 121 54 126 66' stroke='%23ffcf72' stroke-width='3'/%3E%3Cpath d='M123 13 94 10 76 2M136 22 164 13 185 4M124 34 92 29 64 38 35 31M133 43 165 35 195 43 225 35M121 54 96 50 74 61M126 58 154 55 177 66' stroke='%23ff304d' stroke-width='2.4'/%3E%3Cpath d='M94 10 82 21M164 13 172 25M64 38 51 51M195 43 210 56' stroke='%23ff5a48' stroke-width='1.7'/%3E%3C/g%3E%3C/svg%3E") center/100% 100% no-repeat;filter:drop-shadow(0 0 4px #ff243f) drop-shadow(0 0 8px rgba(255,42,61,.78))}
+.platform.cracking{animation:platformCrack .52s steps(5,end) forwards}
+.platform.cracking .crack-overlay{animation:crackReveal .52s steps(5,end) forwards}
+.platform-fragment{display:none;position:absolute;z-index:4;top:-2px;bottom:-2px;width:55%;border:2px solid var(--glow);background:linear-gradient(180deg,rgba(55,114,223,.62),rgba(5,19,53,.96) 72%);box-shadow:inset 0 0 18px color-mix(in srgb,var(--glow) 42%,transparent),0 0 12px color-mix(in srgb,var(--glow) 52%,transparent)}
+.fragment-left{left:-2px;clip-path:polygon(0 0,100% 0,82% 22%,100% 39%,76% 59%,93% 78%,68% 100%,0 100%)}
+.fragment-right{right:-2px;clip-path:polygon(0 0,100% 0,100% 100%,27% 100%,8% 79%,27% 60%,7% 40%,27% 22%)}
+.platform.broken{animation:none;background:transparent;border-color:transparent;box-shadow:none;filter:none}
+.platform.broken::before,.platform.broken::after,.platform.broken .platform-symbol,.platform.broken .crack-overlay{opacity:0}
+.platform.broken .platform-fragment{display:block}
+.platform.broken .fragment-left{animation:fragmentLeft .78s cubic-bezier(.35,.05,.9,.55) forwards}
+.platform.broken .fragment-right{animation:fragmentRight .78s cubic-bezier(.35,.05,.9,.55) forwards}
 .player-cube{position:absolute;z-index:8;left:50%;bottom:102px;width:50px;height:52px;transform:translateX(-50%) rotate(-4deg);filter:drop-shadow(0 0 13px rgba(34,231,255,.72));transition:bottom .55s cubic-bezier(.2,.75,.2,1),left .55s,opacity .3s}
 .player-cube-image{display:block;width:100%;height:100%;object-fit:contain;user-select:none;pointer-events:none}
 .thruster{display:none;position:absolute;left:11px;top:40px;width:27px;height:100px;background:linear-gradient(#fff,#27eaff 22%,rgba(25,100,255,.24) 70%,transparent);clip-path:polygon(20% 0,42% 0,48% 100%,58% 0,80% 0,100% 100%,0 100%);filter:blur(1px)}
 .player-cube.jumping{animation:cubeJump .58s cubic-bezier(.2,.65,.3,1) forwards}
 .player-cube.boost-flight .thruster{display:block;animation:thrusterPulse .18s infinite alternate}
 .player-cube.boost-spring{filter:drop-shadow(0 0 24px var(--orange))}
-.player-cube.failing{animation:cubeFail 1.05s ease-in forwards}
+.player-cube.falling-through{animation:cubeFallThrough .86s cubic-bezier(.45,.05,.9,.5) forwards}
 .altitude-line{position:absolute;top:40px;bottom:85px;width:1px;background:linear-gradient(transparent,rgba(49,132,234,.32),transparent)}
 .altitude-line.left{left:28px}.altitude-line.right{right:28px}
 .altitude-line span{display:block;width:8px;height:1px;margin-top:105px;background:#4289d8}
@@ -59,7 +70,11 @@ body{display:grid;place-items:center;overflow:hidden}
 @keyframes energyRise{0%{transform:translateY(6px);opacity:.38}100%{transform:translateY(-9px);opacity:1}}
 @keyframes cubeJump{0%{bottom:102px;transform:translateX(-50%) scaleY(.86) scaleX(1.08)}52%{bottom:calc(102px + var(--platform-gap) + 30px);transform:translateX(-50%) rotate(84deg)}100%{bottom:calc(102px + var(--platform-gap));transform:translateX(-50%) rotate(94deg) scaleY(.94)}}
 @keyframes thrusterPulse{to{height:115px;opacity:.62}}
-@keyframes cubeFail{0%{bottom:102px}38%{bottom:265px;left:63%;transform:rotate(110deg)}100%{bottom:-100px;left:83%;transform:rotate(260deg);opacity:0}}
+@keyframes platformCrack{0%,24%{transform:translateX(-50%) perspective(380px) rotateX(51deg) scale(var(--scale,1))}35%{transform:translateX(calc(-50% - 3px)) perspective(380px) rotateX(51deg) scale(var(--scale,1))}55%{transform:translateX(calc(-50% + 3px)) perspective(380px) rotateX(51deg) scale(var(--scale,1))}75%{transform:translateX(calc(-50% - 2px)) perspective(380px) rotateX(51deg) scale(var(--scale,1))}100%{transform:translateX(-50%) perspective(380px) rotateX(51deg) scale(var(--scale,1))}}
+@keyframes crackReveal{0%{opacity:0;clip-path:inset(0 0 100% 0)}35%{opacity:.72;clip-path:inset(0 0 55% 0)}70%,100%{opacity:1;clip-path:inset(0)}}
+@keyframes fragmentLeft{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(-34px,105px) rotate(-18deg);opacity:0}}
+@keyframes fragmentRight{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(34px,112px) rotate(19deg);opacity:0}}
+@keyframes cubeFallThrough{0%{bottom:calc(102px + var(--platform-gap));transform:translateX(-50%) rotate(94deg) scale(1);opacity:1}12%{bottom:calc(94px + var(--platform-gap));transform:translateX(-50%) rotate(108deg) scale(.94)}100%{bottom:-110px;transform:translateX(-50%) rotate(245deg) scale(.68);opacity:0}}
 @keyframes flash{from{opacity:.72}to{opacity:0}}
 @keyframes shake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
 @media(max-width:360px){.control-panel{padding-left:22px;padding-right:22px}.setting-row label>span{font-size:15px}.difficulty-setting select{font-size:16px}}
