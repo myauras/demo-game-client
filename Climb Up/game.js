@@ -35,7 +35,8 @@ const els = {
   balance: $('balanceValue'), addBalance: $('addBalanceButton'), betInput: $('betInput'),
   halfBet: $('halfBetButton'), doubleBet: $('doubleBetButton'), difficulty: $('difficultySelect'),
   bet: $('betButton'), cashout: $('cashoutButton'), jump: $('jumpButton'),
-  idleActions: $('idleActions'), playActions: $('playActions')
+  idleActions: $('idleActions'), playActions: $('playActions'), resultModal: $('resultModal'),
+  resultTitle: $('resultTitle'), resultSubtitle: $('resultSubtitle')
 };
 
 function multiplierAt(floor) {
@@ -90,7 +91,7 @@ function setSettingsLocked(locked) {
 
 function updateUI() {
   els.balance.textContent = formatMoney(state.balance);
-  els.cashout.disabled = !state.canCashout || state.isJumping || state.isAutoMoving;
+  els.cashout.disabled = state.status !== 'playing' || !state.canCashout || state.isJumping || state.isAutoMoving;
   els.jump.disabled = state.status !== 'playing' || state.isJumping || state.isAutoMoving;
 }
 
@@ -120,8 +121,22 @@ function prepareNextPlatform() {
 
 function wait(duration) { return new Promise((resolve) => setTimeout(resolve, duration)); }
 
+function showResultModal(type, title, subtitle = '') {
+  els.resultModal.className = `result-modal ${type} show`;
+  els.resultModal.setAttribute('aria-hidden', 'false');
+  els.resultTitle.textContent = title;
+  els.resultSubtitle.textContent = subtitle;
+  els.resultSubtitle.hidden = !subtitle;
+}
+
+function hideResultModal() {
+  els.resultModal.className = 'result-modal';
+  els.resultModal.setAttribute('aria-hidden', 'true');
+}
+
 function resetBoard() {
   stopCycle();
+  hideResultModal();
   Object.assign(state, {
     status: 'idle', currentFloor: 0, previewPlatformType: 'normal', lockedPlatformType: null,
     isJumping: false, isAutoMoving: false, canCashout: false, gameOver: false, cycleIndex: 0,
@@ -265,7 +280,9 @@ function failRun() {
   }, 520);
   setTimeout(() => {
     resetBoard();
-  }, 1480);
+    showResultModal('failure', '再接再勵！');
+    setTimeout(hideResultModal, 1500);
+  }, 1420);
 }
 
 function cashout() {
@@ -273,10 +290,11 @@ function cashout() {
   state.status = 'cashout';
   const reward = Number((state.currentBet * state.currentMultiplier).toFixed(2));
   state.balance = Number((state.balance + reward).toFixed(2));
-  els.stage.classList.add('flash');
+  updateUI();
+  showResultModal('reward', formatMoney(reward), `倍率 ${formatMultiplier(state.currentMultiplier)}`);
   setTimeout(() => {
     resetBoard();
-  }, 520);
+  }, 1600);
 }
 
 function changeBet(multiplier) {
