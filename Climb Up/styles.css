@@ -59,8 +59,6 @@ body{display:grid;place-items:center;overflow:hidden}
 .game-button.primary{background:linear-gradient(180deg,#168df9,#0640b0)}
 #cashoutButton{border-color:#f8c867;background:linear-gradient(180deg,#8b5a11,#3d2508);color:#ffe59d;box-shadow:inset 0 0 12px rgba(255,210,93,.28),0 0 10px rgba(255,151,35,.2)}
 .game-button:disabled{filter:saturate(.25);opacity:.38}
-.round-message{position:absolute;left:31px;right:31px;top:-32px;height:31px;display:none;align-items:center;justify-content:center;border:1px solid #e8ae4f;border-bottom:0;border-radius:12px 12px 0 0;background:linear-gradient(180deg,#4b3212,#171006);color:#ffe39b;box-shadow:0 -4px 14px rgba(255,153,33,.18);font-size:14px;font-weight:900}
-.round-message.show{display:flex}
 .screen-shake{animation:shake .45s linear}
 .flash::after{content:"";position:absolute;inset:0;z-index:40;background:#fff;animation:flash .35s forwards;pointer-events:none}
 @keyframes drift{to{background-position:17px 119px,73px 242px}}
@@ -74,5 +72,5 @@ body{display:grid;place-items:center;overflow:hidden}
 @keyframes cubeFail{0%{bottom:102px}38%{bottom:265px;left:63%;transform:rotate(110deg)}100%{bottom:-100px;left:83%;transform:rotate(260deg);opacity:0}}
 @keyframes flash{from{opacity:.72}to{opacity:0}}
 @keyframes shake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
-@media(max-width:360px){.control-panel{padding-left:22px;padding-right:22px}.round-message{left:23px;right:23px}.setting-row label>span{font-size:15px}.difficulty-setting select{font-size:16px}}
+@media(max-width:360px){.control-panel{padding-left:22px;padding-right:22px}.setting-row label>span{font-size:15px}.difficulty-setting select{font-size:16px}}
 @media(max-height:740px){:root{--panel-height:143px}.control-panel{padding-top:8px}.setting-row label>span{height:19px;line-height:19px;font-size:15px}.bet-input-row,.difficulty-setting select{height:34px}.action-row{margin-top:7px}.game-button{height:35px}.platform::after{font-size:18px}.status-toast{top:60px}}
