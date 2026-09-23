@@ -66,6 +66,7 @@ function renderPlatforms() {
     const isNext = offset === 1;
     const type = isNext && !state.isAutoMoving ? state.previewPlatformType : 'normal';
     platform.className = `platform ${type}${isCurrent ? ' current' : ''}${isNext ? ' next' : ''}`;
+    platform.dataset.offset = offset;
     platform.dataset.multiplier = formatMultiplier(multiplierAt(floor));
     platform.style.top = `${baseY - (offset + .42) * gap}px`;
     platform.style.setProperty('--scale', `${Math.max(.57, 1 - Math.max(0, offset) * .065)}`);
@@ -207,6 +208,13 @@ async function scrollOneFloor() {
   els.layer.style.transition = `transform ${duration}ms cubic-bezier(.2,.82,.25,1)`;
   els.player.style.transition = `bottom ${duration}ms cubic-bezier(.2,.82,.25,1), transform ${duration}ms ease`;
   requestAnimationFrame(() => {
+    Array.from(els.layer.children).forEach((platform) => {
+      const nextOffset = Number(platform.dataset.offset) - 1;
+      const nextScale = Math.max(.57, 1 - Math.max(0, nextOffset) * .065);
+      platform.style.setProperty('--scale', `${nextScale}`);
+      platform.style.width = `${nextOffset === 0 ? 284 : nextOffset === 1 ? 262 : 242}px`;
+      platform.style.opacity = `${Math.max(.2, 1 - Math.max(0, nextOffset) * .105)}`;
+    });
     els.layer.style.transform = `translateY(${state.platformGap}px)`;
     els.player.style.bottom = '102px';
     els.player.style.transform = 'translateX(-50%) rotate(0deg)';
