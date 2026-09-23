@@ -291,7 +291,7 @@ function cashout() {
   const reward = Number((state.currentBet * state.currentMultiplier).toFixed(2));
   state.balance = Number((state.balance + reward).toFixed(2));
   updateUI();
-  showResultModal('reward', formatMoney(reward), `倍率 ${formatMultiplier(state.currentMultiplier)}`);
+  showResultModal('reward', formatMoney(reward), formatMultiplier(state.currentMultiplier));
   setTimeout(() => {
     resetBoard();
   }, 1600);
