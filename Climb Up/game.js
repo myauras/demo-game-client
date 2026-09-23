@@ -71,7 +71,7 @@ function renderPlatforms() {
     platform.style.top = `${baseY - (offset + .42) * gap}px`;
     platform.style.setProperty('--scale', `${Math.max(.57, 1 - Math.max(0, offset) * .065)}`);
     platform.style.opacity = `${Math.max(.2, 1 - Math.max(0, offset) * .105)}`;
-    platform.innerHTML = `<span class="platform-symbol">${isNext ? TYPE_INFO[type].symbol : ''}</span>`;
+    platform.innerHTML = `<span class="platform-symbol">${isNext ? TYPE_INFO[type].symbol : ''}</span><span class="crack-overlay"></span><span class="platform-fragment fragment-left"></span><span class="platform-fragment fragment-right"></span>`;
     els.layer.appendChild(platform);
   }
 }
@@ -169,7 +169,6 @@ function jump() {
   const success = Math.random() <= CONFIG.difficultyConfig[state.difficulty].successRate;
   setTimeout(() => {
     if (!success) {
-      els.player.classList.remove('jumping');
       failRun();
       return;
     }
@@ -249,11 +248,24 @@ async function advanceFloors(distance, type) {
 
 function failRun() {
   state.status = 'failed'; state.isJumping = false;
-  els.player.classList.add('failing');
+  const brokenPlatform = els.layer.querySelector('.platform[data-offset="1"]');
+  const upperBottom = 102 + state.platformGap;
+  els.player.style.animation = 'none';
+  els.player.style.bottom = `${upperBottom}px`;
+  els.player.style.transform = 'translateX(-50%) rotate(94deg)';
+  els.player.classList.remove('jumping');
+  void els.player.offsetHeight;
+  brokenPlatform?.classList.add('cracking');
   els.stage.classList.add('screen-shake');
   setTimeout(() => {
+    brokenPlatform?.classList.remove('cracking');
+    brokenPlatform?.classList.add('broken');
+    els.player.style.animation = '';
+    els.player.classList.add('falling-through');
+  }, 520);
+  setTimeout(() => {
     resetBoard();
-  }, 920);
+  }, 1480);
 }
 
 function cashout() {
