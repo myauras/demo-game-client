@@ -31,9 +31,8 @@ const els = {
   stage: $('gameStage'), layer: $('platformLayer'), player: $('player'), toast: $('statusToast'),
   balance: $('balanceValue'), addBalance: $('addBalanceButton'), betInput: $('betInput'),
   halfBet: $('halfBetButton'), doubleBet: $('doubleBetButton'), difficulty: $('difficultySelect'),
-  bet: $('betButton'), cashout: $('cashoutButton'), jump: $('jumpButton'), replay: $('replayButton'),
-  idleActions: $('idleActions'), playActions: $('playActions'), endActions: $('endActions'),
-  roundMessage: $('roundMessage')
+  bet: $('betButton'), cashout: $('cashoutButton'), jump: $('jumpButton'),
+  idleActions: $('idleActions'), playActions: $('playActions')
 };
 
 function multiplierAt(floor) {
@@ -74,7 +73,6 @@ function renderPlatforms() {
 function setActionMode(mode) {
   els.idleActions.classList.toggle('hidden', mode !== 'idle');
   els.playActions.classList.toggle('hidden', mode !== 'playing');
-  els.endActions.classList.toggle('hidden', mode !== 'ended');
 }
 
 function setSettingsLocked(locked) {
@@ -121,8 +119,6 @@ function resetBoard() {
   state.currentMultiplier = multiplierAt(0);
   els.player.className = 'player-cube';
   els.stage.classList.remove('screen-shake', 'flash');
-  els.roundMessage.classList.remove('show');
-  els.roundMessage.textContent = '';
   setActionMode('idle');
   setSettingsLocked(false);
   renderPlatforms(); updateUI();
@@ -145,7 +141,6 @@ function startBet() {
   });
   state.currentMultiplier = multiplierAt(0);
   els.player.className = 'player-cube';
-  els.roundMessage.classList.remove('show');
   setActionMode('playing');
   setSettingsLocked(true);
   renderPlatforms(); updateUI(); startCycle();
@@ -195,21 +190,15 @@ function landAt(targetFloor) {
   startCycle();
 }
 
-function endRound(message) {
-  stopCycle();
-  state.gameOver = true;
-  setActionMode('ended');
-  els.roundMessage.textContent = message;
-  els.roundMessage.classList.add('show');
-  updateUI();
-}
-
 function failRun() {
   state.status = 'failed'; state.isJumping = false;
   els.player.classList.add('failing');
   els.stage.classList.add('screen-shake');
   toast('挑戰失敗 · 本局獎勵歸零', true, 1200);
-  setTimeout(() => endRound('挑戰失敗 · 獎勵 0.00'), 920);
+  setTimeout(() => {
+    resetBoard();
+    toast('挑戰失敗 · 獎勵歸零 · 可再次投注', true, 1600);
+  }, 920);
 }
 
 function cashout() {
@@ -219,12 +208,10 @@ function cashout() {
   state.balance = Number((state.balance + reward).toFixed(2));
   els.stage.classList.add('flash');
   toast(`提現成功 · ${formatMultiplier(state.currentMultiplier)}`, true, 1000);
-  setTimeout(() => endRound(`提現成功 · +${formatMoney(reward)}`), 520);
-}
-
-function replay() {
-  resetBoard();
-  startBet();
+  setTimeout(() => {
+    resetBoard();
+    toast(`提現成功 · +${formatMoney(reward)} · 可再次投注`, true, 1600);
+  }, 520);
 }
 
 function changeBet(multiplier) {
@@ -235,7 +222,6 @@ function changeBet(multiplier) {
 els.bet.addEventListener('click', startBet);
 els.jump.addEventListener('click', jump);
 els.cashout.addEventListener('click', cashout);
-els.replay.addEventListener('click', replay);
 els.halfBet.addEventListener('click', () => changeBet(.5));
 els.doubleBet.addEventListener('click', () => changeBet(2));
 els.addBalance.addEventListener('click', () => { state.balance += 1000; updateUI(); toast('已增加 $ 1000.00 測試餘額'); });
