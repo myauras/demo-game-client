@@ -31,7 +31,7 @@ const state = {
 
 const $ = (id) => document.getElementById(id);
 const els = {
-  stage: $('gameStage'), layer: $('platformLayer'), player: $('player'), toast: $('statusToast'),
+  stage: $('gameStage'), layer: $('platformLayer'), player: $('player'),
   balance: $('balanceValue'), addBalance: $('addBalanceButton'), betInput: $('betInput'),
   halfBet: $('halfBetButton'), doubleBet: $('doubleBetButton'), difficulty: $('difficultySelect'),
   bet: $('betButton'), cashout: $('cashoutButton'), jump: $('jumpButton'),
@@ -120,14 +120,6 @@ function prepareNextPlatform() {
 
 function wait(duration) { return new Promise((resolve) => setTimeout(resolve, duration)); }
 
-function toast(message, accent = false, hold = 950) {
-  els.toast.textContent = message;
-  els.toast.classList.toggle('accent', accent);
-  els.toast.classList.add('show');
-  clearTimeout(toast.timer);
-  toast.timer = setTimeout(() => els.toast.classList.remove('show'), hold);
-}
-
 function resetBoard() {
   stopCycle();
   Object.assign(state, {
@@ -152,7 +144,7 @@ function readBet() {
 
 function startBet() {
   const amount = readBet();
-  if (amount > state.balance) { toast('餘額不足，請調整下注金額', true, 1200); return; }
+  if (amount > state.balance) return;
   state.currentBet = amount;
   state.balance = Number((state.balance - amount).toFixed(2));
   Object.assign(state, {
@@ -166,7 +158,6 @@ function startBet() {
   setActionMode('playing');
   setSettingsLocked(true);
   prepareNextPlatform(); updateUI();
-  toast(`已投注 ${formatMoney(amount)} · 抓準時機跳躍`, false, 1300);
 }
 
 function jump() {
@@ -174,7 +165,6 @@ function jump() {
   state.lockedPlatformType = state.previewPlatformType;
   state.isJumping = true; state.status = 'jumping'; stopCycle(); updateUI();
   const locked = TYPE_INFO[state.lockedPlatformType];
-  toast(`已鎖定 · ${locked.label}`, state.lockedPlatformType !== 'normal');
   els.player.classList.add('jumping');
   const success = Math.random() <= CONFIG.difficultyConfig[state.difficulty].successRate;
   setTimeout(() => {
@@ -238,14 +228,11 @@ async function advanceFloors(distance, type) {
   state.specialCycleActive = false;
   if (type !== 'normal') {
     els.stage.classList.add('flash');
-    toast(type === 'spring' ? '彈射啟動 · 逐階上升 2 格' : '飛行啟動 · 逐階上升 4 格', true, 1250);
   }
 
   for (let step = 0; step < distance; step += 1) {
     if (step > 0) await liftToNextStep(type);
     await scrollOneFloor();
-    els.stage.classList.add('screen-shake');
-    setTimeout(() => els.stage.classList.remove('screen-shake'), 250);
   }
 
   els.player.classList.remove('boost-flight', 'boost-spring');
@@ -258,17 +245,14 @@ async function advanceFloors(distance, type) {
   state.lockedPlatformType = null;
   prepareNextPlatform();
   updateUI();
-  toast(`抵達 ${state.currentFloor} 樓 · ${formatMultiplier(state.currentMultiplier)}`, false, 1150);
 }
 
 function failRun() {
   state.status = 'failed'; state.isJumping = false;
   els.player.classList.add('failing');
   els.stage.classList.add('screen-shake');
-  toast('挑戰失敗 · 本局獎勵歸零', true, 1200);
   setTimeout(() => {
     resetBoard();
-    toast('挑戰失敗 · 獎勵歸零 · 可再次投注', true, 1600);
   }, 920);
 }
 
@@ -278,10 +262,8 @@ function cashout() {
   const reward = Number((state.currentBet * state.currentMultiplier).toFixed(2));
   state.balance = Number((state.balance + reward).toFixed(2));
   els.stage.classList.add('flash');
-  toast(`提現成功 · ${formatMultiplier(state.currentMultiplier)}`, true, 1000);
   setTimeout(() => {
     resetBoard();
-    toast(`提現成功 · +${formatMoney(reward)} · 可再次投注`, true, 1600);
   }, 520);
 }
 
@@ -295,7 +277,7 @@ els.jump.addEventListener('click', jump);
 els.cashout.addEventListener('click', cashout);
 els.halfBet.addEventListener('click', () => changeBet(.5));
 els.doubleBet.addEventListener('click', () => changeBet(2));
-els.addBalance.addEventListener('click', () => { state.balance += 1000; updateUI(); toast('已增加 $ 1000.00 測試餘額'); });
+els.addBalance.addEventListener('click', () => { state.balance += 1000; updateUI(); });
 els.difficulty.addEventListener('change', () => {
   state.difficulty = els.difficulty.value;
   state.currentMultiplier = multiplierAt(0);
@@ -304,4 +286,3 @@ els.difficulty.addEventListener('change', () => {
 window.addEventListener('resize', renderPlatforms);
 
 resetBoard();
-setTimeout(() => toast('設定下注金額與難度後開始挑戰', false, 1600), 250);

@@ -22,12 +22,8 @@ body{display:grid;place-items:center;overflow:hidden}
 .platform .platform-symbol{position:absolute;inset:0;display:grid;place-items:center;font-size:28px;font-weight:1000;color:#fff;text-shadow:0 0 11px var(--glow);transform:translateZ(1px)}
 .platform.spring .platform-symbol{animation:springArrow .52s ease-in-out infinite alternate}
 .platform.flight .platform-symbol{letter-spacing:4px;animation:energyRise .68s linear infinite}
-.player-cube{position:absolute;z-index:8;left:50%;bottom:102px;width:48px;height:48px;transform:translateX(-50%) rotate(-4deg);filter:drop-shadow(0 0 18px #22e7ff);transition:bottom .55s cubic-bezier(.2,.75,.2,1),left .55s,opacity .3s}
-.cube-face{position:absolute;background:linear-gradient(145deg,#bfffff,#1b6eff 75%);border:2px solid #d9ffff;box-shadow:inset 0 0 14px #53f4ff,0 0 11px #178dff}
-.cube-face.front{inset:5px 1px 0 6px;clip-path:polygon(0 12%,76% 0,100% 22%,92% 87%,25% 100%,0 73%)}
-.cube-face.top{left:6px;top:-6px;width:40px;height:18px;clip-path:polygon(50% 0,100% 50%,72% 100%,0 82%,0 28%)}
-.cube-face.side{right:-3px;top:4px;width:15px;height:39px;clip-path:polygon(0 0,100% 14%,78% 100%,0 88%)}
-.cube-core{position:absolute;left:17px;top:15px;width:13px;height:13px;background:#efffff;border-radius:2px;box-shadow:0 0 14px 6px #31e8ff}
+.player-cube{position:absolute;z-index:8;left:50%;bottom:102px;width:50px;height:52px;transform:translateX(-50%) rotate(-4deg);filter:drop-shadow(0 0 13px rgba(34,231,255,.72));transition:bottom .55s cubic-bezier(.2,.75,.2,1),left .55s,opacity .3s}
+.player-cube-image{display:block;width:100%;height:100%;object-fit:contain;user-select:none;pointer-events:none}
 .thruster{display:none;position:absolute;left:11px;top:40px;width:27px;height:100px;background:linear-gradient(#fff,#27eaff 22%,rgba(25,100,255,.24) 70%,transparent);clip-path:polygon(20% 0,42% 0,48% 100%,58% 0,80% 0,100% 100%,0 100%);filter:blur(1px)}
 .player-cube.jumping{animation:cubeJump .58s cubic-bezier(.2,.65,.3,1) forwards}
 .player-cube.boost-flight .thruster{display:block;animation:thrusterPulse .18s infinite alternate}
@@ -37,9 +33,6 @@ body{display:grid;place-items:center;overflow:hidden}
 .altitude-line.left{left:28px}.altitude-line.right{right:28px}
 .altitude-line span{display:block;width:8px;height:1px;margin-top:105px;background:#4289d8}
 .altitude-line.right span{margin-left:-7px}
-.status-toast{position:absolute;z-index:14;left:50%;top:70px;transform:translate(-50%,-8px);padding:7px 13px;border:1px solid rgba(70,178,255,.55);border-radius:99px;background:rgba(3,15,42,.82);color:#c9eaff;font-size:11px;font-weight:700;letter-spacing:.04em;opacity:0;transition:.25s;white-space:nowrap}
-.status-toast.show{opacity:1;transform:translate(-50%,0)}
-.status-toast.accent{border-color:#ffab54;color:#ffe2ba;box-shadow:0 0 18px rgba(255,126,32,.3)}
 .control-panel{position:absolute;z-index:25;left:8px;right:8px;bottom:0;height:var(--panel-height);padding:14px 32px calc(13px + env(safe-area-inset-bottom));border:1px solid rgba(68,164,255,.7);border-bottom:0;border-radius:24px 24px 0 0;background:linear-gradient(180deg,rgba(7,27,65,.97),rgba(2,10,29,.98));color:#eaf6ff;box-shadow:inset 0 1px rgba(116,218,255,.16),inset 0 0 28px rgba(24,91,190,.13),0 -8px 28px rgba(0,8,30,.72),0 0 18px rgba(27,109,255,.18)}
 .control-panel::before{content:"";position:absolute;left:20%;right:20%;top:0;height:1px;background:linear-gradient(90deg,transparent,#70ddff,transparent);box-shadow:0 0 10px #278cff}
 .setting-row{display:grid;grid-template-columns:2.1fr 1fr;gap:13px}
@@ -70,4 +63,4 @@ body{display:grid;place-items:center;overflow:hidden}
 @keyframes flash{from{opacity:.72}to{opacity:0}}
 @keyframes shake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
 @media(max-width:360px){.control-panel{padding-left:22px;padding-right:22px}.setting-row label>span{font-size:15px}.difficulty-setting select{font-size:16px}}
-@media(max-height:740px){:root{--panel-height:143px}.control-panel{padding-top:8px}.setting-row label>span{height:19px;line-height:19px;font-size:15px}.bet-input-row,.difficulty-setting select{height:34px}.action-row{margin-top:7px}.game-button{height:35px}.platform::after{font-size:18px}.status-toast{top:60px}}
+@media(max-height:740px){:root{--panel-height:143px}.control-panel{padding-top:8px}.setting-row label>span{height:19px;line-height:19px;font-size:15px}.bet-input-row,.difficulty-setting select{height:34px}.action-row{margin-top:7px}.game-button{height:35px}.platform::after{font-size:18px}}
