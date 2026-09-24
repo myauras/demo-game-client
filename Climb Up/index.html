@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
     <meta name="theme-color" content="#05070c" />
     <title>上樓梯｜Climb Up</title>
-    <link rel="stylesheet" href="./styles.css?v=20260924-2" />
+    <link rel="stylesheet" href="./styles.css?v=20260924-3" />
   </head>
   <body>
     <main class="phone-shell" aria-label="上樓梯遊戲 Demo">
@@ -36,15 +36,24 @@
       </div>
 
       <footer class="control-panel">
-        <div class="setting-row">
-          <label class="bet-setting">
-            <span>下注金額</span>
+        <div class="bet-setting">
+          <span>下注金額</span>
+          <div class="bet-control-row">
             <div class="bet-input-row">
               <input id="betInput" type="number" min="1" step="1" value="10" inputmode="decimal" aria-label="下注金額" />
               <button id="halfBetButton" type="button" aria-label="下注金額減半">½</button>
               <button id="doubleBetButton" type="button" aria-label="下注金額加倍">2X</button>
             </div>
-          </label>
+            <div class="quick-bet-row" aria-label="快速投注金額">
+              <button type="button" data-bet-amount="10">10</button>
+              <button type="button" data-bet-amount="50">50</button>
+              <button type="button" data-bet-amount="100">100</button>
+              <button type="button" data-bet-amount="200">200</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="bottom-control-row">
           <label class="difficulty-setting">
             <span>難度</span>
             <select id="difficultySelect" aria-label="選擇難度">
@@ -53,17 +62,16 @@
               <option value="hard">困難</option>
             </select>
           </label>
-        </div>
-
-        <div id="idleActions" class="action-row single">
-          <button id="betButton" class="game-button primary" type="button">投注</button>
-        </div>
-        <div id="playActions" class="action-row hidden">
-          <button id="cashoutButton" class="game-button" type="button" disabled>提現</button>
-          <button id="jumpButton" class="game-button primary" type="button">跳躍</button>
+          <div id="idleActions" class="action-row single">
+            <button id="betButton" class="game-button primary" type="button">投注</button>
+          </div>
+          <div id="playActions" class="action-row hidden">
+            <button id="cashoutButton" class="game-button" type="button" disabled>提現</button>
+            <button id="jumpButton" class="game-button primary" type="button">跳躍</button>
+          </div>
         </div>
       </footer>
     </main>
-    <script src="./game.js?v=20260924-2"></script>
+    <script src="./game.js?v=20260924-3"></script>
   </body>
 </html>

@@ -60,18 +60,22 @@ body{display:grid;place-items:center;overflow:hidden}
 .result-modal.failure .result-card{border-color:#88919f;background:linear-gradient(180deg,rgba(60,66,76,.97),rgba(25,28,34,.98));box-shadow:inset 0 1px rgba(255,255,255,.2),inset 0 0 28px rgba(150,160,175,.12),0 0 28px rgba(80,88,100,.3),0 16px 42px rgba(0,0,0,.62)}
 .result-modal.failure .result-card::before{border-color:rgba(220,225,232,.13)}
 .result-modal.failure .result-title{color:#eef1f5;font-size:30px;text-shadow:0 2px 2px #20242a}
-.control-panel{position:absolute;z-index:25;left:8px;right:8px;bottom:0;height:var(--panel-height);padding:14px 32px calc(13px + env(safe-area-inset-bottom));border:1px solid rgba(68,164,255,.7);border-bottom:0;border-radius:24px 24px 0 0;background:linear-gradient(180deg,rgba(7,27,65,.97),rgba(2,10,29,.98));color:#eaf6ff;box-shadow:inset 0 1px rgba(116,218,255,.16),inset 0 0 28px rgba(24,91,190,.13),0 -8px 28px rgba(0,8,30,.72),0 0 18px rgba(27,109,255,.18)}
+.control-panel{position:absolute;z-index:25;left:8px;right:8px;bottom:0;height:var(--panel-height);padding:11px 24px calc(11px + env(safe-area-inset-bottom));border:1px solid rgba(68,164,255,.7);border-bottom:0;border-radius:24px 24px 0 0;background:linear-gradient(180deg,rgba(7,27,65,.97),rgba(2,10,29,.98));color:#eaf6ff;box-shadow:inset 0 1px rgba(116,218,255,.16),inset 0 0 28px rgba(24,91,190,.13),0 -8px 28px rgba(0,8,30,.72),0 0 18px rgba(27,109,255,.18)}
 .control-panel::before{content:"";position:absolute;left:20%;right:20%;top:0;height:1px;background:linear-gradient(90deg,transparent,#70ddff,transparent);box-shadow:0 0 10px #278cff}
-.setting-row{display:grid;grid-template-columns:2.1fr 1fr;gap:13px}
-.setting-row label{display:block;min-width:0}
-.setting-row label>span{display:block;height:22px;font-size:16px;line-height:22px;font-weight:900;letter-spacing:.06em;color:#b8dcff;text-shadow:0 0 9px rgba(51,153,255,.35)}
-.bet-input-row{display:grid;grid-template-columns:1fr 38px 38px;height:37px}
-.bet-input-row input,.bet-input-row button,.difficulty-setting select{border:1px solid rgba(52,125,216,.48);border-radius:8px;background:rgba(2,12,34,.9);color:#f6fbff;font:inherit;font-size:20px;font-weight:900;min-width:0}
+.bet-setting>span{display:block;height:21px;font-size:16px;line-height:21px;font-weight:900;letter-spacing:.06em;color:#b8dcff;text-shadow:0 0 9px rgba(51,153,255,.35)}
+.bet-control-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px}
+.bet-input-row{display:grid;grid-template-columns:minmax(54px,1fr) 33px 33px;height:34px}
+.bet-input-row input,.bet-input-row button,.quick-bet-row button,.difficulty-setting select{border:1px solid rgba(52,125,216,.48);border-radius:7px;background:rgba(2,12,34,.9);color:#f6fbff;font:inherit;font-size:18px;font-weight:900;min-width:0}
 .bet-input-row input{width:100%;padding:3px 9px;appearance:textfield;box-shadow:inset 0 0 12px rgba(33,105,219,.14)}
 .bet-input-row input::-webkit-inner-spin-button{display:none}
-.bet-input-row button{padding:0;margin-left:4px;color:#c8edff;background:linear-gradient(180deg,#164d91,#082852);box-shadow:inset 0 0 8px rgba(56,190,255,.2)}
-.difficulty-setting select{width:100%;height:37px;padding:2px 7px;font-size:17px;appearance:auto;background-color:#071a3b}
-.action-row{display:grid;grid-template-columns:1fr 1.4fr;gap:9px;margin-top:10px}
+.bet-input-row button{padding:0;margin-left:3px;color:#c8edff;background:linear-gradient(180deg,#164d91,#082852);box-shadow:inset 0 0 8px rgba(56,190,255,.2)}
+.quick-bet-row{display:grid;grid-template-columns:repeat(4,39px);gap:5px;height:34px}
+.quick-bet-row button{padding:0;background:linear-gradient(180deg,#164d91,#082852);color:#eaf7ff;box-shadow:inset 0 0 8px rgba(56,190,255,.18),0 2px 5px rgba(0,0,0,.28);font-size:15px}
+.bottom-control-row{display:grid;grid-template-columns:145px 1fr;gap:9px;margin-top:8px;align-items:end}
+.difficulty-setting{display:grid;grid-template-columns:auto minmax(0,1fr);gap:7px;align-items:center}
+.difficulty-setting>span{font-size:15px;font-weight:900;color:#b8dcff;white-space:nowrap}
+.difficulty-setting select{width:100%;height:36px;padding:2px 6px;font-size:17px;appearance:auto;background-color:#071a3b}
+.action-row{display:grid;grid-template-columns:1fr 1.4fr;gap:7px;margin:0}
 .action-row.single{grid-template-columns:1fr}
 .action-row.hidden{display:none}
 .game-button{height:38px;border:1px solid #70e7ff;border-radius:10px;background:linear-gradient(180deg,#137ff3,#0742ad);color:#fff;font-size:20px;font-weight:1000;line-height:1;letter-spacing:.08em;box-shadow:inset 0 0 13px rgba(113,245,255,.34),0 0 12px rgba(22,123,255,.34),0 4px 8px rgba(0,0,0,.35)}
@@ -95,5 +99,6 @@ body{display:grid;place-items:center;overflow:hidden}
 @keyframes resultClose{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(6px) scale(.82);opacity:0}}
 @keyframes flash{from{opacity:.72}to{opacity:0}}
 @keyframes shake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
-@media(max-width:360px){.control-panel{padding-left:22px;padding-right:22px}.setting-row label>span{font-size:15px}.difficulty-setting select{font-size:16px}}
-@media(max-height:740px){:root{--panel-height:143px}.control-panel{padding-top:8px}.setting-row label>span{height:19px;line-height:19px;font-size:15px}.bet-input-row,.difficulty-setting select{height:34px}.action-row{margin-top:7px}.game-button{height:35px}.platform::after{font-size:18px}}
+@media(max-width:390px){.control-panel{padding-left:17px;padding-right:17px}.quick-bet-row{grid-template-columns:repeat(4,36px);gap:4px}.bottom-control-row{grid-template-columns:137px 1fr}}
+@media(max-width:350px){.quick-bet-row{grid-template-columns:repeat(4,32px)}.bottom-control-row{grid-template-columns:128px 1fr}.difficulty-setting>span{font-size:14px}}
+@media(max-height:740px){:root{--panel-height:143px}.control-panel{padding-top:7px}.bet-setting>span{height:18px;line-height:18px;font-size:14px}.bet-input-row,.quick-bet-row{height:32px}.difficulty-setting select{height:33px}.bottom-control-row{margin-top:6px}.game-button{height:33px}.platform::after{font-size:18px}}
