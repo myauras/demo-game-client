@@ -39,6 +39,9 @@ body{display:grid;place-items:center;overflow:hidden}
 .player-cube.jumping{animation:cubeJump .58s cubic-bezier(.2,.65,.3,1) forwards}
 .player-cube.boost-flight .thruster{display:block;animation:thrusterPulse .18s infinite alternate}
 .player-cube.boost-spring{filter:drop-shadow(0 0 24px var(--orange))}
+.player-cube.boost-spring .player-cube-image{filter:hue-rotate(190deg) saturate(1.55) brightness(1.12)}
+.player-cube.boost-flight{filter:drop-shadow(0 0 23px var(--cyan))}
+.player-cube.boost-flight .player-cube-image{filter:hue-rotate(-18deg) saturate(1.45) brightness(1.2)}
 .player-cube.falling-through{animation:cubeFallThrough .86s cubic-bezier(.45,.05,.9,.5) forwards}
 .altitude-line{position:absolute;top:40px;bottom:85px;width:1px;background:linear-gradient(transparent,rgba(49,132,234,.32),transparent)}
 .altitude-line.left{left:28px}.altitude-line.right{right:28px}
@@ -46,8 +49,10 @@ body{display:grid;place-items:center;overflow:hidden}
 .altitude-line.right span{margin-left:-7px}
 .result-modal{position:absolute;z-index:60;inset:0 0 var(--panel-height);display:grid;place-items:center;padding:24px;background:rgba(0,5,18,.2);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .2s ease,visibility .2s}
 .result-modal.show{opacity:1;visibility:visible}
+.result-modal.closing{opacity:0;visibility:visible}
 .result-card{position:relative;min-width:238px;padding:25px 30px 22px;display:flex;flex-direction:column;align-items:center;border:1px solid #ffd36b;border-radius:18px;background:linear-gradient(180deg,rgba(55,35,7,.97),rgba(13,10,10,.98));box-shadow:inset 0 1px rgba(255,240,175,.42),inset 0 0 28px rgba(255,155,37,.14),0 0 30px rgba(255,172,42,.3),0 16px 42px rgba(0,0,0,.62);transform:translateY(12px) scale(.88)}
 .result-modal.show .result-card{animation:resultPop .34s cubic-bezier(.18,.9,.28,1.2) forwards}
+.result-modal.closing .result-card{animation:resultClose .28s cubic-bezier(.55,.02,.8,.35) forwards}
 .result-card::before{content:"";position:absolute;inset:7px;border:1px solid rgba(255,210,101,.2);border-radius:12px;pointer-events:none}
 .result-title{position:relative;color:#fff1a8;font-size:34px;line-height:1.1;font-weight:1000;letter-spacing:.02em;text-shadow:0 0 14px rgba(255,183,55,.65)}
 .result-subtitle{position:relative;margin-top:10px;color:#ffd67d;font-size:16px;font-weight:800;letter-spacing:.08em}
@@ -87,6 +92,7 @@ body{display:grid;place-items:center;overflow:hidden}
 @keyframes fragmentRight{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(34px,112px) rotate(19deg);opacity:0}}
 @keyframes cubeFallThrough{0%{bottom:calc(102px + var(--platform-gap));transform:translateX(-50%) rotate(94deg) scale(1);opacity:1}12%{bottom:calc(94px + var(--platform-gap));transform:translateX(-50%) rotate(108deg) scale(.94)}100%{bottom:-110px;transform:translateX(-50%) rotate(245deg) scale(.68);opacity:0}}
 @keyframes resultPop{0%{transform:translateY(12px) scale(.88);opacity:0}70%{transform:translateY(-3px) scale(1.035);opacity:1}100%{transform:translateY(0) scale(1);opacity:1}}
+@keyframes resultClose{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(6px) scale(.82);opacity:0}}
 @keyframes flash{from{opacity:.72}to{opacity:0}}
 @keyframes shake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
 @media(max-width:360px){.control-panel{padding-left:22px;padding-right:22px}.setting-row label>span{font-size:15px}.difficulty-setting select{font-size:16px}}

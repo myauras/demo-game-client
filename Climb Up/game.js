@@ -5,7 +5,7 @@ const CONFIG = {
     hard: { label: '困難', minMultiplier: 2.0, maxMultiplier: 12.0, successRate: 0.55 }
   },
   platformMultipliers: [1.00, 1.30, 1.70, 2.20, 3.00, 4.00, 6.00, 8.00, 10.00, 12.00, 15.00, 18.00, 22.00],
-  platformSwitchInterval: 800,
+  platformSwitchInterval: 420,
   specialCycleChance: 0.35,
   platformTypes: ['normal', 'spring', 'flight'],
   springJumpDistance: 2,
@@ -16,7 +16,7 @@ const CONFIG = {
 };
 
 const TYPE_INFO = {
-  normal: { label: '普通平台', symbol: '◇', distance: 1 },
+  normal: { label: '普通平台', symbol: '', distance: 1 },
   spring: { label: '彈射平台', symbol: '▲', distance: CONFIG.springJumpDistance },
   flight: { label: '飛行平台', symbol: '⇈', distance: CONFIG.flightJumpDistance }
 };
@@ -96,7 +96,7 @@ function updateUI() {
 }
 
 function cyclePlatform() {
-  if (!state.specialCycleActive || state.status !== 'playing' || state.isJumping || state.isAutoMoving) return;
+  if (!state.specialCycleActive || !['playing', 'jumping'].includes(state.status) || state.isAutoMoving) return;
   state.cycleIndex = (state.cycleIndex + 1) % CONFIG.platformTypes.length;
   state.previewPlatformType = CONFIG.platformTypes[state.cycleIndex];
   renderPlatforms();
@@ -129,14 +129,23 @@ function showResultModal(type, title, subtitle = '') {
   els.resultSubtitle.hidden = !subtitle;
 }
 
-function hideResultModal() {
+function clearResultModal() {
   els.resultModal.className = 'result-modal';
   els.resultModal.setAttribute('aria-hidden', 'true');
 }
 
+function closeResultModal(onClosed) {
+  els.resultModal.classList.remove('show');
+  els.resultModal.classList.add('closing');
+  setTimeout(() => {
+    clearResultModal();
+    onClosed?.();
+  }, 280);
+}
+
 function resetBoard() {
   stopCycle();
-  hideResultModal();
+  clearResultModal();
   Object.assign(state, {
     status: 'idle', currentFloor: 0, previewPlatformType: 'normal', lockedPlatformType: null,
     isJumping: false, isAutoMoving: false, canCashout: false, gameOver: false, cycleIndex: 0,
@@ -177,12 +186,17 @@ function startBet() {
 
 function jump() {
   if (state.status !== 'playing' || state.isJumping || state.isAutoMoving) return;
-  state.lockedPlatformType = state.previewPlatformType;
-  state.isJumping = true; state.status = 'jumping'; stopCycle(); updateUI();
-  const locked = TYPE_INFO[state.lockedPlatformType];
+  state.isJumping = true; state.status = 'jumping'; updateUI();
   els.player.classList.add('jumping');
-  const success = Math.random() <= CONFIG.difficultyConfig[state.difficulty].successRate;
   setTimeout(() => {
+    stopCycle();
+    state.lockedPlatformType = state.previewPlatformType;
+    const locked = TYPE_INFO[state.lockedPlatformType];
+    const isSpring = state.lockedPlatformType === 'spring';
+    const isFlight = state.lockedPlatformType === 'flight';
+    els.player.classList.toggle('boost-spring', isSpring);
+    els.player.classList.toggle('boost-flight', isFlight);
+    const success = Math.random() <= CONFIG.difficultyConfig[state.difficulty].successRate;
     if (!success) {
       failRun();
       return;
@@ -197,7 +211,7 @@ async function liftToNextStep(type) {
   els.player.classList.toggle('boost-spring', type === 'spring');
   els.player.style.transition = `bottom ${CONFIG.boostLiftDuration}ms cubic-bezier(.18,.8,.25,1), transform ${CONFIG.boostLiftDuration}ms ease`;
   els.player.style.bottom = `${upperBottom}px`;
-  els.player.style.transform = `translateX(-50%) rotate(${type === 'flight' ? 120 : 70}deg)`;
+  els.player.style.transform = `translateX(-50%) rotate(${type === 'flight' ? 0 : 70}deg)`;
   await wait(CONFIG.boostLiftDuration + 25);
 }
 
@@ -241,6 +255,8 @@ async function advanceFloors(distance, type) {
   state.previewPlatformType = 'normal';
   state.specialCycleActive = false;
   if (type !== 'normal') {
+    els.player.classList.toggle('boost-spring', type === 'spring');
+    els.player.classList.toggle('boost-flight', type === 'flight');
     els.stage.classList.add('flash');
   }
 
@@ -278,11 +294,8 @@ function failRun() {
     els.player.style.animation = '';
     els.player.classList.add('falling-through');
   }, 520);
-  setTimeout(() => {
-    resetBoard();
-    showResultModal('failure', '再接再勵！');
-    setTimeout(hideResultModal, 1500);
-  }, 1420);
+  setTimeout(() => showResultModal('failure', '再接再勵！'), 1420);
+  setTimeout(() => closeResultModal(resetBoard), 2920);
 }
 
 function cashout() {
@@ -292,9 +305,7 @@ function cashout() {
   state.balance = Number((state.balance + reward).toFixed(2));
   updateUI();
   showResultModal('reward', formatMoney(reward), formatMultiplier(state.currentMultiplier));
-  setTimeout(() => {
-    resetBoard();
-  }, 1600);
+  setTimeout(() => closeResultModal(resetBoard), 1600);
 }
 
 function changeBet(multiplier) {
