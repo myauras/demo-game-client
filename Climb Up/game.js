@@ -1,7 +1,7 @@
 const CONFIG = {
   rtp: 0.95,
   difficultyConfig: {
-    easy: { label: '簡單', minMultiplier: 1.0, maxMultiplier: 3.0 },
+    easy: { label: '簡單', minMultiplier: 1.3, maxMultiplier: 3.0 },
     normal: { label: '普通', minMultiplier: 1.5, maxMultiplier: 6.0 },
     hard: { label: '困難', minMultiplier: 2.0, maxMultiplier: 12.0 }
   },
