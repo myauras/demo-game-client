@@ -194,14 +194,16 @@ function jump() {
     const locked = TYPE_INFO[state.lockedPlatformType];
     const isSpring = state.lockedPlatformType === 'spring';
     const isFlight = state.lockedPlatformType === 'flight';
+    const isSpecial = isSpring || isFlight;
     els.player.classList.toggle('boost-spring', isSpring);
     els.player.classList.toggle('boost-flight', isFlight);
-    const success = Math.random() <= CONFIG.difficultyConfig[state.difficulty].successRate;
-    if (!success) {
+    const initialLandingSuccess = Math.random() <= CONFIG.difficultyConfig[state.difficulty].successRate;
+    if (!isSpecial && !initialLandingSuccess) {
       failRun();
       return;
     }
-    advanceFloors(locked.distance, state.lockedPlatformType);
+    const totalDistance = isSpecial ? locked.distance + 1 : locked.distance;
+    advanceFloors(totalDistance, state.lockedPlatformType, isSpecial);
   }, CONFIG.jumpDuration);
 }
 
@@ -250,7 +252,7 @@ async function scrollOneFloor() {
   void els.layer.offsetHeight;
 }
 
-async function advanceFloors(distance, type) {
+async function advanceFloors(distance, type, checkFinalLanding = false) {
   state.isAutoMoving = true;
   state.previewPlatformType = 'normal';
   state.specialCycleActive = false;
@@ -261,7 +263,17 @@ async function advanceFloors(distance, type) {
   }
 
   for (let step = 0; step < distance; step += 1) {
-    if (step > 0) await liftToNextStep(type);
+    if (step > 0) {
+      await liftToNextStep(type);
+      if (checkFinalLanding && step === distance - 1) {
+        const finalLandingSuccess = Math.random() <= CONFIG.difficultyConfig[state.difficulty].successRate;
+        if (!finalLandingSuccess) {
+          state.isAutoMoving = false;
+          failRun();
+          return;
+        }
+      }
+    }
     await scrollOneFloor();
   }
 
