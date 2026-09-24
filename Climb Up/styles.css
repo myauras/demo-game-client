@@ -34,6 +34,8 @@ body{display:grid;place-items:center;overflow:hidden}
 .platform.broken .fragment-left{animation:fragmentLeft .78s cubic-bezier(.35,.05,.9,.55) forwards}
 .platform.broken .fragment-right{animation:fragmentRight .78s cubic-bezier(.35,.05,.9,.55) forwards}
 .player-cube{position:absolute;z-index:8;left:50%;bottom:102px;width:50px;height:52px;transform:translateX(-50%) rotate(-4deg);filter:drop-shadow(0 0 13px rgba(34,231,255,.72));transition:bottom .55s cubic-bezier(.2,.75,.2,1),left .55s,opacity .3s}
+.player-cube.reset-hidden{opacity:0;transition:opacity .12s ease}
+.player-cube.reset-enter{animation:playerResetEnter .34s cubic-bezier(.18,.9,.3,1.18) both}
 .player-cube-image{display:block;width:100%;height:100%;object-fit:contain;user-select:none;pointer-events:none}
 .thruster{display:none;position:absolute;left:11px;top:40px;width:27px;height:100px;background:linear-gradient(#fff,#27eaff 22%,rgba(25,100,255,.24) 70%,transparent);clip-path:polygon(20% 0,42% 0,48% 100%,58% 0,80% 0,100% 100%,0 100%);filter:blur(1px)}
 .player-cube.jumping{animation:cubeJump .58s cubic-bezier(.2,.65,.3,1) forwards}
@@ -83,7 +85,6 @@ body{display:grid;place-items:center;overflow:hidden}
 #cashoutButton{border-color:#f8c867;background:linear-gradient(180deg,#8b5a11,#3d2508);color:#ffe59d;box-shadow:inset 0 0 12px rgba(255,210,93,.28),0 0 10px rgba(255,151,35,.2)}
 .game-button:disabled{filter:saturate(.25);opacity:.38}
 .screen-shake{animation:shake .45s linear}
-.flash::after{content:"";position:absolute;inset:0;z-index:40;background:#fff;animation:flash .35s forwards;pointer-events:none}
 @keyframes drift{to{background-position:17px 119px,73px 242px}}
 @keyframes nextPulse{to{filter:drop-shadow(0 0 30px var(--glow)) brightness(1.35)}}
 @keyframes springArrow{to{transform:translateY(-8px)}}
@@ -95,9 +96,9 @@ body{display:grid;place-items:center;overflow:hidden}
 @keyframes fragmentLeft{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(-34px,105px) rotate(-18deg);opacity:0}}
 @keyframes fragmentRight{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(34px,112px) rotate(19deg);opacity:0}}
 @keyframes cubeFallThrough{0%{bottom:calc(102px + var(--platform-gap));transform:translateX(-50%) rotate(94deg) scale(1);opacity:1}12%{bottom:calc(94px + var(--platform-gap));transform:translateX(-50%) rotate(108deg) scale(.94)}100%{bottom:-110px;transform:translateX(-50%) rotate(245deg) scale(.68);opacity:0}}
+@keyframes playerResetEnter{0%{opacity:0;transform:translateX(-50%) translateY(-18px) rotate(-4deg) scale(.55)}65%{opacity:1;transform:translateX(-50%) translateY(3px) rotate(-4deg) scale(1.08)}100%{opacity:1;transform:translateX(-50%) translateY(0) rotate(-4deg) scale(1)}}
 @keyframes resultPop{0%{transform:translateY(12px) scale(.88);opacity:0}70%{transform:translateY(-3px) scale(1.035);opacity:1}100%{transform:translateY(0) scale(1);opacity:1}}
 @keyframes resultClose{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(6px) scale(.82);opacity:0}}
-@keyframes flash{from{opacity:.72}to{opacity:0}}
 @keyframes shake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
 @media(max-width:390px){.control-panel{padding-left:17px;padding-right:17px}.quick-bet-row{grid-template-columns:repeat(4,36px);gap:4px}.bottom-control-row{grid-template-columns:137px 1fr}}
 @media(max-width:350px){.quick-bet-row{grid-template-columns:repeat(4,32px)}.bottom-control-row{grid-template-columns:128px 1fr}.difficulty-setting>span{font-size:14px}}

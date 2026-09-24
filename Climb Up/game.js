@@ -152,21 +152,54 @@ function closeResultModal(onClosed) {
   }, 280);
 }
 
-function resetBoard() {
+async function resetBoard(animated = false) {
   stopCycle();
   clearResultModal();
+  els.stage.classList.remove('screen-shake');
+  els.player.className = 'player-cube reset-hidden';
+  els.player.removeAttribute('style');
+  setSettingsLocked(true);
+
+  const viewportHeight = els.stage.clientHeight || 700;
+  const resetTravel = Math.max(280, viewportHeight * .62);
+  if (animated) {
+    els.layer.style.transition = 'transform 240ms cubic-bezier(.55,.02,.85,.45), opacity 190ms ease';
+    els.layer.style.opacity = '1';
+    void els.layer.offsetHeight;
+    requestAnimationFrame(() => {
+      els.layer.style.transform = `translateY(${-resetTravel}px)`;
+      els.layer.style.opacity = '.08';
+    });
+    await wait(255);
+  }
+
   Object.assign(state, {
     status: 'idle', currentFloor: 0, previewPlatformType: 'normal', lockedPlatformType: null,
     isJumping: false, isAutoMoving: false, canCashout: false, gameOver: false, cycleIndex: 0,
     specialCycleActive: false, hasSuccessfulLanding: false
   });
   state.currentMultiplier = multiplierAt(0);
-  els.player.className = 'player-cube';
-  els.player.removeAttribute('style');
-  els.stage.classList.remove('screen-shake', 'flash');
+  renderPlatforms();
+
+  if (animated) {
+    els.layer.style.transition = 'none';
+    els.layer.style.transform = `translateY(${resetTravel}px)`;
+    els.layer.style.opacity = '.08';
+    void els.layer.offsetHeight;
+    els.layer.style.transition = 'transform 360ms cubic-bezier(.16,.82,.24,1), opacity 250ms ease';
+    requestAnimationFrame(() => {
+      els.layer.style.transform = 'translateY(0)';
+      els.layer.style.opacity = '1';
+    });
+    await wait(380);
+  }
+
+  els.layer.removeAttribute('style');
   setActionMode('idle');
   setSettingsLocked(false);
-  renderPlatforms(); updateUI();
+  updateUI();
+  els.player.className = animated ? 'player-cube reset-enter' : 'player-cube';
+  if (animated) setTimeout(() => els.player.classList.remove('reset-enter'), 360);
 }
 
 function readBet() {
@@ -273,7 +306,6 @@ async function advanceFloors(distance, type, checkFinalLanding = false) {
   if (type !== 'normal') {
     els.player.classList.toggle('boost-spring', type === 'spring');
     els.player.classList.toggle('boost-flight', type === 'flight');
-    els.stage.classList.add('flash');
   }
 
   for (let step = 0; step < distance; step += 1) {
@@ -293,7 +325,6 @@ async function advanceFloors(distance, type, checkFinalLanding = false) {
   }
 
   els.player.classList.remove('boost-flight', 'boost-spring');
-  els.stage.classList.remove('flash');
   els.player.removeAttribute('style');
   state.isJumping = false;
   state.isAutoMoving = false;
@@ -322,7 +353,7 @@ function failRun() {
     els.player.classList.add('falling-through');
   }, 520);
   setTimeout(() => showResultModal('failure', '再接再勵！'), 1420);
-  setTimeout(() => closeResultModal(resetBoard), 2920);
+  setTimeout(() => closeResultModal(() => resetBoard(true)), 2920);
 }
 
 function cashout() {
@@ -332,7 +363,7 @@ function cashout() {
   state.balance = Number((state.balance + reward).toFixed(2));
   updateUI();
   showResultModal('reward', formatMoney(reward), formatMultiplier(state.currentMultiplier));
-  setTimeout(() => closeResultModal(resetBoard), 1600);
+  setTimeout(() => closeResultModal(() => resetBoard(true)), 1600);
 }
 
 function changeBet(multiplier) {
