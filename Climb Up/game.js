@@ -1,8 +1,9 @@
 const CONFIG = {
+  rtp: 0.95,
   difficultyConfig: {
-    easy: { label: '簡單', minMultiplier: 1.0, maxMultiplier: 3.0, successRate: 0.85 },
-    normal: { label: '普通', minMultiplier: 1.5, maxMultiplier: 6.0, successRate: 0.7 },
-    hard: { label: '困難', minMultiplier: 2.0, maxMultiplier: 12.0, successRate: 0.55 }
+    easy: { label: '簡單', minMultiplier: 1.0, maxMultiplier: 3.0 },
+    normal: { label: '普通', minMultiplier: 1.5, maxMultiplier: 6.0 },
+    hard: { label: '困難', minMultiplier: 2.0, maxMultiplier: 12.0 }
   },
   platformMultipliers: [1.00, 1.30, 1.70, 2.20, 3.00, 4.00, 6.00, 8.00, 10.00, 12.00, 15.00, 18.00, 22.00],
   platformSwitchInterval: 420,
@@ -25,7 +26,7 @@ const state = {
   status: 'idle', difficulty: 'easy', currentFloor: 0, currentMultiplier: 1,
   previewPlatformType: 'normal', lockedPlatformType: null, isJumping: false,
   isAutoMoving: false, canCashout: false, gameOver: false, cycleIndex: 0,
-  cycleTimer: null, specialCycleActive: false, platformGap: 118,
+  cycleTimer: null, specialCycleActive: false, platformGap: 118, hasSuccessfulLanding: false,
   balance: 3000, currentBet: 10
 };
 
@@ -36,17 +37,24 @@ const els = {
   halfBet: $('halfBetButton'), doubleBet: $('doubleBetButton'), difficulty: $('difficultySelect'),
   bet: $('betButton'), cashout: $('cashoutButton'), jump: $('jumpButton'),
   idleActions: $('idleActions'), playActions: $('playActions'), resultModal: $('resultModal'),
-  resultTitle: $('resultTitle'), resultSubtitle: $('resultSubtitle')
+  resultTitle: $('resultTitle'), resultSubtitle: $('resultSubtitle'),
+  quickBets: Array.from(document.querySelectorAll('[data-bet-amount]'))
 };
 
 function multiplierAt(floor) {
-  const curveIndex = Math.min(floor, CONFIG.platformMultipliers.length - 1);
+  if (floor === 0) return 1;
+  const curveIndex = Math.min(floor - 1, CONFIG.platformMultipliers.length - 1);
   const curveValue = CONFIG.platformMultipliers[curveIndex];
   const curveMin = CONFIG.platformMultipliers[0];
   const curveMax = CONFIG.platformMultipliers.at(-1);
   const progress = Math.min(1, Math.max(0, (curveValue - curveMin) / (curveMax - curveMin)));
   const config = CONFIG.difficultyConfig[state.difficulty];
   return Number((config.minMultiplier + (config.maxMultiplier - config.minMultiplier) * progress).toFixed(2));
+}
+
+function landingSuccessRate(fromMultiplier, toMultiplier) {
+  const edgeFactor = state.hasSuccessfulLanding ? 1 : CONFIG.rtp;
+  return Math.min(1, edgeFactor * fromMultiplier / toMultiplier);
 }
 
 function formatMultiplier(value) { return `${value.toFixed(2)}X`; }
@@ -86,6 +94,7 @@ function setSettingsLocked(locked) {
   els.betInput.disabled = locked;
   els.halfBet.disabled = locked;
   els.doubleBet.disabled = locked;
+  els.quickBets.forEach((button) => { button.disabled = locked; });
   els.difficulty.disabled = locked;
 }
 
@@ -149,7 +158,7 @@ function resetBoard() {
   Object.assign(state, {
     status: 'idle', currentFloor: 0, previewPlatformType: 'normal', lockedPlatformType: null,
     isJumping: false, isAutoMoving: false, canCashout: false, gameOver: false, cycleIndex: 0,
-    specialCycleActive: false
+    specialCycleActive: false, hasSuccessfulLanding: false
   });
   state.currentMultiplier = multiplierAt(0);
   els.player.className = 'player-cube';
@@ -174,7 +183,7 @@ function startBet() {
   Object.assign(state, {
     status: 'playing', currentFloor: 0, previewPlatformType: 'normal', lockedPlatformType: null,
     isJumping: false, isAutoMoving: false, canCashout: false, gameOver: false, cycleIndex: 0,
-    specialCycleActive: false
+    specialCycleActive: false, hasSuccessfulLanding: false
   });
   state.currentMultiplier = multiplierAt(0);
   els.player.className = 'player-cube';
@@ -197,11 +206,14 @@ function jump() {
     const isSpecial = isSpring || isFlight;
     els.player.classList.toggle('boost-spring', isSpring);
     els.player.classList.toggle('boost-flight', isFlight);
-    const initialLandingSuccess = Math.random() <= CONFIG.difficultyConfig[state.difficulty].successRate;
+    const targetFloor = state.currentFloor + (isSpecial ? locked.distance + 1 : locked.distance);
+    const targetMultiplier = multiplierAt(targetFloor);
+    const initialLandingSuccess = Math.random() <= landingSuccessRate(state.currentMultiplier, targetMultiplier);
     if (!isSpecial && !initialLandingSuccess) {
       failRun();
       return;
     }
+    if (!isSpecial) state.hasSuccessfulLanding = true;
     const totalDistance = isSpecial ? locked.distance + 1 : locked.distance;
     advanceFloors(totalDistance, state.lockedPlatformType, isSpecial);
   }, CONFIG.jumpDuration);
@@ -253,6 +265,8 @@ async function scrollOneFloor() {
 }
 
 async function advanceFloors(distance, type, checkFinalLanding = false) {
+  const riskBaseMultiplier = state.currentMultiplier;
+  const targetMultiplier = multiplierAt(state.currentFloor + distance);
   state.isAutoMoving = true;
   state.previewPlatformType = 'normal';
   state.specialCycleActive = false;
@@ -266,12 +280,13 @@ async function advanceFloors(distance, type, checkFinalLanding = false) {
     if (step > 0) {
       await liftToNextStep(type);
       if (checkFinalLanding && step === distance - 1) {
-        const finalLandingSuccess = Math.random() <= CONFIG.difficultyConfig[state.difficulty].successRate;
+        const finalLandingSuccess = Math.random() <= landingSuccessRate(riskBaseMultiplier, targetMultiplier);
         if (!finalLandingSuccess) {
           state.isAutoMoving = false;
           failRun();
           return;
         }
+        state.hasSuccessfulLanding = true;
       }
     }
     await scrollOneFloor();
@@ -325,11 +340,16 @@ function changeBet(multiplier) {
   els.betInput.value = Number(next.toFixed(2));
 }
 
+function setQuickBet(amount) {
+  els.betInput.value = Number(Math.min(amount, state.balance || amount).toFixed(2));
+}
+
 els.bet.addEventListener('click', startBet);
 els.jump.addEventListener('click', jump);
 els.cashout.addEventListener('click', cashout);
 els.halfBet.addEventListener('click', () => changeBet(.5));
 els.doubleBet.addEventListener('click', () => changeBet(2));
+els.quickBets.forEach((button) => button.addEventListener('click', () => setQuickBet(Number(button.dataset.betAmount))));
 els.addBalance.addEventListener('click', () => { state.balance += 1000; updateUI(); });
 els.difficulty.addEventListener('change', () => {
   state.difficulty = els.difficulty.value;
