@@ -355,16 +355,28 @@ async function flyAcrossFloors(distance, landingSuccess) {
   const duration = Math.max(720, cameraFloors * CONFIG.flightTravelPerFloor);
   const upperBottom = 102 + state.platformGap;
   const cruiseBottom = 102 + state.platformGap * .78;
+  const approachBottom = 102 + state.platformGap * .42;
 
   els.player.style.animation = 'none';
   els.player.classList.remove('jumping');
   els.player.classList.add('boost-flight');
-  const playerMotion = els.player.animate([
+  const playerFrames = landingSuccess ? [
+    { bottom: '102px', transform: 'translateX(-50%) rotate(0deg)', offset: 0 },
+    { bottom: `${cruiseBottom}px`, transform: 'translateX(-50%) rotate(0deg)', offset: .16 },
+    { bottom: `${cruiseBottom}px`, transform: 'translateX(-50%) rotate(0deg)', offset: .5 },
+    { bottom: `${approachBottom}px`, transform: 'translateX(-50%) rotate(0deg)', offset: .76 },
+    { bottom: '102px', transform: 'translateX(-50%) rotate(0deg)', offset: 1 }
+  ] : [
     { bottom: '102px', transform: 'translateX(-50%) rotate(0deg)', offset: 0 },
     { bottom: `${cruiseBottom}px`, transform: 'translateX(-50%) rotate(0deg)', offset: .16 },
     { bottom: `${cruiseBottom}px`, transform: 'translateX(-50%) rotate(0deg)', offset: .8 },
-    { bottom: landingSuccess ? '102px' : `${upperBottom}px`, transform: 'translateX(-50%) rotate(0deg)', offset: 1 }
-  ], { duration, easing: 'cubic-bezier(.22,.62,.28,1)', fill: 'forwards' });
+    { bottom: `${upperBottom}px`, transform: 'translateX(-50%) rotate(0deg)', offset: 1 }
+  ];
+  const playerMotion = els.player.animate(playerFrames, {
+    duration,
+    easing: landingSuccess ? 'cubic-bezier(.2,.58,.24,1)' : 'cubic-bezier(.22,.62,.28,1)',
+    fill: 'forwards'
+  });
 
   els.layer.style.transition = `transform ${duration}ms cubic-bezier(.22,.62,.28,1)`;
   requestAnimationFrame(() => {
