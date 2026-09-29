@@ -304,11 +304,12 @@ function playPlatformContactEffect(type, offset = 1, isFinalLanding = false) {
   if (hasPlayerLandingEffect) {
     els.player.classList.add(`landing-${type}`);
   }
+  const cleanupDelay = isFinalLanding ? 620 : type === 'normal' ? 440 : 480;
   setTimeout(() => {
     platform.classList.remove(effectClass);
     if (hasPlayerLandingEffect) els.player.classList.remove(`landing-${type}`);
     if (isFinalLanding) els.player.classList.remove(`boost-${type}`);
-  }, 700);
+  }, cleanupDelay);
 }
 
 async function scrollOneFloor() {
