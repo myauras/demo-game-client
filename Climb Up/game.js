@@ -1,9 +1,9 @@
 const CONFIG = {
   rtp: 0.95,
   difficultyConfig: {
-    easy: { label: '簡單', minMultiplier: 1.3, maxMultiplier: 3.0 },
-    normal: { label: '普通', minMultiplier: 1.5, maxMultiplier: 6.0 },
-    hard: { label: '困難', minMultiplier: 2.0, maxMultiplier: 12.0 }
+    easy: { label: '簡單', minMultiplier: 1.3, maxMultiplier: 3.0, tailStep: 0.2 },
+    normal: { label: '普通', minMultiplier: 1.5, maxMultiplier: 6.0, tailStep: 0.5 },
+    hard: { label: '困難', minMultiplier: 2.0, maxMultiplier: 12.0, tailStep: 1.0 }
   },
   platformMultipliers: [1.00, 1.30, 1.70, 2.20, 3.00, 4.00, 6.00, 8.00, 10.00, 12.00, 15.00, 18.00, 22.00],
   platformSwitchInterval: 420,
@@ -43,12 +43,17 @@ const els = {
 
 function multiplierAt(floor) {
   if (floor === 0) return 1;
-  const curveIndex = Math.min(floor - 1, CONFIG.platformMultipliers.length - 1);
+  const config = CONFIG.difficultyConfig[state.difficulty];
+  const curveLength = CONFIG.platformMultipliers.length;
+  if (floor > curveLength) {
+    const extraFloors = floor - curveLength;
+    return Number((config.maxMultiplier + extraFloors * config.tailStep).toFixed(2));
+  }
+  const curveIndex = floor - 1;
   const curveValue = CONFIG.platformMultipliers[curveIndex];
   const curveMin = CONFIG.platformMultipliers[0];
   const curveMax = CONFIG.platformMultipliers.at(-1);
   const progress = Math.min(1, Math.max(0, (curveValue - curveMin) / (curveMax - curveMin)));
-  const config = CONFIG.difficultyConfig[state.difficulty];
   return Number((config.minMultiplier + (config.maxMultiplier - config.minMultiplier) * progress).toFixed(2));
 }
 
