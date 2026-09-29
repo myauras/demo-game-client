@@ -86,7 +86,7 @@ function renderPlatforms() {
     platform.style.top = `${baseY - (offset + .42) * gap}px`;
     platform.style.setProperty('--scale', `${Math.max(.57, 1 - Math.max(0, offset) * .065)}`);
     platform.style.opacity = `${Math.max(.2, 1 - Math.max(0, offset) * .105)}`;
-    platform.innerHTML = `<span class="platform-symbol">${isNext ? TYPE_INFO[type].symbol : ''}</span><span class="crack-overlay"></span><span class="platform-fragment fragment-left"></span><span class="platform-fragment fragment-right"></span>`;
+    platform.innerHTML = `<span class="platform-symbol">${isNext ? TYPE_INFO[type].symbol : ''}</span><span class="contact-glow"></span><span class="crack-overlay"></span><span class="platform-fragment fragment-left"></span><span class="platform-fragment fragment-right"></span>`;
     els.layer.appendChild(platform);
   }
 }
@@ -292,6 +292,15 @@ async function liftToNextStep(type) {
   await wait(CONFIG.boostLiftDuration + 25);
 }
 
+function playSpringContactEffect() {
+  const platform = els.layer.querySelector('.platform[data-offset="1"]');
+  if (!platform) return;
+  platform.classList.remove('spring-contact');
+  void platform.offsetHeight;
+  platform.classList.add('spring-contact');
+  setTimeout(() => platform.classList.remove('spring-contact'), 480);
+}
+
 async function scrollOneFloor() {
   const upperBottom = 102 + state.platformGap;
   els.player.style.animation = 'none';
@@ -408,6 +417,7 @@ async function advanceFloors(distance, type, checkFinalLanding = false) {
           state.hasSuccessfulLanding = true;
         }
       }
+      if (type === 'spring') playSpringContactEffect();
       await scrollOneFloor();
     }
   }

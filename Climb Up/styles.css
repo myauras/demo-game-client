@@ -20,6 +20,10 @@ body{display:grid;place-items:center;overflow:hidden}
 .platform.spring{--glow:var(--orange);background:linear-gradient(180deg,rgba(255,150,67,.7),rgba(72,27,8,.94))}
 .platform.flight{--glow:var(--cyan);background:linear-gradient(180deg,rgba(59,226,255,.68),rgba(5,51,83,.94))}
 .platform .platform-symbol{position:absolute;inset:0;display:grid;place-items:center;font-size:28px;font-weight:1000;color:#fff;text-shadow:0 0 11px var(--glow);transform:translateZ(1px)}
+.contact-glow{position:absolute;z-index:4;left:50%;top:5px;width:96px;height:38px;border-radius:50%;opacity:0;transform:translateX(-50%) scale(.35);pointer-events:none;background:radial-gradient(ellipse,rgba(255,244,196,.98) 0 7%,rgba(255,153,45,.8) 18%,rgba(255,111,20,.34) 42%,transparent 72%);filter:drop-shadow(0 0 9px #ff7b22)}
+.contact-glow::after{content:"";position:absolute;inset:5px 9px;border:2px solid rgba(255,166,66,.92);border-radius:50%;box-shadow:0 0 9px #ff7d24,inset 0 0 7px rgba(255,120,27,.7)}
+.platform.spring-contact .contact-glow{animation:springContactGlow .48s cubic-bezier(.18,.78,.25,1) forwards}
+.platform.spring-contact .contact-glow::after{animation:springContactRing .48s ease-out forwards}
 .platform.spring .platform-symbol{animation:springArrow .52s ease-in-out infinite alternate}
 .platform.flight .platform-symbol{letter-spacing:4px;animation:energyRise .68s linear infinite}
 .crack-overlay{position:absolute;z-index:5;inset:-3px;opacity:0;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 262 66'%3E%3Cg fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M132 0 123 13 136 22 124 34 133 43 121 54 126 66' stroke='%23ffcf72' stroke-width='3'/%3E%3Cpath d='M123 13 94 10 76 2M136 22 164 13 185 4M124 34 92 29 64 38 35 31M133 43 165 35 195 43 225 35M121 54 96 50 74 61M126 58 154 55 177 66' stroke='%23ff304d' stroke-width='2.4'/%3E%3Cpath d='M94 10 82 21M164 13 172 25M64 38 51 51M195 43 210 56' stroke='%23ff5a48' stroke-width='1.7'/%3E%3C/g%3E%3C/svg%3E") center/100% 100% no-repeat;filter:drop-shadow(0 0 4px #ff243f) drop-shadow(0 0 8px rgba(255,42,61,.78))}
@@ -97,6 +101,8 @@ body{display:grid;place-items:center;overflow:hidden}
 @keyframes drift{to{background-position:17px 119px,73px 242px}}
 @keyframes nextPulse{to{filter:drop-shadow(0 0 30px var(--glow)) brightness(1.35)}}
 @keyframes springArrow{to{transform:translateY(-8px)}}
+@keyframes springContactGlow{0%{opacity:0;transform:translateX(-50%) scale(.3)}25%{opacity:1}100%{opacity:0;transform:translateX(-50%) scale(1.5)}}
+@keyframes springContactRing{0%{opacity:.9;transform:scale(.35)}100%{opacity:0;transform:scale(1.55)}}
 @keyframes energyRise{0%{transform:translateY(6px);opacity:.38}100%{transform:translateY(-9px);opacity:1}}
 @keyframes cubeJump{0%{bottom:102px;transform:translateX(-50%) scaleY(.86) scaleX(1.08)}52%{bottom:calc(102px + var(--platform-gap) + 30px);transform:translateX(-50%) rotate(84deg)}100%{bottom:calc(102px + var(--platform-gap));transform:translateX(-50%) rotate(94deg) scaleY(.94)}}
 @keyframes thrusterPulse{to{height:115px;opacity:.62}}
