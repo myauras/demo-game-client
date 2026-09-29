@@ -104,10 +104,20 @@ function setSettingsLocked(locked) {
   els.difficulty.disabled = locked;
 }
 
+function syncQuickBetSelection() {
+  const currentAmount = readBet();
+  els.quickBets.forEach((button) => {
+    const selected = Number(button.dataset.betAmount) === currentAmount;
+    button.classList.toggle('selected', selected);
+    button.setAttribute('aria-pressed', String(selected));
+  });
+}
+
 function updateUI() {
   els.balance.textContent = formatMoney(state.balance);
   els.cashout.disabled = state.status !== 'playing' || !state.canCashout || state.isJumping || state.isAutoMoving;
   els.jump.disabled = state.status !== 'playing' || state.isJumping || state.isAutoMoving;
+  syncQuickBetSelection();
 }
 
 function cyclePlatform() {
@@ -439,10 +449,12 @@ function cashout() {
 function changeBet(multiplier) {
   const next = Math.max(1, Math.min(state.balance || 1, readBet() * multiplier));
   els.betInput.value = Number(next.toFixed(2));
+  syncQuickBetSelection();
 }
 
 function setQuickBet(amount) {
   els.betInput.value = Number(Math.min(amount, state.balance || amount).toFixed(2));
+  syncQuickBetSelection();
 }
 
 els.bet.addEventListener('click', startBet);
@@ -451,6 +463,7 @@ els.cashout.addEventListener('click', cashout);
 els.halfBet.addEventListener('click', () => changeBet(.5));
 els.doubleBet.addEventListener('click', () => changeBet(2));
 els.quickBets.forEach((button) => button.addEventListener('click', () => setQuickBet(Number(button.dataset.betAmount))));
+els.betInput.addEventListener('input', syncQuickBetSelection);
 els.addBalance.addEventListener('click', () => { state.balance += 1000; updateUI(); });
 els.difficulty.addEventListener('change', () => {
   state.difficulty = els.difficulty.value;
