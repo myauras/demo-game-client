@@ -152,6 +152,13 @@ function prepareNextPlatform() {
 
 function wait(duration) { return new Promise((resolve) => setTimeout(resolve, duration)); }
 
+function playColorShiftEffect() {
+  els.player.classList.remove('color-shift');
+  void els.player.offsetHeight;
+  els.player.classList.add('color-shift');
+  setTimeout(() => els.player.classList.remove('color-shift'), 560);
+}
+
 function showResultModal(type, title, subtitle = '') {
   els.resultModal.className = `result-modal ${type} show`;
   els.resultModal.setAttribute('aria-hidden', 'false');
@@ -261,6 +268,7 @@ function jump() {
     const isSpecial = isSpring || isFlight;
     els.player.classList.toggle('boost-spring', isSpring);
     els.player.classList.toggle('boost-flight', isFlight);
+    if (isSpecial) playColorShiftEffect();
     const targetFloor = state.currentFloor + (isSpecial ? locked.distance + 1 : locked.distance);
     const targetMultiplier = multiplierAt(targetFloor);
     const initialLandingSuccess = Math.random() <= landingSuccessRate(state.currentMultiplier, targetMultiplier);

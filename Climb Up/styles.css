@@ -36,14 +36,18 @@ body{display:grid;place-items:center;overflow:hidden}
 .player-cube{position:absolute;z-index:8;left:50%;bottom:102px;width:50px;height:52px;transform:translateX(-50%) rotate(-4deg);filter:drop-shadow(0 0 13px rgba(34,231,255,.72));transition:bottom .55s cubic-bezier(.2,.75,.2,1),left .55s,opacity .3s}
 .player-cube.reset-hidden{opacity:0;transition:opacity .12s ease}
 .player-cube.reset-enter{animation:playerResetEnter .34s cubic-bezier(.18,.9,.3,1.18) both}
-.player-cube-image{display:block;width:100%;height:100%;object-fit:contain;user-select:none;pointer-events:none}
+.player-cube-image{position:relative;z-index:2;display:block;width:100%;height:100%;object-fit:contain;user-select:none;pointer-events:none}
 .thruster{display:none;position:absolute;left:11px;top:40px;width:27px;height:100px;background:linear-gradient(#fff,#27eaff 22%,rgba(25,100,255,.24) 70%,transparent);clip-path:polygon(20% 0,42% 0,48% 100%,58% 0,80% 0,100% 100%,0 100%);filter:blur(1px)}
 .player-cube.jumping{animation:cubeJump .58s cubic-bezier(.2,.65,.3,1) forwards}
 .player-cube.boost-flight .thruster{display:block;animation:thrusterPulse .18s infinite alternate}
-.player-cube.boost-spring{filter:drop-shadow(0 0 24px var(--orange))}
+.player-cube.boost-spring{--boost-color:var(--orange);filter:drop-shadow(0 0 24px var(--orange))}
 .player-cube.boost-spring .player-cube-image{filter:hue-rotate(190deg) saturate(1.55) brightness(1.12)}
-.player-cube.boost-flight{filter:drop-shadow(0 0 23px var(--cyan))}
+.player-cube.boost-flight{--boost-color:var(--cyan);filter:drop-shadow(0 0 23px var(--cyan))}
 .player-cube.boost-flight .player-cube-image{filter:hue-rotate(-18deg) saturate(1.45) brightness(1.2)}
+.player-cube.color-shift::before,.player-cube.color-shift::after{content:"";position:absolute;z-index:1;pointer-events:none;border-radius:50%}
+.player-cube.color-shift::before{inset:-13px;border:3px solid var(--boost-color);box-shadow:0 0 10px var(--boost-color),inset 0 0 10px var(--boost-color);animation:colorShiftRing .56s cubic-bezier(.18,.75,.25,1) forwards}
+.player-cube.color-shift::after{inset:-28px;background:repeating-conic-gradient(from 0deg,var(--boost-color) 0 4deg,transparent 4deg 24deg);-webkit-mask:radial-gradient(circle,transparent 0 37%,#000 40% 49%,transparent 52%);mask:radial-gradient(circle,transparent 0 37%,#000 40% 49%,transparent 52%);filter:drop-shadow(0 0 5px var(--boost-color));animation:colorShiftBurst .56s ease-out forwards}
+.player-cube.color-shift .player-cube-image{animation:colorShiftPulse .5s cubic-bezier(.18,.9,.3,1.2)}
 .player-cube.falling-through{animation:cubeFallThrough .86s cubic-bezier(.45,.05,.9,.5) forwards}
 .altitude-line{position:absolute;top:40px;bottom:85px;width:1px;background:linear-gradient(transparent,rgba(49,132,234,.32),transparent)}
 .altitude-line.left{left:28px}.altitude-line.right{right:28px}
@@ -97,6 +101,9 @@ body{display:grid;place-items:center;overflow:hidden}
 @keyframes fragmentLeft{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(-34px,105px) rotate(-18deg);opacity:0}}
 @keyframes fragmentRight{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(34px,112px) rotate(19deg);opacity:0}}
 @keyframes cubeFallThrough{0%{bottom:calc(102px + var(--platform-gap));transform:translateX(-50%) rotate(94deg) scale(1);opacity:1}12%{bottom:calc(94px + var(--platform-gap));transform:translateX(-50%) rotate(108deg) scale(.94)}100%{bottom:-110px;transform:translateX(-50%) rotate(245deg) scale(.68);opacity:0}}
+@keyframes colorShiftRing{0%{opacity:0;transform:scale(.35)}35%{opacity:1}100%{opacity:0;transform:scale(1.9)}}
+@keyframes colorShiftBurst{0%{opacity:0;transform:scale(.35) rotate(0deg)}32%{opacity:1}100%{opacity:0;transform:scale(1.45) rotate(24deg)}}
+@keyframes colorShiftPulse{0%{transform:scale(.76)}45%{transform:scale(1.18)}100%{transform:scale(1)}}
 @keyframes playerResetEnter{0%{opacity:0;transform:translateX(-50%) translateY(-18px) rotate(-4deg) scale(.55)}65%{opacity:1;transform:translateX(-50%) translateY(3px) rotate(-4deg) scale(1.08)}100%{opacity:1;transform:translateX(-50%) translateY(0) rotate(-4deg) scale(1)}}
 @keyframes resultPop{0%{transform:translateY(12px) scale(.88);opacity:0}70%{transform:translateY(-3px) scale(1.035);opacity:1}100%{transform:translateY(0) scale(1);opacity:1}}
 @keyframes resultClose{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(6px) scale(.82);opacity:0}}
