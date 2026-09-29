@@ -292,13 +292,14 @@ async function liftToNextStep(type) {
   await wait(CONFIG.boostLiftDuration + 25);
 }
 
-function playSpringContactEffect() {
+function playPlatformContactEffect(type) {
   const platform = els.layer.querySelector('.platform[data-offset="1"]');
   if (!platform) return;
-  platform.classList.remove('spring-contact');
+  const effectClass = type === 'spring' ? 'spring-contact' : 'normal-contact';
+  platform.classList.remove('spring-contact', 'normal-contact');
   void platform.offsetHeight;
-  platform.classList.add('spring-contact');
-  setTimeout(() => platform.classList.remove('spring-contact'), 480);
+  platform.classList.add(effectClass);
+  setTimeout(() => platform.classList.remove(effectClass), 480);
 }
 
 async function scrollOneFloor() {
@@ -417,7 +418,7 @@ async function advanceFloors(distance, type, checkFinalLanding = false) {
           state.hasSuccessfulLanding = true;
         }
       }
-      if (type === 'spring') playSpringContactEffect();
+      if (type === 'spring' || type === 'normal') playPlatformContactEffect(type);
       await scrollOneFloor();
     }
   }
