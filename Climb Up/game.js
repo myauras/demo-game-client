@@ -129,8 +129,13 @@ function stopCycle() { clearInterval(state.cycleTimer); state.cycleTimer = null;
 
 function prepareNextPlatform() {
   stopCycle();
-  state.previewPlatformType = 'normal';
   state.specialCycleActive = Math.random() < CONFIG.specialCycleChance;
+  if (state.specialCycleActive) {
+    const specialTypes = CONFIG.platformTypes.filter((type) => type !== 'normal');
+    state.previewPlatformType = specialTypes[Math.floor(Math.random() * specialTypes.length)];
+  } else {
+    state.previewPlatformType = 'normal';
+  }
   renderPlatforms();
   startCycle();
 }
