@@ -306,7 +306,8 @@ function playPlatformContactEffect(type, offset = 1, isFinalLanding = false) {
   setTimeout(() => {
     platform.classList.remove(effectClass);
     els.player.classList.remove(`landing-${type}`);
-  }, 700);
+    if (isFinalLanding) els.player.classList.remove(`boost-${type}`);
+  }, type === 'flight' && isFinalLanding ? 900 : 700);
 }
 
 async function scrollOneFloor() {
@@ -435,7 +436,8 @@ async function advanceFloors(distance, type, checkFinalLanding = false) {
     }
   }
 
-  els.player.classList.remove('boost-flight', 'boost-spring');
+  els.player.classList.remove('boost-flight');
+  if (!(checkFinalLanding && type === 'spring')) els.player.classList.remove('boost-spring');
   els.player.removeAttribute('style');
   state.isJumping = false;
   state.isAutoMoving = false;

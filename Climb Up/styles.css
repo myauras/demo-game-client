@@ -25,15 +25,15 @@ body{display:grid;place-items:center;overflow:hidden}
 .contact-glow::before{content:"";position:absolute;inset:-36px -72px;border-radius:50%;opacity:0;background:repeating-conic-gradient(from 0deg,currentColor 0 3deg,transparent 3deg 18deg);-webkit-mask:radial-gradient(ellipse,transparent 0 28%,#000 31% 49%,transparent 52%);mask:radial-gradient(ellipse,transparent 0 28%,#000 31% 49%,transparent 52%)}
 .platform.spring-contact .contact-glow{animation:springContactGlow .48s cubic-bezier(.18,.78,.25,1) forwards}
 .platform.spring-contact .contact-glow::after{animation:springContactRing .48s ease-out forwards}
-.platform.normal-contact .contact-glow{width:104px;height:38px;top:4px;color:#67efff;background:radial-gradient(ellipse,rgba(255,255,255,.94) 0 6%,rgba(62,230,255,.7) 17%,rgba(26,105,255,.26) 42%,transparent 72%);filter:drop-shadow(0 0 7px #21dfff);animation:normalContactGlow .44s ease-out forwards}
+.platform.normal-contact .contact-glow{width:72px;height:30px;top:8px;color:#67efff;background:radial-gradient(ellipse,rgba(255,255,255,.94) 0 6%,rgba(62,230,255,.7) 17%,rgba(26,105,255,.26) 42%,transparent 72%);filter:drop-shadow(0 0 7px #21dfff);animation:normalContactGlow .44s ease-out forwards}
 .platform.normal-contact .contact-glow::after{border-width:1px;border-color:rgba(154,250,255,.78);box-shadow:0 0 8px #24dfff,inset 0 0 5px rgba(38,127,255,.55);animation:normalContactRing .44s ease-out forwards}
 .platform.normal-contact .contact-glow::before{animation:normalContactRays .44s ease-out forwards}
-.platform.spring-landing .contact-glow{width:146px;height:52px;top:-3px;color:#ff9d32;background:radial-gradient(ellipse,#fff 0 6%,#ffd071 12%,rgba(255,126,31,.88) 25%,rgba(255,77,17,.4) 48%,transparent 75%);filter:drop-shadow(0 0 15px #ff7926);animation:specialLandingGlow .62s cubic-bezier(.16,.8,.22,1) forwards}
+.platform.spring-landing .contact-glow{width:88px;height:38px;top:4px;color:#ff9d32;background:radial-gradient(ellipse,#fff 0 6%,#ffd071 12%,rgba(255,126,31,.88) 25%,rgba(255,77,17,.4) 48%,transparent 75%);filter:drop-shadow(0 0 13px #ff7926);animation:specialLandingGlow .62s cubic-bezier(.16,.8,.22,1) forwards}
 .platform.spring-landing .contact-glow::after{border-color:#ffd082;box-shadow:0 0 16px #ff7926,inset 0 0 10px #ff7926;animation:specialLandingRing .62s ease-out forwards}
 .platform.spring-landing .contact-glow::before{animation:contactRays .62s ease-out forwards}
-.platform.flight-landing .contact-glow{width:190px;height:68px;top:-12px;color:#71f7ff;background:radial-gradient(ellipse,#fff 0 7%,#cfffff 12%,rgba(45,231,255,.98) 24%,rgba(31,104,255,.58) 50%,transparent 78%);filter:drop-shadow(0 0 25px #1ce9ff) drop-shadow(0 0 16px #3973ff);animation:flightLandingGlow .86s cubic-bezier(.16,.8,.22,1) forwards}
+.platform.flight-landing .contact-glow{width:108px;height:46px;top:0;color:#71f7ff;background:radial-gradient(ellipse,#fff 0 7%,#cfffff 12%,rgba(45,231,255,.98) 24%,rgba(31,104,255,.58) 50%,transparent 78%);filter:drop-shadow(0 0 20px #1ce9ff) drop-shadow(0 0 12px #3973ff);animation:flightLandingGlow .86s cubic-bezier(.16,.8,.22,1) forwards}
 .platform.flight-landing .contact-glow::after{inset:2px 13px;border-width:3px;border-color:#d8ffff;box-shadow:0 0 26px #25eaff,inset 0 0 17px #257dff;animation:flightLandingRing .86s ease-out forwards}
-.platform.flight-landing .contact-glow::before{inset:-58px -104px;background:repeating-conic-gradient(from 0deg,#d9ffff 0 2deg,#43eaff 2deg 4deg,transparent 4deg 13deg);animation:flightLandingRays .86s ease-out forwards}
+.platform.flight-landing .contact-glow::before{inset:-12px -14px;background:repeating-conic-gradient(from 0deg,#d9ffff 0 2deg,#43eaff 2deg 4deg,transparent 4deg 13deg);animation:flightLandingRays .86s ease-out forwards}
 .platform.spring .platform-symbol{animation:springArrow .52s ease-in-out infinite alternate}
 .platform.flight .platform-symbol{letter-spacing:4px;animation:energyRise .68s linear infinite}
 .crack-overlay{position:absolute;z-index:5;inset:-3px;opacity:0;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 262 66'%3E%3Cg fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M132 0 123 13 136 22 124 34 133 43 121 54 126 66' stroke='%23ffcf72' stroke-width='3'/%3E%3Cpath d='M123 13 94 10 76 2M136 22 164 13 185 4M124 34 92 29 64 38 35 31M133 43 165 35 195 43 225 35M121 54 96 50 74 61M126 58 154 55 177 66' stroke='%23ff304d' stroke-width='2.4'/%3E%3Cpath d='M94 10 82 21M164 13 172 25M64 38 51 51M195 43 210 56' stroke='%23ff5a48' stroke-width='1.7'/%3E%3C/g%3E%3C/svg%3E") center/100% 100% no-repeat;filter:drop-shadow(0 0 4px #ff243f) drop-shadow(0 0 8px rgba(255,42,61,.78))}
@@ -66,12 +66,12 @@ body{display:grid;place-items:center;overflow:hidden}
 .player-cube.landing-spring{--landing-color:#ff922e}
 .player-cube.landing-flight{--landing-color:#37efff}
 .player-cube.landing-normal::before,.player-cube.landing-spring::before,.player-cube.landing-flight::before{content:"";position:absolute;z-index:1;left:50%;bottom:-10px;border-style:solid;border-color:var(--landing-color);border-radius:50%;transform:translateX(-50%)}
-.player-cube.landing-normal::before{width:68px;height:26px;border-width:2px;box-shadow:0 0 7px var(--landing-color),inset 0 0 5px var(--landing-color);animation:normalImpactRing .46s ease-out forwards}
-.player-cube.landing-spring::before{width:100px;height:38px;border-width:3px;box-shadow:0 0 14px var(--landing-color),inset 0 0 10px var(--landing-color);animation:landingImpactRing .62s ease-out forwards}
-.player-cube.landing-flight::before{width:128px;height:48px;border-width:4px;box-shadow:0 0 23px var(--landing-color),inset 0 0 16px var(--landing-color);animation:flightImpactRing .86s ease-out forwards}
+.player-cube.landing-normal::before{width:58px;height:22px;border-width:2px;box-shadow:0 0 7px var(--landing-color),inset 0 0 5px var(--landing-color);animation:normalImpactRing .46s ease-out forwards}
+.player-cube.landing-spring::before{width:76px;height:30px;border-width:2px;box-shadow:0 0 12px var(--landing-color),inset 0 0 8px var(--landing-color);animation:landingImpactRing .62s ease-out forwards}
+.player-cube.landing-flight::before{width:88px;height:34px;border-width:3px;box-shadow:0 0 20px var(--landing-color),inset 0 0 13px var(--landing-color);animation:flightImpactRing .86s ease-out forwards}
 .player-cube.landing-spring::after,.player-cube.landing-flight::after{content:"";position:absolute;z-index:1;left:50%;bottom:-34px;border-radius:50%;transform:translateX(-50%);pointer-events:none}
-.player-cube.landing-spring::after{width:122px;height:76px;background:repeating-conic-gradient(from 0deg,#ffc16d 0 3deg,transparent 3deg 28deg);-webkit-mask:radial-gradient(ellipse,transparent 0 34%,#000 37% 48%,transparent 51%);mask:radial-gradient(ellipse,transparent 0 34%,#000 37% 48%,transparent 51%);animation:springImpactBurst .62s ease-out forwards}
-.player-cube.landing-flight::after{width:190px;height:150px;background:repeating-conic-gradient(from 0deg,#e8ffff 0 2deg,#43eaff 2deg 4deg,transparent 4deg 14deg);-webkit-mask:radial-gradient(ellipse,transparent 0 24%,#000 27% 51%,transparent 54%);mask:radial-gradient(ellipse,transparent 0 24%,#000 27% 51%,transparent 54%);filter:drop-shadow(0 0 8px #2deaff);animation:flightImpactBurst .86s ease-out forwards}
+.player-cube.landing-spring::after{width:82px;height:54px;background:repeating-conic-gradient(from 0deg,#ffc16d 0 3deg,transparent 3deg 28deg);-webkit-mask:radial-gradient(ellipse,transparent 0 34%,#000 37% 48%,transparent 51%);mask:radial-gradient(ellipse,transparent 0 34%,#000 37% 48%,transparent 51%);animation:springImpactBurst .62s ease-out forwards}
+.player-cube.landing-flight::after{width:108px;height:82px;background:repeating-conic-gradient(from 0deg,#e8ffff 0 2deg,#43eaff 2deg 4deg,transparent 4deg 14deg);-webkit-mask:radial-gradient(ellipse,transparent 0 24%,#000 27% 51%,transparent 54%);mask:radial-gradient(ellipse,transparent 0 24%,#000 27% 51%,transparent 54%);filter:drop-shadow(0 0 8px #2deaff);animation:flightImpactBurst .86s ease-out forwards}
 .player-cube.landing-normal .player-cube-image,.player-cube.landing-spring .player-cube-image,.player-cube.landing-flight .player-cube-image{animation:landingCubePulse .42s cubic-bezier(.18,.88,.3,1.18)}
 .player-cube.falling-through{animation:cubeFallThrough .86s cubic-bezier(.45,.05,.9,.5) forwards}
 .altitude-line{position:absolute;top:40px;bottom:85px;width:1px;background:linear-gradient(transparent,rgba(49,132,234,.32),transparent)}
@@ -127,17 +127,17 @@ body{display:grid;place-items:center;overflow:hidden}
 @keyframes normalContactGlow{0%{opacity:0;transform:translateX(-50%) scale(.3)}22%{opacity:.72}100%{opacity:0;transform:translateX(-50%) scale(1.2)}}
 @keyframes normalContactRing{0%{opacity:.72;transform:scale(.35)}100%{opacity:0;transform:scale(1.28)}}
 @keyframes normalContactRays{0%{opacity:0;transform:scale(.45)}25%{opacity:.34}100%{opacity:0;transform:scale(.92)}}
-@keyframes specialLandingGlow{0%{opacity:0;transform:translateX(-50%) scale(.2)}20%{opacity:.94}100%{opacity:0;transform:translateX(-50%) scale(1.58)}}
-@keyframes flightLandingGlow{0%{opacity:0;transform:translateX(-50%) scale(.12)}18%{opacity:1}52%{opacity:1;filter:drop-shadow(0 0 34px #1ce9ff) drop-shadow(0 0 22px #3973ff)}100%{opacity:0;transform:translateX(-50%) scale(2.05)}}
+@keyframes specialLandingGlow{0%{opacity:0;transform:translateX(-50%) scale(.25)}20%{opacity:.94}100%{opacity:0;transform:translateX(-50%) scale(1.3)}}
+@keyframes flightLandingGlow{0%{opacity:0;transform:translateX(-50%) scale(.18)}18%{opacity:1}52%{opacity:1;filter:drop-shadow(0 0 27px #1ce9ff) drop-shadow(0 0 17px #3973ff)}100%{opacity:0;transform:translateX(-50%) scale(1.25)}}
 @keyframes specialLandingRing{0%{opacity:.95;transform:scale(.2)}100%{opacity:0;transform:scale(1.72)}}
-@keyframes flightLandingRing{0%{opacity:1;transform:scale(.12)}45%{opacity:1}100%{opacity:0;transform:scale(2.15)}}
+@keyframes flightLandingRing{0%{opacity:1;transform:scale(.18)}45%{opacity:1}100%{opacity:0;transform:scale(1.35)}}
 @keyframes contactRays{0%{opacity:0;transform:scale(.25) rotate(-10deg)}22%{opacity:1}100%{opacity:0;transform:scale(1.42) rotate(8deg)}}
-@keyframes flightLandingRays{0%{opacity:0;transform:scale(.15) rotate(-18deg)}18%{opacity:1}58%{opacity:.95}100%{opacity:0;transform:scale(1.62) rotate(16deg)}}
+@keyframes flightLandingRays{0%{opacity:0;transform:scale(.22) rotate(-18deg)}18%{opacity:1}58%{opacity:.95}100%{opacity:0;transform:scale(1.15) rotate(16deg)}}
 @keyframes normalImpactRing{0%{opacity:.68;transform:translateX(-50%) scale(.42)}100%{opacity:0;transform:translateX(-50%) scale(1.3)}}
-@keyframes landingImpactRing{0%{opacity:1;transform:translateX(-50%) scale(.22)}100%{opacity:0;transform:translateX(-50%) scale(1.85)}}
-@keyframes flightImpactRing{0%{opacity:1;transform:translateX(-50%) scale(.14)}42%{opacity:1}100%{opacity:0;transform:translateX(-50%) scale(2.15)}}
-@keyframes springImpactBurst{0%{opacity:0;transform:translateX(-50%) scale(.25) rotate(-8deg)}25%{opacity:.8}100%{opacity:0;transform:translateX(-50%) scale(1.45) rotate(8deg)}}
-@keyframes flightImpactBurst{0%{opacity:0;transform:translateX(-50%) scale(.16) rotate(-14deg)}18%{opacity:1}58%{opacity:.92}100%{opacity:0;transform:translateX(-50%) scale(1.7) rotate(14deg)}}
+@keyframes landingImpactRing{0%{opacity:1;transform:translateX(-50%) scale(.28)}100%{opacity:0;transform:translateX(-50%) scale(1.45)}}
+@keyframes flightImpactRing{0%{opacity:1;transform:translateX(-50%) scale(.2)}42%{opacity:1}100%{opacity:0;transform:translateX(-50%) scale(1.42)}}
+@keyframes springImpactBurst{0%{opacity:0;transform:translateX(-50%) scale(.3) rotate(-8deg)}25%{opacity:.8}100%{opacity:0;transform:translateX(-50%) scale(1.2) rotate(8deg)}}
+@keyframes flightImpactBurst{0%{opacity:0;transform:translateX(-50%) scale(.22) rotate(-14deg)}18%{opacity:1}58%{opacity:.92}100%{opacity:0;transform:translateX(-50%) scale(1.2) rotate(14deg)}}
 @keyframes landingCubePulse{0%{transform:scale(.78);filter:brightness(1.8)}55%{transform:scale(1.14);filter:brightness(1.35)}100%{transform:scale(1);filter:brightness(1)}}
 @keyframes energyRise{0%{transform:translateY(6px);opacity:.38}100%{transform:translateY(-9px);opacity:1}}
 @keyframes cubeJump{0%{bottom:102px;transform:translateX(-50%) scaleY(.86) scaleX(1.08)}52%{bottom:calc(102px + var(--platform-gap) + 30px);transform:translateX(-50%) rotate(84deg)}100%{bottom:calc(102px + var(--platform-gap));transform:translateX(-50%) rotate(94deg) scaleY(.94)}}
