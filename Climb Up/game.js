@@ -26,7 +26,7 @@ const TYPE_INFO = {
 const state = {
   status: 'idle', difficulty: 'easy', currentFloor: 0, currentMultiplier: 1,
   previewPlatformType: 'normal', lockedPlatformType: null, isJumping: false,
-  isAutoMoving: false, canCashout: false, gameOver: false, cycleIndex: 0,
+  isAutoMoving: false, canCashout: false, gameOver: false,
   cycleTimer: null, specialCycleActive: false, platformGap: 118, hasSuccessfulLanding: false,
   balance: 3000, currentBet: 10
 };
@@ -112,8 +112,8 @@ function updateUI() {
 
 function cyclePlatform() {
   if (!state.specialCycleActive || !['playing', 'jumping'].includes(state.status) || state.isAutoMoving) return;
-  state.cycleIndex = (state.cycleIndex + 1) % CONFIG.platformTypes.length;
-  state.previewPlatformType = CONFIG.platformTypes[state.cycleIndex];
+  const candidates = CONFIG.platformTypes.filter((type) => type !== state.previewPlatformType);
+  state.previewPlatformType = candidates[Math.floor(Math.random() * candidates.length)];
   renderPlatforms();
 }
 
@@ -127,7 +127,6 @@ function stopCycle() { clearInterval(state.cycleTimer); state.cycleTimer = null;
 
 function prepareNextPlatform() {
   stopCycle();
-  state.cycleIndex = 0;
   state.previewPlatformType = 'normal';
   state.specialCycleActive = Math.random() < CONFIG.specialCycleChance;
   renderPlatforms();
@@ -181,7 +180,7 @@ async function resetBoard(animated = false) {
 
   Object.assign(state, {
     status: 'idle', currentFloor: 0, previewPlatformType: 'normal', lockedPlatformType: null,
-    isJumping: false, isAutoMoving: false, canCashout: false, gameOver: false, cycleIndex: 0,
+    isJumping: false, isAutoMoving: false, canCashout: false, gameOver: false,
     specialCycleActive: false, hasSuccessfulLanding: false
   });
   state.currentMultiplier = multiplierAt(0);
@@ -221,7 +220,7 @@ function startBet() {
   state.balance = Number((state.balance - amount).toFixed(2));
   Object.assign(state, {
     status: 'playing', currentFloor: 0, previewPlatformType: 'normal', lockedPlatformType: null,
-    isJumping: false, isAutoMoving: false, canCashout: false, gameOver: false, cycleIndex: 0,
+    isJumping: false, isAutoMoving: false, canCashout: false, gameOver: false,
     specialCycleActive: false, hasSuccessfulLanding: false
   });
   state.currentMultiplier = multiplierAt(0);
