@@ -62,6 +62,10 @@ body{display:grid;place-items:center;overflow:hidden}
 .result-card::before{content:"";position:absolute;inset:7px;border:1px solid rgba(255,210,101,.2);border-radius:12px;pointer-events:none}
 .result-title{position:relative;color:#fff1a8;font-size:34px;line-height:1.1;font-weight:1000;letter-spacing:.02em;text-shadow:0 0 14px rgba(255,183,55,.65)}
 .result-subtitle{position:relative;margin-top:10px;color:#ffd67d;font-size:16px;font-weight:800;letter-spacing:.08em}
+.result-modal.reward::before{content:"";position:absolute;z-index:0;width:330px;height:330px;border-radius:50%;background:repeating-conic-gradient(from 0deg,rgba(255,211,91,.92) 0 3deg,transparent 3deg 17deg);-webkit-mask:radial-gradient(circle,transparent 0 31%,#000 34% 46%,transparent 49%);mask:radial-gradient(circle,transparent 0 31%,#000 34% 46%,transparent 49%);filter:drop-shadow(0 0 8px rgba(255,176,42,.8));animation:rewardRays .82s cubic-bezier(.18,.72,.25,1) forwards}
+.result-modal.reward .result-card{z-index:1}
+.result-modal.reward .result-card::after{content:"";position:absolute;z-index:3;left:50%;top:50%;width:5px;height:5px;border-radius:50%;background:#fff3a6;box-shadow:-135px -62px 0 #ffcb45,126px -72px 0 #fff0a1,-112px 78px 0 #ff9d2e,139px 54px 0 #ffd55d,-72px -106px 0 #fff8cb,76px 101px 0 #ffb836,-151px 8px 0 #ffe284,154px -5px 0 #fff0a6;animation:rewardSparkles .78s ease-out forwards}
+.result-modal.reward .result-title{animation:rewardTitleGlow .72s cubic-bezier(.18,.9,.3,1.12)}
 .result-modal.failure{background:rgba(0,0,0,.24)}
 .result-modal.failure .result-card{border-color:#88919f;background:linear-gradient(180deg,rgba(60,66,76,.97),rgba(25,28,34,.98));box-shadow:inset 0 1px rgba(255,255,255,.2),inset 0 0 28px rgba(150,160,175,.12),0 0 28px rgba(80,88,100,.3),0 16px 42px rgba(0,0,0,.62)}
 .result-modal.failure .result-card::before{border-color:rgba(220,225,232,.13)}
@@ -106,6 +110,9 @@ body{display:grid;place-items:center;overflow:hidden}
 @keyframes colorShiftPulse{0%{transform:scale(.76)}45%{transform:scale(1.18)}100%{transform:scale(1)}}
 @keyframes playerResetEnter{0%{opacity:0;transform:translateX(-50%) translateY(-18px) rotate(-4deg) scale(.55)}65%{opacity:1;transform:translateX(-50%) translateY(3px) rotate(-4deg) scale(1.08)}100%{opacity:1;transform:translateX(-50%) translateY(0) rotate(-4deg) scale(1)}}
 @keyframes resultPop{0%{transform:translateY(12px) scale(.88);opacity:0}70%{transform:translateY(-3px) scale(1.035);opacity:1}100%{transform:translateY(0) scale(1);opacity:1}}
+@keyframes rewardRays{0%{opacity:0;transform:scale(.28) rotate(-18deg)}35%{opacity:1}100%{opacity:0;transform:scale(1.25) rotate(10deg)}}
+@keyframes rewardSparkles{0%{opacity:0;transform:translate(-50%,-50%) scale(.25)}28%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1.28)}}
+@keyframes rewardTitleGlow{0%{opacity:.2;transform:scale(.65);filter:brightness(1)}48%{opacity:1;transform:scale(1.16);filter:brightness(1.8)}100%{opacity:1;transform:scale(1);filter:brightness(1)}}
 @keyframes resultClose{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(6px) scale(.82);opacity:0}}
 @keyframes shake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
 @media(max-width:390px){.control-panel{padding-left:17px;padding-right:17px}.quick-bet-row{grid-template-columns:repeat(4,36px);gap:4px}.bottom-control-row{grid-template-columns:137px 1fr}}
