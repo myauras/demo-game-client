@@ -4,7 +4,7 @@ html,body{margin:0;min-height:100%;background:#01040e}
 body{display:grid;place-items:center;overflow:hidden}
 .phone-shell{position:relative;width:min(100vw,430px);height:100dvh;max-height:932px;overflow:hidden;background:#03091b;color:#fff;isolation:isolate;box-shadow:0 0 70px #000}
 .game-bg,.vignette,.particles{position:absolute;inset:0;pointer-events:none}
-.game-bg{z-index:-4;background:url('./assets/abyss-bg.png') center/cover;filter:saturate(.95) brightness(.66) contrast(1.08)}
+.game-bg{z-index:-4;background:url('./assets/abyss-bg.webp') center/cover;filter:saturate(.95) brightness(.66) contrast(1.08)}
 .vignette{z-index:-3;background:linear-gradient(180deg,rgba(0,5,22,.5),transparent 20%,transparent 62%,rgba(0,4,18,.82)),radial-gradient(ellipse at center,transparent 35%,rgba(0,3,18,.55) 100%)}
 .particles{z-index:-2;opacity:.85;background-image:radial-gradient(circle,#8eeaff 0 1.2px,transparent 1.8px),radial-gradient(circle,#ffad5e 0 1px,transparent 1.5px);background-size:91px 113px,137px 181px;background-position:17px 6px,73px 61px;animation:drift 13s linear infinite}
 .balance-chip{position:absolute;z-index:30;right:13px;top:calc(15px + env(safe-area-inset-top));height:42px;display:flex;align-items:center;border:1px solid rgba(76,177,255,.75);border-radius:11px;background:linear-gradient(180deg,rgba(8,31,72,.96),rgba(3,13,34,.96));color:var(--gold);box-shadow:inset 0 1px rgba(146,225,255,.16),0 0 18px rgba(30,126,255,.28),0 8px 20px rgba(0,0,0,.35);font-size:16px}
