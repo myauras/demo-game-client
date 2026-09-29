@@ -112,7 +112,9 @@ function updateUI() {
 
 function cyclePlatform() {
   if (!state.specialCycleActive || !['playing', 'jumping'].includes(state.status) || state.isAutoMoving) return;
-  const candidates = CONFIG.platformTypes.filter((type) => type !== state.previewPlatformType);
+  const candidates = state.previewPlatformType === 'normal'
+    ? CONFIG.platformTypes
+    : CONFIG.platformTypes.filter((type) => type !== state.previewPlatformType);
   state.previewPlatformType = candidates[Math.floor(Math.random() * candidates.length)];
   renderPlatforms();
 }
