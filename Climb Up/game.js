@@ -295,19 +295,20 @@ async function liftToNextStep(type) {
 function playPlatformContactEffect(type, offset = 1, isFinalLanding = false) {
   const platform = els.layer.querySelector(`.platform[data-offset="${offset}"]`);
   if (!platform) return;
+  const hasPlayerLandingEffect = type === 'normal' || isFinalLanding;
   const effectClass = isFinalLanding ? `${type}-landing` : type === 'spring' ? 'spring-contact' : 'normal-contact';
   platform.classList.remove('spring-contact', 'normal-contact', 'spring-landing', 'flight-landing');
   els.player.classList.remove('landing-normal', 'landing-spring', 'landing-flight');
   void platform.offsetHeight;
   platform.classList.add(effectClass);
-  if (type === 'normal' || isFinalLanding) {
+  if (hasPlayerLandingEffect) {
     els.player.classList.add(`landing-${type}`);
   }
   setTimeout(() => {
     platform.classList.remove(effectClass);
-    els.player.classList.remove(`landing-${type}`);
+    if (hasPlayerLandingEffect) els.player.classList.remove(`landing-${type}`);
     if (isFinalLanding) els.player.classList.remove(`boost-${type}`);
-  }, type === 'flight' && isFinalLanding ? 900 : 700);
+  }, 700);
 }
 
 async function scrollOneFloor() {
