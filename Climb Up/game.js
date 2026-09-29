@@ -292,14 +292,21 @@ async function liftToNextStep(type) {
   await wait(CONFIG.boostLiftDuration + 25);
 }
 
-function playPlatformContactEffect(type) {
-  const platform = els.layer.querySelector('.platform[data-offset="1"]');
+function playPlatformContactEffect(type, offset = 1, isFinalLanding = false) {
+  const platform = els.layer.querySelector(`.platform[data-offset="${offset}"]`);
   if (!platform) return;
-  const effectClass = type === 'spring' ? 'spring-contact' : 'normal-contact';
-  platform.classList.remove('spring-contact', 'normal-contact');
+  const effectClass = isFinalLanding ? `${type}-landing` : type === 'spring' ? 'spring-contact' : 'normal-contact';
+  platform.classList.remove('spring-contact', 'normal-contact', 'spring-landing', 'flight-landing');
+  els.player.classList.remove('landing-normal', 'landing-spring', 'landing-flight');
   void platform.offsetHeight;
   platform.classList.add(effectClass);
-  setTimeout(() => platform.classList.remove(effectClass), 480);
+  if (type === 'normal' || isFinalLanding) {
+    els.player.classList.add(`landing-${type}`);
+  }
+  setTimeout(() => {
+    platform.classList.remove(effectClass);
+    els.player.classList.remove(`landing-${type}`);
+  }, 700);
 }
 
 async function scrollOneFloor() {
@@ -431,6 +438,9 @@ async function advanceFloors(distance, type, checkFinalLanding = false) {
   state.status = 'playing';
   state.lockedPlatformType = null;
   prepareNextPlatform();
+  if (checkFinalLanding && (type === 'spring' || type === 'flight')) {
+    playPlatformContactEffect(type, 0, true);
+  }
   updateUI();
 }
 
