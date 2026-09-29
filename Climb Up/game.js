@@ -305,10 +305,13 @@ function playPlatformContactEffect(type, offset = 1, isFinalLanding = false) {
     els.player.classList.add(`landing-${type}`);
   }
   const cleanupDelay = isFinalLanding ? 620 : type === 'normal' ? 440 : 480;
+  if (isFinalLanding) {
+    const colorRestoreDelay = type === 'spring' ? 560 : cleanupDelay;
+    setTimeout(() => els.player.classList.remove(`boost-${type}`), colorRestoreDelay);
+  }
   setTimeout(() => {
     platform.classList.remove(effectClass);
     if (hasPlayerLandingEffect) els.player.classList.remove(`landing-${type}`);
-    if (isFinalLanding) els.player.classList.remove(`boost-${type}`);
   }, cleanupDelay);
 }
 
