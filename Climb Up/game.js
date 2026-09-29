@@ -13,7 +13,8 @@ const CONFIG = {
   flightJumpDistance: 4,
   jumpDuration: 580,
   cameraStepDuration: 390,
-  boostLiftDuration: 270
+  boostLiftDuration: 270,
+  flightTravelPerFloor: 230
 };
 
 const TYPE_INFO = {
@@ -302,6 +303,50 @@ async function scrollOneFloor() {
   void els.layer.offsetHeight;
 }
 
+async function flyAcrossFloors(distance, landingSuccess) {
+  const cameraFloors = landingSuccess ? distance : Math.max(0, distance - 1);
+  const duration = Math.max(720, cameraFloors * CONFIG.flightTravelPerFloor);
+  const upperBottom = 102 + state.platformGap;
+  const cruiseBottom = 102 + state.platformGap * .78;
+
+  els.player.style.animation = 'none';
+  els.player.classList.remove('jumping');
+  els.player.classList.add('boost-flight');
+  const playerMotion = els.player.animate([
+    { bottom: '102px', transform: 'translateX(-50%) rotate(0deg)', offset: 0 },
+    { bottom: `${cruiseBottom}px`, transform: 'translateX(-50%) rotate(0deg)', offset: .16 },
+    { bottom: `${cruiseBottom}px`, transform: 'translateX(-50%) rotate(0deg)', offset: .8 },
+    { bottom: landingSuccess ? '102px' : `${upperBottom}px`, transform: 'translateX(-50%) rotate(0deg)', offset: 1 }
+  ], { duration, easing: 'cubic-bezier(.22,.62,.28,1)', fill: 'forwards' });
+
+  els.layer.style.transition = `transform ${duration}ms cubic-bezier(.22,.62,.28,1)`;
+  requestAnimationFrame(() => {
+    Array.from(els.layer.children).forEach((platform) => {
+      const nextOffset = Number(platform.dataset.offset) - cameraFloors;
+      const nextScale = Math.max(.57, 1 - Math.max(0, nextOffset) * .065);
+      platform.style.transition = `transform ${duration}ms cubic-bezier(.22,.62,.28,1), width ${duration}ms cubic-bezier(.22,.62,.28,1), opacity ${duration}ms ease`;
+      platform.style.setProperty('--scale', `${nextScale}`);
+      platform.style.width = `${nextOffset === 0 ? 284 : nextOffset === 1 ? 262 : 242}px`;
+      platform.style.opacity = `${Math.max(.2, 1 - Math.max(0, nextOffset) * .105)}`;
+    });
+    els.layer.style.transform = `translateY(${cameraFloors * state.platformGap}px)`;
+  });
+
+  await wait(duration + 20);
+  playerMotion.cancel();
+  state.currentFloor += cameraFloors;
+  state.currentMultiplier = multiplierAt(state.currentFloor);
+  els.layer.style.transition = 'none';
+  els.layer.style.transform = 'none';
+  renderPlatforms();
+  void els.layer.offsetHeight;
+  els.player.style.animation = 'none';
+  els.player.style.transition = 'none';
+  els.player.style.bottom = landingSuccess ? '102px' : `${upperBottom}px`;
+  els.player.style.transform = 'translateX(-50%) rotate(0deg)';
+  return landingSuccess;
+}
+
 async function advanceFloors(distance, type, checkFinalLanding = false) {
   const riskBaseMultiplier = state.currentMultiplier;
   const targetMultiplier = multiplierAt(state.currentFloor + distance);
@@ -313,20 +358,34 @@ async function advanceFloors(distance, type, checkFinalLanding = false) {
     els.player.classList.toggle('boost-flight', type === 'flight');
   }
 
-  for (let step = 0; step < distance; step += 1) {
-    if (step > 0) {
-      await liftToNextStep(type);
-      if (checkFinalLanding && step === distance - 1) {
-        const finalLandingSuccess = Math.random() <= landingSuccessRate(riskBaseMultiplier, targetMultiplier);
-        if (!finalLandingSuccess) {
-          state.isAutoMoving = false;
-          failRun();
-          return;
-        }
-        state.hasSuccessfulLanding = true;
-      }
-    }
+  if (type === 'flight') {
     await scrollOneFloor();
+    const remainingDistance = distance - 1;
+    const finalLandingSuccess = !checkFinalLanding || Math.random() <= landingSuccessRate(riskBaseMultiplier, targetMultiplier);
+    const landed = await flyAcrossFloors(remainingDistance, finalLandingSuccess);
+    if (!landed) {
+      state.isAutoMoving = false;
+      failRun();
+      return;
+    }
+    state.hasSuccessfulLanding = true;
+  } else {
+
+    for (let step = 0; step < distance; step += 1) {
+      if (step > 0) {
+        await liftToNextStep(type);
+        if (checkFinalLanding && step === distance - 1) {
+          const finalLandingSuccess = Math.random() <= landingSuccessRate(riskBaseMultiplier, targetMultiplier);
+          if (!finalLandingSuccess) {
+            state.isAutoMoving = false;
+            failRun();
+            return;
+          }
+          state.hasSuccessfulLanding = true;
+        }
+      }
+      await scrollOneFloor();
+    }
   }
 
   els.player.classList.remove('boost-flight', 'boost-spring');
