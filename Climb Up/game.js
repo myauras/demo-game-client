@@ -425,7 +425,12 @@ async function advanceFloors(distance, type, checkFinalLanding = false) {
           state.hasSuccessfulLanding = true;
         }
       }
-      if (type === 'spring' || type === 'normal') playPlatformContactEffect(type);
+      if (type === 'normal') {
+        playPlatformContactEffect(type);
+      } else if (type === 'spring') {
+        const isFinalSpringLanding = checkFinalLanding && step === distance - 1;
+        playPlatformContactEffect(type, 1, isFinalSpringLanding);
+      }
       await scrollOneFloor();
     }
   }
@@ -438,9 +443,7 @@ async function advanceFloors(distance, type, checkFinalLanding = false) {
   state.status = 'playing';
   state.lockedPlatformType = null;
   prepareNextPlatform();
-  if (checkFinalLanding && (type === 'spring' || type === 'flight')) {
-    playPlatformContactEffect(type, 0, true);
-  }
+  if (checkFinalLanding && type === 'flight') playPlatformContactEffect(type, 0, true);
   updateUI();
 }
 
