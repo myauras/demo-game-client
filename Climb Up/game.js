@@ -26,7 +26,7 @@ const state = {
   status: 'idle', difficulty: 'easy', currentFloor: 0, currentMultiplier: 1,
   previewPlatformType: 'normal', lockedPlatformType: null, isJumping: false,
   isAutoMoving: false, canCashout: false, gameOver: false,
-  cycleTimer: null, specialCycleActive: false, platformGap: 118, hasSuccessfulLanding: false,
+  cycleTimer: null, specialCycleActive: false, forkRevealPending: false, platformGap: 118, hasSuccessfulLanding: false,
   testGuaranteedLanding: false,
   balance: 3000, currentBet: 10
 };
@@ -69,6 +69,7 @@ function formatMoney(value) { return `$ ${value.toFixed(2)}`; }
 
 function renderPlatforms() {
   els.layer.innerHTML = '';
+  const revealFork = state.forkRevealPending;
   const viewportHeight = els.stage.clientHeight || 700;
   const baseY = viewportHeight - 102;
   const gap = Math.max(103, Math.min(132, viewportHeight * .18));
@@ -80,7 +81,7 @@ function renderPlatforms() {
     const isNext = offset === 1;
     const isFinal = floor === lastFloor();
     const platform = document.createElement('div');
-    const forkClass = route === 'center' ? '' : ` fork-${route}`;
+    const forkClass = route === 'center' ? '' : ` fork-${route}${revealFork ? ' fork-reveal' : ''}`;
     platform.className = `platform ${type}${isCurrent ? ' current' : ''}${isNext ? ' next' : ''}${isFinal ? ' final' : ''}${forkClass}`;
     platform.dataset.offset = offset;
     platform.dataset.route = route;
@@ -104,6 +105,13 @@ function renderPlatforms() {
     if (showFork) {
       platformTop = appendPlatform(floor, offset, 'normal', 'left');
       appendPlatform(floor, offset, state.previewPlatformType, 'right');
+      if (revealFork) {
+        const burst = document.createElement('span');
+        burst.className = 'branch-burst';
+        burst.style.top = `${platformTop + 20}px`;
+        burst.setAttribute('aria-hidden', 'true');
+        els.layer.appendChild(burst);
+      }
     } else {
       const type = isNext && !state.isAutoMoving ? state.previewPlatformType : 'normal';
       platformTop = appendPlatform(floor, offset, type);
@@ -118,6 +126,7 @@ function renderPlatforms() {
       els.layer.appendChild(crown);
     }
   }
+  state.forkRevealPending = false;
 }
 
 function setActionMode(mode) {
@@ -179,6 +188,7 @@ function prepareNextPlatform() {
   stopCycle();
   const specialTypes = availablePlatformTypes().filter((type) => type !== 'normal');
   state.specialCycleActive = specialTypes.length > 0 && Math.random() < CONFIG.specialCycleChance;
+  state.forkRevealPending = state.specialCycleActive;
   if (state.specialCycleActive) {
     state.previewPlatformType = specialTypes[Math.floor(Math.random() * specialTypes.length)];
   } else {
@@ -243,7 +253,7 @@ async function resetBoard(animated = false) {
   Object.assign(state, {
     status: 'idle', currentFloor: 0, previewPlatformType: 'normal', lockedPlatformType: null,
     isJumping: false, isAutoMoving: false, canCashout: false, gameOver: false,
-    specialCycleActive: false, hasSuccessfulLanding: false, testGuaranteedLanding: false
+    specialCycleActive: false, forkRevealPending: false, hasSuccessfulLanding: false, testGuaranteedLanding: false
   });
   state.currentMultiplier = multiplierAt(0);
   renderPlatforms();
@@ -283,7 +293,7 @@ function startBet() {
   Object.assign(state, {
     status: 'playing', currentFloor: 0, previewPlatformType: 'normal', lockedPlatformType: null,
     isJumping: false, isAutoMoving: false, canCashout: false, gameOver: false,
-    specialCycleActive: false, hasSuccessfulLanding: false, testGuaranteedLanding: false
+    specialCycleActive: false, forkRevealPending: false, hasSuccessfulLanding: false, testGuaranteedLanding: false
   });
   state.currentMultiplier = multiplierAt(0);
   els.player.className = 'player-cube';
