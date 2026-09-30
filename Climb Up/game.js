@@ -37,6 +37,7 @@ const els = {
   balance: $('balanceValue'), addBalance: $('addBalanceButton'), finishTest: $('finishTestButton'), betInput: $('betInput'),
   halfBet: $('halfBetButton'), doubleBet: $('doubleBetButton'), difficulty: $('difficultySelect'),
   bet: $('betButton'), cashout: $('cashoutButton'), jump: $('jumpButton'),
+  jumpLeft: $('jumpLeftButton'), jumpRight: $('jumpRightButton'),
   idleActions: $('idleActions'), playActions: $('playActions'), resultModal: $('resultModal'),
   resultTitle: $('resultTitle'), resultSubtitle: $('resultSubtitle'),
   quickBets: Array.from(document.querySelectorAll('[data-bet-amount]'))
@@ -73,16 +74,16 @@ function renderPlatforms() {
   const gap = Math.max(103, Math.min(132, viewportHeight * .18));
   state.platformGap = gap;
   els.player.style.setProperty('--platform-gap', `${gap}px`);
-  for (let offset = -1; offset <= 6; offset += 1) {
-    const floor = state.currentFloor + offset;
-    if (floor < 0 || floor > lastFloor()) continue;
-    const platform = document.createElement('div');
+
+  function appendPlatform(floor, offset, type = 'normal', route = 'center') {
     const isCurrent = offset === 0;
     const isNext = offset === 1;
     const isFinal = floor === lastFloor();
-    const type = isNext && !state.isAutoMoving ? state.previewPlatformType : 'normal';
-    platform.className = `platform ${type}${isCurrent ? ' current' : ''}${isNext ? ' next' : ''}${isFinal ? ' final' : ''}`;
+    const platform = document.createElement('div');
+    const forkClass = route === 'center' ? '' : ` fork-${route}`;
+    platform.className = `platform ${type}${isCurrent ? ' current' : ''}${isNext ? ' next' : ''}${isFinal ? ' final' : ''}${forkClass}`;
     platform.dataset.offset = offset;
+    platform.dataset.route = route;
     platform.dataset.multiplier = formatMultiplier(multiplierAt(floor));
     const platformTop = baseY - (offset + .42) * gap;
     platform.style.top = `${platformTop}px`;
@@ -90,9 +91,26 @@ function renderPlatforms() {
     platform.style.opacity = `${Math.max(.2, 1 - Math.max(0, offset) * .105)}`;
     platform.innerHTML = `<span class="platform-symbol">${isNext ? TYPE_INFO[type].symbol : ''}</span><span class="contact-glow"></span><span class="crack-overlay"></span><span class="platform-fragment fragment-left"></span><span class="platform-fragment fragment-right"></span>`;
     els.layer.appendChild(platform);
+    return platformTop;
+  }
+
+  for (let offset = -1; offset <= 6; offset += 1) {
+    const floor = state.currentFloor + offset;
+    if (floor < 0 || floor > lastFloor()) continue;
+    const isNext = offset === 1;
+    const isFinal = floor === lastFloor();
+    const showFork = isNext && state.specialCycleActive && !state.isAutoMoving;
+    let platformTop;
+    if (showFork) {
+      platformTop = appendPlatform(floor, offset, 'normal', 'left');
+      appendPlatform(floor, offset, state.previewPlatformType, 'right');
+    } else {
+      const type = isNext && !state.isAutoMoving ? state.previewPlatformType : 'normal';
+      platformTop = appendPlatform(floor, offset, type);
+    }
     if (isFinal) {
       const crown = document.createElement('span');
-      crown.className = `crown-marker${isCurrent ? ' current' : ''}`;
+      crown.className = `crown-marker${offset === 0 ? ' current' : ''}`;
       crown.dataset.offset = offset;
       crown.setAttribute('aria-hidden', 'true');
       crown.style.top = `${platformTop - 25}px`;
@@ -126,18 +144,24 @@ function syncQuickBetSelection() {
 
 function updateUI() {
   els.balance.textContent = formatMoney(state.balance);
+  const showForkControls = state.specialCycleActive;
+  els.playActions.classList.toggle('fork-actions', showForkControls);
+  els.jump.classList.toggle('hidden', showForkControls);
+  els.jumpLeft.classList.toggle('hidden', !showForkControls);
+  els.jumpRight.classList.toggle('hidden', !showForkControls);
+  const jumpDisabled = state.status !== 'playing' || state.isJumping || state.isAutoMoving;
   els.cashout.disabled = state.status !== 'playing' || !state.canCashout || state.isJumping || state.isAutoMoving;
-  els.jump.disabled = state.status !== 'playing' || state.isJumping || state.isAutoMoving;
+  els.jump.disabled = jumpDisabled;
+  els.jumpLeft.disabled = jumpDisabled;
+  els.jumpRight.disabled = jumpDisabled;
   els.finishTest.disabled = state.isJumping || state.isAutoMoving || state.currentFloor >= lastFloor() - 1 || ['failed', 'cashout'].includes(state.status);
   syncQuickBetSelection();
 }
 
 function cyclePlatform() {
   if (!state.specialCycleActive || !['playing', 'jumping'].includes(state.status) || state.isAutoMoving) return;
-  const availableTypes = availablePlatformTypes();
-  const candidates = state.previewPlatformType === 'normal'
-    ? availableTypes
-    : availableTypes.filter((type) => type !== state.previewPlatformType);
+  const availableTypes = availablePlatformTypes().filter((type) => type !== 'normal');
+  const candidates = availableTypes.filter((type) => type !== state.previewPlatformType);
   if (!candidates.length) return;
   state.previewPlatformType = candidates[Math.floor(Math.random() * candidates.length)];
   renderPlatforms();
@@ -269,13 +293,30 @@ function startBet() {
   prepareNextPlatform(); updateUI();
 }
 
-function jump() {
+function collapseFork(route) {
+  const chosen = els.layer.querySelector(`.platform[data-offset="1"][data-route="${route}"]`);
+  const unchosen = els.layer.querySelector(`.platform[data-offset="1"]:not([data-route="${route}"])`);
+  unchosen?.remove();
+  if (chosen) {
+    chosen.classList.remove('fork-left', 'fork-right');
+    chosen.dataset.route = 'center';
+    chosen.style.left = '50%';
+    chosen.style.width = '262px';
+  }
+  els.player.classList.remove('route-left', 'route-right');
+}
+
+function jump(route = 'center') {
   if (state.status !== 'playing' || state.isJumping || state.isAutoMoving) return;
+  const forkActive = state.specialCycleActive;
+  const selectedRoute = forkActive ? route : 'center';
+  state.lockedPlatformType = forkActive && selectedRoute === 'right' ? state.previewPlatformType : 'normal';
+  stopCycle();
+  if (forkActive) els.player.classList.add(`route-${selectedRoute}`);
   state.isJumping = true; state.status = 'jumping'; updateUI();
   els.player.classList.add('jumping');
   setTimeout(() => {
-    stopCycle();
-    state.lockedPlatformType = state.previewPlatformType;
+    if (forkActive) collapseFork(selectedRoute);
     const locked = TYPE_INFO[state.lockedPlatformType];
     const isSpring = state.lockedPlatformType === 'spring';
     const isFlight = state.lockedPlatformType === 'flight';
@@ -579,7 +620,9 @@ function setQuickBet(amount) {
 }
 
 els.bet.addEventListener('click', startBet);
-els.jump.addEventListener('click', jump);
+els.jump.addEventListener('click', () => jump('center'));
+els.jumpLeft.addEventListener('click', () => jump('left'));
+els.jumpRight.addEventListener('click', () => jump('right'));
 els.cashout.addEventListener('click', cashout);
 els.halfBet.addEventListener('click', () => changeBet(.5));
 els.doubleBet.addEventListener('click', () => changeBet(2));
