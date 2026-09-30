@@ -5,8 +5,8 @@ const CONFIG = {
     normal: { label: '普通', multipliers: [1.00, 1.02, 1.09, 1.18, 1.29, 1.42, 1.58, 1.77, 2.00, 2.29, 2.64, 3.07, 3.60, 4.27, 5.11, 6.17, 7.52, 9.27, 11.53, 14.48, 18.38, 23.56, 30.52, 39.95, 52.85, 70.66, 95.48, 130.44, 180.17, 251.64, 355.42, 507.75, 733.74, 1072.73, 1586.88, 2375.57, 3599.35, 5520.48, 8572.18] },
     hard: { label: '困難', multipliers: [1.00, 1.04, 1.14, 1.28, 1.45, 1.66, 1.93, 2.28, 2.72, 3.31, 4.07, 5.09, 6.47, 8.33, 10.91, 14.51, 19.61, 26.93, 37.62, 53.44, 77.23, 113.57, 170.02, 259.18, 402.45, 636.79, 1027.09, 1689.29, 2834.38, 4853.40, 8484.97, 15151.73, 27649.15, 51584.23, 98443.20, 192271.88] }
   },
-  platformSwitchInterval: 420,
   specialCycleChance: 0.35,
+  specialPlatformWeights: { spring: 0.7, flight: 0.3 },
   platformTypes: ['normal', 'spring', 'flight'],
   springJumpDistance: 2,
   flightJumpDistance: 4,
@@ -26,7 +26,7 @@ const state = {
   status: 'idle', difficulty: 'easy', currentFloor: 0, currentMultiplier: 1,
   previewPlatformType: 'normal', lockedPlatformType: null, isJumping: false,
   isAutoMoving: false, canCashout: false, gameOver: false,
-  cycleTimer: null, specialCycleActive: false, forkRevealPending: false, platformGap: 118, hasSuccessfulLanding: false,
+  specialCycleActive: false, forkRevealPending: false, platformGap: 118, hasSuccessfulLanding: false,
   testGuaranteedLanding: false,
   balance: 3000, currentBet: 10
 };
@@ -111,6 +111,7 @@ function renderPlatforms() {
         burst.style.top = `${platformTop + 20}px`;
         burst.setAttribute('aria-hidden', 'true');
         els.layer.appendChild(burst);
+        setTimeout(() => burst.remove(), 450);
       }
     } else {
       const type = isNext && !state.isAutoMoving ? state.previewPlatformType : 'normal';
@@ -167,35 +168,27 @@ function updateUI() {
   syncQuickBetSelection();
 }
 
-function cyclePlatform() {
-  if (!state.specialCycleActive || !['playing', 'jumping'].includes(state.status) || state.isAutoMoving) return;
-  const availableTypes = availablePlatformTypes().filter((type) => type !== 'normal');
-  const candidates = availableTypes.filter((type) => type !== state.previewPlatformType);
-  if (!candidates.length) return;
-  state.previewPlatformType = candidates[Math.floor(Math.random() * candidates.length)];
-  renderPlatforms();
+function chooseSpecialPlatform(types) {
+  const weightedTypes = types.map((type) => ({ type, weight: CONFIG.specialPlatformWeights[type] || 0 }));
+  const totalWeight = weightedTypes.reduce((sum, item) => sum + item.weight, 0);
+  let roll = Math.random() * totalWeight;
+  for (const item of weightedTypes) {
+    roll -= item.weight;
+    if (roll <= 0) return item.type;
+  }
+  return weightedTypes.at(-1)?.type || 'normal';
 }
-
-function startCycle() {
-  stopCycle();
-  if (!state.specialCycleActive) return;
-  state.cycleTimer = setInterval(cyclePlatform, CONFIG.platformSwitchInterval);
-}
-
-function stopCycle() { clearInterval(state.cycleTimer); state.cycleTimer = null; }
 
 function prepareNextPlatform() {
-  stopCycle();
   const specialTypes = availablePlatformTypes().filter((type) => type !== 'normal');
   state.specialCycleActive = specialTypes.length > 0 && Math.random() < CONFIG.specialCycleChance;
   state.forkRevealPending = state.specialCycleActive;
   if (state.specialCycleActive) {
-    state.previewPlatformType = specialTypes[Math.floor(Math.random() * specialTypes.length)];
+    state.previewPlatformType = chooseSpecialPlatform(specialTypes);
   } else {
     state.previewPlatformType = 'normal';
   }
   renderPlatforms();
-  startCycle();
 }
 
 function wait(duration) { return new Promise((resolve) => setTimeout(resolve, duration)); }
@@ -230,7 +223,6 @@ function closeResultModal(onClosed) {
 }
 
 async function resetBoard(animated = false) {
-  stopCycle();
   clearResultModal();
   els.stage.classList.remove('screen-shake');
   els.player.className = 'player-cube reset-hidden';
@@ -321,7 +313,6 @@ function jump(route = 'center') {
   const forkActive = state.specialCycleActive;
   const selectedRoute = forkActive ? route : 'center';
   state.lockedPlatformType = forkActive && selectedRoute === 'right' ? state.previewPlatformType : 'normal';
-  stopCycle();
   if (forkActive) els.player.classList.add(`route-${selectedRoute}`);
   state.isJumping = true; state.status = 'jumping'; updateUI();
   els.player.classList.add('jumping');
@@ -531,7 +522,6 @@ async function advanceFloors(distance, type, checkFinalLanding = false) {
   const reachedFinalFloor = state.currentFloor >= lastFloor();
   if (checkFinalLanding && type === 'flight') playPlatformContactEffect(type, 0, true);
   if (reachedFinalFloor) {
-    stopCycle();
     renderPlatforms();
     updateUI();
     setTimeout(() => {
@@ -577,7 +567,6 @@ function cashout() {
 async function testReachPenultimate() {
   if (state.status === 'idle') startBet();
   if (state.status !== 'playing' || state.isJumping || state.isAutoMoving) return;
-  stopCycle();
   state.status = 'jumping';
   state.isJumping = true;
   state.isAutoMoving = true;
