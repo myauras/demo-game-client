@@ -49,6 +49,10 @@ function multiplierAt(floor) {
   return multipliers[Math.min(Math.max(0, floor), multipliers.length - 1)];
 }
 
+function setPlatformScale(platform, scale) {
+  platform.style.setProperty('--scale', `${scale}`);
+}
+
 function availablePlatformTypes() {
   const remaining = lastFloor() - state.currentFloor;
   return CONFIG.platformTypes.filter((type) => type === 'normal' || TYPE_INFO[type].distance + 1 <= remaining);
@@ -80,11 +84,21 @@ function renderPlatforms() {
     platform.className = `platform ${type}${isCurrent ? ' current' : ''}${isNext ? ' next' : ''}${isFinal ? ' final' : ''}`;
     platform.dataset.offset = offset;
     platform.dataset.multiplier = formatMultiplier(multiplierAt(floor));
-    platform.style.top = `${baseY - (offset + .42) * gap}px`;
-    platform.style.setProperty('--scale', `${Math.max(.57, 1 - Math.max(0, offset) * .065)}`);
+    const platformTop = baseY - (offset + .42) * gap;
+    platform.style.top = `${platformTop}px`;
+    setPlatformScale(platform, Math.max(.57, 1 - Math.max(0, offset) * .065));
     platform.style.opacity = `${Math.max(.2, 1 - Math.max(0, offset) * .105)}`;
-    platform.innerHTML = `<span class="platform-symbol">${isNext ? TYPE_INFO[type].symbol : ''}</span><span class="crown-marker" aria-hidden="true">♛</span><span class="contact-glow"></span><span class="crack-overlay"></span><span class="platform-fragment fragment-left"></span><span class="platform-fragment fragment-right"></span>`;
+    platform.innerHTML = `<span class="platform-symbol">${isNext ? TYPE_INFO[type].symbol : ''}</span><span class="contact-glow"></span><span class="crack-overlay"></span><span class="platform-fragment fragment-left"></span><span class="platform-fragment fragment-right"></span>`;
     els.layer.appendChild(platform);
+    if (isFinal) {
+      const crown = document.createElement('span');
+      crown.className = `crown-marker${isCurrent ? ' current' : ''}`;
+      crown.dataset.offset = offset;
+      crown.setAttribute('aria-hidden', 'true');
+      crown.style.top = `${platformTop - 25}px`;
+      crown.textContent = '♛';
+      els.layer.appendChild(crown);
+    }
   }
 }
 
@@ -328,10 +342,10 @@ async function scrollOneFloor() {
   els.layer.style.transition = `transform ${duration}ms cubic-bezier(.2,.82,.25,1)`;
   els.player.style.transition = `bottom ${duration}ms cubic-bezier(.2,.82,.25,1), transform ${duration}ms ease`;
   requestAnimationFrame(() => {
-    Array.from(els.layer.children).forEach((platform) => {
+    Array.from(els.layer.querySelectorAll('.platform')).forEach((platform) => {
       const nextOffset = Number(platform.dataset.offset) - 1;
       const nextScale = Math.max(.57, 1 - Math.max(0, nextOffset) * .065);
-      platform.style.setProperty('--scale', `${nextScale}`);
+      setPlatformScale(platform, nextScale);
       platform.style.width = `${nextOffset === 0 ? 284 : nextOffset === 1 ? 262 : 242}px`;
       platform.style.opacity = `${Math.max(.2, 1 - Math.max(0, nextOffset) * .105)}`;
     });
@@ -382,11 +396,11 @@ async function flyAcrossFloors(distance, landingSuccess) {
 
   els.layer.style.transition = `transform ${duration}ms cubic-bezier(.22,.62,.28,1)`;
   requestAnimationFrame(() => {
-    Array.from(els.layer.children).forEach((platform) => {
+    Array.from(els.layer.querySelectorAll('.platform')).forEach((platform) => {
       const nextOffset = Number(platform.dataset.offset) - cameraFloors;
       const nextScale = Math.max(.57, 1 - Math.max(0, nextOffset) * .065);
       platform.style.transition = `transform ${duration}ms cubic-bezier(.22,.62,.28,1), width ${duration}ms cubic-bezier(.22,.62,.28,1), opacity ${duration}ms ease`;
-      platform.style.setProperty('--scale', `${nextScale}`);
+      setPlatformScale(platform, nextScale);
       platform.style.width = `${nextOffset === 0 ? 284 : nextOffset === 1 ? 262 : 242}px`;
       platform.style.opacity = `${Math.max(.2, 1 - Math.max(0, nextOffset) * .105)}`;
     });
