@@ -10,6 +10,8 @@ body{display:grid;place-items:center;overflow:hidden}
 .balance-chip{position:absolute;z-index:30;right:13px;top:calc(15px + env(safe-area-inset-top));height:42px;display:flex;align-items:center;border:1px solid rgba(76,177,255,.75);border-radius:11px;background:linear-gradient(180deg,rgba(8,31,72,.96),rgba(3,13,34,.96));color:var(--gold);box-shadow:inset 0 1px rgba(146,225,255,.16),0 0 18px rgba(30,126,255,.28),0 8px 20px rgba(0,0,0,.35);font-size:16px}
 .balance-chip strong{padding:0 10px;white-space:nowrap;text-shadow:0 0 10px rgba(255,193,64,.34)}
 .balance-chip button{height:32px;width:32px;margin-right:4px;border:1px solid #67d9ff;border-radius:8px;background:linear-gradient(180deg,#128cf4,#06429e);color:#e9ffff;box-shadow:inset 0 0 10px rgba(107,244,255,.4);font-size:23px;font-weight:1000;line-height:1}
+.finish-test-button{position:absolute;z-index:31;right:14px;top:calc(64px + env(safe-area-inset-top));height:24px;padding:0 9px;border:1px solid rgba(255,211,107,.78);border-radius:7px;background:linear-gradient(180deg,rgba(113,76,15,.96),rgba(45,27,5,.97));color:#ffe89a;box-shadow:inset 0 0 8px rgba(255,218,113,.2),0 0 9px rgba(255,174,36,.24);font-size:10px;font-weight:1000;letter-spacing:.08em}
+.finish-test-button:disabled{opacity:.35;filter:saturate(.3)}
 .game-stage{position:absolute;inset:0 0 var(--panel-height);overflow:hidden;perspective:720px}
 .platform-layer{position:absolute;inset:0;transition:transform .6s cubic-bezier(.2,.8,.2,1)}
 .platform{--glow:var(--blue);position:absolute;left:50%;width:242px;height:66px;transform:translateX(-50%) perspective(380px) rotateX(51deg) scale(var(--scale,1));transform-origin:center bottom;transition:top .68s cubic-bezier(.2,.82,.25,1),transform .39s cubic-bezier(.2,.82,.25,1),width .39s cubic-bezier(.2,.82,.25,1),opacity .35s,filter .2s;filter:drop-shadow(0 0 13px color-mix(in srgb,var(--glow) 78%,transparent));border:2px solid var(--glow);border-radius:8px;background:linear-gradient(180deg,rgba(55,114,223,.5),rgba(5,19,53,.94) 72%);box-shadow:inset 0 0 19px color-mix(in srgb,var(--glow) 45%,transparent),0 0 17px color-mix(in srgb,var(--glow) 54%,transparent)}
@@ -19,6 +21,10 @@ body{display:grid;place-items:center;overflow:hidden}
 .platform.next{width:262px;filter:drop-shadow(0 0 23px var(--glow)) brightness(1.15);animation:nextPulse 1s ease-in-out infinite alternate}
 .platform.spring{--glow:var(--orange);background:linear-gradient(180deg,rgba(255,150,67,.7),rgba(72,27,8,.94))}
 .platform.flight{--glow:var(--cyan);background:linear-gradient(180deg,rgba(59,226,255,.68),rgba(5,51,83,.94))}
+.platform.final{--glow:var(--gold);background:linear-gradient(180deg,rgba(95,71,24,.78),rgba(26,20,10,.96));filter:drop-shadow(0 0 22px rgba(255,205,82,.9)) brightness(1.12)}
+.crown-marker{display:none;position:absolute;z-index:6;left:50%;top:-42px;transform:translateX(-50%) rotateX(-51deg);font-size:38px;line-height:1;color:#ffd75f;text-shadow:0 0 7px #fff1a8,0 0 16px #ffb52e,0 3px 2px rgba(65,34,0,.9);pointer-events:none}
+.platform.final .crown-marker{display:block;animation:crownFloat .9s ease-in-out infinite alternate}
+.platform.final.current .crown-marker{animation:crownLand .72s cubic-bezier(.18,.9,.28,1.2) both}
 .platform .platform-symbol{position:absolute;inset:0;display:grid;place-items:center;font-size:28px;font-weight:1000;color:#fff;text-shadow:0 0 11px var(--glow);transform:translateZ(1px)}
 .contact-glow{position:absolute;z-index:4;left:50%;top:5px;width:96px;height:38px;border-radius:50%;opacity:0;transform:translateX(-50%) scale(.35);pointer-events:none;background:radial-gradient(ellipse,rgba(255,244,196,.98) 0 7%,rgba(255,153,45,.8) 18%,rgba(255,111,20,.34) 42%,transparent 72%);filter:drop-shadow(0 0 9px #ff7b22)}
 .contact-glow::after{content:"";position:absolute;inset:5px 9px;border:2px solid rgba(255,166,66,.92);border-radius:50%;box-shadow:0 0 9px #ff7d24,inset 0 0 7px rgba(255,120,27,.7)}
@@ -121,6 +127,8 @@ body{display:grid;place-items:center;overflow:hidden}
 .screen-shake{animation:shake .45s linear}
 @keyframes drift{to{background-position:17px 119px,73px 242px}}
 @keyframes nextPulse{to{filter:drop-shadow(0 0 30px var(--glow)) brightness(1.35)}}
+@keyframes crownFloat{to{transform:translateX(-50%) rotateX(-51deg) translateY(-6px) scale(1.07);filter:brightness(1.25)}}
+@keyframes crownLand{0%{opacity:0;transform:translateX(-50%) rotateX(-51deg) translateY(-18px) scale(.5)}55%{opacity:1;transform:translateX(-50%) rotateX(-51deg) translateY(3px) scale(1.2)}100%{opacity:1;transform:translateX(-50%) rotateX(-51deg) translateY(0) scale(1)}}
 @keyframes springArrow{to{transform:translateY(-8px)}}
 @keyframes springContactGlow{0%{opacity:0;transform:translateX(-50%) scale(.3)}25%{opacity:1}100%{opacity:0;transform:translateX(-50%) scale(1.5)}}
 @keyframes springContactRing{0%{opacity:.9;transform:scale(.35)}100%{opacity:0;transform:scale(1.55)}}

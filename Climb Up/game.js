@@ -1,11 +1,10 @@
 const CONFIG = {
   rtp: 0.95,
   difficultyConfig: {
-    easy: { label: '簡單', minMultiplier: 1.3, maxMultiplier: 3.0, tailStep: 0.2 },
-    normal: { label: '普通', minMultiplier: 1.5, maxMultiplier: 6.0, tailStep: 0.5 },
-    hard: { label: '困難', minMultiplier: 2.0, maxMultiplier: 12.0, tailStep: 1.0 }
+    easy: { label: '簡單', multipliers: [1.00, 1.01, 1.04, 1.09, 1.15, 1.21, 1.28, 1.36, 1.45, 1.55, 1.66, 1.78, 1.93, 2.08, 2.26, 2.47, 2.70, 2.96, 3.25, 3.59, 3.98, 4.42, 4.93, 5.51, 6.19, 6.97, 7.87, 8.93, 10.16, 11.60, 13.29, 15.27, 17.61, 20.39, 23.68, 27.60, 32.28, 37.89, 44.63, 52.75, 62.58] },
+    normal: { label: '普通', multipliers: [1.00, 1.02, 1.09, 1.18, 1.29, 1.42, 1.58, 1.77, 2.00, 2.29, 2.64, 3.07, 3.60, 4.27, 5.11, 6.17, 7.52, 9.27, 11.53, 14.48, 18.38, 23.56, 30.52, 39.95, 52.85, 70.66, 95.48, 130.44, 180.17, 251.64, 355.42, 507.75, 733.74, 1072.73, 1586.88, 2375.57, 3599.35, 5520.48, 8572.18] },
+    hard: { label: '困難', multipliers: [1.00, 1.04, 1.14, 1.28, 1.45, 1.66, 1.93, 2.28, 2.72, 3.31, 4.07, 5.09, 6.47, 8.33, 10.91, 14.51, 19.61, 26.93, 37.62, 53.44, 77.23, 113.57, 170.02, 259.18, 402.45, 636.79, 1027.09, 1689.29, 2834.38, 4853.40, 8484.97, 15151.73, 27649.15, 51584.23, 98443.20, 192271.88] }
   },
-  platformMultipliers: [1.00, 1.30, 1.70, 2.20, 3.00, 4.00, 6.00, 8.00, 10.00, 12.00, 15.00, 18.00, 22.00],
   platformSwitchInterval: 420,
   specialCycleChance: 0.35,
   platformTypes: ['normal', 'spring', 'flight'],
@@ -34,7 +33,7 @@ const state = {
 const $ = (id) => document.getElementById(id);
 const els = {
   stage: $('gameStage'), layer: $('platformLayer'), player: $('player'),
-  balance: $('balanceValue'), addBalance: $('addBalanceButton'), betInput: $('betInput'),
+  balance: $('balanceValue'), addBalance: $('addBalanceButton'), finishTest: $('finishTestButton'), betInput: $('betInput'),
   halfBet: $('halfBetButton'), doubleBet: $('doubleBetButton'), difficulty: $('difficultySelect'),
   bet: $('betButton'), cashout: $('cashoutButton'), jump: $('jumpButton'),
   idleActions: $('idleActions'), playActions: $('playActions'), resultModal: $('resultModal'),
@@ -42,20 +41,16 @@ const els = {
   quickBets: Array.from(document.querySelectorAll('[data-bet-amount]'))
 };
 
+function multipliersForDifficulty() { return CONFIG.difficultyConfig[state.difficulty].multipliers; }
+function lastFloor() { return multipliersForDifficulty().length - 1; }
 function multiplierAt(floor) {
-  if (floor === 0) return 1;
-  const config = CONFIG.difficultyConfig[state.difficulty];
-  const curveLength = CONFIG.platformMultipliers.length;
-  if (floor > curveLength) {
-    const extraFloors = floor - curveLength;
-    return Number((config.maxMultiplier + extraFloors * config.tailStep).toFixed(2));
-  }
-  const curveIndex = floor - 1;
-  const curveValue = CONFIG.platformMultipliers[curveIndex];
-  const curveMin = CONFIG.platformMultipliers[0];
-  const curveMax = CONFIG.platformMultipliers.at(-1);
-  const progress = Math.min(1, Math.max(0, (curveValue - curveMin) / (curveMax - curveMin)));
-  return Number((config.minMultiplier + (config.maxMultiplier - config.minMultiplier) * progress).toFixed(2));
+  const multipliers = multipliersForDifficulty();
+  return multipliers[Math.min(Math.max(0, floor), multipliers.length - 1)];
+}
+
+function availablePlatformTypes() {
+  const remaining = lastFloor() - state.currentFloor;
+  return CONFIG.platformTypes.filter((type) => type === 'normal' || TYPE_INFO[type].distance + 1 <= remaining);
 }
 
 function landingSuccessRate(fromMultiplier, toMultiplier) {
@@ -75,18 +70,19 @@ function renderPlatforms() {
   els.player.style.setProperty('--platform-gap', `${gap}px`);
   for (let offset = -1; offset <= 6; offset += 1) {
     const floor = state.currentFloor + offset;
-    if (floor < 0) continue;
+    if (floor < 0 || floor > lastFloor()) continue;
     const platform = document.createElement('div');
     const isCurrent = offset === 0;
     const isNext = offset === 1;
+    const isFinal = floor === lastFloor();
     const type = isNext && !state.isAutoMoving ? state.previewPlatformType : 'normal';
-    platform.className = `platform ${type}${isCurrent ? ' current' : ''}${isNext ? ' next' : ''}`;
+    platform.className = `platform ${type}${isCurrent ? ' current' : ''}${isNext ? ' next' : ''}${isFinal ? ' final' : ''}`;
     platform.dataset.offset = offset;
     platform.dataset.multiplier = formatMultiplier(multiplierAt(floor));
     platform.style.top = `${baseY - (offset + .42) * gap}px`;
     platform.style.setProperty('--scale', `${Math.max(.57, 1 - Math.max(0, offset) * .065)}`);
     platform.style.opacity = `${Math.max(.2, 1 - Math.max(0, offset) * .105)}`;
-    platform.innerHTML = `<span class="platform-symbol">${isNext ? TYPE_INFO[type].symbol : ''}</span><span class="contact-glow"></span><span class="crack-overlay"></span><span class="platform-fragment fragment-left"></span><span class="platform-fragment fragment-right"></span>`;
+    platform.innerHTML = `<span class="platform-symbol">${isNext ? TYPE_INFO[type].symbol : ''}</span><span class="crown-marker" aria-hidden="true">♛</span><span class="contact-glow"></span><span class="crack-overlay"></span><span class="platform-fragment fragment-left"></span><span class="platform-fragment fragment-right"></span>`;
     els.layer.appendChild(platform);
   }
 }
@@ -117,14 +113,17 @@ function updateUI() {
   els.balance.textContent = formatMoney(state.balance);
   els.cashout.disabled = state.status !== 'playing' || !state.canCashout || state.isJumping || state.isAutoMoving;
   els.jump.disabled = state.status !== 'playing' || state.isJumping || state.isAutoMoving;
+  els.finishTest.disabled = state.isJumping || state.isAutoMoving || ['failed', 'cashout'].includes(state.status);
   syncQuickBetSelection();
 }
 
 function cyclePlatform() {
   if (!state.specialCycleActive || !['playing', 'jumping'].includes(state.status) || state.isAutoMoving) return;
+  const availableTypes = availablePlatformTypes();
   const candidates = state.previewPlatformType === 'normal'
-    ? CONFIG.platformTypes
-    : CONFIG.platformTypes.filter((type) => type !== state.previewPlatformType);
+    ? availableTypes
+    : availableTypes.filter((type) => type !== state.previewPlatformType);
+  if (!candidates.length) return;
   state.previewPlatformType = candidates[Math.floor(Math.random() * candidates.length)];
   renderPlatforms();
 }
@@ -139,9 +138,9 @@ function stopCycle() { clearInterval(state.cycleTimer); state.cycleTimer = null;
 
 function prepareNextPlatform() {
   stopCycle();
-  state.specialCycleActive = Math.random() < CONFIG.specialCycleChance;
+  const specialTypes = availablePlatformTypes().filter((type) => type !== 'normal');
+  state.specialCycleActive = specialTypes.length > 0 && Math.random() < CONFIG.specialCycleChance;
   if (state.specialCycleActive) {
-    const specialTypes = CONFIG.platformTypes.filter((type) => type !== 'normal');
     state.previewPlatformType = specialTypes[Math.floor(Math.random() * specialTypes.length)];
   } else {
     state.previewPlatformType = 'normal';
@@ -269,7 +268,9 @@ function jump() {
     els.player.classList.toggle('boost-spring', isSpring);
     els.player.classList.toggle('boost-flight', isFlight);
     if (isSpecial) playColorShiftEffect();
-    const targetFloor = state.currentFloor + (isSpecial ? locked.distance + 1 : locked.distance);
+    const requestedDistance = isSpecial ? locked.distance + 1 : locked.distance;
+    const totalDistance = Math.min(requestedDistance, lastFloor() - state.currentFloor);
+    const targetFloor = state.currentFloor + totalDistance;
     const targetMultiplier = multiplierAt(targetFloor);
     const initialLandingSuccess = Math.random() <= landingSuccessRate(state.currentMultiplier, targetMultiplier);
     if (!isSpecial && !initialLandingSuccess) {
@@ -277,7 +278,6 @@ function jump() {
       return;
     }
     if (!isSpecial) state.hasSuccessfulLanding = true;
-    const totalDistance = isSpecial ? locked.distance + 1 : locked.distance;
     advanceFloors(totalDistance, state.lockedPlatformType, isSpecial);
   }, CONFIG.jumpDuration);
 }
@@ -461,8 +461,18 @@ async function advanceFloors(distance, type, checkFinalLanding = false) {
   state.canCashout = true;
   state.status = 'playing';
   state.lockedPlatformType = null;
-  prepareNextPlatform();
+  const reachedFinalFloor = state.currentFloor >= lastFloor();
   if (checkFinalLanding && type === 'flight') playPlatformContactEffect(type, 0, true);
+  if (reachedFinalFloor) {
+    stopCycle();
+    renderPlatforms();
+    updateUI();
+    setTimeout(() => {
+      if (state.status === 'playing' && state.currentFloor >= lastFloor()) cashout();
+    }, 420);
+    return;
+  }
+  prepareNextPlatform();
   updateUI();
 }
 
@@ -497,6 +507,48 @@ function cashout() {
   setTimeout(() => closeResultModal(() => resetBoard(true)), 1600);
 }
 
+async function testReachFinal() {
+  if (state.status === 'idle') startBet();
+  if (state.status !== 'playing' || state.isJumping || state.isAutoMoving) return;
+  stopCycle();
+  state.status = 'jumping';
+  state.isJumping = true;
+  state.isAutoMoving = true;
+  state.canCashout = false;
+  updateUI();
+
+  const travel = Math.min(6, Math.max(1, lastFloor() - state.currentFloor)) * state.platformGap;
+  els.player.classList.add('boost-flight');
+  const playerMotion = els.player.animate([
+    { bottom: '102px', opacity: 1 },
+    { bottom: `${102 + state.platformGap * .72}px`, opacity: 1, offset: .28 },
+    { bottom: `${102 + state.platformGap * .72}px`, opacity: .25, offset: .82 },
+    { bottom: '102px', opacity: 0 }
+  ], { duration: 650, easing: 'cubic-bezier(.2,.68,.25,1)', fill: 'forwards' });
+  els.layer.style.transition = 'transform 650ms cubic-bezier(.18,.75,.22,1), opacity 520ms ease';
+  requestAnimationFrame(() => {
+    els.layer.style.transform = `translateY(${travel}px)`;
+    els.layer.style.opacity = '.08';
+  });
+  await wait(670);
+  playerMotion.cancel();
+
+  state.currentFloor = Math.max(0, lastFloor() - 1);
+  state.currentMultiplier = multiplierAt(state.currentFloor);
+  state.hasSuccessfulLanding = true;
+  state.previewPlatformType = 'normal';
+  state.specialCycleActive = false;
+  state.isJumping = true;
+  state.isAutoMoving = false;
+  els.layer.removeAttribute('style');
+  els.player.className = 'player-cube jumping';
+  els.player.removeAttribute('style');
+  renderPlatforms();
+  updateUI();
+  await wait(CONFIG.jumpDuration);
+  await advanceFloors(1, 'normal', false);
+}
+
 function changeBet(multiplier) {
   const next = Math.max(1, Math.min(state.balance || 1, readBet() * multiplier));
   els.betInput.value = Number(next.toFixed(2));
@@ -516,6 +568,7 @@ els.doubleBet.addEventListener('click', () => changeBet(2));
 els.quickBets.forEach((button) => button.addEventListener('click', () => setQuickBet(Number(button.dataset.betAmount))));
 els.betInput.addEventListener('input', syncQuickBetSelection);
 els.addBalance.addEventListener('click', () => { state.balance += 1000; updateUI(); });
+els.finishTest.addEventListener('click', testReachFinal);
 els.difficulty.addEventListener('change', () => {
   state.difficulty = els.difficulty.value;
   state.currentMultiplier = multiplierAt(0);
