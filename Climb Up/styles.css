@@ -21,6 +21,12 @@ body{display:grid;place-items:center;overflow:hidden}
 .platform.next{width:262px;filter:drop-shadow(0 0 23px var(--glow)) brightness(1.15);animation:nextPulse 1s ease-in-out infinite alternate}
 .platform.next.fork-left{left:28%;width:170px}
 .platform.next.fork-right{left:72%;width:170px}
+.platform.next.fork-left.fork-reveal{animation:forkRevealLeft .38s cubic-bezier(.16,.82,.24,1.08) both,nextPulse 1s .38s ease-in-out infinite alternate}
+.platform.next.fork-right.fork-reveal{animation:forkRevealRight .38s cubic-bezier(.16,.82,.24,1.08) both,nextPulse 1s .38s ease-in-out infinite alternate}
+.branch-burst{position:absolute;z-index:6;left:50%;width:26px;height:26px;transform:translateX(-50%);border-radius:50%;pointer-events:none;background:radial-gradient(circle,#fff 0 9%,#8df3ff 18%,rgba(42,145,255,.7) 35%,transparent 72%);box-shadow:0 0 12px #8eefff,0 0 24px rgba(41,139,255,.85);animation:branchBurst .4s ease-out forwards}
+.branch-burst::before,.branch-burst::after{content:"";position:absolute;left:50%;top:50%;width:108px;height:3px;transform-origin:left center;border-radius:3px;opacity:.9}
+.branch-burst::before{transform:rotate(187deg);background:linear-gradient(90deg,#fff,rgba(63,211,255,.92),transparent);box-shadow:0 0 7px #2acfff}
+.branch-burst::after{transform:rotate(-7deg);background:linear-gradient(90deg,#fff,rgba(255,159,47,.94),transparent);box-shadow:0 0 7px #ff8b2a}
 .platform.spring{--glow:var(--orange);background:linear-gradient(180deg,rgba(255,150,67,.7),rgba(72,27,8,.94))}
 .platform.flight{--glow:var(--cyan);background:linear-gradient(180deg,rgba(59,226,255,.68),rgba(5,51,83,.94))}
 .platform.final{--glow:var(--gold);border-color:#ffe17a;background:radial-gradient(ellipse at 50% 28%,rgba(255,235,151,.56),transparent 34%),repeating-linear-gradient(135deg,rgba(255,221,104,.13) 0 5px,transparent 5px 18px),linear-gradient(180deg,rgba(142,99,26,.94),rgba(45,27,6,.98) 76%);box-shadow:inset 0 0 12px rgba(255,248,190,.56),inset 0 0 30px rgba(255,167,32,.42),0 0 15px rgba(255,231,123,.9),0 0 34px rgba(255,158,27,.62);filter:drop-shadow(0 0 25px rgba(255,205,82,.94)) brightness(1.16);animation:finalPlatformPulse 1.15s ease-in-out infinite alternate}
@@ -137,6 +143,9 @@ body{display:grid;place-items:center;overflow:hidden}
 .screen-shake{animation:shake .45s linear}
 @keyframes drift{to{background-position:17px 119px,73px 242px}}
 @keyframes nextPulse{to{filter:drop-shadow(0 0 30px var(--glow)) brightness(1.35)}}
+@keyframes forkRevealLeft{0%{left:50%;opacity:.15;filter:drop-shadow(0 0 7px #9ff7ff) brightness(2)}58%{opacity:1;filter:drop-shadow(0 0 29px #33d7ff) brightness(1.42)}100%{left:28%;opacity:1}}
+@keyframes forkRevealRight{0%{left:50%;opacity:.15;filter:drop-shadow(0 0 7px #ffe59b) brightness(2)}58%{opacity:1;filter:drop-shadow(0 0 29px var(--glow)) brightness(1.42)}100%{left:72%;opacity:1}}
+@keyframes branchBurst{0%{opacity:0;transform:translateX(-50%) scale(.2)}24%{opacity:1;transform:translateX(-50%) scale(.72)}62%{opacity:.95}100%{opacity:0;transform:translateX(-50%) scale(1.18)}}
 @keyframes finalPlatformPulse{to{filter:drop-shadow(0 0 31px rgba(255,212,91,1)) brightness(1.26);box-shadow:inset 0 0 16px rgba(255,248,190,.7),inset 0 0 34px rgba(255,167,32,.52),0 0 20px rgba(255,234,142,1),0 0 42px rgba(255,151,24,.72)}}
 @keyframes crownFloat{to{transform:translateX(-50%) translateY(-7px) scale(1.035);filter:drop-shadow(0 0 4px rgba(255,196,43,.62)) brightness(1.08)}}
 @keyframes crownLand{0%{opacity:0;transform:translateX(-50%) translateY(-22px) scale(.62)}58%{opacity:1;transform:translateX(-50%) translateY(4px) scale(1.12)}100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
