@@ -27,6 +27,7 @@ const state = {
   previewPlatformType: 'normal', lockedPlatformType: null, isJumping: false,
   isAutoMoving: false, canCashout: false, gameOver: false,
   cycleTimer: null, specialCycleActive: false, platformGap: 118, hasSuccessfulLanding: false,
+  testGuaranteedLanding: false,
   balance: 3000, currentBet: 10
 };
 
@@ -113,7 +114,7 @@ function updateUI() {
   els.balance.textContent = formatMoney(state.balance);
   els.cashout.disabled = state.status !== 'playing' || !state.canCashout || state.isJumping || state.isAutoMoving;
   els.jump.disabled = state.status !== 'playing' || state.isJumping || state.isAutoMoving;
-  els.finishTest.disabled = state.isJumping || state.isAutoMoving || ['failed', 'cashout'].includes(state.status);
+  els.finishTest.disabled = state.isJumping || state.isAutoMoving || state.currentFloor >= lastFloor() - 1 || ['failed', 'cashout'].includes(state.status);
   syncQuickBetSelection();
 }
 
@@ -204,7 +205,7 @@ async function resetBoard(animated = false) {
   Object.assign(state, {
     status: 'idle', currentFloor: 0, previewPlatformType: 'normal', lockedPlatformType: null,
     isJumping: false, isAutoMoving: false, canCashout: false, gameOver: false,
-    specialCycleActive: false, hasSuccessfulLanding: false
+    specialCycleActive: false, hasSuccessfulLanding: false, testGuaranteedLanding: false
   });
   state.currentMultiplier = multiplierAt(0);
   renderPlatforms();
@@ -244,7 +245,7 @@ function startBet() {
   Object.assign(state, {
     status: 'playing', currentFloor: 0, previewPlatformType: 'normal', lockedPlatformType: null,
     isJumping: false, isAutoMoving: false, canCashout: false, gameOver: false,
-    specialCycleActive: false, hasSuccessfulLanding: false
+    specialCycleActive: false, hasSuccessfulLanding: false, testGuaranteedLanding: false
   });
   state.currentMultiplier = multiplierAt(0);
   els.player.className = 'player-cube';
@@ -272,7 +273,8 @@ function jump() {
     const totalDistance = Math.min(requestedDistance, lastFloor() - state.currentFloor);
     const targetFloor = state.currentFloor + totalDistance;
     const targetMultiplier = multiplierAt(targetFloor);
-    const initialLandingSuccess = Math.random() <= landingSuccessRate(state.currentMultiplier, targetMultiplier);
+    const initialLandingSuccess = state.testGuaranteedLanding || Math.random() <= landingSuccessRate(state.currentMultiplier, targetMultiplier);
+    state.testGuaranteedLanding = false;
     if (!isSpecial && !initialLandingSuccess) {
       failRun();
       return;
@@ -507,7 +509,7 @@ function cashout() {
   setTimeout(() => closeResultModal(() => resetBoard(true)), 1600);
 }
 
-async function testReachFinal() {
+async function testReachPenultimate() {
   if (state.status === 'idle') startBet();
   if (state.status !== 'playing' || state.isJumping || state.isAutoMoving) return;
   stopCycle();
@@ -538,15 +540,17 @@ async function testReachFinal() {
   state.hasSuccessfulLanding = true;
   state.previewPlatformType = 'normal';
   state.specialCycleActive = false;
-  state.isJumping = true;
+  state.isJumping = false;
   state.isAutoMoving = false;
+  state.canCashout = true;
+  state.status = 'playing';
+  state.testGuaranteedLanding = true;
   els.layer.removeAttribute('style');
-  els.player.className = 'player-cube jumping';
+  els.player.className = 'player-cube reset-enter';
   els.player.removeAttribute('style');
-  renderPlatforms();
+  prepareNextPlatform();
   updateUI();
-  await wait(CONFIG.jumpDuration);
-  await advanceFloors(1, 'normal', false);
+  setTimeout(() => els.player.classList.remove('reset-enter'), 360);
 }
 
 function changeBet(multiplier) {
@@ -568,7 +572,7 @@ els.doubleBet.addEventListener('click', () => changeBet(2));
 els.quickBets.forEach((button) => button.addEventListener('click', () => setQuickBet(Number(button.dataset.betAmount))));
 els.betInput.addEventListener('input', syncQuickBetSelection);
 els.addBalance.addEventListener('click', () => { state.balance += 1000; updateUI(); });
-els.finishTest.addEventListener('click', testReachFinal);
+els.finishTest.addEventListener('click', testReachPenultimate);
 els.difficulty.addEventListener('change', () => {
   state.difficulty = els.difficulty.value;
   state.currentMultiplier = multiplierAt(0);
