@@ -6,7 +6,7 @@ const CONFIG = {
     hard: { label: '困難', multipliers: [1.00, 1.04, 1.14, 1.28, 1.45, 1.66, 1.93, 2.28, 2.72, 3.31, 4.07, 5.09, 6.47, 8.33, 10.91, 14.51, 19.61, 26.93, 37.62, 53.44, 77.23, 113.57, 170.02, 259.18, 402.45, 636.79, 1027.09, 1689.29, 2834.38, 4853.40, 8484.97, 15151.73, 27649.15, 51584.23, 98443.20, 192271.88] }
   },
   specialCycleChance: 0.35,
-  specialPlatformWeights: { spring: 0.6, flight: 0.4 },
+  specialPlatformWeights: { spring: 0.7, flight: 0.3 },
   platformTypes: ['normal', 'spring', 'flight'],
   springJumpDistance: 2,
   flightJumpDistance: 4,
