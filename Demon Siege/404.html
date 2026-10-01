@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0d0f" />
+    <title>討伐魔王軍｜Demon Siege</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="game-shell" aria-label="討伐魔王軍遊戲">
+      <div class="ambient" aria-hidden="true"></div>
+
+      <header class="topbar">
+        <button class="icon-button" id="helpButton" type="button" aria-label="遊戲說明">?</button>
+        <div class="balance-card" aria-label="玩家餘額">
+          <span class="coin-icon">◆</span>
+          <span class="balance-label">戰備金</span>
+          <strong id="balance">3,000.00</strong>
+        </div>
+        <button class="icon-button sound-on" id="soundButton" type="button" aria-label="切換音效">◈</button>
+      </header>
+
+      <section class="arena" aria-labelledby="gameTitle">
+        <div class="title-lockup">
+          <span class="eyebrow">DEMON SIEGE</span>
+          <h1 id="gameTitle">討伐魔王軍</h1>
+          <span class="round-status" id="roundStatus">戰陣待命</span>
+        </div>
+
+        <div class="rings" id="rings" aria-label="三層職業倍率圈">
+          <div class="ring ring-warrior" data-role="warrior" aria-label="戰士倍率圈">
+            <div class="ring-cutout"></div>
+            <div class="nodes" id="warriorNodes"></div>
+          </div>
+          <div class="ring ring-archer" data-role="archer" aria-label="弓箭手倍率圈">
+            <div class="ring-cutout"></div>
+            <div class="nodes" id="archerNodes"></div>
+          </div>
+          <div class="ring ring-mage" data-role="mage" aria-label="法師倍率圈">
+            <div class="ring-cutout"></div>
+            <div class="nodes" id="mageNodes"></div>
+          </div>
+
+          <div class="result-core" id="resultCore" aria-live="polite">
+            <div class="core-halo"></div>
+            <span class="result-icon" id="resultIcon" data-icon="♜">♜</span>
+            <strong id="resultName">魔王軍</strong>
+            <small id="resultHint">選擇戰備金額後出征</small>
+          </div>
+        </div>
+
+        <div class="legend" aria-label="事件圖例">
+          <span><i class="dot warrior"></i>戰士</span>
+          <span><i class="dot archer"></i>弓箭手</span>
+          <span><i class="dot mage"></i>法師</span>
+        </div>
+      </section>
+
+      <section class="command-panel" aria-label="下注操作區">
+        <div class="command-heading">
+          <div>
+            <span class="panel-kicker">WAR CHEST</span>
+            <h2>戰備金額</h2>
+          </div>
+          <div class="last-win">上次戰果 <strong id="lastWin">0.00</strong></div>
+        </div>
+
+        <div class="bet-row">
+          <div class="bet-display"><span>本次</span><strong id="betAmount">10</strong></div>
+          <button type="button" data-bet-action="half">½</button>
+          <button type="button" data-bet-action="double">2×</button>
+          <button type="button" data-bet="10" class="quick active">10</button>
+          <button type="button" data-bet="50" class="quick">50</button>
+          <button type="button" data-bet="100" class="quick">100</button>
+          <button type="button" data-bet="200" class="quick">200</button>
+        </div>
+
+        <div class="action-row">
+          <button class="action secondary" id="partialButton" type="button" disabled>
+            <span>部分結算</span><small>任一職業達第 3 階</small>
+          </button>
+          <button class="action primary" id="betButton" type="button">
+            <span>出征</span><small>隨機觸發戰況</small>
+          </button>
+          <button class="action secondary" id="cashoutButton" type="button" disabled>
+            <span>全部結算</span><small>領取並重置</small>
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <dialog id="helpDialog">
+      <div class="dialog-head"><span>作戰規則</span><button id="closeHelp" type="button" aria-label="關閉">×</button></div>
+      <ol>
+        <li>每次出征會觸發戰士、弓箭手、法師、沉默術或魔王。</li>
+        <li>英雄事件使對應倍率圈前進；魔王使三圈各後退一階。</li>
+        <li>任一職業達第 3 階可部分結算；全部結算會領取戰果並重置。</li>
+        <li>英雄抵達最終節點會自動發獎；戰士抵達 BONUS 會進入額外倍率。</li>
+      </ol>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="./app.js"></script>
+  </body>
+</html>
