@@ -18,7 +18,6 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const balanceEl = $('#balance');
 const betAmountEl = $('#betAmount');
-const lastWinEl = $('#lastWin');
 const betButton = $('#betButton');
 const partialButton = $('#partialButton');
 const cashoutButton = $('#cashoutButton');
@@ -26,8 +25,6 @@ const resultCore = $('#resultCore');
 const resultIcon = $('#resultIcon');
 const resultName = $('#resultName');
 const resultHint = $('#resultHint');
-const roundStatus = $('#roundStatus');
-const toast = $('#toast');
 
 function buildNodes() {
   Object.entries(roles).forEach(([key, role]) => {
@@ -71,7 +68,6 @@ function money(value) { return value.toLocaleString('zh-TW', { minimumFractionDi
 function render() {
   balanceEl.textContent = money(state.balance);
   betAmountEl.textContent = state.bet;
-  lastWinEl.textContent = money(state.lastWin);
 
   Object.entries(roles).forEach(([key, role]) => {
     const ring = document.querySelector(`[data-role="${key}"]`);
@@ -104,13 +100,6 @@ function pickEvent() {
   if (roll < .78) return 'MAGE';
   if (roll < .89) return 'SILENCE';
   return 'BOSS';
-}
-
-function showToast(message) {
-  toast.textContent = message;
-  toast.classList.add('show');
-  clearTimeout(showToast.timer);
-  showToast.timer = setTimeout(() => toast.classList.remove('show'), 1900);
 }
 
 function setResult(type, hint = '') {
@@ -167,7 +156,6 @@ async function resolveAdvance(roleKey) {
   const win = payoutFor(role);
   state.balance += win;
   state.lastWin = win;
-  showToast(`${role.label}最終倍率，自動獲得 ${money(win)}`);
   role.step = Math.max(0, role.step - 1);
   await sleep(600);
 }
@@ -175,7 +163,6 @@ async function resolveAdvance(roleKey) {
 async function runBonus() {
   const options = [100, 200, 300, 400];
   const result = options[Math.floor(Math.random() * options.length)];
-  roundStatus.textContent = '戰士 BONUS 啟動';
   resultCore.classList.add('rolling');
   for (let i = 0; i < 15; i++) {
     const value = options[i % options.length];
@@ -195,7 +182,6 @@ async function runBonus() {
   state.balance += win;
   state.lastWin = win;
   roles.warrior.step = 0;
-  showToast(`BONUS 戰果 +${money(win)}`);
   await sleep(800);
   resultIcon.style.fontSize = '';
 }
@@ -205,21 +191,16 @@ async function placeBet() {
   state.locked = true;
   state.balance -= state.bet;
   state.lastWin = 0;
-  roundStatus.textContent = '戰況推演中…';
   render();
 
   const type = pickEvent();
   await animateResult(type);
-  roundStatus.textContent = events[type].label;
-
   if (events[type].role) {
     await resolveAdvance(events[type].role);
   } else if (type === 'BOSS') {
     Object.values(roles).forEach(role => role.step = Math.max(0, role.step - 1));
-    showToast('魔王反擊：三軍各後退一階');
     await sleep(450);
   } else {
-    showToast('沉默術籠罩戰場，本回合無事發生');
     await sleep(300);
   }
 
@@ -237,7 +218,6 @@ async function settle(mode) {
   setResult('WARRIOR');
   resultName.textContent = mode === 'partial' ? '部分結算' : '凱旋結算';
   resultIcon.textContent = '◆';
-  showToast(`戰果入帳 +${money(total)}`);
 
   if (mode === 'partial') {
     Object.values(roles).forEach(role => role.step = Math.max(0, role.step - 1));
@@ -246,7 +226,6 @@ async function settle(mode) {
   }
   await sleep(650);
   state.locked = false;
-  roundStatus.textContent = mode === 'partial' ? '整軍再戰' : '新戰役待命';
   render();
 }
 
@@ -262,15 +241,6 @@ document.querySelector('[data-bet-action="double"]').addEventListener('click', (
 betButton.addEventListener('click', placeBet);
 partialButton.addEventListener('click', () => settle('partial'));
 cashoutButton.addEventListener('click', () => settle('all'));
-
-const helpDialog = $('#helpDialog');
-$('#helpButton').addEventListener('click', () => helpDialog.showModal());
-$('#closeHelp').addEventListener('click', () => helpDialog.close());
-helpDialog.addEventListener('click', (event) => { if (event.target === helpDialog) helpDialog.close(); });
-$('#soundButton').addEventListener('click', (event) => {
-  event.currentTarget.classList.toggle('sound-on');
-  showToast(event.currentTarget.classList.contains('sound-on') ? '音效已開啟' : '音效已關閉');
-});
 
 buildNodes();
 render();
