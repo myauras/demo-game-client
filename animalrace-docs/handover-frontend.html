@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="zh-Hant">
+<title>動物大賽跑 前端交接</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700&display=swap">
+<style>
+/* 版型：單欄閱讀文件，頂部角色抬頭＋輪次時間軸，雷點以嚴重度分級條目呈現 */
+:root{
+  --bg:#F4F7F8; --surface:#FFFFFF; --fg:#16252D; --muted:#566872; --line:#D9E3E8;
+  --accent:#2E6B8A; --accent-bg:#E3EFF5;
+  --crit:#B8372A; --crit-bg:#FBE7E4; --warn:#B65A12; --warn-bg:#FDEEDF; --ref:#4F6470; --ref-bg:#E9EEF1;
+  --seg-bet:#2E6B8A; --seg-lock:#8A9AA3; --seg-race:#FF8A3D; --seg-set:#7BC24A;
+  --code-bg:#EEF3F5;
+  --f-display:"Noto Serif TC","Songti TC",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E161B; --surface:#152129; --fg:#E2EBEF; --muted:#94A7B1; --line:#253740;
+  --accent:#74B7DA; --accent-bg:#17303D;
+  --crit:#FF8476; --crit-bg:#3A1C19; --warn:#FFA460; --warn-bg:#382414; --ref:#A9BBC4; --ref-bg:#1E2D35;
+  --seg-bet:#4D93B8; --seg-lock:#5F717A; --seg-race:#E8792F; --seg-set:#5E9C36;
+  --code-bg:#1B2A33; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0E161B; --surface:#152129; --fg:#E2EBEF; --muted:#94A7B1; --line:#253740;
+  --accent:#74B7DA; --accent-bg:#17303D;
+  --crit:#FF8476; --crit-bg:#3A1C19; --warn:#FFA460; --warn-bg:#382414; --ref:#A9BBC4; --ref-bg:#1E2D35;
+  --seg-bet:#4D93B8; --seg-lock:#5F717A; --seg-race:#E8792F; --seg-set:#5E9C36;
+  --code-bg:#1B2A33; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15.5px;line-height:1.75;margin:0}
+.wrap{max-width:820px;margin:0 auto;padding-inline:20px;padding-block:36px 64px}
+header.top{display:grid;gap:14px;padding-bottom:24px;border-bottom:1px solid var(--line)}
+.role{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;color:var(--muted);letter-spacing:.04em}
+.role b{background:var(--accent);color:var(--surface);padding:2px 10px;border-radius:4px;letter-spacing:.08em;font-weight:700}
+h1{font-family:var(--f-display);font-size:clamp(26px,5vw,34px);line-height:1.3;margin:0;text-wrap:balance;font-weight:700}
+.lede{margin:0;color:var(--muted);max-width:62ch}
+.links{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:14px}
+.links a{color:var(--accent);text-decoration:none;border-bottom:1px solid currentColor}
+.links a:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cycle{display:grid;gap:6px}
+.cycle .lab{font-size:12px;color:var(--muted);letter-spacing:.06em}
+.bar{display:flex;height:26px;border-radius:4px;overflow:hidden;font-size:11.5px;font-family:var(--f-mono);color:#fff;font-weight:600}
+.bar span{display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;min-width:0}
+.b1{flex:25;background:var(--seg-bet)} .b2{flex:2;background:var(--seg-lock)} .b3{flex:10;background:var(--seg-race)} .b4{flex:3;background:var(--seg-set)}
+.ticks{display:flex;font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.ticks span{flex:var(--f)}
+h2{font-size:20px;margin:44px 0 6px;text-wrap:balance;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+h2 small{font-size:13px;font-weight:500;color:var(--muted)}
+.sec-intro{margin:0 0 18px;color:var(--muted);max-width:66ch}
+.tally{display:flex;flex-wrap:wrap;gap:8px;font-size:13px}
+.tally span{padding:2px 10px;border-radius:999px;font-weight:600}
+.t-crit{background:var(--crit-bg);color:var(--crit)} .t-warn{background:var(--warn-bg);color:var(--warn)} .t-ref{background:var(--ref-bg);color:var(--ref)}
+.top3{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px 20px;margin-top:28px}
+.top3 h3{margin:0 0 8px;font-size:15px;letter-spacing:.06em;color:var(--accent)}
+.top3 ol{margin:0;padding-left:1.4em;display:grid;gap:6px}
+.items{display:grid;gap:14px}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px 18px;display:grid;gap:10px;min-width:0}
+.item.crit{border-left:4px solid var(--crit)} .item.warn{border-left:4px solid var(--warn)} .item.ref{border-left:4px solid var(--ref)}
+.ih{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.ih .id{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.ih h3{margin:0;font-size:16.5px;line-height:1.5;flex:1 1 300px;text-wrap:balance}
+.sev{font-size:12px;font-weight:700;padding:1px 8px;border-radius:4px;white-space:nowrap}
+.sev.crit{background:var(--crit-bg);color:var(--crit)} .sev.warn{background:var(--warn-bg);color:var(--warn)} .sev.ref{background:var(--ref-bg);color:var(--ref)}
+dl{margin:0;display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px}
+dt{font-size:13px;color:var(--muted);font-weight:600;padding-top:2px}
+dd{margin:0;min-width:0}
+@media (max-width:520px){dl{grid-template-columns:1fr;gap:2px}dd{margin-bottom:8px}}
+code{font-family:var(--f-mono);font-size:.86em;background:var(--code-bg);padding:1px 5px;border-radius:3px;word-break:break-word}
+pre{font-family:var(--f-mono);font-size:13px;background:var(--code-bg);padding:12px 14px;border-radius:6px;overflow-x:auto;margin:0;line-height:1.6}
+.src{font-size:13px;color:var(--muted)}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12.5px;color:var(--muted);font-weight:600;letter-spacing:.04em;background:var(--bg)}
+tr:last-child td{border-bottom:0}
+ul.plain{margin:0;padding-left:1.2em;display:grid;gap:6px}
+footer a{color:var(--accent)}
+footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+</style>
+<div class="wrap">
+<header class="top">
+  <div class="role"><b>前端</b><span>動物大賽跑 HTML Demo 交接</span><span>2026-10-06</span><span>規格依據 B規格書 v1.6</span></div>
+  <h1>畫面要重做，這些坑不用再踩一次</h1>
+  <p class="lede">HTML 版是原型，正式版會轉 Cocos 或 Unity，畫面層整個重寫。但 B05 到 B10 修過的 bug 和使用者退回的設計，換了引擎一樣會遇到。這份列出重做時要帶走的教訓。</p>
+  <div class="tally"><span class="t-crit">必改 3</span><span class="t-warn">留意 11</span><span class="t-ref">參考 1</span></div>
+  <div class="links">
+  <a href="https://myauras.github.io/demo-game-client/animalrace/">線上 Demo</a>
+  <a href="https://myauras.github.io/demo-game-client/mockups/animalrace.html">UI 示意稿</a>
+  <a href="https://github.com/myauras/demo-game-client/tree/master/animalrace">原始碼（animalrace/，master fed59b5）</a>
+</div>
+  <div class="cycle" aria-label="一輪 40 秒的時間軸">
+  <div class="lab">一輪 40 秒：下注 25s・封盤 2s・演出 10s・結算 3s</div>
+  <div class="bar"><span class="b1">下注 25s</span><span class="b2" title="封盤 2s"></span><span class="b3">演出 10s</span><span class="b4" title="結算 3s">結算</span></div>
+  <div class="ticks"><span style="--f:25">0</span><span style="--f:2">25</span><span style="--f:10">27</span><span style="--f:3">37</span><span>40</span></div>
+</div>
+</header>
+<section class="top3"><h3>只能記三件事的話</h3><ol><li>前端只播放伺服器給的結果。演出從結果反推，衝線順序必須等於名次，出包者不能看起來快贏了。</li><li>狀態更新不要掛在動畫或 requestAnimationFrame 上。背景分頁會凍結動畫，已經因此出過珠盤空格。</li><li>一個畫面狀態只給一種下注手勢；暫存單封盤即作廢的問題至少要做「未確認強警示」。</li></ol></section>
+<h2>必改 <small>3 項</small></h2><div class="items">
+<article class="item crit">
+  <div class="ih"><span class="id">F01</span><h3>前端只能播放結果，不能決定或計算結果</h3><span class="sev crit">必改</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>Demo 前端同時負責輪次推導、賽果抽定（透過轉接層）、賠率蒙地卡羅、結算與錢包。這是因為沒有後台。</dd>
+    <dt>正式版</dt><dd>正式版前端只收伺服器的 round 封包和 outcome 向量。結算金額、餘額、賠率、熱門分組都以伺服器下發為準，前端不重算。卡上的 🔥／❄ 徽章與路子冷熱頁也改讀伺服器的分組，不要自己用屬性算。</dd>
+    <dt>出處</dt><dd class="src">規格 §10.3「前端不持有任何影響結果的邏輯」</dd>
+  </dl>
+</article>
+<article class="item crit">
+  <div class="ih"><span class="id">F02</span><h3>上線前要拔掉的 Demo 工具和假功能</h3><span class="sev crit">必改</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd><ul class="plain"><li>連點餘額 5 次重置錢包（<code>game.js</code> 第 712 行）</li><li>log 頁底部「🔄 重置錢包（Demo）」鈕</li><li>log 頁「回報」是假按鈕，order id 是前端隨機派生</li><li>他人下注流、中獎跑馬燈是 <code>ambience.js</code> 捏造的</li></ul></dd>
+    <dt>正式版</dt><dd>重置功能移除；回報、單號、下注流、跑馬燈改接後端真實資料。捏造的中獎播報不能上線。</dd>
+    <dt>出處</dt><dd class="src"><code>js/game.js</code>、<code>js/log-ui.js</code>、<code>js/ambience.js</code></dd>
+  </dl>
+</article>
+<article class="item crit">
+  <div class="ih"><span class="id">F03</span><h3>不要搬 Math.random 劫持和種子重放這兩個技巧</h3><span class="sev crit">必改</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd><code>adapter-b.js</code> 一載入就把全域 <code>Math.random</code> 換成調度器，呼叫 mock-server 時臨時塞入「局號種子」亂數，所以它必須比 <code>mock-server-b.js</code> 先載入。路子歷史也是開機時用種子把整靴 200 局重放出來。</dd>
+    <dt>正式版</dt><dd>這兩招只為了在沒有伺服器的情況下讓各裝置結果一致。正式版有伺服器就整層刪掉，歷史改讀 API。</dd>
+    <dt>出處</dt><dd class="src"><code>js/adapter-b.js</code> 檔頭；README 載入順序段</dd>
+  </dl>
+</article></div>
+<h2>留意：踩過的坑與使用者裁決 <small>11 項</small></h2><div class="items">
+<article class="item warn">
+  <div class="ih"><span class="id">F04</span><h3>演出是從結果反推的，有兩條不能破的鐵則</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd><code>race-fx.js</code> 拿到 outcome（名次、出包旗標、出包位置 out_at）後反推 10 秒跑動：名次決定衝線時刻，屬性×賽段決定速度曲線形狀。鐵則一：衝線順序必須等於名次。鐵則二：出包者不能看起來快贏了——出包時刻取「領先者通過該點的時間 ×1.07 再加 140ms」。內建 <code>RaceFX._verify(n)</code> 會連跑 n 局檢查曲線單調、衝線順序、出包時點。</dd>
+    <dt>正式版</dt><dd>換引擎重做畫面時，演出公式可以重寫，但保留這兩條鐵則和一個等效的自動檢查器。出包演出 1.2–1.5 秒、奪冠 0.8–1.2 秒、派彩入帳動畫 0.4 秒不可省（企畫書 §1.2）。</dd>
+    <dt>出處</dt><dd class="src"><code>js/race-fx.js</code>；B07 回報；B09 驗收 <code>_verify(12)</code> 零違規</dd>
+  </dl>
+</article>
+<article class="item warn">
+  <div class="ih"><span class="id">F05</span><h3>時間軸要從時間推導，不要用計時器一段接一段</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>引擎每次都從時間算出「現在第幾局、哪個階段、剩幾毫秒」，所以中途打開頁面會直接接上正在跑的比賽、重整不重播、休眠醒來自動補上漏掉的局。</dd>
+    <dt>正式版</dt><dd>正式版改成「伺服器時間 + 本機時差」推導，概念不變。不要用 <code>setTimeout</code> 串階段——分頁被節流或手機鎖屏就會漏拍。斷線重連要回到當前狀態，不重播演出。</dd>
+    <dt>出處</dt><dd class="src"><code>js/round-engine.js</code> 檔頭；規格 §10.3</dd>
+  </dl>
+</article>
+<article class="item warn">
+  <div class="ih"><span class="id">F06</span><h3>背景分頁會凍結 requestAnimationFrame，資料更新不能掛在動畫上</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>踩過兩次。B06：「捲到最新」原本寫在 rAF 裡，隱藏分頁時被凍住；改成同步執行。B10：珠盤偶發空格，根因是安全網補結算的局沒寫入賽果紀錄，加上落珠靠動畫插入 DOM；修法是 DOM 插入改事件驅動、動畫只疊加，並加 <code>healShoe()</code> 在結算後、回補後、回到前景時比對珠數與紀錄數自我修復。</dd>
+    <dt>正式版</dt><dd>原則：狀態與 DOM 的更新永遠同步完成，動畫只是裝飾。關鍵列表（路子、注單、log）加一個「顯示數＝資料數」的自癒檢查。</dd>
+    <dt>出處</dt><dd class="src"><code>js/roads-ui.js</code>；TASKS-B 2026-09-03 B10-R2 條目</dd>
+  </dl>
+</article>
+<article class="item warn">
+  <div class="ih"><span class="id">F07</span><h3>休眠期間補結算的局，自動下注要自己對帳</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>分頁休眠時引擎會靜默補結漏掉的局，不發一般事件。B10 初版因此漏記損益，停利停損判定卡住，還多放了單。修法是維護「已放單未入帳」清單，每個事件前先從注單歷史補記。休眠期間不補放單（掛機的意思是 App 開著才下）。</dd>
+    <dt>正式版</dt><dd>App 退到背景再回來同樣會遇到。若自動下注留在前端，照這個模式做；若改由伺服器排程，前端只顯示伺服器狀態。</dd>
+    <dt>出處</dt><dd class="src"><code>js/autobet.js</code> 檔頭；規格 §6.1 自動下注段</dd>
+  </dl>
+</article>
+<article class="item warn">
+  <div class="ih"><span class="id">F08</span><h3>拖曳捲動不要用 setPointerCapture</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>路子容器是隱藏捲條的拖曳平移。<code>setPointerCapture</code> 會把 click 的目標劫持到容器，珠盤的「點擊切換模式」就收不到事件（路子模擬器踩過）。正確做法：<code>pointerdown</code> 掛在容器，<code>pointermove</code>／<code>pointerup</code>／<code>pointercancel</code> 掛在 window；位移超過 5px 判定為拖曳，並在捕獲階段吞掉接下來的 click。切頁籤後要等面板顯示了才捲到最新，隱藏時 <code>scrollWidth</code> 取不到。</dd>
+    <dt>正式版</dt><dd>引擎端的捲動元件通常內建處理，但同樣要確認「拖完不誤觸點擊」。</dd>
+    <dt>出處</dt><dd class="src">規格 §7.5</dd>
+  </dl>
+</article>
+<article class="item warn">
+  <div class="ih"><span class="id">F09</span><h3>手機上不要出現原生捲條</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>B08 加了嵌條之後，卡片區退化出可見的直向捲條，使用者直接退回。之後全 UI 捲條隱藏、觸控捲動保留；所有面板內容超高時在面板內部捲動，不准整頁溢出。</dd>
+    <dt>正式版</dt><dd>每次改版面都做一次全畫面掃描：只允許指定的捲動容器、body 零橫向溢出。</dd>
+    <dt>出處</dt><dd class="src">TASKS-B 2026-09-03 B08-R2 條目</dd>
+  </dl>
+</article>
+<article class="item warn">
+  <div class="ih"><span class="id">F10</span><h3>一個畫面狀態只給一種下注手勢</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>B05 修了三輪才定案「頁籤定模式」：頁籤決定唯一可點的下注動作。冠軍、出包頁籤點整張卡＝以當前籌碼成注；前二連點兩張卡，第二張點下即成注；特殊頁籤是四列面板點鈕成注。展開屬性統一走卡右上 ▾。早期卡上同時有「勝／包」小按鈕和頁籤，使用者會誤點。</dd>
+    <dt>正式版</dt><dd>重做 UI 時維持「點卡＝下注、▾＝展開」這組手勢，不要在卡上再加第二個下注入口。展開動畫只在使用者手點時播放，切頁籤或重繪不重播。</dd>
+    <dt>出處</dt><dd class="src">規格 §2、§9；TASKS-B B05-R3、B06-R2、B10-R2 條目</dd>
+  </dl>
+</article>
+<article class="item warn">
+  <div class="ih"><span class="id">F11</span><h3>暫存單在封盤瞬間作廢，同事下了大注沒按確認</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>點卡＝暫存、按確認＝送出。團隊試玩時有同事選了大注沒按確認，封盤後直接作廢。</dd>
+    <dt>正式版</dt><dd>最低限度做 D1＋D4：剩 5 秒時確認鈕強烈脈動並跳「注單尚未確認」、作廢時明確告知幾注未送出；確認鈕帶金額「確認下注 1,500」。D2（點卡即成注＋5 秒撤銷）留移植時 A/B 測試。D3 封盤自動送出不採（未經同意扣款有合規疑慮）。</dd>
+    <dt>出處</dt><dd class="src"><code>reports/上架回饋改善方案.html</code> 第三節</dd>
+  </dl>
+</article>
+<article class="item warn">
+  <div class="ih"><span class="id">F12</span><h3>首屏資訊太多，新手不知道第一步</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>首屏同時有賽段條、路子、四個注別頁籤、8 張卡、注單列。</dd>
+    <dt>正式版</dt><dd>建議 C（動線指路：當前該做的一步永遠有唯一視覺焦點，提示文案隨頁籤換）為主、A（三步進場導覽，看過就不再出現）為輔。B（簡單面預設進場）效果最強但動版面最大，C＋A 不夠再上。</dd>
+    <dt>出處</dt><dd class="src"><code>reports/上架回饋改善方案.html</code> 第二節</dd>
+  </dl>
+</article>
+<article class="item warn">
+  <div class="ih"><span class="id">F13</span><h3>兩個已知的解析度破版</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>編號 1–8 的數字碰到圓圈邊；「爆發／地形／專注」在窄螢幕擠成兩行、心情增益條超框。</dd>
+    <dt>正式版</dt><dd>編號圈依視口縮放並留 2px 內距；三屬性標籤改圖示（⚡⛰🎯），心情加成段設寬度上限、超出改顯示數字。</dd>
+    <dt>出處</dt><dd class="src"><code>reports/上架回饋改善方案.html</code> 第一節</dd>
+  </dl>
+</article>
+<article class="item warn">
+  <div class="ih"><span class="id">F14</span><h3>Demo 沒守效能紅線</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>提案期裁決「演出質感優先於效能」，B 案沒有照舊手機紅線做（皇帝牌有：動畫只用 transform／opacity、不用 filter、陰影靜態）。蒙地卡羅放主執行緒時曾造成下注點擊卡頓，B07 才移到 Web Worker。</dd>
+    <dt>正式版</dt><dd>正式版回頭訂效能預算。賠率改由伺服器給之後，Worker 就不需要了。</dd>
+    <dt>出處</dt><dd class="src">規格 §9.3 末段；TASKS-B 定位段</dd>
+  </dl>
+</article></div>
+<h2>參考</h2><div class="items">
+<article class="item ref">
+  <div class="ih"><span class="id">F15</span><h3>素材、音效與本機儲存</h3><span class="sev ref">參考</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd><ul class="plain"><li>動物頭像與場景：Kenney CC0（可商用、免署名），對映表在 <code>game.js</code> 的 <code>IMG</code>，授權說明在 <code>assets/CREDITS.md</code>。</li><li>四隻沒有專屬出包演出（鴨鴨、山羊、小馬、阿猴）暫用「ZZZ 睡著」；專屬提案程式碼留在 <code>race-fx.js</code> 的 <code>Q11_GAGS</code>（停用）。</li><li>音效全拔，<code>sfx.js</code> 留骨架，<code>DISABLED = true</code>，填檔名改 false 即恢復。</li><li>localStorage 鍵：<code>gbr_b05r2_save</code>、<code>gbr_b06_roads</code>、<code>gbr_b10_autobet</code>。同源兩個分頁共用，測試時會互相殘留。</li><li>動物以編號 1–8 和代表色為跨畫面錨點（規格 §1.1）；資料表名稱與畫面名稱不一致，見後端交接。</li></ul></dd>
+    <dt>正式版</dt><dd>正式版自製美術（過提案後換）；音效自找資源。</dd>
+    
+  </dl>
+</article></div>
+<footer>本文件是規格書 v1.6 的雷區補充，不取代規格書。內容整理自 B01–B10 任務卡、13 個執行對話、B04 數值驗證報告、B09 驗收報告與上架回饋改善方案。嚴重度：<b>必改</b>＝Demo 因為是假的才沒事，正式版照做會出事；<b>留意</b>＝做過、踩過或有既定裁決，照著做可省時間；<b>參考</b>＝背景資訊。<br>同系列：<a href="https://myauras.github.io/demo-game-client/animalrace-docs/handover-planning.html">企劃交接</a>／<a href="https://myauras.github.io/demo-game-client/animalrace-docs/handover-frontend.html">前端交接</a>／<a href="https://myauras.github.io/demo-game-client/animalrace-docs/handover-backend.html">後端交接</a>；<a href="https://myauras.github.io/demo-game-client/animalrace-docs/spec.html">規格書 v1.6</a>。</footer>
+</div>
+</html>
