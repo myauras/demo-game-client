@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>B04 數值驗證報告</title>
+<style>
+ body{font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;background:#f4f2ee;color:#23201c;max-width:960px;margin:0 auto;padding:36px 24px 80px;line-height:1.75;font-size:14px}
+ h1{font-size:22px;margin:0 0 4px} .sub-t{color:#7c766c;font-size:12.5px;margin-bottom:26px}
+ h2{font-size:15px;letter-spacing:.06em;color:#194A63;border-bottom:2px solid #BFD9E8;padding-bottom:6px;margin:38px 0 14px}
+ h3{font-size:13.5px;margin:20px 0 8px}
+ table{border-collapse:collapse;width:100%;font-size:13px;background:#fff;margin:10px 0;font-variant-numeric:tabular-nums}
+ th,td{border:1px solid #e3ded4;padding:6px 10px;text-align:right} th{background:#EAF3F8;color:#194A63;font-weight:600}
+ td:first-child,th:first-child{text-align:left}
+ tr.sub td{background:#f7f4ee;font-weight:600}
+ .ok{color:#1c7c40;font-weight:700}.bad{color:#d93a1e;font-weight:700}.warn{color:#C9631E;font-weight:700}
+ .verdict{background:#fff;border:1px solid #e3ded4;border-left:5px solid #1c7c40;border-radius:4px;padding:14px 18px;margin:18px 0;font-size:14px}
+ .issue{background:#fff;border:1px solid #e3ded4;border-left:5px solid #E43D2E;border-radius:4px;padding:12px 16px;margin:14px 0;font-size:13.5px}
+ .note{font-size:12px;color:#7c766c;line-height:1.8;border-left:2px solid #ddd8ce;padding-left:12px;margin:10px 0}
+ .exp{color:#a09a90}
+ code{font-family:ui-monospace,"Cascadia Code",Consolas,monospace;background:#EAF3F8;padding:1px 6px;border-radius:3px;font-size:12px;color:#194A63}
+ .scrollx{overflow-x:auto}
+ ol,ul{padding-left:22px} li{margin:4px 0}
+</style></head><body>
+
+<h1>B04｜數值驗證報告</h1>
+<div class="sub-t">2026-09-01 ／ 遊戲 B「動物大賽跑」HTML Demo ／ 驗證對象：tables-b.js + mock-server-b.js（B03 交付物）／ 依據：reports/B規格書_v1.html（v1.1 定稿）</div>
+
+<div class="verdict"><b class="ok">結論：B04 五個工作項全數通過；B03 數值面驗收通過（含一處更正）。</b><br>
+兩組各 2,000 萬、合計 <b>4,000 萬</b>結算樣本（每輪賠率均以完整 MC 反推）：四注別 RTP 全數落判準內（零出包含「取整向莊家」對帳後通過）；45 個盤口長期 EV 全部 &lt; 100%；出包偏斜 3.26:1 合 ~3:1 假設；大小／奇偶 ≈50/50；冷熱調參後守住率 50.8% 落 45–55 帶中心；心情三方向偏移與賠率修正一致，Q6 抽選規則驗證通過定案。<br>
+<b class="warn">重要更正</b>：B03 將規格 §6.2「賠率反推 MC ≥100 萬輪」誤讀為「≥10 萬」——10 萬輪的抽樣噪音會在稀有前二連盤口開出知情玩家 EV&gt;100% 的賠率（實測 0.77% 盤口翻正、最高 108.9%）。已於 tables-b.js 將 <code>MC_RUNS</code> 更正為 100 萬，重掃後缺口收斂（EV&gt;100% 且統計顯著的盤口歸零）。</div>
+
+<h2>一、驗證方法與判準</h2>
+<div class="note">
+以 Node 載入與瀏覽器完全相同的 tables-b.js / mock-server-b.js。每輪經真實接口 <code>newRound</code>（含規格級蒙地卡羅賠率反推）開局，再以 mock-server 測試鉤 <code>_draw</code>（與正式開獎同一支 drawVector）對同一輪參數抽 5,000–10,000 次賽果、對全部 45 個盤口結算——賠率所依據的分佈與開獎完全同源。瀏覽器 sim.html 留作互動抽查（MC 選項已補 1,000,000 規格檔）。<br>
+<b>RTP 判準</b>：|實測 − 檔位| ≤ max(0.1pp, 3σ)。σ 以「輪」為單位計算（同輪內共用賠率表、樣本相關，逐抽計 σ 會低估）。檔位依 Q9 裁決：冠軍 95／前二連 95／出包 94／零出包 94。<br>
+<b>取整對帳</b>：規格 §6.2 取整一律向莊家（捨去至小數兩位）、微幅收益計入總 RTP 對帳——低賠率盤口有可計算的確定性損耗（賠率 o 平均損 0.005，RTP 損 ≈ 0.5×命中率 pp），對帳欄明列。<br>
+<b>自洽驗證</b>：全程 6,000 輪的「封包重建參數 → 賠率快取比對」0 筆不符；24/24 次抽驗改走真實 placeBets→lockRound→settleRound 路徑，派彩與獨立判定完全一致。
+</div>
+
+<h2>二、各注別實測 RTP（工作項 1）</h2>
+<p>定案參數（W_SHARP=1.5、MC_RUNS=100 萬）：2,000 輪 × 每輪 10,000 次結算 = 2,000 萬樣本。另有調參後、MC=10 萬的基線組 4,000 輪 × 5,000 = 2,000 萬樣本供對照。</p>
+<table>
+<tr><th>注別</th><th>檔位</th><th>實測 RTP（定案版）</th><th>偏差</th><th>±3σ</th><th>取整損耗（理論）</th><th>對帳後殘差</th><th>判定</th></tr>
+<tr><td>冠軍</td><td>95%</td><td>94.926%</td><td>−0.074pp</td><td>0.026pp</td><td>−0.066pp</td><td>−0.008pp</td><td class="ok">通過</td></tr>
+<tr><td>前二連</td><td>95%</td><td>94.983%</td><td>−0.017pp</td><td>0.037pp</td><td>−0.018pp</td><td>+0.001pp</td><td class="ok">通過</td></tr>
+<tr><td>出包</td><td>94%</td><td>93.951%</td><td>−0.049pp</td><td>0.055pp</td><td>−0.083pp</td><td>+0.034pp</td><td class="ok">通過</td></tr>
+<tr><td>零出包</td><td>94%</td><td>93.779%</td><td>−0.221pp</td><td>0.120pp</td><td>−0.117pp</td><td>−0.104pp</td><td class="ok">通過（對帳）*</td></tr>
+</table>
+<p class="note">* 零出包為低賠率盤（均值 4.17x），二位捨去的確定性損耗 −0.117pp 最大；殘差 −0.104pp 為 2.6σ 抽樣波動。與基線組（實測 93.896%、殘差 +0.013pp）合併 <b>4,000 萬樣本：實測 93.838%、對帳後殘差 −0.045pp（1.6σ）</b>，判定通過。若營運端要求名目 RTP 貼齊 94.00，可改三位小數取整——但 §6.2 取整向莊家為既定規則，微幅收益列入對帳即可，不建議動。<br>
+基線組（MC=10 萬）四注別亦全數通過：94.940／95.008／93.922／93.896——RTP 對 MC 次數不敏感（防套利才敏感，見第三節）。</p>
+<p><b>45 個盤口逐一驗證</b>：冠軍×8、前二連×28、出包×8、零出包個別長期 EV 介於 <b>93.78%–95.20%</b>，無任一盤口 &gt; 100%；6,000 輪中無任何盤口因命中率過低而不可押（null 0 次）；前二連賠率觸 500x 封頂僅 13 輪盤口次（封頂只利莊家）。</p>
+
+<h3>賠率參考帶更新（取代規格 §6.1 車輛版參考帶）</h3>
+<table>
+<tr><th>注別</th><th>實測賠率帶（6,000 輪）</th><th>規格舊參考帶</th><th>備註</th></tr>
+<tr><td>冠軍</td><td>2.78x – 103.5x</td><td>4.30 – 15.80</td><td>權重銳利度 γ=1.5 後熱門更熱、冷門更冷（讀盤感），帶寬屬預期</td></tr>
+<tr><td>前二連</td><td>4.97x – 500x（封頂）</td><td>6.50 – 42.00</td><td>雙冷門組合為長尾；ODDS_CAP=500 封頂</td></tr>
+<tr><td>出包</td><td>3.55x – 16.24x</td><td>3.80 – 11.50</td><td>對應 p_out ∈ [6%, 26%] 與心情折算</td></tr>
+<tr><td>零出包</td><td>2.09x – 7.56x（均值 4.16x）</td><td>2.60</td><td>零出包率 ≈23.5% 之自然結果</td></tr>
+</table>
+
+<h2>三、防套利窮舉（工作項 2）——本遊戲最容易出包的地方</h2>
+<h3>3.1 組合層：任意複押組合無 EV&gt;100%</h3>
+<p>結算對每注獨立計算 <code>floor(amount × odds)</code>、下注不影響賽果，故任意跨注別複押組合的 EV 是各單注 EV 的注額加權平均——<b>不存在任何組合能超過其中單注的最大 EV</b>（對沖只能降波動、不能造出期望值；整數取整只會更利莊家）。窮舉因此歸結為 45 個單一盤口的逐一檢驗：上節實測全部 &lt; 100%（最高 95.20%）。長期面通過。</p>
+
+<h3>3.2 逐輪層：知情玩家掃描（發現問題 → 已修正）</h3>
+<p>屬性、心情、賽段全數公開（公平性揭露），玩家可自跑高精度模擬還原各盤口真實命中率、只挑賠率開高的輪下注。掃描方式：250 輪，每輪以獨立 50–100 萬次同源抽樣重估 45 個盤口真實機率，計算「當輪賠率 × 真實機率」：</p>
+<table>
+<tr><th>賠率反推 MC 次數</th><th>EV&gt;100% 盤口</th><th>顯著（z&gt;2）</th><th>高度顯著（z&gt;3）</th><th>單盤最高 EV</th><th>選注策略邊際</th></tr>
+<tr><td>100,000（B03 誤讀值）</td><td class="bad">87 / 11,250（0.77%）</td><td class="bad">12</td><td class="bad">5</td><td class="bad">108.9%（前二連 2-7，z=7.0）</td><td class="bad">+0.44% / 輪</td></tr>
+<tr><td><b>1,000,000（規格 §6.2）</b></td><td class="ok">1 / 11,250</td><td class="ok">0</td><td class="ok">0</td><td class="ok">101.2%（z=0.75，統計上與噪音無異）</td><td class="ok">+0.005% / 輪（贏家詛咒噪音內）</td></tr>
+</table>
+<p class="note">根因：稀有前二連盤口命中率低至 0.2–3%，10 萬輪 MC 的相對噪音 ±3–7%——噪音一旦吃掉 5% 莊家邊際，該輪賠率就「開高」。翻正的 87 個盤口全部是前二連、無一冠軍/出包/零出包（後者機率高、噪音小）。100 萬輪後 3σ 噪音壓進邊際內；殘餘暴露僅極端尾部（p&lt;0.3% 且未觸封頂的組合），量級 &lt;0.01%/輪且不可被穩定識別。結構性零噪音方案（解析式聯合分佈枚舉定價）列第七節待裁決。</p>
+
+<h2>四、出包分佈與全滅頻率（工作項 3）</h2>
+<table>
+<tr><th>出包隻數</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8（全滅）</th></tr>
+<tr><td>占比（4,000 萬局）</td><td>23.50%</td><td>37.33%</td><td>25.91%</td><td>10.27%</td><td>2.546%</td><td>0.403%</td><td>0.0395%</td><td>0.0022%</td><td>23 次（5.8e-7）</td></tr>
+</table>
+<ul>
+<li><b>有出包 : 零出包 = 3.26 : 1</b>（解析理論值 3.25:1）——§7.3「不設出包二元路」的 ~3:1 偏斜前提成立。</li>
+<li><b>全滅頻率</b>：23 次 / 4,000 萬 = 5.8e-7，解析理論值 5.6e-7（Poisson 期望 22.2 次）一致；每靴 200 局出現率約 0.011%。全滅局照 out_at 倒序結算已由接口自測與 4,000 萬局向量自洽（B03 冒煙 + 本次 0 違規）覆蓋。</li>
+<li>0–2 隻佔 86.7%（演出負擔可控）、4+ 隻佔 2.99%（總覽紅底徽章「有感稀有」）。</li>
+<li><b>Q1 定案：出包率區間 [6%, 26%] 與線性曲線維持 B03 初值</b>。</li>
+</ul>
+
+<h2>五、路子均衡度與冷熱調參（工作項 4）</h2>
+<h3>5.1 大小／奇偶</h3>
+<p>八隻動物數學上完全同分佈，大小/奇偶理論恰為 50/50。實測（4,000 萬局）：大 <b>50.09%</b>、奇 <b>49.85%</b>，均在輪組成波動 1σ 內。<span class="ok">通過</span></p>
+
+<h3>5.2 冷熱調參（Q3 定案）</h3>
+<p>現況：γ=1（B03 原式）下「前二熱門守住率」僅 32.6%——冷熱路會長期偏「失守」，不在可玩帶。掃描權重銳利度 γ（勝率權重取 <code>w^γ</code>）× 門檻（前二/前三）：</p>
+<table>
+<tr><th>γ</th><th>守住率（前二）</th><th>守住率（前三）</th><th>大冷門（末二奪冠）</th><th>勝賠帶</th><th>展示↔勝率相關</th></tr>
+<tr><td>1（B03 原式）</td><td>32.6%</td><td>46.7%</td><td>17.7%</td><td>3.7 – 56x</td><td>0.787</td></tr>
+<tr><td>1.25</td><td>34.4%</td><td>48.8%</td><td>16.0%</td><td>3.5 – 39x</td><td>0.823</td></tr>
+<tr class="sub"><td><b>1.5（採用）</b></td><td>35.9%</td><td><b>50.7%</b></td><td>14.8%</td><td>3.4 – 83x</td><td>0.837</td></tr>
+<tr><td>2</td><td>39.2%</td><td>54.3%</td><td>12.4%</td><td>2.7 – 190x</td><td>0.868</td></tr>
+<tr><td>2.5</td><td>42.9%</td><td>58.4%</td><td>10.3%</td><td>2.0 – 460x</td><td>0.875</td></tr>
+<tr><td>3</td><td>46.0%</td><td>61.8%</td><td>8.7%</td><td>2.0 – 500x（觸頂）</td><td>0.878</td></tr>
+</table>
+<p><b>定案：<code>W_SHARP = 1.5</code> ＋ 冷熱門檻改「前三熱門」（<code>ROAD_HOT = {FAV_TOP:3, LONG_BOTTOM:2}</code>）</b>，已寫回 tables-b.js 並註記。理由：純靠 γ 把「前二」推進 45–55 帶需 γ≥3.5，賠率帶會被拉爆（勝賠貼 2x、前二連大面積觸 500x 封頂）；γ=1.5＋前三則落帶中心，賠率帶健康、大冷門降至「有感但稀有」的 ~15%，且展示與勝率的連動更強（讀盤感提升）。γ 只作用於抽樣銳利度、單調不變，屬性條「越長越強」的讀法不受影響。</p>
+<ul>
+<li><b>定案版全量驗證：守住率 50.83%</b>（45–55 帶中心）、大冷門 <b>14.80%</b>（約每 7 局一顆金斜線珠）。<span class="ok">通過</span></li>
+<li><b>展示與勝率一致性（§11-3）</b>：權重份額 ↔ 實測勝率相關係數 <b>0.970</b>（結構口徑，Demo 所見即所算）；含對手組成與出包噪音的保守混合口徑 0.903。兩口徑均 &gt; 0.9。<span class="ok">通過</span></li>
+<li>連冠率實測 12.6%（動物同分佈下理論恰 1/8=12.5%）、三連冠 1.7%（理論 1/64=1.56%）——Q10 冷門保護提案見第七節。</li>
+</ul>
+
+<h2>六、心情影響量測（工作項 5）</h2>
+<h3>6.1 受控量測（八隻同屬性 60/60/60，僅 1 號帶心情；200 萬次/格）</h3>
+<table>
+<tr><th>情境</th><th>勝率</th><th>出包率</th><th>勝賠</th><th>出包賠</th><th>該盤 EV</th></tr>
+<tr><td>基準（均勻賽段）</td><td>12.51%</td><td>16.80%</td><td>7.59</td><td>5.59</td><td>95.0% / 93.9%</td></tr>
+<tr><td>🔥 亢奮（爆發+15）</td><td>13.80%（+1.29pp）</td><td>16.77%（—）</td><td>6.86 <b>▼</b></td><td>5.61（—）</td><td>94.7% / 94.1%</td></tr>
+<tr><td>😪 想睡（專注−20）</td><td>11.60%（−0.91pp）</td><td>22.94%（<b>+6.14pp</b>）</td><td>8.21 <b>▲</b></td><td>4.10 <b>▼</b></td><td>95.3% / 94.1%</td></tr>
+<tr><td>😰 怯場（地形−20，均勻賽段）</td><td>9.04%（−3.47pp）</td><td>16.82%（—）</td><td>10.56 <b>▲</b></td><td>5.59（—）</td><td>95.5% / 94.0%</td></tr>
+<tr><td>😰 怯場（水多賽段 20/40/40）</td><td>8.32%（−4.15pp）</td><td>16.83%（—）</td><td>11.41 <b>▲</b></td><td>5.58（—）</td><td>94.9% / 93.9%</td></tr>
+</table>
+<p>三種心情的方向與幅度全數符合 §4.1：亢奮只動勝率（勝賠下修）、想睡出包率 +6.14pp（理論值 0.2×20/65 = +6.15pp，出包賠 5.59→4.10 下修）、怯場只動勝率且水多賽道降幅更大（賠率上修幅度連動賽段組成）。<b>每格 EV 均貼目標 RTP——賠率修正與實際偏移一致、心情完全計入 RTP</b>，玩家不需心算。<b>Q2 定案：+15／−20／−20 維持</b>。<span class="ok">通過</span></p>
+
+<h3>6.2 Q6 心情抽選規則驗證（6,000 真實輪次）</h3>
+<table>
+<tr><th>檢查項</th><th>實測</th><th>期望</th><th>判定</th></tr>
+<tr><td>每局心情隻數 2 / 3</td><td>50.3% / 49.7%</td><td>50 / 50</td><td class="ok">通過</td></tr>
+<tr><td>逐隻均勻（8 隻，共 14,981 次心情）</td><td>1,835–1,899 次/隻</td><td>1,873 ±129（3σ）</td><td class="ok">通過</td></tr>
+<tr><td>種類均勻（亢奮/想睡/怯場）</td><td>5,005 / 5,023 / 4,953</td><td>4,994 ±212（3σ）</td><td class="ok">通過</td></tr>
+<tr><td>跨局無記憶（同隻連續有心情機率）</td><td>31.5%</td><td>獨立期望 31.25%</td><td class="ok">通過</td></tr>
+</table>
+<p><b>Q6 定案：維持 B03 初版</b>（均勻抽 2/3 隻各半、種類三選一均勻、無跨局記憶）。抽選簡單、可驗證、無可預測性可供讀牌套利。</p>
+
+<h2>七、發現的問題與待裁決事項</h2>
+<div class="issue"><b>P1（已修正）：B03 誤讀規格 §6.2 蒙地卡羅次數</b>——規格要求「≥100 萬輪」，tables-b.js 實作 10 萬（註解寫「§6.2 要求 ≥10 萬」）。後果見第三節（知情玩家套利缺口）。已於 tables-b.js 更正 <code>MC_RUNS = 1000000</code> 並註記；重掃驗證缺口收斂。<br>
+<b>連帶（待裁決）</b>：mock-server-b.js 頭部註解同樣寫「≥10 萬次/輪」——僅註解錯誤、邏輯無誤，但該檔 B04 不得動，請管理對話裁決由誰修註解。</div>
+<div class="issue"><b>P2（效能注意，非阻斷）</b>：MC 100 萬使 <code>newRound</code>（本輪＋無心情基準共兩次 MC）耗時實測 649ms（Node 桌機；瀏覽器同量級）。30 秒循環的結算段 3s 內可完成；舊裝置建議 B02/B05 整合時把下一輪生成移到演出段預跑。B 專案「演出優先於效能」原則下不構成阻斷。</div>
+<div class="issue"><b>P3（殘餘風險備忘）</b>：MC 定價的統計噪音無法歸零，極端尾部（命中率 &lt;0.3% 的前二連）理論上仍有 &lt;0.01%/輪的不可穩定識別暴露。結構性零噪音方案＝解析式聯合分佈定價（枚舉 2⁸ 出包子集 × 條件名次機率，可精確算出全部 45 個盤口機率、成本低於 MC）。此案不違「不可用手算<b>邊際</b>機率」鐵律的本意（它正是聯合分佈定價），但屬 mock-server 賠率邏輯改動＋規格 §6.2 文字修訂，<b>留待正式版裁決；Demo 以 MC 100 萬為定案</b>。</div>
+<div class="issue"><b>P4（Q10 提案，待裁決）</b>：冷門保護（§6.3）尚未實作（mock-server 無此邏輯，非 B03 遺漏——§12 列 B04 定參數）。實測三連冠率 1.7%（每靴 200 局約 3 次）。<b>提案：N=3 連冠觸發、下輪該隻權重 ×0.85</b>（賠率照調整後權重重算 → EV 中性、計入 RTP、全體玩家一致，合規）；四連冠率將由 0.20% 降至 ~0.03%。需動 mock-server <code>newRound</code>——建議 Demo 不實作（不影響數學驗收）、列正式版後台需求；若要納入 Demo 請授權小改。</div>
+<div class="issue"><b>P5（規格文件同步）</b>：建議規格書 v1.2 更新——§7.2 冷熱定義「前二熱門」→「前三熱門（B04 定案）」；§6.1 參考帶換用第二節實測帶；§12 Q1/Q2/Q3/Q6 標定案、Q10 標提案待裁決；§6.2 補「Demo 實測 MC 100 萬約 0.65s/輪」。</div>
+
+<h2>八、調參與變更清單（全部在 B04 檔案權限內）</h2>
+<table>
+<tr><th>檔案</th><th>變更</th><th>性質</th></tr>
+<tr><td>js/tables-b.js</td><td><code>W_SHARP = 1.5</code>（新增，勝率權重取 1.5 次方）</td><td>Q3 調參（冷熱守住率入帶）</td></tr>
+<tr><td>js/tables-b.js</td><td><code>ROAD_HOT = {FAV_TOP:3, LONG_BOTTOM:2}</code>（新增，供 B06）</td><td>Q3 定案（冷熱門檻前三/末二）</td></tr>
+<tr><td>js/tables-b.js</td><td><code>MC_RUNS</code> 100,000 → 1,000,000</td><td>P1 更正（規格 §6.2）</td></tr>
+<tr><td>js/tables-b.js</td><td><code>PARAM_VERSION</code> → <code>b-demo-b04-01</code>；Q1/Q2/Q6 定案註記</td><td>註記</td></tr>
+<tr><td>sim.html</td><td>MC 選項補 1,000,000（規格）檔；頁首註記 B04 定案</td><td>擴充</td></tr>
+<tr><td>js/mock-server-b.js、B02 檔案</td><td>未動（僅 P1 註解錯誤待裁決）</td><td>—</td></tr>
+</table>
+
+<h2>九、逐項驗收總表</h2>
+<table>
+<tr><th>#</th><th>工作項</th><th>結果</th><th>判定</th></tr>
+<tr><td>1</td><td>各注別 RTP ≥100 萬輪</td><td>4,000 萬樣本；95/95/94/94 全落 max(0.1pp, 3σ)（零出包含取整對帳）；45 盤口 EV 93.8–95.2%</td><td class="ok">通過</td></tr>
+<tr><td>2</td><td>防套利窮舉</td><td>組合層線性歸結＋45 盤口全 &lt;100%；知情玩家掃描於 MC 100 萬下顯著盤口歸零（B03 誤讀已修）</td><td class="ok">通過（修正後）</td></tr>
+<tr><td>3</td><td>出包分佈／零出包／全滅</td><td>3.26:1 合 ~3:1；全滅 5.8e-7 ≈ 理論 5.6e-7；分佈全表與理論一致</td><td class="ok">通過</td></tr>
+<tr><td>4</td><td>路子均衡度</td><td>大小 50.09／奇偶 49.85；冷熱調參後守住 50.83%（45–55 帶）；大冷門 14.8%；相關係數 0.970</td><td class="ok">通過（調參後）</td></tr>
+<tr><td>5</td><td>心情影響</td><td>三方向偏移＝理論值、賠率修正一致、EV 貼檔位；Q6 抽選四項檢驗通過</td><td class="ok">通過</td></tr>
+<tr><td>—</td><td>§12 參數定案</td><td>Q1/Q2/Q3/Q6 定案；Q10 提案待裁決（P4）</td><td class="ok">完成</td></tr>
+</table>
+<p class="note">§11-7（輪次時序）與 §11-8（路子互動）屬 B02/B06 驗收範圍，不在本報告。驗證腳本、原始 JSON 結果（sweep / main / arb×2 / mood）存於 B04 工作區，報告數字皆可重跑復現。</p>
+
+</body></html>

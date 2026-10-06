@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>動物大賽跑規格書</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 40px 24px 90px; background: #f4f2ee; color: #23201c;
+         font-family: "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+         line-height: 1.8; font-size: 14.5px; }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  h1 { font-size: 26px; letter-spacing: .04em; margin: 0 0 6px; }
+  .sub { color: #7c766c; font-size: 13px; margin-bottom: 8px; }
+  .meta { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0 34px; }
+  .meta div { background: #fff; border: 1px solid #e3ded4; border-radius: 6px; padding: 6px 14px;
+              font-size: 12px; color: #7c766c; }
+  .meta b { color: #23201c; font-weight: 600; }
+  h2 { font-size: 17px; letter-spacing: .05em; color: #194A63; border-bottom: 2px solid #BFD9E8;
+       padding-bottom: 8px; margin: 52px 0 16px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  h2 .no { color: #2E6B8A; font-variant-numeric: tabular-nums; }
+  h3 { font-size: 14.5px; margin: 26px 0 8px; color: #23201c; }
+  p { margin: 8px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; background: #fff; margin: 12px 0;
+          font-variant-numeric: tabular-nums; }
+  th, td { border: 1px solid #e3ded4; padding: 7px 11px; text-align: left; vertical-align: top; }
+  th { background: #EAF3F8; font-weight: 600; white-space: nowrap; color: #194A63; }
+  .card { background: #fff; border: 1px solid #e3ded4; border-radius: 6px; padding: 16px 20px; margin: 14px 0; }
+  .rule { background: #fff; border: 1px solid #e3ded4; border-left: 5px solid #2E6B8A; border-radius: 4px;
+          padding: 12px 16px; margin: 14px 0; font-size: 13.5px; }
+  .rule.hard { border-left-color: #E43D2E; }
+  .rule.hard::before { content: "鐵律"; display: inline-block; background: #E43D2E; color: #fff;
+          font-size: 11px; padding: 1px 8px; border-radius: 8px; margin-right: 8px; vertical-align: 1px; }
+  .note { font-size: 12.5px; color: #7c766c; border-left: 2px solid #ddd8ce; padding-left: 12px; margin: 10px 0; }
+  code, .mono { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; }
+  code { background: #EAF3F8; padding: 1px 6px; border-radius: 3px; font-size: 12px; color: #194A63; }
+  pre { background: #194A63; color: #D6EBF5; border-radius: 6px; padding: 14px 18px; overflow-x: auto;
+        font-size: 12px; line-height: 1.7; margin: 12px 0; }
+  pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+  pre .c { color: #7FAEC6; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 400; letter-spacing: 0;
+           background: #EAF3F8; color: #2E6B8A; border: 1px solid #BFD9E8; border-radius: 9px;
+           padding: 0 9px; white-space: nowrap; }
+  .tune { display: inline-block; font-size: 11px; background: #FFF1DC; color: #C9631E;
+          border: 1px solid #FF8A3D; border-radius: 9px; padding: 0 8px; white-space: nowrap; }
+  .src { font-size: 11.5px; color: #9a938a; }
+  .swatch { display: inline-block; width: 13px; height: 13px; border-radius: 50%; vertical-align: -2px;
+            margin-right: 5px; border: 1px solid rgba(0,0,0,.12); }
+  .toc { background: #fff; border: 1px solid #e3ded4; border-radius: 6px; padding: 16px 22px;
+         margin: 0 0 10px; font-size: 13px; columns: 2; column-gap: 36px; }
+  .toc a { color: #2E6B8A; text-decoration: none; display: block; padding: 2.5px 0; break-inside: avoid; }
+  .toc a:hover { text-decoration: underline; }
+  .toc .tno { color: #9a938a; display: inline-block; min-width: 34px; font-variant-numeric: tabular-nums; }
+  /* 輪次時間軸 */
+  .timeline { display: flex; border-radius: 6px; overflow: hidden; margin: 12px 0 4px;
+              font-size: 12px; color: #fff; text-align: center; min-height: 46px; }
+  .timeline div { display: flex; flex-direction: column; justify-content: center; padding: 5px 4px; }
+  .timeline b { font-size: 13px; font-weight: 700; }
+  /* 資料流 */
+  .flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; margin: 12px 0; }
+  .flow .fbox { background: #fff; border: 1.5px solid #2E6B8A; border-radius: 6px; padding: 8px 12px;
+                font-size: 12.5px; min-width: 118px; flex: 1; }
+  .flow .fbox b { display: block; color: #194A63; font-size: 13px; }
+  .flow .fbox span { color: #7c766c; font-size: 11.5px; line-height: 1.5; display: block; }
+  .flow .arr { align-self: center; color: #2E6B8A; font-weight: 700; font-size: 15px; flex: none; }
+  .cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 760px) { .cols2 { grid-template-columns: 1fr; } .toc { columns: 1; } }
+  .layer { border-radius: 6px; padding: 14px 18px; font-size: 13px; }
+  .layer h4 { margin: 0 0 6px; font-size: 13.5px; }
+  .layer ul { margin: 4px 0; padding-left: 18px; }
+  .layer li { margin: 3px 0; }
+  .scrollx { overflow-x: auto; }
+  ol, ul { padding-left: 22px; }
+  li { margin: 4px 0; }
+  .openq td:first-child { white-space: nowrap; color: #2E6B8A; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>動物大賽跑｜遊戲規格書 v1</h1>
+<div class="sub">專案 B ── 8 隻動物的全服同步輪次觀賽投注遊戲（iGaming Demo）</div>
+<div class="meta">
+  <div>版本 <b>v1.6</b></div>
+  <div>日期 <b>2026-09-01</b></div>
+  <div>狀態 <b>待驗收</b></div>
+  <div>任務 <b>B01 規格整併</b></div>
+  <div>效力 <b>B02–B09 的唯一依據</b></div>
+</div>
+
+<div class="toc">
+  <a href="#s0"><span class="tno">§0</span>文件定位與依據</a>
+  <a href="#s1"><span class="tno">§1</span>產品定位與主題</a>
+  <a href="#s2"><span class="tno">§2</span>輪次結構</a>
+  <a href="#s3"><span class="tno">§3</span>三屬性與賽段組成</a>
+  <a href="#s4"><span class="tno">§4</span>心情機制</a>
+  <a href="#s5"><span class="tno">§5</span>出包機制與賽果生成</a>
+  <a href="#s6"><span class="tno">§6</span>注別與賠率</a>
+  <a href="#s7"><span class="tno">§7</span>路子系統</a>
+  <a href="#s8"><span class="tno">§8</span>個體統計</a>
+  <a href="#s9"><span class="tno">§9</span>UI 與演出決稿方向</a>
+  <a href="#s10"><span class="tno">§10</span>系統架構與資料流</a>
+  <a href="#s11"><span class="tno">§11</span>驗收要點</a>
+  <a href="#s12"><span class="tno">§12</span>開放問題與待調參數</a>
+  <a href="#s13"><span class="tno">§13</span>變更紀錄</a>
+</div>
+<p class="note">標記說明：<span class="badge">決議①</span>＝對應 B01 任務卡「須涵蓋的既有決議」編號（①–⑩，供逐項核對）；<span class="tune">待 B04</span>＝數值為初值，由 B04 模擬定案，不得視為結論。</p>
+
+<!-- ═══════════ §0 ═══════════ -->
+<h2 id="s0"><span class="no">§0</span> 文件定位與依據</h2>
+<p>本文件把散落在提案、示意稿與活原型中的決議整併為專案 B 的正式規格，是後續任務 B02–B09 的唯一依據，也是回饋企畫書 v3 的素材。內容以既有決議為準、不新增機制；文件間互相矛盾之處一律列入 §12 開放問題，不在本文件內裁決。</p>
+<table>
+<tr><th>依據文件</th><th>提供內容</th></tr>
+<tr><td class="mono">三款博弈遊戲企畫暨規則書_v2.md</td><td>§1 通用原則（結算/演出分離、演出時長、公平性揭露）；§3 遊戲 B（賽果生成鐵律、防套利方法論、驗收要點）；§5.4 接口契約形狀；§7 合規備註</td></tr>
+<tr><td class="mono">reports/機制強化提案.html</td><td>機制設計理由：耐玩度來自「基礎結果 × 局內變化 × 稀有時刻 × 跨局累積」四條獎勵軸；側注聯合分佈防套利方法論；chainfire 可搬資產</td></tr>
+<tr><td class="mono">reports/B主題比較示意.html</td><td>主題決稿（動物大賽跑）、色板與調性、下注畫面與演出構圖、心情三守則、個體統計</td></tr>
+<tr><td class="mono">reports/路子與心情示意.html</td><td>路子總覽讀法、點珠詳情彈窗版式、心情疊加條決稿樣式</td></tr>
+<tr><td class="mono">reports/路子模擬器.html</td><td>路子系統活原型──<b>四頁籤、版位尺寸、拖曳互動規格以此為準</b>（含已修正的 setPointerCapture 拖曳 bug）</td></tr>
+</table>
+<p class="note">獎勵軸對應：賽段組成＝局內變化（每局新題目）、心情＝讀盤決策線索、出包與大冷門＝稀有時刻、路子與個體統計＝跨局累積。這是回應評審「獎勵反饋要豐富耐玩」的機制骨架。</p>
+
+<!-- ═══════════ §1 ═══════════ -->
+<h2 id="s1"><span class="no">§1</span> 產品定位與主題 <span class="badge">決議①</span></h2>
+<p>8 隻 Q 版動物跑障礙賽的全服同步輪次觀賽投注遊戲。玩家不操作賽事、只在開賽前下注；核心賣點是「看得懂的讀盤」──鴨子會游泳、豹跑得快是常識，賽段組成與心情徽章把判斷素材直接攤在下注畫面上。調性：<b>歡樂・爆笑・全民看得懂</b>（圓潤 Q 版、粗描邊、誇張表情；出包走喜劇路線）。避免：寫實動物、血腥、賭場金碧輝煌感。</p>
+
+<h3>1.1 八隻動物（編號、名稱、代表色固定）</h3>
+<table>
+<tr><th>編號</th><th>名稱</th><th>代表色</th><th>備註</th></tr>
+<tr><td>1</td><td>小兔</td><td><span class="swatch" style="background:#F2F2F0"></span><span class="mono">#F2F2F0</span></td><td>淺色珠，路子上需加描邊 <span class="mono">#8a94a6</span>、深色字</td></tr>
+<tr><td>2</td><td>阿汪</td><td><span class="swatch" style="background:#C98B5B"></span><span class="mono">#C98B5B</span></td><td></td></tr>
+<tr><td>3</td><td>鴨鴨</td><td><span class="swatch" style="background:#FFD02F"></span><span class="mono">#FFD02F</span></td><td>亮色珠，用深色字 <span class="mono">#5a4a10</span></td></tr>
+<tr><td>4</td><td>山羊</td><td><span class="swatch" style="background:#AEB6BF"></span><span class="mono">#AEB6BF</span></td><td></td></tr>
+<tr><td>5</td><td>小馬（v1.3 前：獵豹）</td><td><span class="swatch" style="background:#E8B14C"></span><span class="mono">#E8B14C</span></td><td></td></tr>
+<tr><td>6</td><td>阿猴（v1.3 前：袋鼠）</td><td><span class="swatch" style="background:#D9814C"></span><span class="mono">#D9814C</span></td><td></td></tr>
+<tr><td>7</td><td>樹懶（v1.3 前：烏龜）</td><td><span class="swatch" style="background:#7FA65A"></span><span class="mono">#7FA65A</span></td><td></td></tr>
+<tr><td>8</td><td>小豬</td><td><span class="swatch" style="background:#D97BA6"></span><span class="mono">#D97BA6</span></td><td></td></tr>
+</table>
+<p>編號與代表色貫穿全遊戲：動物卡、賽事演出、路子珠盤、詳情彈窗一律同色同號，是玩家跨畫面對照的錨點。</p>
+
+<h3>1.2 換皮原則</h3>
+<p>數學層與機制層與主題無關。若日後改換主題（例如無人機競速版），<b>僅動美術層</b>：出包＝炸機、賽段＝航道、心情＝機況等語意替換，權重公式、聯合分佈、路子演算法、輪次結構全部不變。本規格以動物版術語書寫。</p>
+
+<!-- ═══════════ §2 ═══════════ -->
+<h2 id="s2"><span class="no">§2</span> 輪次結構 <span class="badge">決議⑧</span></h2>
+<p>全服同步、每 <b>40 秒</b>一輪的固定循環（v1.3：下注窗由 15s 延長至 25s，緊張感改由末 5 秒倒數演出製造）。所有玩家看到同一場比賽、同一份賽果；輪次不論是否有人下注照常進行並記錄進路子。</p>
+<div class="timeline">
+  <div style="flex:25; background:#2E6B8A"><b>下注階段</b>00:00–00:25（25s）</div>
+  <div style="flex:2; background:#194A63"><b>封盤</b>2s</div>
+  <div style="flex:10; background:#FF8A3D"><b>賽事演出</b>00:17–00:27（10s）</div>
+  <div style="flex:3; background:#7BC24A"><b>結算</b>3s</div>
+</div>
+<p class="note">封盤段含發車倒數；結算段含派彩演出與下輪動物數值／賽段／心情的生成揭示。</p>
+<ul>
+  <li><b>下注階段（25s）</b>：展示本局賽段組成、8 張動物卡（精簡卡＋點卡展開屬性／統計，v1.3）；演出區顯示路子總覽（§7.1）。四注別採<b>頁籤定模式</b>（v1.3；v1.6 頁籤改冠軍/前二連/出包/<b>特殊</b>）：頁籤決定唯一可點的下注動作（冠軍/出包＝單一大按鈕、前二連＝整卡配對兩點成注、特殊＝四列面板點鈕成注），可複押多注別並存注單列。末 5 秒倒數壓迫演出。</li>
+  <li><b>封盤（2s）</b>：停止收注，發車倒數。曝險封盤狀態在此之前隨時可能生效（§6.5）。</li>
+  <li><b>演出（10s）</b>：起跑 → 各賽段速度差 → 出包事件（若有）→ 衝線。演出僅播放已定賽果（§10.3）。</li>
+  <li><b>結算（3s）</b>：派彩、路子落新珠、生成下一輪。</li>
+</ul>
+<p><b>Demo 範圍</b>：以單機狀態機模擬整個 40 秒循環（本地計時器驅動狀態流轉），時間軸與正式版一致；正式版改由後台輪次調度與 WebSocket 推送驅動，前端狀態機不變（§10.4）。</p>
+
+<!-- ═══════════ §3 ═══════════ -->
+<h2 id="s3"><span class="no">§3</span> 三屬性與賽段組成 <span class="badge">決議②</span> <span class="badge">決議③</span></h2>
+
+<h3>3.1 三屬性（每局每隻隨機重生成）</h3>
+<table>
+<tr><th>屬性</th><th>作用</th><th>對應賽段</th><th>展示</th></tr>
+<tr><td>爆發</td><td>直線段速度權重</td><td>草地段</td><td>橘色橫條 <span class="mono">#FF8A3D</span></td></tr>
+<tr><td>地形</td><td>泥水段速度權重</td><td>泥沼段＋淺灘段</td><td>青色橫條 <span class="mono">#5BC8DE</span></td></tr>
+<tr><td>專注</td><td>出包率反向（越高越不出包，§5.1）</td><td>全程</td><td>綠色橫條 <span class="mono">#7BC24A</span></td></tr>
+</table>
+<p>屬性每局重抽，初值取均勻分佈 30–95 <span class="tune">待 B04</span>。屬性條是玩家的主要判斷素材：三條長條供掃視、不放數字，「地形條長＋本局水多＝有戲」是設計要傳達的讀法。</p>
+
+<h3>3.2 賽段組成（每局的新題目）</h3>
+<p>賽道由<b>草地／泥沼／淺灘</b>三段組成，比例每局重抽並在下注畫面頂部以比例條揭示（例：草地 40%・泥沼 25%・淺灘 35%）。這是「每局變數」的來源──同一隻動物在不同賽段組成下的身價完全不同，玩家每局都有新題目可讀。</p>
+<div class="rule">
+<b>勝率權重＝屬性 × 賽段的內積：</b><br>
+<code>w_i = 爆發_i × 直線占比 + 地形_i × 泥水占比</code>（泥水占比＝泥沼＋淺灘）<br>
+名次由 w 做無放回加權抽樣決定（完整流程見 §5.2 鐵律）。心情為公式中的加減項（§4.3）。
+</div>
+<p class="note">屬性展示與實際權重：Demo 中屬性條數值直接代入權重公式（所見即所算）。正式版若後台將展示層與權重層分離，須維持展示數值與實際勝率的相關係數 &gt; 0.9（企畫書 B-R1、驗收 §11）。</p>
+<p class="note">賽段比例的抽法（連續隨機重抽 vs 固定數種同 RTP 檔位）兩份文件說法不一，列 §12 開放問題 Q4；Demo 初值採連續重抽。</p>
+
+<!-- ═══════════ §4 ═══════════ -->
+<h2 id="s4"><span class="no">§4</span> 心情機制 <span class="badge">決議④</span></h2>
+<p>心情是「賽前線索」：下注時看到 😪 想睡，賽中牠真的睡著出包──「我就知道！」的讀盤成就感，也是出包側注的伏筆。機率上心情計入權重與賠率、計入 RTP，玩家不需要心算。</p>
+
+<h3>4.1 三種心情＋中性</h3>
+<table>
+<tr><th>徽章</th><th>影響</th><th>賠率連動（自動重算後標示）</th><th>演出呼應</th></tr>
+<tr><td>🔥 亢奮</td><td>爆發 ▲（初值 +15 <span class="tune">待 B04</span>）</td><td>勝賠下修 ▼</td><td>開場暴衝、衝刺過猛</td></tr>
+<tr><td>😪 想睡</td><td>專注 ▼（初值 −20 <span class="tune">待 B04</span>）→ 出包率升</td><td>該動物出包賠率下修 ▼（變易中）</td><td>賽中打瞌睡（出包伏筆）</td></tr>
+<tr><td>😰 怯場</td><td>地形 ▼（初值 −20 <span class="tune">待 B04</span>）</td><td>勝賠上修 ▲（視賽段組成）</td><td>泥水段明顯掉速、猶豫不前</td></tr>
+<tr><td>―（中性）</td><td>無影響</td><td>―</td><td>多數動物的常態，<b>不顯示徽章</b></td></tr>
+</table>
+
+<h3>4.2 三守則（不可違反）</h3>
+<ol>
+  <li><b>已折算</b>：心情的增減已折算進屬性條與賠率（賠率旁以 ▲▼ 標示變動方向），玩家不需自行心算。</li>
+  <li><b>稀疏</b>：每局僅 2–3 隻有心情，其餘中性不顯示徽章──稀疏才是線索，全員都有徽章等於沒有資訊。</li>
+  <li><b>單屬性</b>：一種心情只動一條屬性，玩家的閱讀負擔不隨機制增加。</li>
+</ol>
+<p class="note">早期示意稿在亢奮欄位註有「出包微升」，與守則③（一心情一屬性）及 §5.1（出包率僅由專注反推）不相容，列 §12 開放問題 Q5；Demo 初值採守則③從簡──亢奮只動爆發、不動出包率。</p>
+
+<h3>4.3 疊加條顯示規格（決稿，依路子與心情示意 Part 3）</h3>
+<ul>
+  <li><b>實色段</b>＝本局實際生效值。</li>
+  <li><b>加成（▲）</b>：以更亮色階的<b>延伸段</b>接在原條之後（例：爆發橘 <span class="mono">#FF8A3D</span> 的加成段用亮紅 <span class="mono">#E43D2E</span>），基準點以 2.5px 白色分隔線標出，條末標 <span class="mono">▲ +15</span> 數值。</li>
+  <li><b>損失（▼）</b>：原長度輪廓保留，尾端改為<b>斜紋段</b>（45° 斜紋，如 <span class="mono">#F3D9D2</span> 底＋ <span class="mono">#D96B5B</span> 紋）──玩家同時看到「原本多強」與「掉了多少」，條末標 <span class="mono">▼ −20</span>。</li>
+  <li>徽章配色：亢奮 <span class="mono">#FFE9E0/#E45B5B</span>、想睡 <span class="mono">#FFF1DC/#FF8A3D</span>、怯場 <span class="mono">#E8F0FA/#3D74C7</span>。</li>
+</ul>
+<p><b>伺服端實作</b>：心情＝權重／出包率公式中的一個加項，賽果生成流程（§5.2）與蒙地卡羅賠率反推（§6.2）自動吸收其影響、計入 RTP──模擬器照常驗證，無需特例。心情抽選規則（每局 2–3 隻怎麼抽）列 §12 開放問題 Q6。</p>
+
+<!-- ═══════════ §5 ═══════════ -->
+<h2 id="s5"><span class="no">§5</span> 出包機制與賽果生成 <span class="badge">決議⑤</span></h2>
+<p>「出包」是本作的招牌事件（爆缸的喜劇化）：動物在賽中脫線退賽。它同時是輸家的情緒出口、贏家的爽點與傳播素材──輸也有笑點。</p>
+
+<h3>5.1 出包率</h3>
+<div class="rule">
+<code>p_out(i) = clamp( f(專注_i), 6%, 26% )</code>──出包率由專注<b>反向</b>推得，夾在 [6%, 26%] 區間內。<br>
+初值公式：<code>p_out = 0.06 + 0.20 × (95 − 專注) / 65</code>（沿用路子模擬器）<span class="tune">區間與曲線待 B04</span>
+</div>
+<p>心情「想睡」透過壓低專注間接抬升出包率（§4.1），不另設獨立出包修正項。</p>
+
+<h3>5.2 賽果生成順序（企畫書 §3-R3）</h3>
+<div class="rule hard">
+後台（Demo 為 mock-server）<b>一次抽出完整賽果向量</b>，嚴格依以下順序生成，不可拆成獨立事件分別定賠率：
+<ol style="margin:8px 0 2px">
+  <li>依各隻 <code>p_out</code> <b>獨立擲骰</b>，決定本局出包集合，並為每隻出包者擲出 <code>out_at</code>（出包發生的賽道位置，供演出與排序）。</li>
+  <li>從<b>未出包</b>集合中依權重 w（§3.2）做<b>無放回加權抽樣</b>，決定完賽名次。</li>
+  <li>出包者一律排在完賽者之後，彼此依 <code>out_at</code> <b>倒序</b>（撐得越久排越前）。</li>
+</ol>
+</div>
+<p>出包與名次高度相關（出包者必然無法奪冠）──若把注別當獨立事件分別定價，會產生可套利組合。賠率必須由此聯合分佈反推（§6.2）。</p>
+
+<h3>5.3 全滅局</h3>
+<p>8 隻全數出包時，<b>照 <code>out_at</code> 邏輯結算、不退款</b>：名次＝<code>out_at</code> 倒序（撐最久者第 1），冠軍與前二連按此名次判定（該冠軍同時計為出包），出包注全中、零出包注全輸。此情境已包含在聯合分佈內，蒙地卡羅反推賠率時自然計入。</p>
+<p class="note">路子模擬器現行的全滅 fallback（將全體放回抽樣池重抽冠軍）為舊行為，與本條不符──B03 依本條實作，B06 改造模擬器時一併修正。</p>
+
+<h3>5.4 出包演出（每隻專屬喜劇）</h3>
+<table>
+<tr><th>動物</th><th>出包演出</th></tr>
+<tr><td>1 小兔</td><td>打瞌睡，原地睡著（心情「想睡」的伏筆回收）</td></tr>
+<tr><td>2 阿汪</td><td>追蝴蝶衝出賽道</td></tr>
+<tr><td>7 樹懶</td><td>原地睡著（v1.3 前為烏龜縮殼罷工，隨名冊調整）</td></tr>
+<tr><td>8 小豬</td><td>滾泥坑不走了</td></tr>
+<tr><td>3 鴨鴨・4 山羊・5 小馬・6 阿猴</td><td><b>ZZZ 睡著佔位（v1.4／Q11 暫緩定案）</b>：躺平＋💤、橫幅「睡著了」。B07 專屬提案（戲水／頂柵欄／擺 pose／吃香蕉）存查 §12 Q11，程式碼保留於 race-fx.js Q11_GAGS（停用），正式版再議</td></tr>
+</table>
+<p class="note">時長規範（企畫書 §1.2）：出包屬損失類演出 1.2–1.5s、可壓縮至 40%；奪冠屬收益類 0.8–1.2s；派彩入帳動畫 0.4s 不可省略。</p>
+
+<!-- ═══════════ §6 ═══════════ -->
+<h2 id="s6"><span class="no">§6</span> 注別與賠率 <span class="badge">決議⑥</span></h2>
+
+<h3>6.1 注別總表（v1.6：增特殊注別）</h3>
+<table>
+<tr><th>注別</th><th>說明</th><th>賠率參考帶*</th><th>RTP 初值</th></tr>
+<tr><td>冠軍</td><td>押中第 1 名（8 選 1）</td><td>2.8x – 103x</td><td>95%（B04 定案）</td></tr>
+<tr><td>前二連</td><td>押中前二名，<b>不計順序</b>（28 組合）</td><td>5.0x – 500x</td><td>95%（B04 定案）</td></tr>
+<tr><td>出包</td><td>押某隻動物本局出包（可押任一隻）</td><td>3.6x – 16.2x</td><td>94%（B04 定案）</td></tr>
+<tr><td>零出包</td><td>押本局 8 隻全數完賽（v1.6 併入「特殊」頁籤）</td><td>2.1x – 7.6x（均值 4.17x）</td><td>94%（B04 定案）</td></tr>
+<tr><td>大小（v1.6）</td><td>押冠軍編號屬大（5–8）或小（1–4）</td><td>~1.5x – 2.5x</td><td>95%（公式定價）</td></tr>
+<tr><td>奇偶（v1.6）</td><td>押冠軍編號奇或偶</td><td>~1.5x – 2.3x</td><td>95%（公式定價）</td></tr>
+<tr><td>熱門度（v1.6）</td><td>三分互斥：熱門＝前三熱門奪冠／冷門＝其餘三隻奪冠／爆冷門＝勝率末二奪冠（與 §7.2 冷熱頁同源判定）</td><td>熱門 ~1.6–2.1x／冷門 ~2.4–3.4x／爆冷門 ~5–12x</td><td>95%（公式定價）</td></tr>
+</table>
+<p class="note"><b>特殊注別公式定價（v1.6，B10 裁決）</b>：機率＝roads.js 既有 2⁸ 出包集合<b>解析勝率</b>分組加總（與冷熱頁同源、零 MC、mock-server 維持凍結），<code>賠率 = 0.95 / 機率</code> 向下取兩位（向莊家有利）；每局隨屬性/心情自然浮動。結算＝轉接層純函數判「冠軍編號屬哪組」。實測三組機率各自加總＝1.0000、七盤口 P×賠率全落 0.945–0.949；<b>MC 複驗留正式版（§12 Q12）</b>。UI 上大小/奇偶/熱門度/零出包同住「特殊」頁籤四列面板，路子正看對應頁籤時該列微發光。</p>
+<p class="note"><b>自動下注（v1.6，B10）</b>：範本＝本局已確認注單；入口 ⟳ 鈕→底部彈窗設定（局數 5/10/20/∞、停利/停損可關）→常駐橘色浮條（第 n/N 局・累計損益・停止鈕）。停止＝跑滿/停利/停損/手動，餘額不足當局自動終止＋跑馬燈提示；手動加注併入當局不改範本；狀態存 localStorage、同局重整不重複下單。<b>啟動當局計為第 1 局</b>；分頁休眠期間不補放單、僅補記損益（未入帳局清單＋事件前對帳）。</p>
+<p class="src">* 賠率帶為 B04 四千萬樣本實測值（tables-b.js 參數版 b-demo-b04-01、MC 100 萬次/輪）。同一輪內可複押多注別、多目標。</p>
+
+<h3>6.2 賠率生成（防套利方法論）</h3>
+<div class="rule hard">
+賠率表由 §5.2 的完整生成流程跑<b>蒙地卡羅模擬（≥100 萬輪）</b>反推各注別實際命中率，再套 <code>賠率 = RTP / 命中率</code>。<b>不可用手算的邊際機率</b>。取整方向一律對莊家有利（向下取至小數點後兩位），微幅收益計入總 RTP 對帳。
+</div>
+<ul>
+  <li>心情與賽段組成改變權重 → 賠率<b>每局重算</b>，卡面以 ▲▼ 標示相對基準的變動方向（§4.1）。</li>
+  <li>驗收須窮舉所有注別組合，驗證不存在期望值 &gt; 100% 的組合下注策略（§11）──這是本遊戲最容易出包的地方。</li>
+</ul>
+
+<h3>6.3 冷門保護</h3>
+<p>連續 N 輪由同一隻動物奪冠時，自動微調下輪權重（企畫書 B-R4）。此為體驗保護、非勝率操控：調整量計入 RTP、作用於全體玩家、<b>不讀取任何玩家個人維度資料</b>（合規要求，企畫書 §7）。N 與調整量 <span class="tune">待 B04</span>。</p>
+
+<h3>6.4 大滿貫獎池（是否納入 Demo 未定）</h3>
+<p>示意稿下注畫面含「🏆 大滿貫獎池」跑馬燈；任務板將獎池列為「若後續加」的繼承資產（chainfire 分級派發公式可直接沿用）。是否納入 Demo 列 §12 開放問題 Q8。</p>
+
+<h3>6.5 曝險封盤</h3>
+<p>單一注別達曝險上限時該注別轉不可押（<code>available: false</code>），文案一律用「<b>本輪額度已滿</b>」而非「禁止下注」。Demo 僅保留接口與 UI 狀態，不實作額度邏輯。</p>
+
+<!-- ═══════════ §7 ═══════════ -->
+<h2 id="s7"><span class="no">§7</span> 路子系統 <span class="badge">決議⑦</span></h2>
+<p>路子是延長遊玩時長與大廳圍觀感的核心元件。冠軍是 8 選 1、無法直接套百家樂路，解法是把賽果做<b>二元投影</b>之後套用標準路子演算法──大路、大眼仔、小路、蟑螂路原封不動。<b>本節的頁籤結構、版位尺寸、互動規格一律以路子模擬器（活原型）為準。</b></p>
+
+<h3>7.1 版位</h3>
+<ul>
+  <li>下注階段（25s）演出區閒置，直接顯示路子總覽──一打開就看到全紀錄，不多一層導航。</li>
+  <li>開賽自動切回賽事畫面；賽後回到總覽並落下新珠（有落珠動畫）。</li>
+  <li>全服輪次不論是否下注均記錄。手機直式下總覽為整版、其餘路頁籤切換；平板／橫式可並排。</li>
+</ul>
+
+<h3>7.2 五頁籤（v1.5：B08 增「走勢」）</h3>
+<table>
+<tr><th>頁籤</th><th>內容</th><th>二元投影定義</th></tr>
+<tr><td><b>總覽</b>（預設）</td><td>珠盤路，雙模式：<b>冠軍 ⇄ 出包計數</b>，點珠盤任意處切換</td><td>―（非二元，見 7.3）</td></tr>
+<tr><td>大小</td><td>詳細頁三段式（7.4）</td><td>冠軍編號 5–8＝大（橘）／1–4＝小（藍）</td></tr>
+<tr><td>奇偶</td><td>詳細頁三段式</td><td>冠軍編號奇數＝橘／偶數＝藍</td></tr>
+<tr><td>冷熱</td><td>詳細頁三段式＋大冷門註記</td><td>冠軍屬賠率<b>前三熱門</b>（B04 定案，原前二）＝守住（橘）／否＝失守（藍）；<b>大冷門</b>＝賠率末二奪冠 → 該珠加金色斜線 <span class="mono">#D4A017</span>（註記層，<b>不斷路、不另成珠</b>）</td></tr>
+<tr><td>走勢（v1.5）</td><td>2×4 八張迷你折線圖（單隻近 20 局名次，Y 軸 1 上 8 下；出包紅點、奪冠橘點）；點單張就地切入該動物逐局明細（返回鈕；內部捲動、捲條隱藏）</td><td>―（個體視圖，非二元）</td></tr>
+</table>
+<p class="note">冷熱門檻（前二）<span class="tune">待 B04</span>（校至守住率落在可玩帶）。早期示意稿曾有「出包路」二元頁籤，已在定稿移除，理由見 7.3。</p>
+
+<h3>7.3 總覽珠盤與「出包不設二元路」</h3>
+<ul>
+  <li><b>讀法</b>：一局一珠、由上往下填、滿 6 珠換下一列（時間往右），與百家樂珠盤相同。</li>
+  <li><b>冠軍模式</b>：珠色＝冠軍動物固定色＋編號（小兔淺色珠加描邊）；角標＝該局出包<b>隻數</b>：1–3 隻為橘點 <span class="mono">#FF8A3D</span> 疊標，≥4 隻改紅底數字徽章 <span class="mono">#E43D2E</span>。</li>
+  <li><b>出包計數模式</b>：珠面直接顯示隻數，0＝灰框／1＝黃框／2＝橘框／3+＝紅實心。</li>
+  <li><b>點單珠</b>＝開啟該局詳情彈窗（7.6）。</li>
+</ul>
+<div class="rule">
+<b>出包不設二元路</b>：有出包／零出包的分佈偏斜約 3:1，二元路會長期單邊、沒有讀路價值。出包資訊改由三處承擔──總覽角標（多不多）、出包計數模式（幾隻）、動物卡個體統計（誰常出包，§8）；「是誰」放詳情彈窗。
+</div>
+
+<h3>7.4 詳細頁三段式版位（固定高度）</h3>
+<p>大小／奇偶／冷熱三頁共用同一版式，左右等高、內容高度統一 240px：</p>
+<table>
+<tr><th>區塊</th><th>內容</th><th>尺寸規格（模擬器實作值）</th></tr>
+<tr><td>左</td><td>二元珠盤路（實心珠＋單字標籤，近 36 局）</td><td>6 列 × 40px 格＝240px 高</td></tr>
+<tr><td>右上</td><td>大路（空心圈；冷熱頁含金斜線註記）</td><td>6 列 × 25px＝150px 高，可視約 34 欄</td></tr>
+<tr><td>右下</td><td>大眼仔（空心）・小路（實心）・蟑螂路（斜線）三路並排</td><td>各 6 列 × 14px＝84px 高，可視約 16 欄</td></tr>
+</table>
+<ul>
+  <li>頂欄：局號＋雙方計數 chip（冷熱頁另加大冷門計數）。</li>
+  <li>大路規則：同結果往下疊、結果改變換新列；超過 6 列轉龍尾（向右折行，佔位判定按標準百家樂大路）。</li>
+  <li>衍生路：大眼仔／小路／蟑螂路演算法與百家樂完全相同（欄位偏移 1／2／3）。</li>
+  <li>路色：橘 <span class="mono">#FF8A3D</span>＝Y 方、藍 <span class="mono">#2E6B8A</span>＝B 方、格線 <span class="mono">#E3EEF5</span>。</li>
+</ul>
+
+<h3>7.5 互動規格（含已修 bug 的實作鐵則）</h3>
+<ul>
+  <li>各路子容器<b>拖曳平移</b>（隱藏捲軸）；預設停在<b>最右端（最新）</b>。</li>
+  <li>頁籤切換後須在面板顯示之後才執行捲到最新──面板隱藏時 <code>scrollWidth</code> 取不到。</li>
+  <li>位移 &gt; 5px 判定為拖曳，並在捕獲階段抑制後續 click（避免拖完誤觸切換／彈窗）。</li>
+</ul>
+<div class="rule hard">
+拖曳實作<b>不可使用 <code>setPointerCapture</code></b>──它會把 click 目標劫持到容器，害珠盤的「點擊切換模式」收不到事件（模擬器已踩過並修正）。正確做法：<code>pointerdown</code> 掛在容器上，<code>pointermove</code>／<code>pointerup</code>／<code>pointercancel</code> 監聽 <code>window</code>。
+</div>
+
+<h3>7.6 點珠詳情彈窗</h3>
+<p>總覽答「趨勢」，詳情答「這局到底發生什麼」。點珠盤任一珠彈出：</p>
+<ol>
+  <li><b>標題列</b>：局號＋時間（主色底 <span class="mono">#2E6B8A</span>）。</li>
+  <li><b>本局賽段</b>：草地／泥沼／淺灘比例條──這局的「題目」。</li>
+  <li><b>完整名次</b>：冠軍列金底高亮（含奪冠原因短註，例「水段起飛」）；各列含編號珠、名稱、當局心情註記（例「🔥亢奮（爆發+15）」）。</li>
+  <li><b>出包者沉底橘列</b>：依 out_at 倒序；含出包地點（哪個賽段）、心情伏筆回收（「😪想睡 → 草地段睡著」）、該注賠率與 ✓（有玩家中此注）。</li>
+  <li>左右滑動看上一局／下一局；點動物名看牠的近期走勢（§8）；點外圍或 ✕ 一步回總覽。</li>
+</ol>
+
+<h3>7.7 資料保留量</h3>
+<p>【已裁決 2026-09-01】路子<b>每 200 局重置</b>（沿龍虎鬥「換靴」慣例，原對應撲克牌靴量）：靴內全量保留、滿 200 局清空重計、介面標「第 N 靴」；靴內渲染視窗由 B06 依版位定。原 96／120／160 之爭作廢。</p>
+
+<!-- ═══════════ §8 ═══════════ -->
+<h2 id="s8"><span class="no">§8</span> 個體統計 <span class="badge">決議⑨</span></h2>
+<p>每張動物卡常駐「<b>近 20 局：勝 x・包 y</b>」。原則：<b>側注決策資訊出現在做決策的位置</b>──押「小兔出包」的人要的是小兔的出包頻率，不是全場的，不必去路子裡翻。點卡可展開該動物的近期走勢（勝／包／名次折線）。統計由全服輪次流累計（不論玩家是否下注）。</p>
+
+<!-- ═══════════ §9 ═══════════ -->
+<h2 id="s9"><span class="no">§9</span> UI 與演出決稿方向</h2>
+
+<h3>9.1 色板（日光卡通）</h3>
+<table>
+<tr><th>色</th><th>值</th><th>用途</th></tr>
+<tr><td><span class="swatch" style="background:#8ED4F2"></span>晴空</td><td class="mono">#8ED4F2</td><td>演出區天空、背景</td></tr>
+<tr><td><span class="swatch" style="background:#7BC24A"></span>草地</td><td class="mono">#7BC24A</td><td>草地段、專注屬性條</td></tr>
+<tr><td><span class="swatch" style="background:#9A6B3F"></span>泥沼</td><td class="mono">#9A6B3F</td><td>泥沼段</td></tr>
+<tr><td><span class="swatch" style="background:#5BC8DE"></span>淺灘</td><td class="mono">#5BC8DE</td><td>淺灘段、地形屬性條</td></tr>
+<tr><td><span class="swatch" style="background:#FF8A3D"></span>出包橘</td><td class="mono">#FF8A3D</td><td>出包事件、爆發屬性條、確認下注鈕、路子 Y 方</td></tr>
+<tr><td><span class="swatch" style="background:#2E6B8A"></span>主色藍</td><td class="mono">#2E6B8A</td><td>頂欄、頁籤選中、勝賠 chip、路子 B 方（深階 <span class="mono">#194A63</span>）</td></tr>
+</table>
+
+<h3>9.2 下注畫面（直式，由上而下）</h3>
+<ol>
+  <li>頂欄：屆數／局號＋下注倒數。</li>
+  <li>本局賽段比例條（每局重抽・「屬性身價跟著變」提示）。</li>
+  <li>路子總覽區（§7.1，下注階段的演出區）。</li>
+  <li>注別頁籤（v1.6）：冠軍／前二連／出包／<b>特殊</b>（大小・奇偶・熱門度・零出包四列面板；動物卡區不渲染，面板貼版放大）。</li>
+  <li>8 張動物卡（2 欄）：頭像＋編號名稱＋心情徽章（中性不顯示）＋三屬性條（含疊加段）＋「近20局：勝 x・包 y」＋勝賠 chip・出包賠 chip（▲▼）。</li>
+  <li>注額列（快捷額度＋已押摘要）→ 確認下注鈕（出包橘）。</li>
+  <li>獎池／跑馬燈列（若獎池納入，§6.4）。</li>
+</ol>
+
+<h3>9.3 賽事演出（10 秒・側視跟拍）</h3>
+<ul>
+  <li>賽道背景按本局賽段比例分色；起跑 → 賽段速度差（地形差的在泥水段明顯掉速）→ 出包事件（專屬喜劇＋橘色事件橫幅，例「出包！😪小兔睡著了」）→ 衝線。</li>
+  <li>心情演出呼應：想睡的在賽中打瞌睡、亢奮的開場暴衝──下注時的徽章在演出中兌現。</li>
+  <li>演出時長規範見 §5.4 註；演出僅為已定賽果的播放（§10.3）。</li>
+</ul>
+<p class="note">本專案為提案期 Demo，<b>演出質感優先於效能約束</b>（與專案 A 的舊機優先原則不同，任務板已明示）。</p>
+
+<!-- ═══════════ §10 ═══════════ -->
+<h2 id="s10"><span class="no">§10</span> 系統架構與資料流</h2>
+
+<h3>10.1 兩層架構</h3>
+<div class="cols2">
+  <div class="layer" style="background:#EAF3F8; border:1.5px solid #2E6B8A">
+    <h4 style="color:#194A63">可移植邏輯層（純函數、無 DOM，可轉 Cocos／Unity）</h4>
+    <ul>
+      <li><b>round-engine</b>：40 秒輪次狀態機（betting → locked → racing → settled）</li>
+      <li><b>result-gen</b>：屬性／賽段／心情生成＋ §5.2 聯合分佈賽果抽樣</li>
+      <li><b>odds-mc</b>：蒙地卡羅賠率反推（§6.2）</li>
+      <li><b>settle</b>：注單結算（含全滅局規則）</li>
+      <li><b>roads</b>：二元投影＋大路／衍生路演算法（自路子模擬器抽出）</li>
+      <li><b>stats</b>：近 20 局個體統計、路子保留窗</li>
+    </ul>
+  </div>
+  <div class="layer" style="background:#FFF6EE; border:1.5px solid #FF8A3D">
+    <h4 style="color:#C9631E">拋棄式演出層（HTML Demo 專用，換引擎即重寫）</h4>
+    <ul>
+      <li>下注 UI、動物卡、疊加條渲染</li>
+      <li>賽事演出（跑動、出包喜劇、衝線）</li>
+      <li>路子繪製與拖曳互動（§7.5）</li>
+      <li>詳情彈窗、派彩與落珠動畫</li>
+    </ul>
+    <p style="font-size:12px;color:#7c766c;margin:6px 0 0">演出層只讀 outcome 與演出腳本，不持有任何影響結果的邏輯。</p>
+  </div>
+</div>
+
+<h3>10.2 資料流</h3>
+<div class="flow">
+  <div class="fbox"><b>輪次引擎</b><span>40s 狀態機<br>開局生成屬性／賽段／心情</span></div>
+  <div class="arr">→</div>
+  <div class="fbox"><b>round 封包</b><span>賽段＋8 隻動物<br>（屬性・心情・賠率・統計）</span></div>
+  <div class="arr">→</div>
+  <div class="fbox"><b>下注 UI</b><span>收注、複押<br>封盤即鎖</span></div>
+  <div class="arr">→</div>
+  <div class="fbox"><b>賽果生成</b><span>§5.2 聯合分佈<br>一次抽完</span></div>
+  <div class="arr">→</div>
+  <div class="fbox"><b>outcome 向量</b><span>ranking / out / out_at</span></div>
+</div>
+<div class="flow">
+  <div class="fbox" style="border-style:dashed"><b>outcome 向量</b><span>（承上）</span></div>
+  <div class="arr">→</div>
+  <div class="fbox"><b>結算</b><span>payouts、全滅規則<br>派彩入帳</span></div>
+  <div class="arr">→</div>
+  <div class="fbox"><b>演出腳本</b><span>賽段速度曲線<br>出包時點＝out_at</span></div>
+  <div class="arr">＋</div>
+  <div class="fbox"><b>路子投影</b><span>大小／奇偶／冷熱<br>＋總覽落珠</span></div>
+  <div class="arr">＋</div>
+  <div class="fbox"><b>個體統計</b><span>近 20 局窗更新</span></div>
+</div>
+
+<h3>10.3 結算與演出分離（企畫書 §1.1，全案前提）</h3>
+<ul>
+  <li>賽果在封盤當下一次性決定完畢；演出只是把已定結果播出來。</li>
+  <li>前端不持有任何影響結果的邏輯──反編譯只能提前知道結果、無法改變結果。</li>
+  <li>結果封包一次下發完整內容，不逐段請求。</li>
+  <li>斷線重連還原至原狀態、不重播演出（Demo 可簡化，正式版必備 <code>round/pending</code>）。</li>
+</ul>
+
+<h3>10.4 契約形狀（Demo mock ＝ 正式版接口的子集，沿企畫書 §5.4 改欄名）</h3>
+<pre><code><span class="c">// 開局下發（正式版 GET /round/current ＋ WebSocket 推送）</span>
+round = {
+  round_no, state,            <span class="c">// betting | locked | racing | settled</span>
+  betting_ends_at,
+  segments: { grass: 0.40, mud: 0.25, water: 0.35 },   <span class="c">// 每局重抽</span>
+  animals: [{
+    id, name,
+    attrs: { burst, terrain, focus },                  <span class="c">// 本局屬性（含心情折算前原值）</span>
+    mood:  null | "hyper" | "sleepy" | "nervous",      <span class="c">// 中性為 null，每局僅 2–3 隻非空</span>
+    mood_delta,                                        <span class="c">// 疊加條用：±幅度</span>
+    stats20: { wins, outs },                           <span class="c">// 近 20 局個體統計</span>
+    odds: { win, out },                                <span class="c">// 每局重算，含 ▲▼ 基準比對值</span>
+    available: { win: true, out: true }                <span class="c">// 曝險封盤 → false</span>
+  } × 8],
+  odds_exacta: { "1-2": 6.50, … },                     <span class="c">// 前二連 28 組合（不計順序）</span>
+  odds_no_out: 2.60
+}
+
+<span class="c">// 賽果（封盤時一次抽定，演出開始前已下發）</span>
+outcome = {
+  round_no,
+  ranking: [id × 8],          <span class="c">// 完整名次（出包者沉底、依 out_at 倒序）</span>
+  out:     [bool × 8],        <span class="c">// 出包旗標（索引＝動物 id − 1）</span>
+  out_at:  [int × 8],         <span class="c">// 出包位置（公尺；未出包＝0；演出與沉底排序用）</span>
+  payouts: [{ bet_index, hit, payout }],
+  total_payout
+}</code></pre>
+<p><b>Demo 範圍</b>：以上全部由單機 mock-server（本地 RNG）供給，無網路；正式版把 round 改為後台推送、outcome 改為結算下發，欄位形狀不變──這是留給後台團隊的接口草案。</p>
+
+<h3>10.5 繼承資產（chainfire）</h3>
+<p>結算／演出分離架構、mock 契約形狀、<span class="mono">sim-engine</span> 驗證器、輪次／狀態機模式、獎池分級公式（若加獎池）、路子模擬器（B06 直接改造）。</p>
+
+<!-- ═══════════ §11 ═══════════ -->
+<h2 id="s11"><span class="no">§11</span> 驗收要點（B04 數值驗證／B09 整合驗收）</h2>
+<ol>
+  <li><b>RTP</b>：蒙地卡羅 100 萬輪，四種注別實測 RTP 各自落在目標值 ±0.1%。</li>
+  <li><b>防套利</b>：窮舉所有注別組合（含跨注別複押），驗證不存在期望值 &gt; 100% 的組合策略。<b>本遊戲最容易出事的地方。</b></li>
+  <li><b>展示與勝率一致</b>：屬性展示值與實際勝率相關係數 &gt; 0.9。</li>
+  <li><b>全滅局</b>：8 隻全出包時依 §5.3 結算正確、不退款；出現頻率與理論值相符。</li>
+  <li><b>路子均衡度</b>：大小／奇偶長期接近 50/50；冷熱守住率落在可玩帶（門檻由 B04 校定）；大冷門出現率有感但稀有。</li>
+  <li><b>出包計數分佈</b>：有出包：零出包偏斜比與 ~3:1 假設核對（支持 §7.3 不設二元路的前提）。</li>
+  <li><b>輪次時序</b>：40 秒循環各階段準時，演出不溢出 10 秒（含全滅局與多出包局）。</li>
+  <li><b>路子互動</b>：拖曳不劫持點擊（§7.5 鐵則）、頁籤切換後停在最新、觸控與滑鼠皆測。</li>
+</ol>
+
+<!-- ═══════════ §12 ═══════════ -->
+<h2 id="s12"><span class="no">§12</span> 開放問題與待調參數 <span class="badge">決議⑩</span></h2>
+<p>以下數值一律「初值＋標記」，由指定任務定案；矛盾項不在本文件裁決。</p>
+<div class="scrollx">
+<table class="openq">
+<tr><th>#</th><th>問題／參數</th><th>目前初值或現況</th><th>定案</th></tr>
+<tr><td>Q1</td><td>出包率區間與曲線</td><td>clamp [6%, 26%]；<span class="mono">p = 0.06 + 0.20×(95−專注)/65</span></td><td><b>定案</b>（B04 驗證維持初值）</td></tr>
+<tr><td>Q2</td><td>心情幅度（各心情的 ±值、是否分級）</td><td>亢奮 +15／想睡 −20／怯場 −20</td><td><b>定案</b>（B04 受控量測：偏移＝理論值、賠率修正一致）</td></tr>
+<tr><td>Q3</td><td>冷熱門檻</td><td><b>前三熱門</b>＝守住（W_SHARP=1.5）；大冷門＝末二。守住率 50.8% 落 45–55 帶中心、大冷門 14.8%</td><td><b>定案</b>（B04）</td></tr>
+<tr><td>Q4</td><td>賽段比例抽法：<b>連續隨機重抽</b>（任務卡決議③、模擬器現行）vs <b>固定數種同 RTP 檔位</b>（主題示意稿「風向數學沿用」說法）──兩文件不一致</td><td>連續重抽</td><td><b>✅ 已裁決（2026-09-01）：連續重抽</b>。賠率每局照實際賽道重算、RTP 恆定，自動下注 EV 不受影響；固定檔位屬 A 專案遺產，B 不需要</td></tr>
+<tr><td>Q5</td><td>亢奮的「出包微升」註記與守則③（一心情一屬性）不相容</td><td>守則③：亢奮只動爆發</td><td><b>✅ 已裁決（2026-09-01）：採守則③</b>。雙向心情（如「慎重」＝地形▲爆發▼）列入未來「進階心情池」備忘，v1 不做</td></tr>
+<tr><td>Q6</td><td>心情抽選規則</td><td>每局均勻抽 2/3 隻（各 50%）、逐隻均勻、種類均勻獨立、跨局無記憶</td><td><b>定案</b>（B03 初版、B04 四項檢驗全過）</td></tr>
+<tr><td>Q7</td><td>路子保留局數：示意稿寫 120，模擬器實作 96（總覽）／160（二元路輸入）</td><td>兩數字均作廢</td><td><b>✅ 已裁決（2026-09-01）：每 200 局重置</b>。沿龍虎鬥「換靴」慣例（原對應撲克牌靴量），靴內全量保留、滿 200 局路子清空重計，介面標「第 N 靴」；渲染視窗由 B06 依版位定</td></tr>
+<tr><td>Q8</td><td>大滿貫獎池是否納入 Demo（示意稿有跑馬燈；任務板列為「若後續加」）</td><td>未納入任務排程</td><td><b>✅ 已裁決（2026-09-01）：Demo 不納入</b>。過審後再加（chainfire 分級派發公式現成）</td></tr>
+<tr><td>Q9</td><td>各注別 RTP 檔位</td><td>95／95／94／94（沿用企畫書車輛版）</td><td><b>✅ 已裁決（2026-09-01）：維持原樣</b>。Demo 佔位值，正式檔位由營運層定，B04 照此驗證</td></tr>
+<tr><td>Q10</td><td>冷門保護參數（連冠 N、權重調整量）</td><td>B04 提案：N=3 連冠、下輪權重 ×0.85、賠率隨調整後權重重算（EV 中性）；實測三連冠率 1.7%/局</td><td><b>Demo 不做</b>，列正式版需求（2026-09-02 裁決）</td></tr>
+<tr><td>Q12</td><td>特殊注別（大小/奇偶/熱門度）RTP 之 MC 複驗與曝險精算</td><td>B10 採公式定價（2⁸ 解析勝率加總、賠率=0.95/P 向下兩位）；Node 重放 35 局×7 盤口抽驗全 ≤0.95、取整偏差 ≤0.01×P。理論上解析勝率即精確值，MC 複驗屬程序性把關</td><td><b>正式版補驗</b>（含爆冷門高賠盤口曝險精算；2026-09-03 裁決）</td></tr>
+<tr><td>Q11</td><td>其餘四隻動物（鴨鴨／山羊／小馬／阿猴）的專屬出包演出</td><td><b>暫緩（2026-09-02 定案）</b>：Demo 先套用 ZZZ 睡著佔位示意，既有四隻（小兔/阿汪/樹懶/小豬）照 §5.4 不動。B07 提案存查：鴨鴨戲水／山羊頂柵欄／小馬擺 pose／阿猴吃香蕉，正式版再議</td><td>暫緩</td></tr>
+</table>
+</div>
+
+<!-- ═══════════ §13 ═══════════ -->
+<h2 id="s13"><span class="no">§13</span> 變更紀錄</h2>
+<table>
+<tr><th>日期</th><th>版本</th><th>內容</th></tr>
+<tr><td>2026-09-01</td><td>v1.0</td><td>B01 初版：整併任務卡十項決議＋企畫書 §1/§3/§5.4 ＋三份示意稿＋路子模擬器規格；開放問題 Q1–Q11。待使用者驗收。</td></tr>
+<tr><td>2026-09-01</td><td>v1.1 定稿</td><td>使用者裁決寫入：Q4 連續重抽／Q5 守則③（一心情一屬性）／Q7 每 200 局換靴重置／Q8 獎池不納入／Q9 RTP 檔位維持。新增備忘：①自動下注模式（跟同一隻／跟熱門／跟上局冠軍，因 RTP 恆定皆 EV 中性）留 B05 或後續版本；②「進階心情池」（雙向心情如慎重＝地形▲爆發▼）留未來版本。B01 驗收通過。</td></tr>
+<tr><td>2026-09-02</td><td>v1.2</td><td>B04 數值驗證定案寫回：§6.1 賠率帶改 B04 實測值（RTP 四注別達標）；§7.2/Q3 冷熱門檻改<b>前三熱門</b>（W_SHARP=1.5，守住率 50.8%）；Q1/Q2/Q6 標定案；Q10 冷門保護 Demo 不做、留正式版；§6.2 MC 次數確認 100 萬/輪（B03 誤植 10 萬已修，堵知情套利）。接口裁決：局號以牆鐘推導為準，B02 轉接層驅動 MockServerB（newRound 受外部局號作種子）、下一輪生成移演出段預跑。B02/B03/B04 驗收通過。</td></tr>
+<tr><td>2026-09-03</td><td>v1.6</td><td>B10 三輪修訂驗收結案寫回：§6.1 <b>特殊注別</b>（大小/奇偶/熱門度三分互斥＋零出包併入「特殊」頁籤四列面板）＝<b>公式定價</b>（roads.js 2⁸ 解析勝率、賠率=0.95/P 向下兩位、零 MC 零解凍，MC 複驗記 Q12）；<b>自動下注</b>（⟳→底部彈窗→橘浮條，四停法＋餘額不足終止、同局重整不重複下單、休眠僅補記損益）；他人下注流改注單列上緣<b>零佔位疊層</b>（卡列讓位槽、8 卡免捲全見）；珠盤空格根因修補（adapter 安全網局補落紀錄＋事件驅動插珠＋healShoe 自癒）；展開動畫僅使用者點擊播放。</td></tr>
+<tr><td>2026-09-03</td><td>v1.5</td><td>B08 兩輪修訂驗收結案寫回：結算逐注開獎＋0.4s 派彩滾動入帳；他人下注流與跑馬燈（本地擬真、自帶亂數不碰種子流）；<b>勝負 log 頁</b>（定死規格：總覽列金色+淨額/灰色−額＋日期→詳細頁排名＋注單 order id＋回報鈕）；動物卡<b>冷熱徽章</b>（前三熱門 🔥/大冷門 ❄，與 §7.2 同源）＋編號⇄冷熱排序；§7.2 路子增第五頁籤<b>走勢</b>（2×4 迷你折線→單隻明細）；全 UI 捲條隱藏（觸控捲動保留）；<b>音效 Demo 不採用</b>（sfx.js 骨架停用，正式版自找資源）。</td></tr>
+<tr><td>2026-09-03</td><td>v1.4</td><td>B07 兩輪修訂驗收結案寫回：§5.4 出包表——鴨鴨/山羊/小馬/阿猴 採 <b>ZZZ 睡著佔位</b>（Q11 暫緩定案，B07 專屬提案存查 §12）；§12 Q11 狀態改「暫緩」。演出實作定稿：<b>結果反推編排</b>（名次→衝線時刻、屬性×賽段→速度曲線、出包時刻由領先者位置反推保「出包者不看似快贏」鐵則）、牆鐘時間軸中途接演、MC 預跑 Worker 化（B05/B06 遺留收口）。M2「可觀賽」達成。</td></tr>
+<tr><td>2026-09-02</td><td>v1.3</td><td>B05 三輪修訂驗收結案寫回：§2 輪次 30s→<b>40s</b>（下注 25s＋末 5 秒倒數壓迫演出）；§2/§7 下注 UI 定稿「精簡卡＋點卡展開」與「<b>頁籤定模式</b>」（冠軍/出包單一大按鈕、前二連整卡兩點成注＋✓脈衝與飛入注單列回饋、零出包主打面板）；§1 名冊：5 獵豹→小馬、6 袋鼠→阿猴、7 烏龜→樹懶（Kenney CC0 素材對映，編號/代表色不變）；§5 出包演出表隨名冊調整。M1「可下注」達成。</td></tr>
+</table>
+
+</div>
+</body>
+</html>

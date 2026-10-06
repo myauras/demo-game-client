@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>B09 整合驗收與部署報告</title>
+<style>
+  :root { --ink:#1f2937; --sub:#6b7280; --ok:#059669; --warn:#b45309; --line:#e5e7eb; --bg:#f8fafc; --card:#ffffff; --accent:#0f766e; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:"Microsoft JhengHei",system-ui,sans-serif; color:var(--ink); background:var(--bg); line-height:1.75; }
+  .wrap { max-width:900px; margin:0 auto; padding:28px 20px 60px; }
+  h1 { font-size:24px; margin:0 0 4px; }
+  .meta { color:var(--sub); font-size:13px; margin-bottom:20px; }
+  h2 { font-size:18px; margin:34px 0 10px; padding-left:10px; border-left:4px solid var(--accent); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px 18px; margin:12px 0; }
+  .lead { background:#ecfdf5; border:1px solid #a7f3d0; border-radius:10px; padding:16px 18px; font-size:15px; }
+  .url { display:block; background:#0f766e; color:#fff; text-align:center; padding:12px; border-radius:10px; font-size:16px; font-weight:bold; text-decoration:none; margin:14px 0; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th,td { border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+  th { background:#f1f5f9; white-space:nowrap; }
+  .ok { color:var(--ok); font-weight:bold; white-space:nowrap; }
+  .warn { color:var(--warn); font-weight:bold; }
+  code { background:#eef2f7; padding:1px 6px; border-radius:4px; font-size:13px; }
+  ul { margin:8px 0; padding-left:22px; }
+  .shots { display:flex; gap:12px; flex-wrap:wrap; }
+  .shots figure { margin:0; flex:1 1 260px; }
+  .shots img { width:100%; border:1px solid var(--line); border-radius:8px; }
+  .shots figcaption { font-size:12.5px; color:var(--sub); text-align:center; margin-top:4px; }
+  .small { font-size:13px; color:var(--sub); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>B09｜整合驗收與部署報告</h1>
+<div class="meta">2026-09-03・動物大賽跑 HTML Demo・任務卡 tasks/B09-整合驗收與部署.md</div>
+
+<div class="lead">
+<b>這次做了什麼（白話版）：</b>B09 是整個專案 B 的「總驗收＋上架」。我做了三件事——
+①把 B02～B10 做完的遊戲<b>整包放上網路</b>：先同步到發布倉庫的 master 分支（源碼備份），再放上 gh-pages 分支（GitHub 免費幫我們架的靜態網站），任何人開網址就能玩；
+②<b>照驗收清單逐項實測</b>：讓遊戲自己連跑 30 輪、每輪程式自動下注再逐筆核對派彩有沒有算錯、封盤瞬間故意下注看會不會被拒、關掉重開看能不能接回當局……全部用自動化腳本跑，不是肉眼看；
+③把唯一遺留的<b>文件錯字修掉</b>：round-engine.js 檔頭註解還寫著舊的 30 秒時序，改成實際的 40 秒（純註解，程式碼一個字都沒動）。
+</div>
+
+<a class="url" href="https://myauras.github.io/demo-game-client/animalrace/" target="_blank">🎮 線上遊玩網址：myauras.github.io/demo-game-client/animalrace/</a>
+
+<h2>部署紀錄</h2>
+<div class="card">
+<table>
+<tr><th>步驟</th><th>內容</th><th>結果</th></tr>
+<tr><td>同步</td><td>最新 game-b-demo → demo-game-client/animalrace/（鏡像覆蓋，含 B10 新增四檔 ambience/autobet/log-ui/sfx）</td><td class="ok">✓ 36 檔</td></tr>
+<tr><td>master</td><td>commit <code>fed59b5</code>；pull --rebase 後 push——連同先前被權限攔下的 B07-R2 快照 <code>bc512f5</code> 一併推上，這次未被攔</td><td class="ok">✓ 已推送</td></tr>
+<tr><td>gh-pages</td><td>沿 chainfire 慣例：animalrace/ 加入 gh-pages 分支根目錄，commit <code>d166103</code>（以 git worktree 操作，master 工作區與其他遊戲資料夾零觸碰）</td><td class="ok">✓ 已推送</td></tr>
+<tr><td>紅線</td><td>arena / Beyblade / chainfire / racing-game 四資料夾</td><td class="ok">✓ 零修改</td></tr>
+<tr><td>線上生效</td><td>推送後即生效，資源請求全 200（含 mc-worker.js），載入順序正確</td><td class="ok">✓</td></tr>
+</table>
+</div>
+
+<h2>驗收清單逐項結果</h2>
+<div class="card">
+<table>
+<tr><th>項目</th><th>實測方法與證據</th><th>結果</th></tr>
+<tr><td>30 輪連跑無錯誤、無記憶體成長</td><td>本地掛自動化記錄器連跑局 529867–529896（30 局跨度、觀測 29 筆*）：遊戲 console／onerror／unhandledrejection <b>零錯誤</b>；JS heap 首 2.3MB → 末 2.7MB（峰值 4.0MB，震盪非成長）；注單歷史恰在 50 筆封頂、路子存檔 60KB 有限</td><td class="ok">✓ 通過</td></tr>
+<tr><td>演出與賽果 10 輪抽查零矛盾</td><td><code>RaceFX._verify(12)</code>：12 局衝線順序＝名次、全員達終點、衝線時刻在窗內、曲線單調、出包點位／時刻正確、「出包者不看似快贏」鐵則量化檢查——<b>零違規</b></td><td class="ok">✓ 通過</td></tr>
+<tr><td>路子五頁籤一致；拖曳／切換／落珠／自癒；背景分頁回前景零洞</td><td>總覽／大小／奇偶／冷熱／走勢就地切換全正常、同靴同局數、版位高度恆定零跳動；拖曳雙向實測（scrollLeft 470→310→470）；分頁背景 20+ 局後回前景：當靴 96 局紀錄 96/96 珠<b>零洞</b></td><td class="ok">✓ 通過</td></tr>
+<tr><td>B10 特殊注別四組實下對帳＋自動下注</td><td>30 輪 soak 共實下 <b>63 注</b>（輪替涵蓋 win／exacta／out／大／奇／熱門／零出包），逐注驗 <code>派彩=floor(注額×賠率)</code>——<b>零誤差</b>；抽局 529881 四組全中 +640 與 log 頁分毫不差；自動下注於<b>線上網址</b>實跑：範本 🛣奇 100→5 局跑滿自然停（停法「跑滿局數」），浮條逐局計數、累計 +124 與錢包一致</td><td class="ok">✓ 通過</td></tr>
+<tr><td>勝負 log 頁鏈路抽帳</td><td>局 529881：總覽金列「4 注 +640」→ 詳細頁排名 7,2,1,3,5,6,4,8 與引擎紀錄<b>逐位一致</b>，4 筆注單（大 +174／奇 +170／熱門 +197／零出包 +499）各附唯一單號與回報鈕，合計 400→1,040 = +640</td><td class="ok">✓ 通過</td></tr>
+<tr><td>封盤 200ms 內拒單</td><td>線上精準邊界測試：歸零前 300ms 收單、歸零後 <b>+80ms 即拒</b>（reason: locked）、+180ms 亦拒；soak 期間 24 次 locked 探測<b>全拒</b>。（引擎收注純由牆鐘推導，數學上歸零即拒）</td><td class="ok">✓ 通過</td></tr>
+<tr><td>手機 375×812 與桌面；file:// 直開</td><td>375×812：8 卡全見、零橫向溢出、唯一捲動容器捲條隱藏（幾何斷言）；桌面 800px 正常（截圖如下）；file:// 以無頭 Chrome 直開實測：遊戲起跑、路子「第 2650 靴」與伺服器版同步推導、8 卡與錢包渲染正常（Worker 在 file:// 必然不可用→自動回退主執行緒，實證回退路徑有效）</td><td class="ok">✓ 通過</td></tr>
+<tr><td>重整接回；錢包／歷史持久化</td><td>於<b>線上網址</b>實測：局 529875 下注中 reload → 9 秒後接回 529876 betting（局號連續），錢包持久化，reload 期間掛單於回補時照常結算入帳（+227）</td><td class="ok">✓ 通過</td></tr>
+<tr><td>線上實測 2 局含下注結算</td><td>實跑 <b>10+ 局</b>：手動 2 局對帳（win 中獎 2,248=floor(200×11.24)、big 444／362 全準）＋自動下注 5 局＋封盤／重整測試局，全數對帳一致</td><td class="ok">✓ 超標通過</td></tr>
+</table>
+<p class="small">* 記錄器於局 529868 封盤中途安裝，該局落在觀測窗邊界外（引擎歷史內該局存在、資料完整），其後 28 局觀測連續無斷——是測試腳本的起步缺口，非遊戲漏局。</p>
+</div>
+
+<h2>round-engine.js 頭註校註（唯一例外修改）</h2>
+<div class="card">
+檔頭註解 5 處 30s 舊文改為實際 40s 時序（標題、週期敘述、推導公式、階段表、狀態流），並加一行校註說明出處（B05-R2 調整）。<b>純註解，程式碼零修改</b>；全檔已無殘留 30s／15s 舊文。凍結四件其餘三件（mock-server-b／tables-b／roads.js）零觸碰。
+</div>
+
+<h2>線上實測截圖</h2>
+<div class="card">
+<div class="shots">
+<figure><img src="b09-online-375x812.png" alt="線上 375×812"><figcaption>線上 375×812（無頭 Chrome 實拍，右緣為截圖工具裁切非遊戲破版——面板內 375×812 幾何斷言零溢出）</figcaption></figure>
+<figure><img src="b09-online-desktop-800.png" alt="線上桌面 800px"><figcaption>線上桌面 800px（手機殼置中設計、他人下注流跑動中）</figcaption></figure>
+</div>
+</div>
+
+<h2>已知遺留清單</h2>
+<div class="card">
+<ul>
+<li><b>特殊注別 RTP 未 MC 複驗</b>——公式定價（0.95/P 向下取整）數學已驗，正式版 §12 Q12 補百萬輪複驗（B10 既定裁決）。</li>
+<li><b>休眠期間自動下注不補放單</b>（僅補記損益）、注單歷史 50 筆窗外補記以 0 計（B10 既定邊界）。</li>
+<li><b>歷史局賠率以低 MC 重估有噪音</b>（B06 遺留，僅影響路子歷史局顯示值）。</li>
+<li><b>round-engine 內建 StubProvider 佔位賠率</b>非 §6.2 精度——僅在 MockServerB 未載入時代打，正式路徑不經過。</li>
+<li><b>本機兩瀏覽器面板共用 localStorage</b>——環境怪癖非遊戲缺陷（管理既知）；本次驗收前已清 gbr_ 鍵從乾淨狀態起測。</li>
+<li>README 規格版號待管理 v1.6 寫回後同步（任務卡既載）。</li>
+</ul>
+</div>
+
+<h2>相關檔案</h2>
+<div class="card small">
+<ul>
+<li>遊戲：<code>game-b-demo/</code>（本地）＝ <code>demo-game-client/animalrace/</code>（發布，master <code>fed59b5</code> / gh-pages <code>d166103</code>）</li>
+<li>校註：<code>game-b-demo/js/round-engine.js</code>（頭部註解 5 處）</li>
+<li>截圖：<code>reports/B09-線上375x812.png</code>、<code>reports/B09-線上桌面800.png</code></li>
+<li>本報告：<code>reports/B09-驗收報告.html</code></li>
+</ul>
+</div>
+
+</div>
+</body>
+</html>
