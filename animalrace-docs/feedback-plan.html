@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>上架回饋改善方案（備忘・移植時實作）</title>
+<style>
+  body{font-family:"Microsoft JhengHei",sans-serif;max-width:880px;margin:24px auto;padding:0 16px;color:#243B4A;line-height:1.75;background:#FAFCFD}
+  h1{font-size:22px;border-bottom:3px solid #2E6B8A;padding-bottom:8px}
+  h2{font-size:18px;color:#2E6B8A;margin-top:32px}
+  h3{font-size:15px;margin-top:20px}
+  table{border-collapse:collapse;width:100%;margin:12px 0;font-size:13.5px}
+  th,td{border:1px solid #C9DCE8;padding:7px 10px;text-align:left;vertical-align:top}
+  th{background:#EAF3F8}
+  .rec{background:#FFF8E6;border-left:4px solid #E8A33D;padding:10px 14px;margin:12px 0;border-radius:0 6px 6px 0}
+  .note{color:#5A7484;font-size:13px}
+  .tag{display:inline-block;background:#2E6B8A;color:#fff;border-radius:4px;padding:1px 8px;font-size:12px;margin-right:6px}
+  .cost{color:#8A5A2E;font-size:12.5px}
+  code{background:#EDF3F7;padding:1px 5px;border-radius:3px;font-size:12.5px}
+</style>
+</head>
+<body>
+
+<h1>上架回饋改善方案</h1>
+<p><b>定位：</b>2026-09-03 團隊試玩（線上 Demo）回饋的整理與對策提案。<b>本文件只想不做</b>——Demo 階段以「暫定 UI」口徑帶過，全部留待移植（Cocos/Unity）時實作。整體反響不錯，以下是三類問題與方案。</p>
+
+<h2>一、解析度小修清單（照做即可，無需裁決）</h2>
+<p>兩項都是特定解析度下的破版，屬工程修正非設計問題：</p>
+<table>
+<tr><th>問題</th><th>修法</th></tr>
+<tr><td>編號 1–8 文字碰到圈圈邊緣</td><td>編號圈直徑依視口縮放（如 <code>clamp(18px, 5vw, 26px)</code>），字級同步用相對單位；圈內預留 2px 內距，任何解析度不觸邊</td></tr>
+<tr><td>「爆發／地形／專注」擠成兩排；心情增益條超框</td><td>三屬性標籤 <b>icon 化</b>：⚡爆發、⛰地形、🎯專注（首次顯示附一次性圖例，或長按/懸停出全名）——單一 icon 永不折行；心情疊加段寬度設上限 <code>max-width:100%</code>＋超出改數字標示（如「+15%」）不畫長條</td></tr>
+</table>
+<p class="note">icon 方案優先於「縮成一個字」（爆/地/專）：單字仍占字寬且語意打折；icon 在小解析度更穩、移植到遊戲引擎也更常規。</p>
+
+<h2>二、「一眼看不出怎麼玩」——資訊量與新手動線</h2>
+<p>根因：首屏同時給了「賽段條＋路子＋四注別頁籤＋8 張卡＋注單列」五組資訊，對沒看過的人沒有「第一步該做什麼」的指路。三個方案（可疊加，非互斥）：</p>
+
+<h3>方案 A：三步進場導覽（業界標配）</h3>
+<p>首次進站以半透明遮罩分三步聚光：①「點一隻動物押冠軍」（聚光動物卡）→②「按確認送出」（聚光確認鈕）→③「等比賽開跑看結果」（聚光演出區）。<code>localStorage</code> 記住看過，之後不再出現；設定處可重看。</p>
+<p class="cost">成本：低（~半天）。只加不改，零風險。缺點：教學遮罩大家習慣性跳過，單靠它不夠。</p>
+
+<h3>方案 B：漸進揭露——「簡單面」預設進場</h3>
+<p>首次進場預設<b>簡化畫面</b>：只有冠軍頁＋8 張卡＋確認鈕，路子區摺疊成一條小橫幅（「歷史紀錄 ▾」）、前二連/出包/特殊頁籤收進「進階 ▾」。玩過 3 局或手動展開後恢復完整介面並記住偏好。</p>
+<p class="cost">成本：中（1–2 天，含狀態記憶與版面兩態）。效果最好——新手第一眼只看到「選動物→確認」一條路。缺點：老手多一次展開；路子是產品賣點，藏起來要拿捏。</p>
+
+<h3>方案 C：動線指路（不減資訊、只加引導）</h3>
+<p>下注階段的「當前該做的一步」永遠有唯一視覺焦點：未選注時動物卡群輕微呼吸光暈＋頂部一句話提示「選一隻動物押冠軍」；已選未確認時焦點轉移到確認鈕（呼吸＋顯示金額）；已確認則顯示「等待開賽」。提示文案跟著頁籤換（前二連：「再選一隻湊配對」）。</p>
+<p class="cost">成本：低中（~1 天）。與 A/B 完全相容。純 transform/opacity 動畫，符合舊機約束。</p>
+
+<div class="rec"><b>建議組合：C 為主 ＋ A 為輔</b>。C 治本（每一局都在指路，不只第一次）；A 治首次印象。B 效果最強但動版面最大，建議移植時若 C+A 實測仍不夠再上 B。</div>
+
+<h2>三、「下大注沒按確認」——注單確認動線</h2>
+<p>根因：點卡＝暫存（staged）、確認＝送出的兩段式，對新手不直觀；封盤瞬間暫存單直接作廢，損失感很重。四個方案：</p>
+<table>
+<tr><th>方案</th><th>做法</th><th>優點</th><th>風險／缺點</th></tr>
+<tr><td><span class="tag">D1</span>未確認強警示</td><td>有暫存單且倒數 ≤5s：確認鈕強烈脈動變色＋toast「注單尚未確認！」＋倒數數字轉紅；封盤作廢時明確告知「N 注未送出已取消」</td><td>零規則變更、成本最低（半天內）</td><td>治標——趕不上倒數仍然作廢</td></tr>
+<tr><td><span class="tag">D2</span>點卡即成注＋撤銷窗</td><td>取消兩段式：點卡直接扣款成注，toast 顯示「已下注 ✕500——撤銷」5 秒可撤；注單列的 ✕ 照舊全程可撤（封盤前）</td><td>動線最短，「沒按確定」問題根除；撤銷窗保留反悔權</td><td>誤觸即扣款，籌碼選大時心理壓力大；與「確認前可調整組合」的玩法衝突</td></tr>
+<tr><td><span class="tag">D3</span>封盤自動送出</td><td>倒數歸零時暫存單自動確認（進場時明示規則，設定可關）</td><td>大注不落空</td><td><b>不建議</b>：玩家沒明確同意就扣款，正式版有合規疑慮；誤點暫存也會被送出</td></tr>
+<tr><td><span class="tag">D4</span>確認鈕升級</td><td>有暫存單時確認鈕放大＋變主色＋帶金額「確認下注 1,500」；位置貼近籌碼列動線終點</td><td>成本極低，跟 D1 天然一組</td><td>單獨用效果有限</td></tr>
+</table>
+<div class="rec"><b>建議：D1＋D4 為 Demo/正式版底線</b>（純提示強化，無規則變更）；<b>D2 列為移植時的 A/B 選項</b>——若正式產品線其他遊戲已是「點即成注」慣例，跟齊 D2 反而更一致。D3 不採。</div>
+
+<h2>四、口徑備忘</h2>
+<ul>
+  <li>對外（團隊/主管）：UI 為<b>暫定 UI</b>，視覺與資訊架構將於移植遊戲引擎時重做——本文件即重做時的輸入。</li>
+  <li>本文件所有項目<b>不排入 Demo 任務板</b>；移植立項時直接引用。</li>
+</ul>
+
+<p class="note">2026-09-03・管理對話產出。相關：reports/B09-驗收報告.html（上線驗收）、reports/B規格書_v1.html v1.6（現行規格）。</p>
+
+</body>
+</html>

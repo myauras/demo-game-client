@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>B04 白話版說明</title>
+<style>
+  :root{ --yel:#FF8A3D; --blu:#2E6B8A; --ink:#2b2b2b; --bg:#FFF8F0; --card:#ffffff; --ok:#2e8a57; --warn:#c0392b; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; padding:24px 16px 64px; background:var(--bg); color:var(--ink);
+        font-family:"Microsoft JhengHei","PingFang TC",system-ui,sans-serif; line-height:1.9; }
+  .wrap{ max-width:760px; margin:0 auto; }
+  h1{ font-size:1.5rem; color:var(--blu); margin:0 0 4px; }
+  .sub{ color:#8a7a6a; font-size:.9rem; margin-bottom:28px; }
+  h2{ font-size:1.15rem; color:var(--yel); border-left:5px solid var(--yel); padding-left:10px; margin:36px 0 12px; }
+  .card{ background:var(--card); border:1px solid #f0e2d0; border-radius:12px; padding:18px 20px; margin:14px 0; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+  .card h3{ margin:0 0 8px; font-size:1.02rem; color:var(--blu); }
+  .tag{ display:inline-block; font-size:.78rem; padding:1px 10px; border-radius:99px; color:#fff; margin-right:6px; vertical-align:2px; }
+  .tag.ok{ background:var(--ok); } .tag.fix{ background:var(--warn); } .tag.ask{ background:var(--blu); }
+  .talk{ background:#FFF3E4; border-radius:10px; padding:10px 14px; margin:8px 0; font-size:.95rem; }
+  .talk b{ color:var(--yel); }
+  table{ width:100%; border-collapse:collapse; font-size:.92rem; margin:8px 0; }
+  th,td{ border-bottom:1px solid #f0e2d0; padding:8px 10px; text-align:left; }
+  th{ color:var(--blu); font-weight:600; background:#F4F9FC; }
+  .num{ font-variant-numeric:tabular-nums; }
+  .foot{ margin-top:40px; font-size:.85rem; color:#8a7a6a; border-top:1px dashed #e0d0bc; padding-top:14px; }
+  ul{ margin:6px 0; padding-left:22px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>🐾 B04 數值驗證・白話版說明</h1>
+<div class="sub">動物大賽跑 Demo｜2026-09-02｜原始技術報告：reports/B04-數值驗證報告.html</div>
+
+<h2>這份報告到底在做什麼？</h2>
+<div class="card">
+  <p style="margin:0">一句話：<b>我們讓電腦自己玩了四千萬局，檢查這個遊戲的數學有沒有算錯。</b></p>
+  <p style="margin:8px 0 0">遊戲上線前一定要確認兩件事：① 莊家長期一定小賺（遊戲才活得下去）；② 沒有任何漏洞讓聰明玩家「穩賺不賠」。這兩件事用人腦算不出來，只能靠海量模擬去驗。</p>
+</div>
+
+<h2>驗了五件事，結果如下</h2>
+
+<div class="card">
+  <h3><span class="tag ok">通過</span>① 回本率（RTP）——莊家有沒有照設計賺錢？</h3>
+  <div class="talk">比喻：夜市套圈圈，老闆設計成「客人每花 100 元，平均拿回 95 元的獎品」。我們檢查四種玩法是不是真的都是這個比例。</div>
+  <table>
+    <tr><th>玩法</th><th>設計目標</th><th>四千萬局實測</th></tr>
+    <tr><td>押冠軍</td><td class="num">95%</td><td class="num">94.93% ✔</td></tr>
+    <tr><td>押前二名組合</td><td class="num">95%</td><td class="num">94.98% ✔</td></tr>
+    <tr><td>押誰會出包</td><td class="num">94%</td><td class="num">93.95% ✔</td></tr>
+    <tr><td>押這局沒人出包</td><td class="num">94%</td><td class="num">93.78% ✔</td></tr>
+  </table>
+  <p style="margin:4px 0 0">全部命中目標，誤差都在允許範圍內。45 種下注選項逐一檢查，<b>沒有任何一項是玩家長期能賺的</b>。</p>
+</div>
+
+<div class="card">
+  <h3><span class="tag fix">抓到並修好</span>② 防套利——聰明玩家能不能鑽漏洞？<b>（本次最重要的發現）</b></h3>
+  <div class="talk">比喻：賠率是靠「先在電腦裡試跑很多次比賽」估出來的。規格要求每局試跑 <b>100 萬次</b>，但程式被寫成只跑 <b>10 萬次</b>——就像民調只問 100 人就發布結果，數字會不準。</div>
+  <p style="margin:0">不準的賠率偶爾會「開太高」，帶著計算機的行家專挑那幾格下注就能穩賺（實測約每 130 格出現 1 格漏洞，最誇張的一格玩家期望拿回 108.9 元／每 100 元）。<b>已修正回 100 萬次，重驗後漏洞完全消失。</b></p>
+  <p style="margin:8px 0 0">代價：每局開賽前的計算變慢（約 0.65 秒），但會安排在上一局的演出時間裡偷偷算完，<b>玩家完全無感</b>。</p>
+</div>
+
+<div class="card">
+  <h3><span class="tag ok">通過</span>③ 出包頻率——喜劇效果的密度對不對？</h3>
+  <div class="talk">每局 8 隻動物，「至少一隻出包」的機率約 <b>76%</b>（出包：沒出包 ≈ 3.3 : 1），跟設計預期一致。也就是說平均每 4 局才有 1 局是「大家都平安跑完」，出包笑料不會太稀有。八隻全出包的「全滅局」極罕見（約每 170 萬局一次），發生時照規則正常結算、不退款。</div>
+</div>
+
+<div class="card">
+  <h3><span class="tag ok">通過（含一項調整）</span>④ 路子——紀錄板夠不夠好看？</h3>
+  <div class="talk">路子（歷史紀錄板）要好看，關鍵是紅藍兩邊要接近一半一半——如果 9 成都開同一邊，紀錄板就沒有懸念了。</div>
+  <ul>
+    <li>大小號：50.09%／奇偶數：49.85% —— 幾乎完美的一半一半 ✔</li>
+    <li>冷熱：調整後「熱門守住」機率 50.8% ✔（<b>調整內容：門檻從「前二熱門」改成「前三熱門」</b>，因為前二怎麼調都到不了一半一半）</li>
+    <li>大冷門（倒數兩名爆冷奪冠）：約每 7 局出現一次——金斜線標記的驚喜頻率剛好</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3><span class="tag ok">通過</span>⑤ 心情機制——表情符號是真的還是裝飾？</h3>
+  <div class="talk">驗證結果：🔥亢奮的動物真的更會贏、😪想睡的真的更容易出包（機率 +6.1%，跟理論值一模一樣）、😰怯場的遇到泥水段真的更慢。<b>而且賠率都有跟著調整</b>——心情好賠率就變低，玩家不能靠盯表情符號佔便宜。</div>
+</div>
+
+<h2>⭐ 您需要注意的重點（只有三個）</h2>
+
+<div class="card">
+  <h3>1. 那個套利漏洞已經修好了——這是本次驗證的最大價值</h3>
+  <p style="margin:0">如果沒抓到，正式上線後就是真金白銀的損失。修正方式（模擬次數 10 萬 → 100 萬）已寫進數值表並重新全面驗證。</p>
+</div>
+
+<div class="card">
+  <h3>2. 一項規則微調需要您知道：冷熱門檻改「前三熱門」</h3>
+  <p style="margin:0">原規格寫「前二熱門」，但數學上前二怎麼調都做不出漂亮的路子。改成前三之後路子居中、賠率也健康。<b>玩家看到的差別</b>：冷熱頁籤的定義文字從「前二」變「前三」。若您同意，規格書會更新成 v1.2。</p>
+</div>
+
+<div class="card">
+  <h3>3. 一項功能建議先不做：連冠冷卻（Q10）</h3>
+  <p style="margin:0">「同一隻連贏三局後稍微壓它一點」的保護機制，實測三連冠每局只有 1.7% 機率發生，Demo 階段影響很小，建議留給正式版。<b>與您的方向一致：Demo 重點放在畫面，不加工程複雜度。</b></p>
+</div>
+
+<h2>看完之後呢？</h2>
+<div class="card">
+  <p style="margin:0">如果以上沒有疑問，回一句「B04 驗收通過」即可。我會把 B02／B03／B04 三張卡轉「完成」、規格書更新 v1.2，然後開工 <b>B05 下注畫面</b>——從這一步開始就是您最在意的「畫面吸引力」戰場了。</p>
+</div>
+
+<div class="foot">本文件為 B04 技術報告的白話摘要，完整數據與方法請見 reports/B04-數值驗證報告.html。管理對話：遊戲A Demo｜專案管理。</div>
+
+</div>
+</body>
+</html>
