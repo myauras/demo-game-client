@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="zh-Hant">
+<title>動物大賽跑 後端交接</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700&display=swap">
+<style>
+/* 版型：單欄閱讀文件，頂部角色抬頭＋輪次時間軸，雷點以嚴重度分級條目呈現 */
+:root{
+  --bg:#F4F7F8; --surface:#FFFFFF; --fg:#16252D; --muted:#566872; --line:#D9E3E8;
+  --accent:#2E6B8A; --accent-bg:#E3EFF5;
+  --crit:#B8372A; --crit-bg:#FBE7E4; --warn:#B65A12; --warn-bg:#FDEEDF; --ref:#4F6470; --ref-bg:#E9EEF1;
+  --seg-bet:#2E6B8A; --seg-lock:#8A9AA3; --seg-race:#FF8A3D; --seg-set:#7BC24A;
+  --code-bg:#EEF3F5;
+  --f-display:"Noto Serif TC","Songti TC",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E161B; --surface:#152129; --fg:#E2EBEF; --muted:#94A7B1; --line:#253740;
+  --accent:#74B7DA; --accent-bg:#17303D;
+  --crit:#FF8476; --crit-bg:#3A1C19; --warn:#FFA460; --warn-bg:#382414; --ref:#A9BBC4; --ref-bg:#1E2D35;
+  --seg-bet:#4D93B8; --seg-lock:#5F717A; --seg-race:#E8792F; --seg-set:#5E9C36;
+  --code-bg:#1B2A33; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0E161B; --surface:#152129; --fg:#E2EBEF; --muted:#94A7B1; --line:#253740;
+  --accent:#74B7DA; --accent-bg:#17303D;
+  --crit:#FF8476; --crit-bg:#3A1C19; --warn:#FFA460; --warn-bg:#382414; --ref:#A9BBC4; --ref-bg:#1E2D35;
+  --seg-bet:#4D93B8; --seg-lock:#5F717A; --seg-race:#E8792F; --seg-set:#5E9C36;
+  --code-bg:#1B2A33; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15.5px;line-height:1.75;margin:0}
+.wrap{max-width:820px;margin:0 auto;padding-inline:20px;padding-block:36px 64px}
+header.top{display:grid;gap:14px;padding-bottom:24px;border-bottom:1px solid var(--line)}
+.role{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;color:var(--muted);letter-spacing:.04em}
+.role b{background:var(--accent);color:var(--surface);padding:2px 10px;border-radius:4px;letter-spacing:.08em;font-weight:700}
+h1{font-family:var(--f-display);font-size:clamp(26px,5vw,34px);line-height:1.3;margin:0;text-wrap:balance;font-weight:700}
+.lede{margin:0;color:var(--muted);max-width:62ch}
+.links{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:14px}
+.links a{color:var(--accent);text-decoration:none;border-bottom:1px solid currentColor}
+.links a:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cycle{display:grid;gap:6px}
+.cycle .lab{font-size:12px;color:var(--muted);letter-spacing:.06em}
+.bar{display:flex;height:26px;border-radius:4px;overflow:hidden;font-size:11.5px;font-family:var(--f-mono);color:#fff;font-weight:600}
+.bar span{display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;min-width:0}
+.b1{flex:25;background:var(--seg-bet)} .b2{flex:2;background:var(--seg-lock)} .b3{flex:10;background:var(--seg-race)} .b4{flex:3;background:var(--seg-set)}
+.ticks{display:flex;font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.ticks span{flex:var(--f)}
+h2{font-size:20px;margin:44px 0 6px;text-wrap:balance;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+h2 small{font-size:13px;font-weight:500;color:var(--muted)}
+.sec-intro{margin:0 0 18px;color:var(--muted);max-width:66ch}
+.tally{display:flex;flex-wrap:wrap;gap:8px;font-size:13px}
+.tally span{padding:2px 10px;border-radius:999px;font-weight:600}
+.t-crit{background:var(--crit-bg);color:var(--crit)} .t-warn{background:var(--warn-bg);color:var(--warn)} .t-ref{background:var(--ref-bg);color:var(--ref)}
+.top3{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px 20px;margin-top:28px}
+.top3 h3{margin:0 0 8px;font-size:15px;letter-spacing:.06em;color:var(--accent)}
+.top3 ol{margin:0;padding-left:1.4em;display:grid;gap:6px}
+.items{display:grid;gap:14px}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px 18px;display:grid;gap:10px;min-width:0}
+.item.crit{border-left:4px solid var(--crit)} .item.warn{border-left:4px solid var(--warn)} .item.ref{border-left:4px solid var(--ref)}
+.ih{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.ih .id{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.ih h3{margin:0;font-size:16.5px;line-height:1.5;flex:1 1 300px;text-wrap:balance}
+.sev{font-size:12px;font-weight:700;padding:1px 8px;border-radius:4px;white-space:nowrap}
+.sev.crit{background:var(--crit-bg);color:var(--crit)} .sev.warn{background:var(--warn-bg);color:var(--warn)} .sev.ref{background:var(--ref-bg);color:var(--ref)}
+dl{margin:0;display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px}
+dt{font-size:13px;color:var(--muted);font-weight:600;padding-top:2px}
+dd{margin:0;min-width:0}
+@media (max-width:520px){dl{grid-template-columns:1fr;gap:2px}dd{margin-bottom:8px}}
+code{font-family:var(--f-mono);font-size:.86em;background:var(--code-bg);padding:1px 5px;border-radius:3px;word-break:break-word}
+pre{font-family:var(--f-mono);font-size:13px;background:var(--code-bg);padding:12px 14px;border-radius:6px;overflow-x:auto;margin:0;line-height:1.6}
+.src{font-size:13px;color:var(--muted)}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12.5px;color:var(--muted);font-weight:600;letter-spacing:.04em;background:var(--bg)}
+tr:last-child td{border-bottom:0}
+ul.plain{margin:0;padding-left:1.2em;display:grid;gap:6px}
+footer a{color:var(--accent)}
+footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+</style>
+<div class="wrap">
+<header class="top">
+  <div class="role"><b>後端</b><span>動物大賽跑 HTML Demo 交接</span><span>2026-10-06</span><span>規格依據 B規格書 v1.6</span></div>
+  <h1>Demo 的伺服器是假的，這些地方不能照搬</h1>
+  <p class="lede">Demo 沒有後台：輪次、賽果、賠率、錢包全部在瀏覽器裡模擬。當時的取捨是「能動就好、重點在畫面」，所以它安全只因為沒有真錢。下面列出正式版必須改掉的做法，和可以直接沿用的部分。</p>
+  <div class="tally"><span class="t-crit">必改 6</span><span class="t-warn">留意 9</span><span class="t-ref">參考 1</span></div>
+  <div class="links">
+  <a href="https://myauras.github.io/demo-game-client/animalrace/">線上 Demo</a>
+  <a href="https://myauras.github.io/demo-game-client/mockups/animalrace.html">UI 示意稿</a>
+  <a href="https://github.com/myauras/demo-game-client/tree/master/animalrace">原始碼（animalrace/，master fed59b5）</a>
+</div>
+  <div class="cycle" aria-label="一輪 40 秒的時間軸">
+  <div class="lab">一輪 40 秒：下注 25s・封盤 2s・演出 10s・結算 3s</div>
+  <div class="bar"><span class="b1">下注 25s</span><span class="b2" title="封盤 2s"></span><span class="b3">演出 10s</span><span class="b4" title="結算 3s">結算</span></div>
+  <div class="ticks"><span style="--f:25">0</span><span style="--f:2">25</span><span style="--f:10">27</span><span style="--f:3">37</span><span>40</span></div>
+</div>
+</header>
+<section class="top3"><h3>只能記三件事的話</h3><ol><li>賽果目前可由公開演算法提前算出。正式版要由伺服器以秘密亂數在封盤時抽定，封盤後才下發。</li><li>錢包與結算在 localStorage 和前端程式裡。正式版伺服器是唯一帳本，每筆注單鎖定成交賠率。</li><li>賠率改用 2⁸ 枚舉的解析解，不要沿用蒙地卡羅。B03 曾因次數不夠開出期望值 108.9% 的盤口。</li></ol></section>
+<h2>必改：Demo 是假的才沒事 <small>6 項</small></h2><p class="sec-intro">這些做法在 Demo 是刻意的捷徑，正式版照做會直接造成金錢損失或被破解。</p><div class="items">
+<article class="item crit">
+  <div class="ih"><span class="id">B01</span><h3>賽果可以被任何人提前算出來</h3><span class="sev crit">必改</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>局號由客戶端時鐘推導：<code>round_no = floor((now − EPOCH) / 40000) + 1</code>，<code>EPOCH = 2026-01-01 UTC</code>。賽果亂數種子由局號派生（<code>mulberry32(round_no × 2654435761 ^ hash("outcome"))</code>），演算法就在前端 JS 裡。所以打開原始碼就能算出未來任一局的賽果。Demo 用這招讓「兩台電腦看到同一場比賽」，沒有伺服器也像全服同步。</dd>
+    <dt>正式版</dt><dd>賽果由伺服器用密碼學等級亂數（CSPRNG）、秘密種子產生，在封盤當下抽定。客戶端在封盤前拿不到任何能推出結果的資料，outcome 封盤後才下發。若產品要對玩家證明公平，可加 hash 承諾（開局先公布雜湊、結束後公開種子），屬選配。</dd>
+    <dt>出處</dt><dd class="src"><code>js/round-engine.js</code>、<code>js/adapter-b.js</code> 的 <code>rngFor()</code>；管理對話 2026-09-02 已註明「局號種子是公開演算法，Demo 無所謂，正式版由伺服器抽」</dd>
+  </dl>
+</article>
+<article class="item crit">
+  <div class="ih"><span class="id">B02</span><h3>錢包、注單、結算全部在瀏覽器裡</h3><span class="sev crit">必改</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>餘額與注單存在 localStorage（<code>gbr_b05r2_save</code>），派彩由前端 <code>adapter-b.js settle()</code> 計算後直接加回錢包。mock-server 雖有 <code>placeBets</code>、冪等鍵與錢包，但轉接層刻意不呼叫，帳本只有引擎那一份。改 localStorage 就能改餘額。</dd>
+    <dt>正式版</dt><dd>伺服器是唯一帳本。下注扣款與結算入帳都在伺服器交易內完成，客戶端只顯示伺服器回傳的餘額。前端的 <code>settle()</code> 只能當「顯示用預估」，不能當入帳依據。</dd>
+    <dt>出處</dt><dd class="src"><code>js/adapter-b.js</code> 檔頭第 3 條裁決</dd>
+  </dl>
+</article>
+<article class="item crit">
+  <div class="ih"><span class="id">B03</span><h3>賠率在客戶端用蒙地卡羅算，而且有噪音</h3><span class="sev crit">必改</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>每局在瀏覽器跑 100 萬次模擬反推四種注別賠率（約 0.65 秒，放在 Web Worker），另外再跑一次「心情全拔」的基準供卡面 ▲▼ 比對，所以是兩次。蒙地卡羅有隨機誤差：B03 曾把規格的「≥100 萬次」誤讀成 10 萬次，B04 掃描發現 0.77% 的盤口期望值超過 100%，最高 108.9%。屬性、心情、賽段全部公開，懂的玩家可以自己精算、只挑開高的盤口下注。改回 100 萬次後，重掃 11,250 個盤口只剩 1 個名目超過 100% 且和雜訊無法區分。</dd>
+    <dt>正式版</dt><dd>賠率由伺服器算好隨開局封包下發。建議<b>改用解析解取代蒙地卡羅</b>：出包集合只有 2⁸ = 256 種，四種主注別的機率都能精確枚舉——冠軍與熱門排序 <code>roads.js winProbs()</code> 已經實作；出包＝該隻出包率；零出包＝各隻不出包率連乘；前二連在每個出包集合下按「無放回加權抽樣」的兩步機率加總（只剩一隻完賽時，第二名是出包者中 out_at 最大者，均分；全滅時 28 組均分）。零噪音、毫秒級、各伺服器結果一致，也就不需要 100 萬次的算力。換成解析解後要重跑一次 B04 等級的 RTP 與防套利驗證。</dd>
+    <dt>出處</dt><dd class="src"><code>js/tables-b.js</code> 的 <code>MC_RUNS</code> 註解；<code>reports/B04-數值驗證報告.html</code>；<code>js/roads.js</code> 第 39–56 行</dd>
+  </dl>
+</article>
+<article class="item crit">
+  <div class="ih"><span class="id">B04</span><h3>大小、奇偶、熱門度三種特殊注別不在接口契約裡</h3><span class="sev crit">必改</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>規格 §10.4 的 round／outcome 契約只有冠軍、前二連、出包、零出包。B10 加的特殊注別由前端 <code>adapter-b.js specialInfo()</code> 自己定價（解析勝率分組加總，賠率 = 0.95 ÷ 機率，向下取兩位），結算也是前端判「冠軍編號屬哪組」。這三種注別的 RTP 沒做過百萬局複驗（規格 §12 Q12）。</dd>
+    <dt>正式版</dt><dd>補進契約：開局封包下發七個特殊盤口的賠率，以及熱門度的<b>分組名單</b>（熱門＝勝率前三、冷門＝中間三隻、爆冷門＝末二）。分組必須開局定死、跟著注單存檔，結算時用存下來的名單判定，不能結算時重算——浮點誤差可能讓勝率相近的兩隻換邊。上線前補 Q12：百萬局複驗＋爆冷門（約 5–12x）曝險精算。</dd>
+    <dt>出處</dt><dd class="src"><code>js/adapter-b.js</code> 第 262–316 行；規格 §6.1、§12 Q12</dd>
+  </dl>
+</article>
+<article class="item crit">
+  <div class="ih"><span class="id">B05</span><h3>注單的賠率要在成交那一刻鎖定</h3><span class="sev crit">必改</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>前端結算時回頭讀當局封包的賠率，沒有每筆注單自己的成交賠率。因為一局之內賠率不變，Demo 沒出錯。</dd>
+    <dt>正式版</dt><dd>每筆注單存成交賠率，結算只用它。之後只要做曝險調價、盤口暫停或任何局中變動，沒有這一欄就會算錯錢。mock-server <code>placeBets</code> 的回傳形狀（<code>accepted[].odds</code>）是對的，照它做。</dd>
+    <dt>出處</dt><dd class="src"><code>js/adapter-b.js settle()</code>；<code>js/mock-server-b.js placeBets</code></dd>
+  </dl>
+</article>
+<article class="item crit">
+  <div class="ih"><span class="id">B06</span><h3>封盤時間以客戶端時鐘為準</h3><span class="sev crit">必改</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>收注截止由瀏覽器自己的 <code>Date.now()</code> 判定，B09 驗的「歸零後 80ms 拒單」是前端自己拒。玩家手機時鐘不準，局號就會算錯；改時鐘也能騙過前端。</dd>
+    <dt>正式版</dt><dd>伺服器時間為準。封盤判定在伺服器；開局封包帶各階段的伺服器時間戳，客戶端只做時差校正，並提早約 300ms 鎖住下注鈕以吸收網路延遲。階段長度只在伺服器定義一次。</dd>
+    <dt>出處</dt><dd class="src"><code>js/round-engine.js</code> 第 58–65 行</dd>
+  </dl>
+</article></div>
+<h2>留意：照著做可以少踩坑 <small>9 項</small></h2><div class="items">
+<article class="item warn">
+  <div class="ih"><span class="id">B07</span><h3>下注 API 必須冪等，自動下注要防重複</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>mock-server 有 <code>idempotency_key</code>（同 key 重送回原結果、不重扣），但轉接層沒用。自動下注的「同局重整不重複下單」靠 localStorage 記住上一次放單的局號。</dd>
+    <dt>正式版</dt><dd>客戶端每次送單產生 key，伺服器去重。自動下注規格寫「正式版歸後台排程」，若放伺服器端，停利／停損以結算入帳時點判定，啟動當局算第 1 局（Demo 既定行為）。</dd>
+    <dt>出處</dt><dd class="src"><code>js/autobet.js</code> 檔頭；規格 §6.1 自動下注段</dd>
+  </dl>
+</article>
+<article class="item warn">
+  <div class="ih"><span class="id">B08</span><h3>曝險上限和盤口額度完全沒做</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>規格 §6.5 只留了接口：<code>available: false</code> 加文案「本輪額度已滿」。現行單注上限 5,000、賠率封頂 500x，所以單注最大派彩是 250 萬；前二連冷門組合確實會開到數百倍。</dd>
+    <dt>正式版</dt><dd>每局每盤口設累計曝險上限，觸頂轉 <code>available: false</code>。文案沿用「本輪額度已滿」，不寫「禁止下注」。</dd>
+    <dt>出處</dt><dd class="src"><code>js/tables-b.js</code> <code>ODDS_CAP</code>、<code>BET_LIMITS</code>；規格 §6.5</dd>
+  </dl>
+</article>
+<article class="item warn">
+  <div class="ih"><span class="id">B09</span><h3>路子歷史與近 20 局統計是客戶端重算出來的</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>開機時前端用種子把當靴（最多 200 局）全部重放一次來畫路子；歷史局的賠率只用 2,000 次低量模擬重估，所以歷史賠率有幾 % 的誤差。近 20 局「勝 x・包 y」也是重放出來的。</dd>
+    <dt>正式版</dt><dd>伺服器提供歷史 API：每局賽果、當時賠率、熱門分組、出包集合。落庫後誤差自然消失。換靴規則（每 200 局清空、介面標「第 N 靴」）由伺服器定義，前端只顯示。</dd>
+    <dt>出處</dt><dd class="src"><code>js/adapter-b.js</code> 檔頭回補效能段；B09 報告遺留清單</dd>
+  </dl>
+</article>
+<article class="item warn">
+  <div class="ih"><span class="id">B10</span><h3>全滅局照規則結算，不退款</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>8 隻全出包時：名次＝出包位置 out_at 倒序（撐最久的是冠軍），冠軍同時算出包；出包注全中、零出包注全輸。機率約 5.6×10⁻⁷／局，Demo 已在聯合分佈內實作。</dd>
+    <dt>正式版</dt><dd>後端結算照做並寫單元測試。這種局一年可能遇不到幾次，沒有測試就等於沒驗過。</dd>
+    <dt>出處</dt><dd class="src">規格 §5.3；<code>js/mock-server-b.js drawVector()</code></dd>
+  </dl>
+</article>
+<article class="item warn">
+  <div class="ih"><span class="id">B11</span><h3>「前二連」是不計順序，程式裡卻叫 exacta</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>前二連押的是前兩名的組合、不計順序（28 組，鍵值小編號在前如 <code>"1-2"</code>）。業界這叫 quinella；exacta 通常指計順序。程式與契約欄位卻用 <code>exacta</code>／<code>odds_exacta</code>。</dd>
+    <dt>正式版</dt><dd>正式接口改名（例如 <code>quinella</code>）或在文件明寫「不計順序」，免得有人照字面做成計順序，賠率會差一倍。</dd>
+    <dt>出處</dt><dd class="src"><code>js/tables-b.js exactaKey()</code>；規格 §6.1</dd>
+  </dl>
+</article>
+<article class="item warn">
+  <div class="ih"><span class="id">B12</span><h3>動物名冊在資料層和畫面層不一致</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd><code>tables-b.js</code> 仍是「獵豹／袋鼠／烏龜」，畫面顯示「小馬／阿猴／樹懶」（B05-R2 為了配 Kenney 素材只改顯示層）。</dd>
+    <dt>正式版</dt><dd>一律以編號 id 1–8 為準，名稱表只存一份。</dd>
+    <dt>出處</dt><dd class="src"><code>js/tables-b.js</code> 第 18–27 行；<code>assets/CREDITS.md</code></dd>
+  </dl>
+</article>
+<article class="item warn">
+  <div class="ih"><span class="id">B13</span><h3>取整方向與 RTP 驗收判準</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>賠率向下取到小數兩位、派彩 <code>floor(注額 × 賠率)</code>，兩次都向莊家。RTP 檔位冠軍／前二連 95%、出包／零出包 94%、特殊 95%，都是 Demo 佔位值。驗收判準實際用 <code>|偏差| ≤ max(0.1pp, 3σ)</code>；規格 §11 寫的「±0.1%」對高賠盤口在可行局數內統計上做不到。</dd>
+    <dt>正式版</dt><dd>RTP 正式檔位由營運決定。對帳時把取整收益算進 RTP 分母口徑，和營運先講清楚。</dd>
+    <dt>出處</dt><dd class="src"><code>js/tables-b.js RTP</code>；<code>reports/B04-數值驗證報告.html</code></dd>
+  </dl>
+</article>
+<article class="item warn">
+  <div class="ih"><span class="id">B14</span><h3>冷門保護（Q10）沒做，規格文字卻像已實作</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>規格 §6.3 描述「連續 N 輪同一隻奪冠就微調下輪權重」，但 §12 Q10 裁決是 Demo 不做。B04 提案：連冠 3 次、下輪權重 ×0.85、賠率隨調整後權重重算（EV 中性）。</dd>
+    <dt>正式版</dt><dd>如果要做，只能用全服輪次資料，<b>不可讀任何玩家個人資料</b>（企畫書 §7 合規要求），調整量要計入 RTP。</dd>
+    <dt>出處</dt><dd class="src">規格 §6.3、§12 Q10</dd>
+  </dl>
+</article>
+<article class="item warn">
+  <div class="ih"><span class="id">B15</span><h3>他人下注流與中獎跑馬燈是捏造的</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd><code>ambience.js</code> 用自己的亂數產生暱稱（中段打碼）、金額、目標（按勝率跟熱門），跑馬燈的「大額中獎」也是擬真捏造。</dd>
+    <dt>正式版</dt><dd>後端要提供真實的全服下注流與中獎事件（暱稱遮罩規則在後端做）。捏造的中獎播報不能上線。</dd>
+    <dt>出處</dt><dd class="src"><code>js/ambience.js</code></dd>
+  </dl>
+</article></div>
+<h2>參考</h2><div class="items">
+<article class="item ref">
+  <div class="ih"><span class="id">B16</span><h3>可以直接沿用的部分</h3><span class="sev ref">參考</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd><ul class="plain"><li>賽果生成三步驟（先擲出包集合與 out_at → 未出包者按權重無放回抽名次 → 出包者按 out_at 倒序沉底）：<code>mock-server-b.js drawVector()</code>，換掉亂數源即可移植。</li><li>round／outcome 契約形狀（規格 §10.4），以及 <code>placeBets</code> 的錯誤碼：<code>ROUND_LOCKED</code>、<code>MARKET_UNAVAILABLE</code>、<code>INSUFFICIENT_BALANCE</code>、<code>BET_OUT_OF_RANGE</code>。</li><li>結算與演出分離：封盤時一次抽定完整賽果向量，演出開始前整包下發，不逐段請求。</li><li><code>roads.js</code> 全部是零 DOM 純函式：路子演算法、精確勝率、熱門排序。</li><li><code>sim.html</code> 與 B04 的驗證方法：4,000 萬局、45 個盤口逐一掃描期望值。</li></ul></dd>
+    <dt>正式版</dt><dd>新增或修改任何注別，都要整套重驗防套利（窮舉組合、確認沒有期望值超過 100% 的策略）。規格 §6.2 說這是本遊戲最容易出事的地方，B03 的 10 萬次事件就是實例。</dd>
+    
+  </dl>
+</article></div>
+<footer>本文件是規格書 v1.6 的雷區補充，不取代規格書。內容整理自 B01–B10 任務卡、13 個執行對話、B04 數值驗證報告、B09 驗收報告與上架回饋改善方案。嚴重度：<b>必改</b>＝Demo 因為是假的才沒事，正式版照做會出事；<b>留意</b>＝做過、踩過或有既定裁決，照著做可省時間；<b>參考</b>＝背景資訊。<br>同系列：<a href="https://myauras.github.io/demo-game-client/animalrace-docs/handover-planning.html">企劃交接</a>／<a href="https://myauras.github.io/demo-game-client/animalrace-docs/handover-frontend.html">前端交接</a>／<a href="https://myauras.github.io/demo-game-client/animalrace-docs/handover-backend.html">後端交接</a>；<a href="https://myauras.github.io/demo-game-client/animalrace-docs/spec.html">規格書 v1.6</a>。</footer>
+</div>
+</html>

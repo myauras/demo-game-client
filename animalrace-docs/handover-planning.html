@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="zh-Hant">
+<title>動物大賽跑 企劃交接</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700&display=swap">
+<style>
+/* 版型：單欄閱讀文件，頂部角色抬頭＋輪次時間軸，雷點以嚴重度分級條目呈現 */
+:root{
+  --bg:#F4F7F8; --surface:#FFFFFF; --fg:#16252D; --muted:#566872; --line:#D9E3E8;
+  --accent:#2E6B8A; --accent-bg:#E3EFF5;
+  --crit:#B8372A; --crit-bg:#FBE7E4; --warn:#B65A12; --warn-bg:#FDEEDF; --ref:#4F6470; --ref-bg:#E9EEF1;
+  --seg-bet:#2E6B8A; --seg-lock:#8A9AA3; --seg-race:#FF8A3D; --seg-set:#7BC24A;
+  --code-bg:#EEF3F5;
+  --f-display:"Noto Serif TC","Songti TC",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E161B; --surface:#152129; --fg:#E2EBEF; --muted:#94A7B1; --line:#253740;
+  --accent:#74B7DA; --accent-bg:#17303D;
+  --crit:#FF8476; --crit-bg:#3A1C19; --warn:#FFA460; --warn-bg:#382414; --ref:#A9BBC4; --ref-bg:#1E2D35;
+  --seg-bet:#4D93B8; --seg-lock:#5F717A; --seg-race:#E8792F; --seg-set:#5E9C36;
+  --code-bg:#1B2A33; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0E161B; --surface:#152129; --fg:#E2EBEF; --muted:#94A7B1; --line:#253740;
+  --accent:#74B7DA; --accent-bg:#17303D;
+  --crit:#FF8476; --crit-bg:#3A1C19; --warn:#FFA460; --warn-bg:#382414; --ref:#A9BBC4; --ref-bg:#1E2D35;
+  --seg-bet:#4D93B8; --seg-lock:#5F717A; --seg-race:#E8792F; --seg-set:#5E9C36;
+  --code-bg:#1B2A33; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15.5px;line-height:1.75;margin:0}
+.wrap{max-width:820px;margin:0 auto;padding-inline:20px;padding-block:36px 64px}
+header.top{display:grid;gap:14px;padding-bottom:24px;border-bottom:1px solid var(--line)}
+.role{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;color:var(--muted);letter-spacing:.04em}
+.role b{background:var(--accent);color:var(--surface);padding:2px 10px;border-radius:4px;letter-spacing:.08em;font-weight:700}
+h1{font-family:var(--f-display);font-size:clamp(26px,5vw,34px);line-height:1.3;margin:0;text-wrap:balance;font-weight:700}
+.lede{margin:0;color:var(--muted);max-width:62ch}
+.links{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:14px}
+.links a{color:var(--accent);text-decoration:none;border-bottom:1px solid currentColor}
+.links a:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cycle{display:grid;gap:6px}
+.cycle .lab{font-size:12px;color:var(--muted);letter-spacing:.06em}
+.bar{display:flex;height:26px;border-radius:4px;overflow:hidden;font-size:11.5px;font-family:var(--f-mono);color:#fff;font-weight:600}
+.bar span{display:flex;align-items:center;justify-content:center;white-space:nowrap;overflow:hidden;min-width:0}
+.b1{flex:25;background:var(--seg-bet)} .b2{flex:2;background:var(--seg-lock)} .b3{flex:10;background:var(--seg-race)} .b4{flex:3;background:var(--seg-set)}
+.ticks{display:flex;font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.ticks span{flex:var(--f)}
+h2{font-size:20px;margin:44px 0 6px;text-wrap:balance;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+h2 small{font-size:13px;font-weight:500;color:var(--muted)}
+.sec-intro{margin:0 0 18px;color:var(--muted);max-width:66ch}
+.tally{display:flex;flex-wrap:wrap;gap:8px;font-size:13px}
+.tally span{padding:2px 10px;border-radius:999px;font-weight:600}
+.t-crit{background:var(--crit-bg);color:var(--crit)} .t-warn{background:var(--warn-bg);color:var(--warn)} .t-ref{background:var(--ref-bg);color:var(--ref)}
+.top3{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px 20px;margin-top:28px}
+.top3 h3{margin:0 0 8px;font-size:15px;letter-spacing:.06em;color:var(--accent)}
+.top3 ol{margin:0;padding-left:1.4em;display:grid;gap:6px}
+.items{display:grid;gap:14px}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px 18px;display:grid;gap:10px;min-width:0}
+.item.crit{border-left:4px solid var(--crit)} .item.warn{border-left:4px solid var(--warn)} .item.ref{border-left:4px solid var(--ref)}
+.ih{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.ih .id{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.ih h3{margin:0;font-size:16.5px;line-height:1.5;flex:1 1 300px;text-wrap:balance}
+.sev{font-size:12px;font-weight:700;padding:1px 8px;border-radius:4px;white-space:nowrap}
+.sev.crit{background:var(--crit-bg);color:var(--crit)} .sev.warn{background:var(--warn-bg);color:var(--warn)} .sev.ref{background:var(--ref-bg);color:var(--ref)}
+dl{margin:0;display:grid;grid-template-columns:5.5em 1fr;gap:6px 14px}
+dt{font-size:13px;color:var(--muted);font-weight:600;padding-top:2px}
+dd{margin:0;min-width:0}
+@media (max-width:520px){dl{grid-template-columns:1fr;gap:2px}dd{margin-bottom:8px}}
+code{font-family:var(--f-mono);font-size:.86em;background:var(--code-bg);padding:1px 5px;border-radius:3px;word-break:break-word}
+pre{font-family:var(--f-mono);font-size:13px;background:var(--code-bg);padding:12px 14px;border-radius:6px;overflow-x:auto;margin:0;line-height:1.6}
+.src{font-size:13px;color:var(--muted)}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12.5px;color:var(--muted);font-weight:600;letter-spacing:.04em;background:var(--bg)}
+tr:last-child td{border-bottom:0}
+ul.plain{margin:0;padding-left:1.2em;display:grid;gap:6px}
+footer a{color:var(--accent)}
+footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+</style>
+<div class="wrap">
+<header class="top">
+  <div class="role"><b>企劃</b><span>動物大賽跑 HTML Demo 交接</span><span>2026-10-06</span><span>規格依據 B規格書 v1.6</span></div>
+  <h1>Demo 過了，接手前先知道哪些是假的</h1>
+  <p class="lede">動物大賽跑 Demo 已通過。規格書 v1.6 是正式依據，這份是補充：哪些功能只是演出來的、規格書哪幾處文字過時、哪些設計驗證過不要輕易改，以及正式版還有哪些待決。</p>
+  <div class="tally"><span class="t-crit">必改 2</span><span class="t-warn">留意 5</span><span class="t-ref">參考 2</span></div>
+  <div class="links">
+  <a href="https://myauras.github.io/demo-game-client/animalrace/">線上 Demo</a>
+  <a href="https://myauras.github.io/demo-game-client/mockups/animalrace.html">UI 示意稿</a>
+  <a href="https://github.com/myauras/demo-game-client/tree/master/animalrace">原始碼（animalrace/，master fed59b5）</a>
+</div>
+  <div class="cycle" aria-label="一輪 40 秒的時間軸">
+  <div class="lab">一輪 40 秒：下注 25s・封盤 2s・演出 10s・結算 3s</div>
+  <div class="bar"><span class="b1">下注 25s</span><span class="b2" title="封盤 2s"></span><span class="b3">演出 10s</span><span class="b4" title="結算 3s">結算</span></div>
+  <div class="ticks"><span style="--f:25">0</span><span style="--f:2">25</span><span style="--f:10">27</span><span style="--f:3">37</span><span>40</span></div>
+</div>
+</header>
+<section class="top3"><h3>只能記三件事的話</h3><ol><li>全服同步、其他玩家、中獎播報都是 Demo 演出來的，估時與對外說明不能當成已完成。</li><li>任何數值改動都要重跑驗證。曾有一次誤讀次數，就開出期望值 108.9% 的盤口。</li><li>上線前要先定：RTP 正式檔位、單局曝險上限、特殊注別複驗、冷門保護做不做。</li></ol></section>
+<h2>必改 <small>2 項</small></h2><div class="items">
+<article class="item crit">
+  <div class="ih"><span class="id">P01</span><h3>Demo 裡哪些是假的，對外不能說「已經有」</h3><span class="sev crit">必改</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd><ul class="plain"><li><b>全服同步</b>：單機模擬，各裝置靠相同演算法算出同一場比賽，沒有伺服器。</li><li><b>其他玩家</b>：下注流與中獎跑馬燈是捏造的。</li><li><b>錢包</b>：虛擬幣，存在瀏覽器，可重置。</li><li><b>勝負 log</b>：單號隨機產生，「回報」是假按鈕。</li><li><b>美術</b>：Kenney 免費素材佔位，四隻動物沒有專屬出包演出。</li><li><b>音效</b>：沒有。</li></ul></dd>
+    <dt>正式版</dt><dd>對外口徑沿用「暫定 UI」。以上都是正式版要做的工，估時時別當成既有資產。</dd>
+    
+  </dl>
+</article>
+<article class="item crit">
+  <div class="ih"><span class="id">P02</span><h3>捏造的中獎播報不能上線</h3><span class="sev crit">必改</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>Demo 為了氛圍捏造大額中獎跑馬燈，用的是當局真實賠率，看起來很真。</dd>
+    <dt>正式版</dt><dd>正式版只播真實中獎。另兩條既有合規裁決：封盤自動送出暫存單（D3）不採，因為玩家沒明確同意就扣款；冷門保護若要做，只能用全服輪次資料，不可讀玩家個人資料。</dd>
+    <dt>出處</dt><dd class="src"><code>js/ambience.js</code>；上架回饋改善方案 D3；規格 §6.3</dd>
+  </dl>
+</article></div>
+<h2>留意 <small>5 項</small></h2><div class="items">
+<article class="item warn">
+  <div class="ih"><span class="id">P03</span><h3>規格書 v1.6 有幾處文字過時，以實作為準</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd><div class="tbl"><table><thead><tr><th>位置</th><th>規格書寫的</th><th>實際</th></tr></thead><tbody><tr><td>頁首</td><td>狀態「待驗收」、日期 2026-09-01</td><td>v1.6 定稿，B 案全數結案</td></tr><tr><td>§2 時間軸</td><td>賽事演出 00:17–00:27</td><td>30 秒時代殘留；實際 27–37 秒</td></tr><tr><td>§6.3 冷門保護</td><td>讀起來像已實作</td><td>Q10 裁決 Demo 不做</td></tr><tr><td>§7.2 表後註</td><td>冷熱門檻（前二）待 B04</td><td>已定前三熱門</td></tr><tr><td>§7.3、§7.6</td><td>點珠開詳情彈窗</td><td>B06-R2 已移除</td></tr><tr><td>§8</td><td>點卡展開近期走勢</td><td>走勢移到路子第五頁籤</td></tr><tr><td>§9.2 動物卡</td><td>卡上有勝賠、出包賠兩顆按鈕</td><td>改頁籤定模式，點整張卡成注</td></tr><tr><td>§11 RTP</td><td>目標值 ±0.1%</td><td>實際判準 max(0.1pp, 3σ)</td></tr><tr><td>§1.1 名冊</td><td>小馬／阿猴／樹懶</td><td>資料表仍是獵豹／袋鼠／烏龜，只改了畫面</td></tr></tbody></table></div></dd>
+    <dt>正式版</dt><dd>寫正式版規格時一併修正。這些都不影響已驗證的數值。</dd>
+    <dt>出處</dt><dd class="src"><code>reports/B規格書_v1.html</code></dd>
+  </dl>
+</article>
+<article class="item warn">
+  <div class="ih"><span class="id">P04</span><h3>任何數值改動都要重跑驗證，包括「看起來很小」的</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>B03 把「每局蒙地卡羅 ≥100 萬次」誤讀成 10 萬次，結果每 130 個盤口就有 1 個期望值超過 100%，最高 108.9%。因為屬性和心情全部公開，懂的玩家可以自己精算、只挑開高的盤口下注。輪長從 30 秒改 40 秒也牽動了兩支程式、存檔鍵和局號推導。</dd>
+    <dt>正式版</dt><dd>規格裡的數字寫清楚下限與單位。新增注別、改 RTP、改出包率曲線、改心情幅度，都要排數值驗證：RTP 落在判準內，且窮舉組合沒有期望值超過 100% 的下注策略。</dd>
+    <dt>出處</dt><dd class="src"><code>reports/B04-數值驗證報告.html</code></dd>
+  </dl>
+</article>
+<article class="item warn">
+  <div class="ih"><span class="id">P05</span><h3>已經驗證過、不要輕易動的設計</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd><ul class="plain"><li><b>心情三守則</b>：每局只有 2–3 隻有心情（稀疏）、增減已折算進屬性條與賠率（不用心算）、一種心情只動一條屬性。</li><li><b>出包不設二元路</b>：有出包與零出包約 3.2:1，二元路會長期單邊、沒有讀路價值。</li><li><b>冷熱門檻前三熱門</b>：守住率 50.8%，落在 45–55% 的可玩帶中心；大冷門約 15%。</li><li><b>換靴 200 局</b>：沿龍虎鬥慣例，路子滿 200 局清空，介面標「第 N 靴」。</li><li><b>40 秒輪次、下注 25 秒</b>：原本下注 15 秒，使用者嫌趕改長，緊張感改由最後 5 秒倒數演出製造。</li><li><b>頁籤定模式</b>：一個畫面狀態只有一種下注動作。</li><li><b>屬性條所見即所算</b>：若後台把展示值與權重分開，相關係數要維持 0.9 以上（企畫書 B-R1）。</li></ul></dd>
+    <dt>正式版</dt><dd>想改其中任何一條，先回頭看當初為什麼這樣定（TASKS-B.md 變更紀錄有逐條脈絡）。</dd>
+    <dt>出處</dt><dd class="src">規格 §4、§7、§12；<code>TASKS-B.md</code></dd>
+  </dl>
+</article>
+<article class="item warn">
+  <div class="ih"><span class="id">P06</span><h3>正式版待決清單</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd><div class="tbl"><table><thead><tr><th>項目</th><th>現況</th><th>建議</th></tr></thead><tbody><tr><td>RTP 正式檔位</td><td>冠軍／前二連 95%、出包／零出包 94%、特殊 95%，Demo 佔位</td><td>營運決定</td></tr><tr><td>單局曝險上限</td><td>未做；單注最大派彩可達 250 萬</td><td>和營運訂每局每盤口上限</td></tr><tr><td>特殊注別複驗（Q12）</td><td>公式定價，未做百萬局複驗</td><td>上線前補，含爆冷門曝險精算</td></tr><tr><td>冷門保護（Q10）</td><td>未做</td><td>B04 提案：連冠 3 次、下輪權重 ×0.85</td></tr><tr><td>大滿貫獎池（Q8）</td><td>未做</td><td>烽火連環船的分級派發公式可直接用</td></tr><tr><td>四隻專屬出包（Q11）</td><td>ZZZ 睡著佔位</td><td>B07 提案：鴨鴨戲水、山羊頂柵欄、小馬擺 pose、阿猴吃香蕉</td></tr><tr><td>自動下注放哪</td><td>前端，App 開著才下</td><td>規格寫「正式版歸後台排程」</td></tr><tr><td>新手動線</td><td>無</td><td>動線指路 C ＋ 三步導覽 A</td></tr><tr><td>下注確認</td><td>暫存單封盤即作廢</td><td>D1＋D4 為底線，D2 做 A/B</td></tr><tr><td>美術與音效</td><td>Kenney 免費素材；無音效</td><td>自製</td></tr></tbody></table></div></dd>
+    <dt>正式版</dt><dd>前四項會卡上線，建議先排。</dd>
+    <dt>出處</dt><dd class="src">規格 §12；上架回饋改善方案</dd>
+  </dl>
+</article>
+<article class="item warn">
+  <div class="ih"><span class="id">P07</span><h3>「前二連」是不計順序</h3><span class="sev warn">留意</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>押前兩名的組合，順序不拘，共 28 組。程式內部卻叫 exacta（業界通常指計順序）。</dd>
+    <dt>正式版</dt><dd>對玩家的規則說明與對工程的文件都寫明「不計順序」，避免實作成計順序。</dd>
+    <dt>出處</dt><dd class="src">規格 §6.1</dd>
+  </dl>
+</article></div>
+<h2>參考</h2><div class="items">
+<article class="item ref">
+  <div class="ih"><span class="id">P08</span><h3>換皮只動美術層</h3><span class="sev ref">參考</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd>數學、機制、路子演算法、輪次結構與主題無關。示意稿已出過無人機競速版：出包＝炸機、賽段＝航道、心情＝機況。</dd>
+    <dt>正式版</dt><dd>若要換主題，只換美術與文案，數值不用重驗。</dd>
+    <dt>出處</dt><dd class="src">規格 §1.2；<code>reports/B主題比較示意.html</code></dd>
+  </dl>
+</article>
+<article class="item ref">
+  <div class="ih"><span class="id">P09</span><h3>規格書與報告線上版</h3><span class="sev ref">參考</span></div>
+  <dl>
+    <dt>Demo 現況</dt><dd><ul class="plain"><li><a href="https://myauras.github.io/demo-game-client/animalrace-docs/spec.html">規格書 v1.6（唯一規格）</a></li><li><a href="https://myauras.github.io/demo-game-client/animalrace-docs/b04-numbers.html">B04 數值驗證報告</a></li><li><a href="https://myauras.github.io/demo-game-client/animalrace-docs/b04-plain.html">B04 白話版說明</a></li><li><a href="https://myauras.github.io/demo-game-client/animalrace-docs/feedback-plan.html">上架回饋改善方案</a></li><li><a href="https://myauras.github.io/demo-game-client/animalrace-docs/b09-acceptance.html">B09 整合驗收報告</a></li><li>原始碼：GitHub <code>demo-game-client/animalrace/</code>；以上文件原檔在 <code>demo-game-client/animalrace-docs/</code></li></ul></dd>
+    <dt>正式版</dt><dd>每個決定的脈絡在 <code>TASKS-B.md</code> 變更紀錄，未上 GitHub，需要時另外附。</dd>
+    
+  </dl>
+</article></div>
+<footer>本文件是規格書 v1.6 的雷區補充，不取代規格書。內容整理自 B01–B10 任務卡、13 個執行對話、B04 數值驗證報告、B09 驗收報告與上架回饋改善方案。嚴重度：<b>必改</b>＝Demo 因為是假的才沒事，正式版照做會出事；<b>留意</b>＝做過、踩過或有既定裁決，照著做可省時間；<b>參考</b>＝背景資訊。<br>同系列：<a href="https://myauras.github.io/demo-game-client/animalrace-docs/handover-planning.html">企劃交接</a>／<a href="https://myauras.github.io/demo-game-client/animalrace-docs/handover-frontend.html">前端交接</a>／<a href="https://myauras.github.io/demo-game-client/animalrace-docs/handover-backend.html">後端交接</a>；<a href="https://myauras.github.io/demo-game-client/animalrace-docs/spec.html">規格書 v1.6</a>。</footer>
+</div>
+</html>
