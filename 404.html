@@ -1,1 +1,90 @@
-Not Found
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0d0f" />
+    <title>討伐魔王軍｜Demon Siege</title>
+    <link rel="stylesheet" href="./styles-20261002-12.css" />
+  </head>
+  <body>
+    <main class="game-shell" aria-label="討伐魔王軍遊戲">
+      <div class="ambient" aria-hidden="true"></div>
+
+      <header class="topbar">
+        <div class="balance-card" aria-label="玩家餘額">
+          <span class="coin-icon">◆</span>
+          <strong id="balance">3,000.00</strong>
+          <button id="resetBalanceButton" type="button" aria-label="重置餘額為 3000">＋</button>
+        </div>
+      </header>
+
+      <section class="arena" aria-label="討伐魔王軍主遊戲區">
+        <div class="rings" id="rings" aria-label="三層職業倍率圈">
+          <div class="ring ring-warrior" data-role="warrior" aria-label="戰士倍率圈">
+            <div class="ring-cutout"></div>
+            <div class="nodes" id="warriorNodes"></div>
+          </div>
+          <div class="ring ring-archer" data-role="archer" aria-label="弓箭手倍率圈">
+            <div class="ring-cutout"></div>
+            <div class="nodes" id="archerNodes"></div>
+          </div>
+          <div class="ring ring-mage" data-role="mage" aria-label="法師倍率圈">
+            <div class="ring-cutout"></div>
+            <div class="nodes" id="mageNodes"></div>
+          </div>
+
+          <div class="result-core" id="resultCore" aria-live="polite">
+            <div class="core-halo"></div>
+            <span class="result-icon" id="resultIcon" aria-label="魔王" style="--icon-image: url('./assets/event-boss.webp')"></span>
+          </div>
+
+          <div class="event-fx" id="eventFx" aria-hidden="true">
+            <span class="fx-vignette"></span>
+            <span class="fx-sigil"></span>
+            <span class="fx-wave fx-wave-a"></span>
+            <span class="fx-wave fx-wave-b"></span>
+            <span class="fx-slashes"></span>
+            <span class="fx-particles"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="command-panel" aria-label="下注操作區">
+        <div class="bet-row">
+          <div class="bet-display">
+            <input id="betAmount" type="number" min="1" max="100000" step="1" value="10" inputmode="numeric" aria-label="自訂投注金額" />
+            <button type="button" data-bet-action="half" aria-label="投注金額減半">½</button>
+            <button type="button" data-bet-action="double" aria-label="投注金額加倍">2×</button>
+          </div>
+          <button type="button" data-bet="10" class="quick active">10</button>
+          <button type="button" data-bet="50" class="quick">50</button>
+          <button type="button" data-bet="100" class="quick">100</button>
+          <button type="button" data-bet="200" class="quick">200</button>
+        </div>
+
+        <div class="action-row">
+          <button class="action secondary" id="partialButton" type="button" disabled>
+            <span>部分結算</span>
+          </button>
+          <button class="action secondary" id="cashoutButton" type="button" disabled>
+            <span>全部結算</span>
+          </button>
+          <button class="action primary" id="betButton" type="button">
+            <span>投注</span>
+          </button>
+        </div>
+      </section>
+
+      <div class="reward-popup" id="rewardPopup" role="status" aria-live="assertive" hidden>
+        <div class="reward-card">
+          <div class="reward-burst" aria-hidden="true"></div>
+          <div class="reward-sparkles" aria-hidden="true"></div>
+          <strong id="rewardAmount">+0.00</strong>
+          <small id="rewardMultiplier">0X</small>
+        </div>
+      </div>
+    </main>
+    <script src="./app-20261002-12.js"></script>
+  </body>
+</html>

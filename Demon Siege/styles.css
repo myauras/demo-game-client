@@ -228,6 +228,55 @@ button { font: inherit; }
   box-shadow: 0 0 0 3px #12171b, 0 0 14px color-mix(in srgb,var(--tone) 75%,transparent);
 }
 
+.silence-dialog {
+  position:absolute;
+  z-index:12;
+  left:50%;
+  bottom:calc(100% + 8px);
+  width:38px;
+  height:24px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  border:1px solid #c9edff;
+  border-radius:12px;
+  background:linear-gradient(180deg,rgba(224,246,255,.98),rgba(104,179,215,.96));
+  box-shadow:0 0 0 2px rgba(5,25,37,.78),0 0 14px rgba(113,214,255,.82),inset 0 1px 5px rgba(255,255,255,.8);
+  opacity:0;
+  transform:translateX(-50%) translateY(5px) scale(.45);
+  transform-origin:50% 100%;
+  pointer-events:none;
+}
+.silence-dialog::after {
+  content:"";
+  position:absolute;
+  left:50%;
+  bottom:-6px;
+  width:9px;
+  height:9px;
+  border-right:1px solid #c9edff;
+  border-bottom:1px solid #c9edff;
+  background:#68b3d7;
+  transform:translateX(-50%) rotate(45deg);
+}
+.silence-dialog i {
+  position:relative;
+  z-index:1;
+  width:5px;
+  height:5px;
+  border-radius:50%;
+  background:#143e59;
+  box-shadow:0 1px 1px rgba(255,255,255,.6);
+}
+.rings.silence-muted .start-node { z-index:11; animation:silenced-icon 2.1s ease both; }
+.rings.silence-muted .silence-dialog { animation:silence-dialog-pop 1.86s cubic-bezier(.18,.86,.24,1.12) both; }
+.rings.silence-muted .ring-archer .silence-dialog { animation-delay:.1s; }
+.rings.silence-muted .ring-mage .silence-dialog { animation-delay:.2s; }
+.rings.silence-muted .silence-dialog i { animation:silence-dialog-dot .7s ease-in-out infinite; }
+.rings.silence-muted .silence-dialog i:nth-child(2) { animation-delay:.14s; }
+.rings.silence-muted .silence-dialog i:nth-child(3) { animation-delay:.28s; }
+
 .node.value-node.reached {
   color: #fff8e8;
   box-shadow: none;
@@ -408,6 +457,9 @@ button { font: inherit; }
 @keyframes silence-particles { 0%{opacity:0;transform:scale(.5) rotate(-8deg)} 30%{opacity:1} 100%{opacity:0;transform:scale(1.42) rotate(14deg)} }
 @keyframes silence-rings { 0%,100%{filter:none} 28%,68%{filter:saturate(.12) brightness(1.18) drop-shadow(0 0 9px #77d4ff)} }
 @keyframes silence-core { 0%,100%{filter:none} 30%,68%{filter:brightness(1.28) saturate(.3) drop-shadow(0 0 15px #8cddff)} }
+@keyframes silenced-icon { 0%{filter:none} 12%,82%{filter:grayscale(.75) brightness(.82) drop-shadow(0 0 7px #89dcff)} 100%{filter:none} }
+@keyframes silence-dialog-pop { 0%{opacity:0;transform:translateX(-50%) translateY(5px) scale(.45)} 15%{opacity:1;transform:translateX(-50%) translateY(-2px) scale(1.08)} 24%,78%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)} 100%{opacity:0;transform:translateX(-50%) translateY(-5px) scale(.82)} }
+@keyframes silence-dialog-dot { 0%,65%,100%{transform:translateY(0);opacity:.42} 32%{transform:translateY(-3px);opacity:1} }
 @keyframes boss-vignette { 0%{opacity:0} 18%{opacity:.72} 38%{opacity:1} 72%{opacity:.62} 100%{opacity:0} }
 @keyframes boss-charge { 0%{opacity:0;transform:translate(-50%,-50%) scale(.18) rotate(-55deg)} 70%{opacity:1;transform:translate(-50%,-50%) scale(1.12) rotate(8deg)} 100%{opacity:.2;transform:translate(-50%,-50%) scale(.82) rotate(18deg)} }
 @keyframes boss-wave { 0%{opacity:1;transform:translate(-50%,-50%) scale(.32)} 100%{opacity:0;transform:translate(-50%,-50%) scale(2.9);border-width:1px} }

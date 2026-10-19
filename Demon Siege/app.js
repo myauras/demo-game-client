@@ -60,6 +60,14 @@ function buildNodes() {
     start.style.setProperty('--angle', '0deg');
     start.textContent = role.icon;
     start.title = `${role.label}起點`;
+    const dialogue = document.createElement('span');
+    dialogue.className = 'silence-dialog';
+    dialogue.setAttribute('aria-hidden', 'true');
+    for (let index = 0; index < 3; index++) {
+      const dot = document.createElement('i');
+      dialogue.appendChild(dot);
+    }
+    start.appendChild(dialogue);
     host.appendChild(start);
 
     role.values.forEach((value, index) => {
@@ -206,6 +214,12 @@ async function playEventEffect(type, onImpact) {
   ringsEl.classList.remove(`effect-${type}`);
 }
 
+async function showSilencedDialogs() {
+  ringsEl.classList.add('silence-muted');
+  await sleep(2100);
+  ringsEl.classList.remove('silence-muted');
+}
+
 function payoutFor(role) { return role.step === 0 ? 0 : state.bet * role.numbers[role.step - 1]; }
 
 async function resolveAdvance(roleKey) {
@@ -285,6 +299,7 @@ async function placeBet() {
     });
   } else {
     await playEventEffect('silence');
+    await showSilencedDialogs();
   }
 
   state.locked = false;
