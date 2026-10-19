@@ -12,6 +12,24 @@ const events = {
   BOSS: { label: '魔王反擊', image: './assets/event-boss.webp', color: '#ed20ff', rgb: '237,32,255' },
 };
 
+const GAME_RTP = 0.95;
+const baseHitWeights = Object.freeze({ WARRIOR: 0.29, ARCHER: 0.25, MAGE: 0.24 });
+const firstStepReturn = (
+  baseHitWeights.WARRIOR * roles.warrior.numbers[0]
+  + baseHitWeights.ARCHER * roles.archer.numbers[0]
+  + baseHitWeights.MAGE * roles.mage.numbers[0]
+);
+const hitChanceScale = GAME_RTP / firstStepReturn;
+const calibratedHitTotal = Object.values(baseHitWeights).reduce((sum, chance) => sum + chance * hitChanceScale, 0);
+const nonRewardChance = (1 - calibratedHitTotal) / 2;
+const eventChances = Object.freeze({
+  WARRIOR: baseHitWeights.WARRIOR * hitChanceScale,
+  ARCHER: baseHitWeights.ARCHER * hitChanceScale,
+  MAGE: baseHitWeights.MAGE * hitChanceScale,
+  SILENCE: nonRewardChance,
+  BOSS: nonRewardChance,
+});
+
 const state = { balance: 3000, bet: 10, lastWin: 0, locked: false, hasProgress: false };
 const $ = (selector) => document.querySelector(selector);
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -99,10 +117,11 @@ function render() {
 
 function pickEvent() {
   const roll = Math.random();
-  if (roll < .29) return 'WARRIOR';
-  if (roll < .54) return 'ARCHER';
-  if (roll < .78) return 'MAGE';
-  if (roll < .89) return 'SILENCE';
+  let cumulative = 0;
+  for (const [type, chance] of Object.entries(eventChances)) {
+    cumulative += chance;
+    if (roll < cumulative) return type;
+  }
   return 'BOSS';
 }
 
