@@ -354,6 +354,69 @@ button { font: inherit; }
   100% { transform: translateY(0) scale(1); opacity: 1; filter: blur(0) brightness(1); }
 }
 
+.event-fx {
+  --fx-color:#fff;
+  --fx-rgb:255,255,255;
+  position:absolute;
+  z-index:9;
+  inset:-10%;
+  border-radius:50%;
+  pointer-events:none;
+  opacity:0;
+}
+.event-fx > span { position:absolute; pointer-events:none; }
+.event-fx.play { opacity:1; }
+.fx-vignette { inset:0; border-radius:50%; opacity:0; }
+.fx-sigil { left:50%; top:50%; width:46%; aspect-ratio:1; border-radius:50%; transform:translate(-50%,-50%) scale(.2) rotate(-35deg); opacity:0; }
+.fx-sigil::before,.fx-sigil::after { content:""; position:absolute; inset:8%; border-radius:50%; }
+.fx-wave { left:50%; top:50%; width:34%; aspect-ratio:1; border:3px solid var(--fx-color); border-radius:50%; transform:translate(-50%,-50%) scale(.25); opacity:0; box-shadow:0 0 18px var(--fx-color),inset 0 0 18px var(--fx-color); }
+.fx-wave-b { animation-delay:.16s!important; }
+.fx-slashes { left:50%; top:50%; width:66%; height:9%; border-radius:100%; transform:translate(-50%,-50%) rotate(-24deg) scaleX(.05); opacity:0; }
+.fx-slashes::before,.fx-slashes::after { content:""; position:absolute; left:2%; width:96%; height:32%; border-radius:100%; background:linear-gradient(90deg,transparent,var(--fx-color) 12% 88%,transparent); box-shadow:0 0 8px #fff,0 0 20px var(--fx-color),0 0 34px rgba(var(--fx-rgb),.9); }
+.fx-slashes::before { top:-90%; transform:translateX(4%); }
+.fx-slashes::after { top:160%; transform:translateX(-4%); }
+.fx-particles { inset:17%; border-radius:50%; opacity:0; }
+
+.event-fx.fx-silence { --fx-color:#bfe8ff; --fx-rgb:112,210,255; }
+.fx-silence .fx-vignette { background:radial-gradient(circle,rgba(175,231,255,.18),rgba(15,69,98,.38) 55%,rgba(1,12,22,.7)); animation:silence-vignette 1.36s ease-out both; }
+.fx-silence .fx-sigil { border:3px solid #cceeff; background:repeating-conic-gradient(from 0deg,rgba(183,232,255,.92) 0 2deg,transparent 2deg 23deg); box-shadow:0 0 15px #80d8ff,inset 0 0 22px rgba(112,210,255,.75); animation:silence-sigil 1.2s cubic-bezier(.16,.8,.28,1) .06s both; }
+.fx-silence .fx-sigil::before { border:2px dashed rgba(220,246,255,.9); animation:spin 2.2s linear infinite reverse; }
+.fx-silence .fx-sigil::after { inset:35%; border:2px solid #e5f8ff; box-shadow:0 0 20px #83dcff; }
+.fx-silence .fx-wave { animation:silence-wave 1.02s ease-out .26s both; }
+.fx-silence .fx-wave-b { animation-delay:.48s!important; }
+.fx-silence .fx-slashes { display:none; }
+.fx-silence .fx-particles { background:radial-gradient(circle at 8% 40%,#e8f9ff 0 2px,transparent 3px),radial-gradient(circle at 28% 8%,#8bdbff 0 2px,transparent 3px),radial-gradient(circle at 76% 14%,#d9f4ff 0 2px,transparent 3px),radial-gradient(circle at 92% 62%,#73cff8 0 2px,transparent 3px),radial-gradient(circle at 66% 91%,#e8f9ff 0 2px,transparent 3px),radial-gradient(circle at 19% 82%,#8bdbff 0 2px,transparent 3px); filter:drop-shadow(0 0 7px #8bdcff); animation:silence-particles 1.25s ease-out .1s both; }
+.rings.effect-silence .ring { animation:silence-rings 1.36s ease-out both; }
+.rings.effect-silence .result-core { animation:silence-core 1.36s ease-out both; }
+
+.event-fx.fx-boss { --fx-color:#ff2f8a; --fx-rgb:236,25,115; }
+.fx-boss .fx-vignette { background:radial-gradient(circle,rgba(255,43,147,.22),rgba(83,0,88,.5) 50%,rgba(15,0,18,.74)); animation:boss-vignette 1.28s ease-out both; }
+.fx-boss .fx-sigil { border:3px solid #ff46ac; background:conic-gradient(from 25deg,transparent,#ff2f8a 8%,transparent 16%,#8e24ff 26%,transparent 38%,#ff2f8a 52%,transparent 64%,#8e24ff 78%,transparent 90%); box-shadow:0 0 22px #ff2f8a,inset 0 0 25px #741071; animation:boss-charge .48s cubic-bezier(.2,.86,.2,1) both; }
+.fx-boss .fx-sigil::before { border:2px solid rgba(255,134,205,.8); box-shadow:inset 0 0 15px #b815a0; }
+.fx-boss .fx-sigil::after { inset:38%; background:#fff; box-shadow:0 0 18px #fff,0 0 36px #ff2f8a; }
+.fx-boss .fx-wave { border-color:#ff2f8a; animation:boss-wave .8s cubic-bezier(.08,.66,.18,1) .38s both; }
+.fx-boss .fx-wave-b { border-color:#8e3bff; animation-delay:.53s!important; }
+.fx-boss .fx-slashes { background:linear-gradient(90deg,transparent,rgba(255,255,255,.95) 44% 56%,transparent); box-shadow:0 0 20px #ff1b83; animation:boss-slash .52s cubic-bezier(.05,.75,.16,1) .35s both; }
+.fx-boss .fx-particles { background:radial-gradient(circle at 5% 48%,#ff76bd 0 3px,transparent 4px),radial-gradient(circle at 20% 15%,#a855ff 0 2px,transparent 3px),radial-gradient(circle at 80% 9%,#ff3f9c 0 3px,transparent 4px),radial-gradient(circle at 96% 55%,#d58bff 0 2px,transparent 3px),radial-gradient(circle at 70% 92%,#ff76bd 0 3px,transparent 4px),radial-gradient(circle at 15% 87%,#a855ff 0 2px,transparent 3px); filter:drop-shadow(0 0 8px #ff2f8a); animation:boss-particles .92s ease-out .38s both; }
+.rings.effect-boss { animation:boss-shake .72s cubic-bezier(.36,.07,.19,.97) .32s both; }
+.rings.effect-boss .ring { animation:boss-rings-hit 1.28s ease-out both; }
+.rings.effect-boss .result-core { animation:boss-core-hit 1.28s ease-out both; }
+
+@keyframes silence-vignette { 0%{opacity:0} 22%{opacity:1} 72%{opacity:.86} 100%{opacity:0} }
+@keyframes silence-sigil { 0%{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(-35deg)} 28%{opacity:1;transform:translate(-50%,-50%) scale(1.08) rotate(4deg)} 72%{opacity:.92;transform:translate(-50%,-50%) scale(.96) rotate(13deg)} 100%{opacity:0;transform:translate(-50%,-50%) scale(1.18) rotate(22deg)} }
+@keyframes silence-wave { 0%{opacity:.95;transform:translate(-50%,-50%) scale(.2)} 65%{opacity:.55} 100%{opacity:0;transform:translate(-50%,-50%) scale(2.55)} }
+@keyframes silence-particles { 0%{opacity:0;transform:scale(.5) rotate(-8deg)} 30%{opacity:1} 100%{opacity:0;transform:scale(1.42) rotate(14deg)} }
+@keyframes silence-rings { 0%,100%{filter:none} 28%,68%{filter:saturate(.12) brightness(1.18) drop-shadow(0 0 9px #77d4ff)} }
+@keyframes silence-core { 0%,100%{filter:none} 30%,68%{filter:brightness(1.28) saturate(.3) drop-shadow(0 0 15px #8cddff)} }
+@keyframes boss-vignette { 0%{opacity:0} 18%{opacity:.72} 38%{opacity:1} 72%{opacity:.62} 100%{opacity:0} }
+@keyframes boss-charge { 0%{opacity:0;transform:translate(-50%,-50%) scale(.18) rotate(-55deg)} 70%{opacity:1;transform:translate(-50%,-50%) scale(1.12) rotate(8deg)} 100%{opacity:.2;transform:translate(-50%,-50%) scale(.82) rotate(18deg)} }
+@keyframes boss-wave { 0%{opacity:1;transform:translate(-50%,-50%) scale(.32)} 100%{opacity:0;transform:translate(-50%,-50%) scale(2.9);border-width:1px} }
+@keyframes boss-slash { 0%{opacity:0;transform:translate(-50%,-50%) rotate(-24deg) scaleX(.05)} 22%{opacity:1} 68%{opacity:1;transform:translate(-50%,-50%) rotate(-24deg) scaleX(1.18)} 100%{opacity:0;transform:translate(-50%,-50%) rotate(-24deg) scaleX(1.35) translateX(8%)} }
+@keyframes boss-particles { 0%{opacity:0;transform:scale(.45)} 25%{opacity:1} 100%{opacity:0;transform:scale(1.55) rotate(18deg)} }
+@keyframes boss-shake { 0%,100%{transform:translate(0,0)} 15%{transform:translate(-5px,2px) rotate(-.7deg)} 28%{transform:translate(6px,-3px) rotate(.8deg)} 42%{transform:translate(-4px,4px) rotate(-.5deg)} 56%{transform:translate(4px,-2px) rotate(.45deg)} 72%{transform:translate(-2px,2px)} }
+@keyframes boss-rings-hit { 0%,100%{filter:none} 28%{filter:brightness(.72) saturate(.7)} 42%{filter:brightness(1.45) drop-shadow(0 0 14px #ff2f8a)} 70%{filter:brightness(.82) saturate(.8)} }
+@keyframes boss-core-hit { 0%,100%{filter:none} 26%{filter:brightness(1.4) drop-shadow(0 0 18px #ff2f8a)} 46%{filter:brightness(.65) saturate(.7)} }
+
 .command-panel {
   flex: 0 0 auto;
   padding: 13px 13px max(14px,env(safe-area-inset-bottom));
