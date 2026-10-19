@@ -40,8 +40,10 @@ const betAmountEl = $('#betAmount');
 const betButton = $('#betButton');
 const partialButton = $('#partialButton');
 const cashoutButton = $('#cashoutButton');
+const ringsEl = $('#rings');
 const resultCore = $('#resultCore');
 const resultIcon = $('#resultIcon');
+const eventFx = $('#eventFx');
 const rewardPopup = $('#rewardPopup');
 const rewardAmount = $('#rewardAmount');
 const rewardMultiplier = $('#rewardMultiplier');
@@ -186,6 +188,24 @@ async function animateResult(finalType) {
   resultCore.classList.remove('rolling');
 }
 
+async function playEventEffect(type, onImpact) {
+  const isBoss = type === 'boss';
+  const impactDelay = isBoss ? 410 : 520;
+  const duration = isBoss ? 1280 : 1360;
+  eventFx.className = 'event-fx';
+  ringsEl.classList.remove('effect-silence', 'effect-boss');
+  void eventFx.offsetWidth;
+  eventFx.classList.add(`fx-${type}`, 'play');
+  ringsEl.classList.add(`effect-${type}`);
+
+  await sleep(impactDelay);
+  if (onImpact) onImpact();
+  await sleep(duration - impactDelay);
+
+  eventFx.className = 'event-fx';
+  ringsEl.classList.remove(`effect-${type}`);
+}
+
 function payoutFor(role) { return role.step === 0 ? 0 : state.bet * role.numbers[role.step - 1]; }
 
 async function resolveAdvance(roleKey) {
@@ -259,10 +279,12 @@ async function placeBet() {
   if (events[type].role) {
     await resolveAdvance(events[type].role);
   } else if (type === 'BOSS') {
-    Object.values(roles).forEach(role => role.step = Math.max(0, role.step - 1));
-    await sleep(450);
+    await playEventEffect('boss', () => {
+      Object.values(roles).forEach(role => role.step = Math.max(0, role.step - 1));
+      render();
+    });
   } else {
-    await sleep(300);
+    await playEventEffect('silence');
   }
 
   state.locked = false;
