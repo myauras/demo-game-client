@@ -30,12 +30,13 @@ const eventChances = Object.freeze({
   BOSS: nonRewardChance,
 });
 
-const state = { balance: 3000, bet: 10, lastWin: 0, locked: false, hasProgress: false };
+const state = { balance: 3000, bet: 10, lastWin: 0, locked: false, hasProgress: false, forceNextSuccess: false };
 const $ = (selector) => document.querySelector(selector);
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const balanceEl = $('#balance');
 const resetBalanceButton = $('#resetBalanceButton');
+const testWinButton = $('#testWinButton');
 const betAmountEl = $('#betAmount');
 const betButton = $('#betButton');
 const partialButton = $('#partialButton');
@@ -122,10 +123,20 @@ function render() {
   betButton.disabled = state.locked || state.balance < state.bet;
   partialButton.disabled = state.locked || !canPartial;
   cashoutButton.disabled = state.locked || !state.hasProgress;
+  testWinButton.disabled = state.locked;
+  testWinButton.classList.toggle('armed', state.forceNextSuccess);
+  testWinButton.setAttribute('aria-pressed', String(state.forceNextSuccess));
+  testWinButton.title = state.forceNextSuccess ? '下一局必定成功' : '保證下一局成功';
   document.querySelectorAll('.bet-row button').forEach(button => button.disabled = state.locked);
 }
 
 function pickEvent() {
+  if (state.forceNextSuccess) {
+    state.forceNextSuccess = false;
+    const successfulEvents = ['WARRIOR', 'ARCHER', 'MAGE'];
+    return successfulEvents[Math.floor(Math.random() * successfulEvents.length)];
+  }
+
   const roll = Math.random();
   let cumulative = 0;
   for (const [type, chance] of Object.entries(eventChances)) {
@@ -345,6 +356,10 @@ betAmountEl.addEventListener('keydown', (event) => {
 resetBalanceButton.addEventListener('click', () => {
   state.balance = 3000;
   state.lastWin = 0;
+  render();
+});
+testWinButton.addEventListener('click', () => {
+  state.forceNextSuccess = !state.forceNextSuccess;
   render();
 });
 betButton.addEventListener('click', placeBet);
