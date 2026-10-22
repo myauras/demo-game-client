@@ -160,7 +160,7 @@ function formatMultiplier(value) {
   return Number(value.toFixed(2)).toLocaleString('zh-TW', { maximumFractionDigits: 2 });
 }
 
-async function showReward(amount, multiplier, variant) {
+async function showReward(amount, multiplier, variant, onExit) {
   rewardAmount.textContent = `+${money(amount)}`;
   rewardMultiplier.textContent = `${formatMultiplier(multiplier)}X`;
   rewardPopup.className = `reward-popup reward-${variant}`;
@@ -178,6 +178,7 @@ async function showReward(amount, multiplier, variant) {
   }
 
   rewardPopup.classList.add('exit');
+  if (onExit) onExit();
   await sleep(variant === 'partial' ? 950 : variant === 'bonus' ? 720 : 560);
   rewardPopup.hidden = true;
   rewardPopup.className = 'reward-popup';
@@ -252,11 +253,13 @@ async function resolveAdvance(roleKey) {
 
   const win = payoutFor(role);
   const multiplier = role.numbers[role.step - 1];
-  await showReward(win, multiplier, 'partial');
+  await showReward(win, multiplier, 'partial', () => {
+    role.step = Math.max(0, role.step - 1);
+    render();
+  });
   state.balance += win;
   state.lastWin = win;
   render();
-  role.step = Math.max(0, role.step - 1);
   await sleep(600);
 }
 
@@ -323,14 +326,16 @@ async function settle(mode) {
   render();
   const total = Object.values(roles).reduce((sum, role) => sum + payoutFor(role), 0);
   const multiplier = total / state.bet;
-  await showReward(total, multiplier, mode === 'partial' ? 'partial' : 'all');
+  const isPartial = mode === 'partial';
+  await showReward(total, multiplier, isPartial ? 'partial' : 'all', isPartial ? () => {
+    Object.values(roles).forEach(role => role.step = Math.max(0, role.step - 1));
+    render();
+  } : undefined);
   state.balance += total;
   state.lastWin = total;
   render();
 
-  if (mode === 'partial') {
-    Object.values(roles).forEach(role => role.step = Math.max(0, role.step - 1));
-  } else {
+  if (!isPartial) {
     Object.values(roles).forEach(role => role.step = 0);
   }
   await sleep(650);
