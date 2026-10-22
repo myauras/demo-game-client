@@ -526,6 +526,8 @@ button { font: inherit; }
 .bet-display input::-webkit-inner-spin-button,
 .bet-display input::-webkit-outer-spin-button { appearance:none; margin:0; }
 .bet-display input:focus { box-shadow:inset 0 0 0 1px var(--gold-bright); }
+.bet-row button:disabled,
+.bet-display input:disabled { cursor:not-allowed; opacity:.42; }
 .bet-display button {
   height:100%;
   border-width:0 0 0 1px;

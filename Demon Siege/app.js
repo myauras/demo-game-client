@@ -127,7 +127,9 @@ function render() {
   testWinButton.classList.toggle('armed', state.forceNextSuccess);
   testWinButton.setAttribute('aria-pressed', String(state.forceNextSuccess));
   testWinButton.title = state.forceNextSuccess ? '下一局必定成功' : '保證下一局成功';
-  document.querySelectorAll('.bet-row button').forEach(button => button.disabled = state.locked);
+  const lockBetAmount = state.locked || state.hasProgress;
+  betAmountEl.disabled = lockBetAmount;
+  document.querySelectorAll('.bet-row button').forEach(button => button.disabled = lockBetAmount);
 }
 
 function pickEvent() {
@@ -344,6 +346,7 @@ async function settle(mode) {
 }
 
 function setBet(next) {
+  if (state.locked || state.hasProgress) return;
   const parsed = Number(next);
   state.bet = Number.isFinite(parsed) ? Math.max(1, Math.min(100000, Math.round(parsed))) : 10;
   document.querySelectorAll('[data-bet]').forEach(button => button.classList.toggle('active', Number(button.dataset.bet) === state.bet));
