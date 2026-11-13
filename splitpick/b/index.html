@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>空投對分 · 方向B</title>
+<style>
+:root{--green:#5fd068;--blue:#4aa3ff;--purple:#b878ff;--gold:#ffc83d;--grey:#98a2a8;--bg:#10181a;--ink:#f2f6f3;--dim:#9db0a8;--k:1}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden;background:#070d0f;color:var(--ink);font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",system-ui,sans-serif;user-select:none;-webkit-user-select:none}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+#app{position:relative;width:375px;height:812px;margin:0 auto;overflow:hidden;background:var(--bg);transform-origin:top center}
+b{font-weight:800}
+.up{color:var(--gold)}.dn{color:var(--grey)}
+
+/* ===== 上方 ===== */
+#top{position:absolute;left:0;top:0;width:375px;height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#0b1214;border-bottom:1px solid #1f2d2a}
+#wallet{display:flex;align-items:center;gap:6px;font-size:20px;font-weight:800;letter-spacing:.5px;transform-origin:left center}
+#wallet small{font-size:11px;color:var(--dim);font-weight:600;letter-spacing:0}
+#wallet.bump{animation:bump calc(500ms*var(--k)) ease-out}
+#rno{font-size:13px;color:var(--dim)}
+#rno b{color:var(--ink);font-size:15px}
+#tot{font-size:13px;color:var(--dim);min-width:84px;text-align:right}
+#tot b{color:var(--ink);font-size:15px}
+#timer{position:absolute;left:0;top:50px;width:375px;height:34px;background:#0b1214}
+#tlabel{position:absolute;left:12px;top:0;height:28px;line-height:28px;font-size:14px;font-weight:800}
+#tlabel.hide{color:#ff8a6b}
+#tsec{position:absolute;right:12px;top:0;height:28px;line-height:28px;font-size:17px;font-weight:900;font-variant-numeric:tabular-nums}
+#tbar{position:absolute;left:0;bottom:0;width:375px;height:5px;background:#1b2a27}
+#tbar i{display:block;width:375px;height:5px;background:var(--gold);transform-origin:left center}
+#tbar i.hide{background:#ff6b4a}
+#strip{position:absolute;left:0;top:84px;width:375px;height:28px;display:flex;align-items:center;gap:5px;padding:0 10px;background:#0e1719;font-size:11px;color:var(--dim);overflow:hidden}
+#strip .lab{flex:none;margin-right:2px}
+.pill{flex:none;display:flex;align-items:center;gap:3px;height:18px;padding:0 6px 0 4px;border-radius:9px;background:#18262a;font-weight:800;font-size:11px}
+.pill i{display:block;width:8px;height:8px;border-radius:50%}
+#legend{margin-left:auto;flex:none;font-size:10px;white-space:nowrap}
+
+/* ===== 地圖 ===== */
+#map{position:absolute;left:0;top:112px;width:375px;height:552px;overflow:hidden;background:#34553d}
+#mapsvg{position:absolute;left:0;top:0;width:375px;height:552px}
+#plane{position:absolute;left:0;top:30px;font-size:28px;line-height:1;opacity:0;z-index:5}
+#app[data-phase=drop] #plane{animation:fly calc(2000ms*var(--k)) linear forwards}
+#stamp{position:absolute;left:50%;top:50%;width:220px;margin-left:-110px;margin-top:-34px;text-align:center;font-size:44px;font-weight:900;letter-spacing:6px;color:#fff;background:rgba(200,50,30,.9);border:4px solid #fff;border-radius:10px;padding:4px 0;opacity:0;z-index:6;pointer-events:none;transform:rotate(-6deg)}
+#app[data-phase=drop] #stamp{animation:stamp calc(1500ms*var(--k)) ease-out forwards}
+#zones{position:absolute;left:0;top:0;width:375px;height:552px;padding:10px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:10px}
+.zone{position:relative;display:flex;flex-direction:column;padding:8px 8px 6px;border-radius:16px;border:2px solid var(--c);background:linear-gradient(rgba(8,14,12,.74),rgba(8,14,12,.6));text-align:left;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.45)}
+.zone:active{transform:scale(.985)}
+.zone.mine{background:linear-gradient(rgba(14,24,20,.88),rgba(10,18,15,.78));box-shadow:0 0 0 3px var(--c),inset 0 0 0 1px rgba(0,0,0,.45)}
+#app:not([data-phase=bet]) .zone{cursor:default}
+.zh{display:flex;align-items:center;gap:6px;height:26px}
+.ztag{flex:none;width:22px;height:22px;border-radius:50%;background:var(--c);color:#10181a;font-size:13px;font-weight:900;line-height:22px;text-align:center}
+.zname{font-size:15px;font-weight:800;white-space:nowrap}
+.zrange{height:20px;line-height:20px;font-size:12px;color:var(--dim);white-space:nowrap}
+.zrange b{color:var(--c);font-size:14px}
+.stage{position:relative;flex:1;min-height:0}
+.ring{position:absolute;left:50%;top:50%;width:84px;height:84px;margin:-42px 0 0 -42px;border-radius:50%;border:3px dashed var(--c);opacity:.45;animation:ring calc(1600ms) ease-in-out infinite alternate}
+#app:not([data-phase=bet]) .ring{animation:none;opacity:.3}
+.zmine{position:absolute;left:0;top:2px;padding:2px 7px;border-radius:8px;background:var(--c);color:#10181a;font-size:12px;font-weight:900;opacity:0}
+.zone.mine .zmine{opacity:1}
+.zhint{position:absolute;left:0;right:0;top:50%;margin-top:-10px;text-align:center;font-size:12px;color:var(--dim)}
+.zone.mine .zhint,#app:not([data-phase=bet]) .zhint{opacity:0}
+.chute{position:absolute;left:50%;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;font-size:18px;line-height:22px;text-align:center;opacity:0;transform:translate(var(--x),calc(var(--y) - 240px));animation:fall calc(1100ms*var(--k)) cubic-bezier(.25,.7,.3,1) forwards;animation-delay:calc(var(--d)*1ms*var(--k))}
+.chute.me{width:34px;height:34px;margin:-17px 0 0 -17px;font-size:30px;line-height:34px}
+.chute.me::after{content:"你";position:absolute;left:50%;top:-12px;margin-left:-9px;width:18px;height:14px;border-radius:7px;background:#fff;color:#10181a;font-size:10px;font-weight:900;line-height:14px}
+.crate{position:absolute;left:50%;top:50%;width:70px;height:70px;margin:-35px 0 0 -35px;text-align:center;opacity:0}
+.zone.land .crate{animation:crateIn calc(500ms*var(--k)) ease-out forwards;animation-delay:calc(var(--ld)*1ms*var(--k))}
+.box{position:absolute;left:0;top:6px;width:70px;font-size:44px;line-height:50px}
+.zone.open .box{animation:boxOpen calc(700ms*var(--k)) ease-in forwards;animation-delay:calc(var(--od)*1ms*var(--k))}
+.num{position:absolute;left:0;top:2px;width:70px;font-size:40px;line-height:48px;font-weight:900;color:var(--lc);opacity:0;text-shadow:0 2px 0 rgba(0,0,0,.6)}
+.zone.open .num{animation:numPop calc(500ms*var(--k)) cubic-bezier(.2,1.6,.4,1) forwards;animation-delay:calc((var(--od) + 450)*1ms*var(--k))}
+.grade{position:absolute;left:-10px;top:50px;width:90px;font-size:11px;font-weight:800;line-height:16px;color:var(--lc);opacity:0}
+.zone.open .grade{animation:fadeIn calc(300ms*var(--k)) ease-out forwards;animation-delay:calc((var(--od) + 650)*1ms*var(--k))}
+.burst{position:absolute;left:50%;top:50%;width:70px;height:70px;margin:-35px 0 0 -35px;border-radius:50%;border:4px solid var(--lc);opacity:0}
+.zone.open .burst{animation:burst calc(700ms*var(--k)) ease-out forwards;animation-delay:calc((var(--od) + 450)*1ms*var(--k))}
+.zcount{display:flex;align-items:center;gap:6px;height:22px;font-size:12px;color:var(--dim)}
+.zcount b{color:var(--ink);font-size:16px;font-variant-numeric:tabular-nums;display:inline-block;transform-origin:left center}
+.zcount b.bump{animation:bump calc(300ms) ease-out}
+.zbar{height:6px;border-radius:3px;background:#1f302c;overflow:hidden}
+.zbar i{display:block;width:100%;height:6px;background:var(--c);transform-origin:left center;transform:scaleX(0)}
+.zone.blind .zbar i{transform:scaleX(1)!important;opacity:.18}
+.zbotslot{position:relative;height:46px;margin-top:4px}
+.zest{position:absolute;left:0;right:0;top:0;text-align:center;line-height:1}
+.zest small{display:block;font-size:10px;color:var(--dim);margin-bottom:4px}
+.zest span{font-size:18px;font-weight:800;white-space:nowrap}
+.zest span em{font-style:normal;font-size:12px;color:var(--dim);margin-left:1px}
+.zest.lock span{font-size:14px;color:var(--dim)}
+.zfinal{position:absolute;left:0;right:0;top:0;text-align:center;font-size:30px;font-weight:900;line-height:46px;opacity:0;transform-origin:center}
+.zfinal em{font-style:normal;font-size:16px;margin-right:1px}
+.zone.final .zest{animation:fadeOut calc(250ms*var(--k)) ease-out forwards;animation-delay:calc((var(--fd) - 100)*1ms*var(--k))}
+.zone.final .zfinal{animation:finalIn calc(450ms*var(--k)) cubic-bezier(.2,1.5,.4,1) forwards;animation-delay:calc(var(--fd)*1ms*var(--k))}
+.zone.mine.final.winz{box-shadow:0 0 0 3px var(--gold),inset 0 0 0 1px rgba(0,0,0,.45)}
+.zone.mine.final.losez{box-shadow:0 0 0 3px #6a767b,inset 0 0 0 1px rgba(0,0,0,.45)}
+
+/* ===== 下方 ===== */
+#bottom{position:absolute;left:0;top:664px;width:375px;height:148px;background:#0b1214;border-top:1px solid #1f2d2a;overflow:hidden}
+#bet{position:absolute;left:0;top:0;width:375px;height:148px;padding:8px 10px 0}
+#hint{height:26px;line-height:26px;font-size:13px;color:var(--ink);text-align:center;white-space:nowrap;overflow:hidden}
+#hint b{color:var(--gold)}
+#chips{display:flex;align-items:center;justify-content:space-between;height:60px;margin-top:2px}
+.chip{position:relative;width:54px;height:54px;border-radius:50%;border:3px dashed rgba(255,255,255,.55);background:#2a3b38;font-size:16px;font-weight:900;color:#fff;text-align:center;line-height:48px;box-shadow:inset 0 0 0 3px rgba(0,0,0,.35)}
+.chip[data-v="10"]{background:#3c7d4a}
+.chip[data-v="50"]{background:#2f6fb5}
+.chip[data-v="100"]{background:#7b46b8}
+.chip[data-v="250"]{background:#b8861c}
+.chip.on{border-color:#fff;border-style:solid;box-shadow:0 0 0 3px var(--gold),inset 0 0 0 3px rgba(0,0,0,.35)}
+.chip:disabled{opacity:.3;cursor:default}
+#auto{width:62px;height:54px;border-radius:12px;border:2px solid #2d4440;background:#16231f;font-size:12px;font-weight:800;line-height:1.2;color:var(--dim)}
+#auto.on{border-color:var(--gold);color:var(--gold);background:#2a2412}
+#note{margin-top:4px;text-align:center;font-size:10px;color:#6f847c;white-space:nowrap;overflow:hidden}
+#sheet{position:absolute;left:0;top:0;width:375px;height:148px;padding:8px 12px 0;background:#0b1214;opacity:0;visibility:hidden}
+#app[data-phase=result] #sheet{visibility:visible;animation:fadeIn calc(350ms*var(--k)) ease-out forwards}
+#app[data-phase=result] #bet{visibility:hidden}
+.sh-row{display:flex;align-items:flex-end;justify-content:space-between;height:48px}
+.sh-title{font-size:13px;color:var(--dim);line-height:1.3;max-width:150px}
+.sh-title b{color:var(--ink)}
+.sh-pay{text-align:right;line-height:1}
+.sh-pay small{display:block;font-size:11px;color:var(--dim);margin-bottom:3px}
+.sh-pay b{font-size:34px;font-weight:900}
+.sh-mult{font-size:15px;font-weight:900;margin-left:8px}
+.sh-line{font-size:11px;line-height:17px;color:var(--dim);white-space:nowrap;overflow:hidden}
+.sh-line b{color:var(--ink)}
+.sh-bar{position:absolute;left:12px;right:12px;bottom:8px;height:4px;background:#1b2a27;border-radius:2px;overflow:hidden}
+.sh-bar i{display:block;height:4px;width:351px;background:#41615a;transform-origin:left center}
+#coins{position:absolute;left:0;top:0;width:375px;height:148px;pointer-events:none}
+.coin{position:absolute;top:0;font-size:18px;opacity:0}
+#sheet.win .coin{animation:coin calc(1400ms*var(--k)) ease-in forwards;animation-delay:calc(var(--d)*1ms*var(--k))}
+
+/* ===== 動畫（只動 transform/opacity） ===== */
+@keyframes ring{from{transform:scale(.9);opacity:.5}to{transform:scale(1.12);opacity:.15}}
+@keyframes fly{from{transform:translateX(-40px) rotate(45deg);opacity:1}to{transform:translateX(415px) rotate(45deg);opacity:1}}
+@keyframes stamp{0%{opacity:0;transform:rotate(-6deg) scale(2)}12%{opacity:1;transform:rotate(-6deg) scale(1)}70%{opacity:1;transform:rotate(-6deg) scale(1)}100%{opacity:0;transform:rotate(-6deg) scale(1)}}
+@keyframes fall{0%{opacity:0;transform:translate(var(--x),calc(var(--y) - 240px))}12%{opacity:1}100%{opacity:1;transform:translate(var(--x),var(--y))}}
+@keyframes crateIn{0%{opacity:0;transform:translateY(-30px) scale(.4)}70%{opacity:1;transform:translateY(4px) scale(1.1)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes boxOpen{0%{opacity:1;transform:rotate(0)}15%{transform:rotate(-9deg)}30%{transform:rotate(9deg)}45%{transform:rotate(-7deg)}60%{opacity:1;transform:rotate(6deg) scale(1)}100%{opacity:0;transform:scale(1.6)}}
+@keyframes numPop{0%{opacity:0;transform:scale(.2)}100%{opacity:1;transform:scale(1)}}
+@keyframes burst{0%{opacity:.9;transform:scale(.4)}100%{opacity:0;transform:scale(2.4)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeOut{from{opacity:1}to{opacity:0}}
+@keyframes finalIn{0%{opacity:0;transform:scale(.4)}100%{opacity:1;transform:scale(1)}}
+@keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.25)}100%{transform:scale(1)}}
+@keyframes coin{0%{opacity:0;transform:translateY(-10px)}15%{opacity:1}100%{opacity:0;transform:translateY(150px)}}
+@keyframes blink{from{opacity:1}to{opacity:.35}}
+#tlabel.hide{animation:blink .5s ease-in-out infinite alternate}
+</style>
+</head>
+<body>
+<div id="app" data-phase="bet">
+  <div id="top">
+    <div id="wallet">💰<span id="walv">1000</span><small>物資幣</small></div>
+    <div id="rno">第 <b id="rnov">1</b> 輪</div>
+    <div id="tot">🪂 全場 <b id="totv">0</b> 人</div>
+  </div>
+  <div id="timer">
+    <div id="tlabel">下注中</div><div id="tsec">13</div>
+    <div id="tbar"><i id="tbari"></i></div>
+  </div>
+  <div id="strip"><span class="lab">近況</span><span id="pills"></span><span id="legend"><b class="up">金＝賺(≥1x)</b> <b class="dn">灰＝賠</b></span></div>
+  <div id="map">
+    <svg id="mapsvg" viewBox="0 0 375 552" preserveAspectRatio="none" aria-hidden="true">
+      <rect width="375" height="552" fill="#34553d"/>
+      <ellipse cx="60" cy="90" rx="90" ry="60" fill="#3d6446"/><ellipse cx="320" cy="200" rx="80" ry="70" fill="#2d4b36"/>
+      <ellipse cx="90" cy="400" rx="100" ry="80" fill="#2f4e38"/><ellipse cx="300" cy="470" rx="90" ry="60" fill="#3d6446"/>
+      <path d="M-10 150 C80 190 120 250 190 270 S300 330 390 410" fill="none" stroke="#a9996c" stroke-width="16" opacity=".6"/>
+      <path d="M-10 410 C60 360 130 300 190 276 S320 190 390 120" fill="none" stroke="#3a7ca5" stroke-width="26" opacity=".85"/>
+      <path d="M-10 410 C60 360 130 300 190 276 S320 190 390 120" fill="none" stroke="#7fc0e0" stroke-width="3" stroke-dasharray="3 14" opacity=".6"/>
+      <path d="M187 0 V552 M0 276 H375" stroke="#c9b98a" stroke-width="5" stroke-dasharray="14 8" opacity=".55"/>
+      <g stroke="#ffffff" stroke-opacity=".07" stroke-width="1"><path d="M94 0V552M281 0V552M0 138H375M0 414H375"/></g>
+      <circle cx="187" cy="276" r="210" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="3" stroke-dasharray="10 8"/>
+      <g fill="#7d8a8f"><rect x="20" y="248" width="14" height="10"/><rect x="38" y="256" width="10" height="12"/><rect x="330" y="300" width="16" height="12"/><rect x="350" y="312" width="10" height="10"/><rect x="170" y="260" width="12" height="9"/><rect x="196" y="284" width="12" height="10"/><rect x="60" y="520" width="14" height="10"/><rect x="310" y="20" width="14" height="10"/></g>
+      <g fill="#24472f"><circle cx="30" cy="30" r="9"/><circle cx="46" cy="40" r="7"/><circle cx="345" cy="520" r="9"/><circle cx="355" cy="500" r="7"/><circle cx="140" cy="530" r="8"/><circle cx="240" cy="14" r="8"/><circle cx="12" cy="300" r="8"/><circle cx="365" cy="270" r="8"/></g>
+      <path d="M0 22H375" stroke="#fff" stroke-opacity=".25" stroke-dasharray="4 6"/>
+      
+    </svg>
+    <div id="plane">✈️</div>
+    <div id="stamp">封盤</div>
+    <div id="zones"></div>
+  </div>
+  <div id="bottom">
+    <div id="bet">
+      <div id="hint">👆 點一個落點跳傘｜人越少、分到的物資越多</div>
+      <div id="chips"></div>
+      <div id="note">全服同步 · 彩池制：全場派彩＝全場投注×96% · 人群為模擬 · 美術佔位</div>
+    </div>
+    <div id="sheet">
+      <div class="sh-row"><div class="sh-title" id="shTitle"></div><div class="sh-pay"><small id="shSmall">領回</small><b id="shPay">0</b></div></div>
+      <div class="sh-line" id="shL1"></div>
+      <div class="sh-line" id="shL2"></div>
+      <div class="sh-line" id="shL3"></div>
+      <div class="sh-bar"><i id="shBar"></i></div>
+      <div id="coins"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+/*CORE_START*/
+// ============================================================
+// VALUES：唯一數字來源（RTP、物資等級分佈、人群參數、時間）
+// ============================================================
+const VALUES = {
+  RTP: 0.96,                       // 彩池制：全場總派彩 = 全場總投注 × RTP
+  startWallet: 1000,
+  chips: [10, 50, 100, 250],
+  timing: {                        // 單位 ms（名目值；?fast=1 時整輪壓到 fastTotal）
+    bet: 13000, hideLast: 3000, drop: 2200, open: 2700, result: 3600,
+    fastTotal: 360, headStart: 3500
+  },
+  loot: {                          // 每個落點獨立抽「物資等級」，等級對應該點的物資量
+    levelWeights: [48, 32, 14, 6],
+    levelNames: ['普通箱', '精良箱', '稀有箱', '傳說箱']
+  },
+  points: [                        // supply[等級] = 該點此等級的物資量（相對單位，只用來分彩池）
+    { key: 'green',  tag: '綠', name: '草原農場', supply: [1, 2, 4, 8] },
+    { key: 'blue',   tag: '藍', name: '港口碼頭', supply: [2, 4, 8, 16] },
+    { key: 'purple', tag: '紫', name: '研究所',   supply: [3, 6, 12, 24] },
+    { key: 'gold',   tag: '金', name: '軍事基地', supply: [4, 10, 20, 48] }
+  ],
+  crowd: {                         // 模擬人群
+    nMin: 320, nMax: 480,
+    bets: [10, 20, 50, 100, 200], betW: [35, 30, 20, 10, 5],
+    pGreedy: 0.45, greedyGamma: 1.5,   // 貪心型：偏好高等級（物資期望值^1.5）
+    pBalanced: 0.25,                   // 照期望值比例選
+    pSmart: 0.15, smartPad: 120, smartNoise: 0.25, // 聰明型：看當下人群，挑 期望物資/已投注 最大者（帶雜訊）
+    // 其餘 = 隨機型（四點等機率）
+    moodSigma: 0.30,                   // 每輪每點的「人氣」對數常態雜訊（讓某些輪特別擠／特別冷）
+    arrivalExp: 0.8                    // <1 表示晚到的人較多
+  },
+  simProbeBet: 100                     // simulate 用的探針下注額
+};
+const NP = VALUES.points.length;
+const LW = VALUES.loot.levelWeights, LWSUM = LW.reduce((a, b) => a + b, 0);
+const MEAN = VALUES.points.map(p => p.supply.reduce((s, v, k) => s + v * LW[k], 0) / LWSUM);
+const SMIN = VALUES.points.map(p => Math.min(...p.supply));
+const SMAX = VALUES.points.map(p => Math.max(...p.supply));
+
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function gauss(r) { let u = r(); if (u < 1e-12) u = 1e-12; return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+function pickW(r, w, sum) { let x = r() * sum; for (let i = 0; i < w.length; i++) { x -= w[i]; if (x < 0) return i; } return w.length - 1; }
+const r2 = x => Math.round(x * 100) / 100;
+
+// 先定後演：一輪的物資等級、全場人群（含每個人的到達時間、落點、金額）一次抽定
+function makeRound(seed, opts) {
+  const r = mulberry32(seed), C = VALUES.crowd;
+  const level = [], supply = [];
+  for (let i = 0; i < NP; i++) { const k = pickW(r, LW, LWSUM); level.push(k); supply.push(VALUES.points[i].supply[k]); }
+  const n = C.nMin + Math.floor(r() * (C.nMax - C.nMin + 1));
+  const mood = [], wG = [], wB = []; let sG = 0, sB = 0;
+  for (let i = 0; i < NP; i++) {
+    mood.push(Math.exp(gauss(r) * C.moodSigma));
+    wG.push(Math.pow(MEAN[i], C.greedyGamma) * mood[i]); wB.push(MEAN[i] * mood[i]);
+    sG += wG[i]; sB += wB[i];
+  }
+  const betSum = C.betW.reduce((a, b) => a + b, 0);
+  const cum = new Array(n + 1); let s = 0;
+  for (let k = 0; k <= n; k++) { s += -Math.log(1 - r()); cum[k] = s; }   // 排序好的到達時間（指數間隔法）
+  const totals = new Array(NP).fill(0), counts = new Array(NP).fill(0), bots = opts && opts.noBots ? null : [];
+  const tG = C.pGreedy, tB = tG + C.pBalanced, tS = tB + C.pSmart;
+  for (let k = 0; k < n; k++) {
+    const t = Math.min(0.999, Math.max(0.02, Math.pow(cum[k] / cum[n], C.arrivalExp)));
+    const x = r(); let p;
+    if (x < tG) p = pickW(r, wG, sG);
+    else if (x < tB) p = pickW(r, wB, sB);
+    else if (x < tS) {
+      let best = -1, bs = -Infinity;
+      for (let i = 0; i < NP; i++) {
+        const sc = MEAN[i] / (totals[i] + C.smartPad) * Math.exp(gauss(r) * C.smartNoise);
+        if (sc > bs) { bs = sc; best = i; }
+      }
+      p = best;
+    } else p = Math.floor(r() * NP);
+    const b = C.bets[pickW(r, C.betW, betSum)];
+    totals[p] += b; counts[p]++;
+    if (bots) bots.push({ t, p, b });
+  }
+  return { seed, level, supply, bots, totals, counts, n };
+}
+
+// 彩池制結算：pool = 全場投注×RTP；只有「有人降落」的落點分彩池（無人點的物資份額自動併入有人的點，不憑空消失也不多發）
+function settle(supply, totals) {
+  let S = 0, T = 0;
+  for (let i = 0; i < NP; i++) { T += totals[i]; if (totals[i] > 0) S += supply[i]; }
+  const pool = T * VALUES.RTP, mult = [], poolBy = [];
+  for (let i = 0; i < NP; i++) {
+    if (totals[i] > 0) { poolBy.push(pool * supply[i] / S); mult.push(poolBy[i] / totals[i]); }
+    else { poolBy.push(0); mult.push(null); }
+  }
+  return { pool, T, S, mult, poolBy };
+}
+const payoutOf = (bet, mult) => r2(bet * mult);
+
+// 下注期間的「預估倍率區間」：假設最終人群比例＝目前可見比例，其他點取期望物資；本點取最低／最高等級
+function estimate(i, vis) {
+  let T = 0; for (let j = 0; j < NP; j++) T += vis[j];
+  if (vis[i] <= 0 || T <= 0) return null;
+  let others = 0; for (let j = 0; j < NP; j++) if (j !== i) others += MEAN[j];
+  const sh = vis[i] / T;
+  return [VALUES.RTP * (SMIN[i] / (SMIN[i] + others)) / sh, VALUES.RTP * (SMAX[i] / (SMAX[i] + others)) / sh];
+}
+const fm = (m, d) => { const f = Math.pow(10, d); return (Math.floor(m * f + 1e-9) / f).toFixed(d); };
+
+function simulate(n) {
+  const probe = VALUES.simProbeBet, pay = new Array(NP).fill(0), below = new Array(NP).fill(0), maxBy = new Array(NP).fill(0);
+  let maxMult = 0, belowAll = 0, maxErr = 0, T0 = 0;
+  const base = 20261113;
+  for (let k = 0; k < n; k++) {
+    const rd = makeRound((base + Math.imul(k, 0x9E3779B1)) | 0, { noBots: true });
+    T0 += rd.totals.reduce((a, b) => a + b, 0);
+    for (let i = 0; i < NP; i++) {
+      const tot = rd.totals.slice(); tot[i] += probe;
+      const st = settle(rd.supply, tot), m = st.mult[i];
+      pay[i] += probe * m; if (m > maxMult) maxMult = m; if (m > maxBy[i]) maxBy[i] = m;
+      if (m < 1) { belowAll++; below[i]++; }
+      if (i === 0) { const sum = st.poolBy.reduce((a, b) => a + b, 0); maxErr = Math.max(maxErr, Math.abs(sum - st.pool)); }
+    }
+  }
+  const rtpByPoint = pay.map(v => v / (n * probe));
+  return {
+    rtpByPoint, maxMultiplier: maxMult, shareBelow1: belowAll / (n * NP),
+    shareBelow1ByPoint: below.map(v => v / n), maxMultiplierByPoint: maxBy,
+    avgTotalBet: T0 / n, poolConservationMaxErr: maxErr
+  };
+}
+/*CORE_END*/
+
+// ============================================================
+// UI
+// ============================================================
+const Q = new URLSearchParams(location.search);
+const FAST = Q.get('fast') === '1';
+const SHOT = Q.get('shot');
+const T = VALUES.timing;
+const NOM = T.bet + T.drop + T.open + T.result;
+const K = FAST ? T.fastTotal / NOM : 1;
+document.documentElement.style.setProperty('--k', K);
+const $ = s => document.querySelector(s);
+const app = $('#app');
+const fmt = n => Number(n.toFixed(2)).toLocaleString('en-US');
+const CHIP_PT = ['green', 'blue', 'purple', 'gold'];
+const LV_COLOR = ['#d8e2dc', '#4aa3ff', '#b878ff', '#ffc83d'];
+const DOT = ['#5fd068', '#4aa3ff', '#b878ff', '#ffc83d'];
+
+const S = {
+  rno: 0, wallet: VALUES.startWallet, chip: 50, auto: false, lastPick: null, bet: null,
+  phase: 'bet', t0: 0, round: null, res: null, pay: 0, hist: [], frozen: false,
+  vi: 0, vb: [0, 0, 0, 0], vc: [0, 0, 0, 0], blind: false, listeners: []
+};
+
+// ---------- 建 DOM ----------
+const zoneEl = [];
+(function build() {
+  const zs = $('#zones');
+  VALUES.points.forEach((p, i) => {
+    const b = document.createElement('button');
+    b.className = 'zone'; b.dataset.i = i; b.style.setProperty('--c', `var(--${p.key})`);
+    const lo = SMIN[i], hi = SMAX[i];
+    b.innerHTML =
+      `<div class="zh"><span class="ztag">${p.tag}</span><span class="zname">${p.name}</span></div>` +
+      `<div class="zrange">🎁 物資 <b>${lo}～${hi}</b></div>` +
+      `<div class="stage"><div class="ring"></div><div class="zhint">點一下跳傘</div><span class="zmine">你 · 0</span>` +
+      `<div class="burst"></div><div class="crate"><span class="box">📦</span><span class="num"></span><span class="grade"></span></div></div>` +
+      `<div class="zcount">👥 <b>0</b><span>人</span></div><div class="zbar"><i></i></div>` +
+      `<div class="zbotslot"><div class="zest"><small>預估倍率</small><span>—</span></div><div class="zfinal"></div></div>`;
+    b.addEventListener('click', () => tapZone(i));
+    zs.appendChild(b); zoneEl.push(b);
+  });
+  const cs = $('#chips');
+  VALUES.chips.forEach(v => {
+    const c = document.createElement('button'); c.className = 'chip'; c.dataset.v = v; c.textContent = v;
+    c.addEventListener('click', () => setChip(v)); cs.appendChild(c);
+  });
+  const a = document.createElement('button'); a.id = 'auto'; a.innerHTML = '🔁 續押<br>同一點';
+  a.addEventListener('click', () => { S.auto = !S.auto; a.classList.toggle('on', S.auto); if (S.auto && S.lastPick != null && S.phase === 'bet' && !S.bet) placeBet(S.lastPick, S.chip); renderBet(); });
+  cs.appendChild(a);
+})();
+const el = zoneEl.map(z => ({
+  z, count: z.querySelector('.zcount b'), bar: z.querySelector('.zbar i'), est: z.querySelector('.zest'),
+  fin: z.querySelector('.zfinal'), stage: z.querySelector('.stage'), mine: z.querySelector('.zmine'),
+  num: z.querySelector('.num'), grade: z.querySelector('.grade'), cache: {}
+}));
+
+// ---------- 錢包／下注 ----------
+function setWallet(v, anim) {
+  S.wallet = r2(v); $('#walv').textContent = fmt(S.wallet);
+  if (anim) { const w = $('#wallet'); w.classList.remove('bump'); void w.offsetWidth; w.classList.add('bump'); }
+}
+function placeBet(p, amt) {
+  if (S.phase !== 'bet') return false;
+  const back = S.bet ? S.bet.amt : 0;
+  if (amt > S.wallet + back + 1e-9) return false;
+  setWallet(S.wallet + back - amt);
+  S.bet = { p, amt }; S.lastPick = p; renderBet(); renderCrowd(); return true;
+}
+function cancelBet() { if (S.bet) { setWallet(S.wallet + S.bet.amt); S.bet = null; renderBet(); renderCrowd(); } }
+function tapZone(i) {
+  if (S.phase !== 'bet') return;
+  if (S.bet && S.bet.p === i) { cancelBet(); return; }
+  if (!placeBet(i, S.chip)) flashHint('物資幣不夠，選小一點的籌碼');
+}
+function setChip(v) {
+  S.chip = v;
+  if (S.phase === 'bet' && S.bet && S.bet.amt !== v) { if (!placeBet(S.bet.p, v)) flashHint('物資幣不夠'); }
+  renderBet();
+}
+let hintMsg = '', hintUntil = 0;
+function flashHint(m) { hintMsg = m; hintUntil = performance.now() + 1600; renderBet(); setTimeout(renderBet, 1700); }
+
+function renderBet() {
+  const h = $('#hint'), bet = S.phase === 'bet', back = S.bet ? S.bet.amt : 0;
+  document.querySelectorAll('.chip').forEach(c => {
+    const v = +c.dataset.v; c.classList.toggle('on', v === S.chip); c.disabled = !bet || v > S.wallet + back;
+  });
+  el.forEach((e, i) => {
+    const mine = S.bet && S.bet.p === i; e.z.classList.toggle('mine', !!mine);
+    if (mine) e.mine.textContent = '你 · ' + fmt(S.bet.amt);
+  });
+  if (performance.now() < hintUntil) h.innerHTML = hintMsg;
+  else if (S.phase === 'bet') {
+    if (S.bet) h.innerHTML = `已跳 <b>${VALUES.points[S.bet.p].tag}·${VALUES.points[S.bet.p].name}</b> ${fmt(S.bet.amt)}｜可改點，再點一次取消`;
+    else h.innerHTML = '👆 點一個落點跳傘｜<b>人越少、分到的物資越多</b>';
+  } else if (S.phase === 'drop') h.innerHTML = S.bet ? '✈️ 已封盤，空投降落中…' : '✈️ 已封盤，本輪觀戰';
+  else if (S.phase === 'open') h.innerHTML = '📦 開箱中… 物資量揭曉';
+}
+
+// ---------- 人群顯示（下注期間） ----------
+function crowdAdvance(e) {
+  const f = e / T.bet, bots = S.round.bots;
+  while (S.vi < bots.length && bots[S.vi].t <= f) { const b = bots[S.vi++]; S.vb[b.p] += b.b; S.vc[b.p]++; }
+}
+function setTxt(node, key, cache, v) { if (cache[key] !== v) { node.textContent = v; cache[key] = v; return true; } return false; }
+function renderCrowd() {
+  if (S.phase !== 'bet') return;
+  const mineP = S.bet ? S.bet.p : -1, mineA = S.bet ? S.bet.amt : 0;
+  const vis = S.vb.map((v, i) => v + (i === mineP ? mineA : 0));
+  const cnt = S.vc.map((v, i) => v + (i === mineP ? 1 : 0));
+  const totC = cnt.reduce((a, b) => a + b, 0);
+  if (S.blind) {
+    setTxt($('#totv'), 'v', el[0].cache, '？？');
+  } else setTxt($('#totv'), 'v', el[0].cache, String(totC));
+  el.forEach((e, i) => {
+    e.z.classList.toggle('blind', S.blind);
+    if (S.blind) {
+      setTxt(e.count, 'c', e.cache, '？？？');
+      const est = '<small>預估倍率</small><span style="font-size:14px;color:#ff8a6b">🙈 情報封鎖</span>';
+      if (e.cache.est !== est) { e.est.innerHTML = est; e.cache.est = est; }
+      return;
+    }
+    if (setTxt(e.count, 'c', e.cache, String(cnt[i])) && S.vi > 0) { e.count.classList.remove('bump'); void e.count.offsetWidth; e.count.classList.add('bump'); }
+    e.bar.style.transform = `scaleX(${totC ? (cnt[i] / totC).toFixed(3) : 0})`;
+    const es = estimate(i, vis); let html;
+    if (!es) html = '<small>預估倍率</small><span style="font-size:14px;color:var(--dim)">等人跳傘…</span>';
+    else {
+      const lo = fm(es[0], 1), hi = fm(es[1], 1);
+      html = `<small>預估倍率</small><span><b class="${es[0] >= 1 ? 'up' : 'dn'}">${lo}</b>～<b class="${es[1] >= 1 ? 'up' : 'dn'}">${hi}</b><em>x</em></span>`;
+    }
+    if (e.cache.est !== html) { e.est.innerHTML = html; e.cache.est = html; }
+  });
+}
+
+function renderTimer(e) {
+  const lab = $('#tlabel'), sec = $('#tsec'), bar = $('#tbari');
+  let remain, total, txt, hide = false;
+  if (S.phase === 'bet') {
+    remain = T.bet - e; total = T.bet; hide = S.blind;
+    txt = hide ? '🙈 最後3秒：人數封鎖' : '🪂 下注中｜看人數選落點';
+    sec.textContent = Math.max(0, Math.ceil(remain / 1000));
+  } else {
+    const st = S.phase === 'drop' ? T.bet : S.phase === 'open' ? T.bet + T.drop : T.bet + T.drop + T.open;
+    const len = S.phase === 'drop' ? T.drop : S.phase === 'open' ? T.open : T.result;
+    remain = len - (e - st); total = len;
+    txt = S.phase === 'drop' ? '✈️ 封盤！空投降落' : S.phase === 'open' ? '📦 落地開箱' : '🏁 結算';
+    sec.textContent = S.phase === 'result' ? '下一輪' : '';
+    if (S.phase === 'result') sec.style.fontSize = '12px';
+  }
+  if (S.phase !== 'result') sec.style.fontSize = '';
+  lab.textContent = txt; lab.classList.toggle('hide', hide);
+  bar.classList.toggle('hide', hide);
+  bar.style.transform = `scaleX(${Math.max(0, Math.min(1, remain / total)).toFixed(4)})`;
+}
+
+function renderPills() {
+  const box = $('#pills'); box.innerHTML = '';
+  S.hist.slice(-6).forEach(h => {
+    const d = document.createElement('span'); d.className = 'pill';
+    const m = h.mult[h.best];
+    d.innerHTML = `<i style="background:${DOT[h.best]}"></i><span class="${m >= 1 ? 'up' : 'dn'}">${fm(m, 1)}</span>`;
+    box.appendChild(d);
+  });
+  box.style.display = 'flex'; box.style.gap = '5px';
+  if (!S.hist.length) box.innerHTML = '<span style="color:#6f847c">還沒有紀錄（顯示每輪最高倍率落點）</span>';
+}
+
+// ---------- 輪次狀態機 ----------
+function startRound(seed, headStart) {
+  S.rno++; S.phase = 'bet'; app.dataset.phase = 'bet';
+  S.round = makeRound(seed != null ? seed : ((Math.random() * 4294967296) >>> 0));
+  S.res = null; S.bet = null; S.pay = 0; S.vi = 0; S.vb = [0, 0, 0, 0]; S.vc = [0, 0, 0, 0]; S.blind = false;
+  const first = S.rno === 1;
+  if (first) S.t0 = performance.now() - (headStart || 0) * K;
+  $('#rnov').textContent = S.rno;
+  el.forEach(e => {
+    e.z.className = 'zone'; e.cache = {}; e.fin.innerHTML = ''; e.mine.textContent = '你 · 0';
+    e.stage.querySelectorAll('.chute').forEach(c => c.remove());
+    e.bar.style.transform = 'scaleX(0)';
+  });
+  if (S.wallet < VALUES.chips[0]) { setWallet(VALUES.startWallet, true); flashHint('🎁 補給箱：物資幣歸零，重新發 ' + VALUES.startWallet); }
+  if (S.chip > S.wallet) S.chip = [...VALUES.chips].reverse().find(v => v <= S.wallet) || VALUES.chips[0];
+  if (S.auto && S.lastPick != null) placeBet(S.lastPick, S.chip);
+  renderBet(); renderPills(); notify('round');
+}
+
+function lockPhase() {
+  S.phase = 'drop'; app.dataset.phase = 'drop';
+  const tot = S.round.totals.slice(), cnt = S.round.counts.slice();
+  if (S.bet) { tot[S.bet.p] += S.bet.amt; cnt[S.bet.p]++; }
+  const res = settle(S.round.supply, tot); res.counts = cnt; res.totals = tot; S.res = res;
+  S.pay = S.bet ? payoutOf(S.bet.amt, res.mult[S.bet.p]) : 0;
+  el.forEach((e, i) => {
+    e.z.classList.remove('blind');
+    e.z.classList.add('land');
+    e.z.style.setProperty('--ld', 1300); // 落地前不顯示箱子
+    const lv = S.round.level[i];
+    e.z.style.setProperty('--lc', LV_COLOR[lv]);
+    e.z.style.setProperty('--od', 250 + i * 480);
+    e.z.style.setProperty('--fd', 250 + i * 480 + 1000);
+    e.count.textContent = res.counts[i]; e.cache.c = String(res.counts[i]);
+    e.bar.style.transform = `scaleX(${(res.counts[i] / res.counts.reduce((a, b) => a + b, 0)).toFixed(3)})`;
+    e.est.innerHTML = '<small>預估倍率</small><span>🔒 已封盤</span>'; e.est.className = 'zest lock'; e.cache.est = 'lock';
+    e.num.textContent = S.round.supply[i];
+    e.grade.textContent = VALUES.loot.levelNames[lv];
+    const fin = res.mult[i];
+    e.fin.innerHTML = fin == null ? '<span style="font-size:16px;color:var(--dim)">無人</span>' : `<em>×</em>${fm(fin, 2)}`;
+    e.fin.style.color = fin != null && fin >= 1 ? 'var(--gold)' : 'var(--grey)';
+    e.fin.classList.toggle('upz', fin != null && fin >= 1);
+    // 降落傘（氛圍用亂數，不影響結果）
+    const n = Math.max(3, Math.min(9, 3 + Math.round(res.counts[i] / 16)));
+    const mineHere = S.bet && S.bet.p === i;
+    for (let c = 0; c < n + (mineHere ? 1 : 0); c++) {
+      const sp = document.createElement('span'); sp.className = 'chute'; sp.textContent = '🪂';
+      const me = mineHere && c === n;
+      const ang = (c / n) * Math.PI * 2 + Math.random() * 0.5, rx = 50 + Math.random() * 16, ry = 28 + Math.random() * 14;
+      let x = Math.cos(ang) * rx, y = Math.sin(ang) * ry + 4;
+      if (me) { x = 36; y = -22; sp.classList.add('me'); }
+      sp.style.setProperty('--x', x.toFixed(0) + 'px'); sp.style.setProperty('--y', y.toFixed(0) + 'px');
+      sp.style.setProperty('--d', Math.round(150 + Math.random() * 700));
+      e.stage.appendChild(sp);
+    }
+  });
+  const totN = res.counts.reduce((a, b) => a + b, 0);
+  $('#totv').textContent = totN;
+  renderBet();
+}
+function openPhase() {
+  S.phase = 'open'; app.dataset.phase = 'open';
+  el.forEach((e, i) => { e.z.classList.add('open', 'final'); const m = S.res.mult[i]; e.z.classList.toggle('winz', m != null && m >= 1); e.z.classList.toggle('losez', !(m != null && m >= 1)); });
+  renderBet();
+}
+function resultPhase() {
+  S.phase = 'result'; app.dataset.phase = 'result';
+  const res = S.res, P = VALUES.points, b = S.bet;
+  let best = 0; res.mult.forEach((m, i) => { if (m != null && m > (res.mult[best] || 0)) best = i; });
+  S.hist.push({ mult: res.mult.slice(), best });
+  const sheet = $('#sheet'); sheet.classList.remove('win');
+  const shT = $('#shTitle'), shP = $('#shPay'), shS = $('#shSmall');
+  const poolTxt = `全場投注 <b>${fmt(res.T)}</b> × 96% = 派彩池 <b>${fmt(r2(res.pool))}</b>`;
+  $('#shL1').innerHTML = poolTxt;
+  const bestTxt = `本輪最賺：<b>${P[best].tag}·${P[best].name}</b> ×${fm(res.mult[best], 2)}`;
+  if (b) {
+    const m = res.mult[b.p], pay = S.pay, win = m >= 1, net = r2(pay - b.amt);
+    shT.innerHTML = `你押 <b>${P[b.p].tag}·${P[b.p].name}</b> ${fmt(b.amt)}<br><span class="sh-mult ${win ? 'up' : 'dn'}" style="margin:0">×${fm(m, 2)}</span> <span class="${win ? 'up' : 'dn'}" style="font-weight:800">${net >= 0 ? '+' : ''}${fmt(net)}</span>`;
+    shS.textContent = '領回'; shP.textContent = fmt(pay); shP.className = win ? 'up' : 'dn';
+    $('#shL2').innerHTML = `${P[b.p].tag}點物資 <b>${S.round.supply[b.p]}</b>/${res.S} → 分得 <b>${fmt(r2(res.poolBy[b.p]))}</b> ÷ 該點投注 <b>${fmt(res.totals[b.p])}</b> = ×${fm(m, 2)}`;
+    $('#shL3').innerHTML = best === b.p ? `🎯 你選到本輪最賺的落點！` : bestTxt + `（若押它會領回 <b>${fmt(payoutOf(b.amt, res.mult[best]))}</b>）`;
+    if (win) { sheet.classList.add('win'); }
+    setWallet(S.wallet + pay, true);
+  } else {
+    shT.innerHTML = '本輪你沒下注<br><span style="color:var(--dim)">下一輪點一個落點試試</span>'; shS.textContent = ''; shP.textContent = '觀戰'; shP.className = 'dn'; shP.style.fontSize = '24px';
+    $('#shL2').innerHTML = `金色倍率＝賺、灰色＝賠，分界在 <b>1.00x</b>`;
+    $('#shL3').innerHTML = bestTxt;
+  }
+  if (b) $('#shPay').style.fontSize = '';
+  const coins = $('#coins'); coins.innerHTML = '';
+  if (b && res.mult[b.p] >= 1) for (let i = 0; i < 12; i++) { const c = document.createElement('span'); c.className = 'coin'; c.textContent = '🪙'; c.style.left = (20 + Math.random() * 335).toFixed(0) + 'px'; c.style.setProperty('--d', Math.round(Math.random() * 600)); coins.appendChild(c); }
+  const st = $('#shBar'); st.style.transform = 'scaleX(1)';
+  renderBet(); notify('result', { payout: S.pay, bet: b });
+}
+
+function advance(e) {
+  for (let guard = 0; guard < 8; guard++) {
+    if (S.phase === 'bet') {
+      S.blind = e >= T.bet - T.hideLast;
+      if (e >= T.bet) { crowdAdvance(T.bet); lockPhase(); continue; }
+      crowdAdvance(e); renderCrowd(); renderTimer(e);
+    } else if (S.phase === 'drop') {
+      if (e >= T.bet + T.drop) { openPhase(); continue; }
+      renderTimer(e);
+    } else if (S.phase === 'open') {
+      if (e >= T.bet + T.drop + T.open) { resultPhase(); continue; }
+      renderTimer(e);
+    } else {
+      if (e >= NOM) { S.t0 += NOM * K; startRound(); e -= NOM; continue; }
+      renderTimer(e); const bar = (1 - (e - (NOM - T.result)) / T.result);
+      $('#shBar').style.transform = `scaleX(${Math.max(0, Math.min(1, bar)).toFixed(4)})`;
+    }
+    break;
+  }
+}
+function tick() {
+  if (S.frozen) return;
+  let e = (performance.now() - S.t0) / K;
+  if (e > NOM * 2) { S.t0 = performance.now() - 1; e = 1; }
+  advance(e);
+}
+
+// ---------- 事件／測試介面 ----------
+function notify(type, data) { S.listeners.slice().forEach(f => f(type, data)); }
+function waitFor(type) { return new Promise(res => { const f = (t, d) => { if (t === type) { S.listeners.splice(S.listeners.indexOf(f), 1); res(d); } }; S.listeners.push(f); }); }
+let chain = Promise.resolve();
+async function doPlay(p, bet) {
+  if (S.phase !== 'bet') await waitFor('round');
+  const back = S.bet ? S.bet.amt : 0;
+  if (!(p >= 0 && p < NP) || !(bet > 0) || bet > S.wallet + back + 1e-9) return { payout: 0, wallet: S.wallet, error: 'invalid-or-insufficient' };
+  placeBet(p, bet);
+  const d = await waitFor('result');
+  return { payout: d.payout, wallet: S.wallet };
+}
+window.__proto = {
+  wallet: () => S.wallet,
+  playRound(p, bet) { const run = chain.then(() => doPlay(p, bet)); chain = run.catch(() => {}); return run; },
+  simulate: n => simulate(n),
+  values: VALUES
+};
+
+// ---------- 啟動 ----------
+function fit() { const s = Math.min(1, innerHeight / 812, innerWidth / 375); app.style.transform = s < 1 ? `scale(${s})` : ''; }
+addEventListener('resize', fit); fit();
+setWallet(S.wallet);
+
+function startShot(name) {
+  S.frozen = true; startRound(777, 0);
+  const round = S.round;
+  const best = (dir) => { let bi = 0, bm = null; for (let p = 0; p < NP; p++) { const t = round.totals.slice(); t[p] += 50; const m = settle(round.supply, t).mult[p]; if (bm == null || (dir > 0 ? m > bm : m < bm)) { bm = m; bi = p; } } return bi; };
+  const cfg = {
+    idle: { e: 2500, p: null, ready: 600 },
+    bet: { e: 7500, p: 1, ready: 600 },
+    blackout: { e: 11000, p: 2, ready: 600 },
+    drop: { e: 'drop', p: 1, ready: 1300 },
+    open: { e: 'open', p: 1, ready: 2300 },
+    'result-win': { e: 'result', p: best(1), ready: 3600 },
+    'result-lose': { e: 'result', p: best(-1), ready: 3600 },
+    'result-nobet': { e: 'result', p: null, ready: 3600 }
+  }[name] || { e: 7500, p: null, ready: 600 };
+  if (typeof cfg.e === 'number') {
+    S.blind = cfg.e >= T.bet - T.hideLast; crowdAdvance(cfg.e);
+    if (cfg.p != null) placeBet(cfg.p, 50);
+    renderCrowd(); renderTimer(cfg.e);
+  } else {
+    crowdAdvance(T.bet); if (cfg.p != null) placeBet(cfg.p, 50);
+    lockPhase(); renderTimer(T.bet + 100);
+    if (cfg.e !== 'drop') { openPhase(); renderTimer(T.bet + T.drop + 100); }
+    if (cfg.e === 'result') { resultPhase(); renderTimer(NOM - T.result + 100); }
+  }
+  setTimeout(() => { window.__shotReady = true; }, cfg.ready);
+}
+
+if (SHOT) startShot(SHOT);
+else {
+  startRound(null, T.headStart);
+  setInterval(tick, FAST ? 10 : 80);
+  tick();
+  setTimeout(() => { window.__shotReady = true; }, FAST ? 100 : 400);
+}
+})();
+</script>
+</body>
+</html>
