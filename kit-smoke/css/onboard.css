@@ -1,0 +1,48 @@
+/* =========================================================================
+ * 三選一冒煙——新手引導樣式（常駐提示＋首次多步聚光，z-index 50 最上層）
+ * 效能紅線：transition 只動 transform／opacity；聚光洞靠靜態 box-shadow；禁 filter
+ * 多語紀律：盒子用 min-width／padding 撐，不鎖死寬度；長字可換行（?lang=xx 驗）
+ * ========================================================================= */
+
+/* ---------- 常駐提示列 ---------- */
+.obhint{flex:none;box-sizing:border-box;margin:6px 8px 0;padding:3px 8px;min-height:26px;
+  display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:7px;
+  background:rgba(20,26,22,.55);font-size:11.5px;color:#B9C3B4;cursor:pointer}
+.obhint .oht{flex:none;color:var(--gold);font-weight:700}
+.obhint .ohs{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.obhint .ohm{flex:none;color:#7C8A7C;font-size:10.5px}
+
+/* 點開的一行說明（貼提示列下方） */
+.obpop{position:absolute;left:8px;right:8px;top:80px;z-index:14;
+  box-sizing:border-box;padding:8px 10px;border-radius:8px;
+  border:1px solid var(--edge);background:#161C18;color:var(--fg);font-size:12px;line-height:1.55;
+  opacity:0;transform:translateY(-4px);pointer-events:none;
+  transition:opacity .18s linear,transform .18s ease-out}
+.obpop.show{opacity:1;transform:translateY(0);pointer-events:auto}
+.obpop .opx{float:right;margin-left:8px;border:0;background:transparent;color:#7C8A7C;font-size:11px;padding:0}
+
+/* ---------- 首次多步引導覆蓋層 ---------- */
+#obd{position:absolute;inset:0;z-index:50;display:none;opacity:0;transition:opacity .2s linear}
+#obd.on{display:block}
+#obd.show{opacity:1}
+.obspot{position:absolute;border-radius:10px;box-shadow:0 0 0 9999px rgba(8,11,9,.74);
+  border:1.5px solid var(--gold);pointer-events:none}
+.obcard{position:absolute;left:14px;right:14px;box-sizing:border-box;
+  padding:11px 12px 12px;border-radius:10px;border:1px solid var(--edge);background:#121814;color:var(--fg);
+  transform:translateY(6px);opacity:0;transition:opacity .2s linear,transform .2s ease-out}
+#obd.show .obcard{transform:translateY(0);opacity:1}
+.obcard .obstep{font-size:10.5px;color:#7C8A7C;letter-spacing:.06em}
+.obcard .obtit{font-size:14.5px;font-weight:700;color:var(--gold);margin:2px 0 4px;line-height:1.4}
+.obcard .obbody{font-size:12.5px;line-height:1.6;color:#D6D0BE}
+.obcard .obfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+.obcard .obdots{display:flex;gap:5px}
+.obcard .obdots i{width:6px;height:6px;border-radius:50%;background:#3A423A}
+.obcard .obdots i.on{background:var(--gold)}
+.obnext{min-width:84px;padding:7px 14px;border-radius:7px;border:1px solid var(--gold);
+  background:var(--gold);color:#141A16;font-size:13px;font-weight:700;line-height:1.3}
+.obskip{position:absolute;right:10px;top:48px;z-index:51;min-width:46px;padding:5px 10px;border-radius:6px;
+  border:1px solid #3A423A;background:rgba(14,18,15,.86);color:#9AA79A;font-size:11.5px;line-height:1.3}
+
+/* log 頁「重看教學」入口 */
+.tutb{min-width:74px;padding:4px 10px;border-radius:6px;border:1px solid var(--edge);
+  background:transparent;color:#C9C2AE;font-size:11.5px;line-height:1.3}
