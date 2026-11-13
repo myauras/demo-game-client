@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>空投爭奪｜方向 C 混合制（原型）</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#070d0a;color:#eaf3ec;
+  font-family:system-ui,-apple-system,"Microsoft JhengHei","PingFang TC",sans-serif}
+body{display:flex;justify-content:center}
+#app{position:relative;width:375px;height:812px;flex:none;overflow:hidden;display:flex;flex-direction:column;
+  background:#0d1712;transform-origin:top center;user-select:none}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer}
+
+/* 頂列 */
+.top{height:46px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#101d16;border-bottom:1px solid #22382b}
+.top .ttl{font-weight:800;font-size:15px;letter-spacing:.5px}
+.top .ttl small{font-weight:500;font-size:10px;color:#8fb09a;margin-left:6px}
+.wallet{font-weight:800;font-size:16px;color:#ffd75a;background:#1b2a1f;border:1px solid #3b5a45;border-radius:14px;padding:3px 10px;min-width:92px;text-align:right}
+
+/* 對手無線電 */
+.radio{height:58px;flex:none;display:flex;gap:6px;padding:6px 8px;background:#0f1a14}
+.bot{flex:1;min-width:0;display:flex;align-items:center;gap:5px;background:#17261d;border:1px solid #29412f;border-radius:10px;padding:0 6px}
+.bot .av{font-size:20px;flex:none}
+.bot .tx{min-width:0;flex:1}
+.bot .nm{font-size:9px;color:#86a892;line-height:1.1}
+.bot .say{font-size:11px;font-weight:700;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:opacity .25s}
+.radio.mute .say{opacity:.45}
+
+/* 地圖 */
+.map{position:relative;flex:1;min-height:0;overflow:hidden;background:
+  radial-gradient(120px 90px at 82% 12%,#b9a56a 0,#b9a56a00 70%),
+  radial-gradient(150px 120px at 12% 60%,#2f5a2c 0,#2f5a2c00 70%),
+  radial-gradient(140px 110px at 70% 78%,#7b8a4a 0,#7b8a4a00 70%),
+  radial-gradient(90px 70px at 40% 30%,#2c5229 0,#2c522900 70%),
+  #416f3c}
+.map .grid{position:absolute;inset:0;background:
+  repeating-linear-gradient(0deg,#ffffff14 0 1px,transparent 1px 62px),
+  repeating-linear-gradient(90deg,#ffffff14 0 1px,transparent 1px 62px)}
+.map .river{position:absolute;left:-60px;top:46%;width:520px;height:26px;background:#3f8fc4;border-top:3px solid #6fb6df;border-bottom:3px solid #2c6d99;transform:rotate(-17deg);opacity:.85}
+.map .road{position:absolute;background:#c9b98a;opacity:.55}
+.map .road.r1{left:47%;top:-20px;width:7px;height:640px;transform:rotate(9deg)}
+.map .road.r2{left:-30px;top:27%;width:460px;height:6px;transform:rotate(12deg)}
+.map .deco{position:absolute;font-size:15px;opacity:.75}
+.map .tag{position:absolute;right:6px;bottom:4px;font-size:9px;color:#ffffffaa;background:#0007;border-radius:4px;padding:1px 5px}
+.map .coord{position:absolute;font-size:9px;color:#ffffff66;font-weight:700}
+.map .path{position:absolute;left:-40px;top:50%;width:470px;height:0;border-top:2px dashed #ffffff55;transform:rotate(38deg)}
+.plane{position:absolute;left:0;top:0;font-size:26px;opacity:0;transform:translate(-40px,60px) rotate(40deg)}
+.plane.fly{opacity:1;transform:translate(380px,400px) rotate(40deg);transition:transform .9s linear,opacity .2s}
+.ring{position:absolute;left:50%;top:50%;width:330px;height:330px;margin:-165px 0 0 -165px;border-radius:50%;border:3px dashed #9fe8ff;opacity:0;transform:scale(1.5);pointer-events:none}
+.ring.on{opacity:.9;transform:scale(.72);transition:transform 3s linear,opacity .2s}
+
+.zone{position:absolute;width:158px;height:132px;border-radius:20px;background:#0c1611e0;border:2.5px solid var(--c);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;box-shadow:0 4px 0 #0006;transition:opacity .25s,transform .15s}
+.zone:active{transform:scale(.96)}
+.zone .zn{font-size:12px;font-weight:800;color:var(--c)}
+.zone .zs{display:flex;align-items:baseline;gap:4px;line-height:1}
+.zone .zs i{font-style:normal;font-size:10px;font-weight:800;color:#0c1611;background:var(--c);border-radius:5px;padding:2px 4px;align-self:center}
+.zone .zs b{font-size:29px;font-weight:900;color:#fff}
+.zone .zs b small{font-size:14px}
+.zone .zk{display:flex;gap:3px;margin-top:2px}
+.zone .zk span{font-size:9px;line-height:1.15;color:#a9bdb0;background:#ffffff12;border-radius:5px;padding:2px 5px;text-align:center}
+.zone .zk span em{display:block;font-style:normal;font-size:11px;font-weight:800;color:#dfe9e2}
+.zone .zq{font-size:9.5px;color:#9fb7a6;margin-top:1px}
+.zone .pulse{position:absolute;inset:-7px;border-radius:25px;border:3px solid var(--c);opacity:0;pointer-events:none}
+.zone.sel .pulse{animation:pulse .8s ease-in-out infinite}
+.map.show .zone:not(.sel){opacity:.5}
+.zone .cnt{position:absolute;right:-6px;bottom:-10px;font-size:11px;font-weight:900;background:#fff;color:#111;border-radius:10px;padding:2px 7px;opacity:0;transform:scale(.4);transition:transform .2s,opacity .2s}
+.zone .cnt.on{opacity:1;transform:scale(1)}
+.zone .cnt.one{background:var(--c)}
+.zone .stamp{position:absolute;left:50%;top:50%;width:150px;margin:-24px 0 0 -75px;text-align:center;font-size:30px;font-weight:900;letter-spacing:2px;
+  color:#ffe169;-webkit-text-stroke:1.5px #5a3b00;text-shadow:0 3px 0 #0009;opacity:0;transform:rotate(-9deg) scale(2.6);pointer-events:none}
+.zone .stamp.on{opacity:1;transform:rotate(-9deg) scale(1);transition:transform .22s cubic-bezier(.2,1.6,.4,1),opacity .12s}
+.zone .stamp.crash{color:#ffd0c7;-webkit-text-stroke:0;font-size:25px;text-shadow:0 2px 0 #7a1c0c,0 0 6px #000}
+.z0{--c:#43e08a;left:16px;top:56%}
+.z1{--c:#57b0ff;left:12px;top:7%}
+.z2{--c:#c08bff;left:203px;top:65%}
+.z3{--c:#ffc93c;left:205px;top:17%}
+
+.mk{position:absolute;left:0;top:0;width:30px;height:30px;border-radius:50%;background:#10201a;border:2px solid #fff;font-size:16px;line-height:26px;text-align:center;
+  opacity:0;transition:transform .55s cubic-bezier(.3,.9,.4,1),opacity .25s;pointer-events:none;box-shadow:0 2px 0 #0007}
+.mk.me{border-color:#ffe169;background:#4a3a00}
+.mk.me::after{content:"你";position:absolute;left:50%;top:-13px;margin-left:-9px;width:18px;font-size:10px;font-weight:900;line-height:12px;color:#111;background:#ffe169;border-radius:4px}
+.mk.nt{transition:none}
+
+/* 開箱 */
+.box{position:absolute;left:50%;top:50%;width:190px;height:170px;margin:-85px 0 0 -95px;border-radius:18px;background:#0b140fee;border:2px solid #ffffff33;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;opacity:0;transform:scale(.7);pointer-events:none;transition:opacity .2s,transform .2s}
+.box.on{opacity:1;transform:scale(1)}
+.box .b0{font-size:11px;color:#a9bdb0}
+.box .bi{font-size:50px;line-height:1.1}
+.box .bi.shake{animation:shake .28s linear infinite}
+.box .bi.pop{animation:pop .3s ease-out}
+.box .bt{font-size:14px;font-weight:900;min-height:19px}
+.box .bf{font-size:30px;font-weight:900;line-height:1.1;opacity:0;transform:scale(.5);transition:transform .25s cubic-bezier(.2,1.6,.4,1),opacity .15s}
+.box .bf.on{opacity:1;transform:scale(1)}
+.box .bw{font-size:13px;font-weight:800;min-height:17px}
+.win{color:#ffd75a}.lose{color:#9aa8a0}
+
+/* 狀態列、紀錄、下注、開箱表 */
+.status{height:44px;flex:none;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 10px;font-size:13px;font-weight:700;background:#101d16;border-top:1px solid #22382b;line-height:1.25}
+.hist{height:30px;flex:none;display:flex;align-items:center;gap:4px;padding:0 8px;background:#0f1a14;overflow:hidden}
+.hist .lbl{font-size:10px;color:#7f9a88;flex:none}
+.hist .chips{flex:1;min-width:0;display:flex;gap:4px;overflow:hidden}
+.hist .h{flex:none;font-size:10.5px;font-weight:800;border-radius:8px;padding:2px 6px;border:1.5px solid var(--c);color:#9aa8a0;background:#17261d}
+.hist .h.w{color:#ffd75a}
+.hist .best{flex:none;font-size:10px;color:#ffd75a;font-weight:800}
+.bets{height:60px;flex:none;display:flex;align-items:center;gap:6px;padding:0 8px;background:#101d16}
+.bets .lbl{font-size:11px;color:#8fb09a;flex:none;width:30px;line-height:1.2}
+.chip{flex:1;height:42px;border-radius:12px;background:#1b2a1f;border:2px solid #36523f;font-size:16px;font-weight:900;color:#cfe0d4}
+.chip.on{background:#ffd75a;border-color:#fff3b8;color:#2a2000}
+.chip:disabled{opacity:.35}
+.legend{height:46px;flex:none;display:flex;align-items:center;gap:4px;padding:0 8px 4px;background:#101d16}
+.legend .lbl{font-size:10px;color:#8fb09a;flex:none;width:22px;line-height:1.2}
+.legend .t{flex:1;text-align:center;border-radius:8px;background:#17261d;border:1.5px solid var(--c);padding:2px 0;font-size:9.5px;line-height:1.25;color:#a9bdb0}
+.legend .t b{display:block;font-size:11.5px;color:var(--c)}
+
+#app.fast *{transition-duration:.03s !important;animation-duration:.03s !important}
+@keyframes pulse{0%,100%{opacity:.15}50%{opacity:.95}}
+@keyframes shake{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}}
+@keyframes pop{0%{transform:scale(.5)}60%{transform:scale(1.3)}100%{transform:scale(1)}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="top">
+    <div class="ttl">🪂 空投爭奪<small>混合制｜撞車對分・獨佔加成</small></div>
+    <div class="wallet" id="wallet"></div>
+  </div>
+  <div class="radio" id="radio"></div>
+  <div class="map" id="map">
+    <div class="grid"></div><div class="river"></div><div class="road r1"></div><div class="road r2"></div>
+    <div class="path"></div>
+    <span class="deco" style="left:150px;top:8px">🌲🌲</span><span class="deco" style="left:176px;top:47%">🌉</span>
+    <span class="deco" style="left:6px;top:42%">🌲</span><span class="deco" style="left:330px;top:52%">🌲🌲</span>
+    <span class="deco" style="left:170px;top:90%">🏚️</span><span class="deco" style="left:180px;top:22%">⛰️</span>
+    <span class="coord" style="left:3px;top:2px">A1</span><span class="coord" style="left:189px;top:2px">D1</span>
+    <div class="ring" id="ring"></div>
+    <div class="plane" id="plane">✈️</div>
+    <div class="box" id="box"><div class="b0" id="b0"></div><div class="bi" id="bi">📦</div><div class="bt" id="bt"></div><div class="bf" id="bf"></div><div class="bw" id="bw"></div></div>
+    <div class="tag">佔位美術</div>
+  </div>
+  <div class="status" id="status"></div>
+  <div class="hist"><span class="lbl">近況</span><div class="chips" id="chips"></div><span class="best" id="best"></span></div>
+  <div class="bets" id="bets"><span class="lbl">下注</span></div>
+  <div class="legend" id="legend"><span class="lbl">落地開箱</span></div>
+</div>
+<script>
+'use strict';
+/* ============================================================
+   VALUES：唯一數字來源。
+   - q（機器人出手機率）固定且公開，嚴禁為了調 RTP 去動它。
+   - 調 RTP 只動 rtp／soloBonus（→ 賠付表由 buildTable 反推）。
+   - boxes 中 mult:null 的那一級由程式反推，使開箱期望值＝1。
+   ============================================================ */
+const VALUES = {
+  rtp: 0.96,
+  walletStart: 1000,
+  bets: [10, 50, 100, 500],
+  defaultBet: 50,
+  botCount: 3,
+  points: [ // 由低到高：綠／藍／紫／金
+    { key: 'green',  name: '綠・農場', icon: '🌾', color: '#43e08a', q: 0.07, soloBonus: 1.2 },
+    { key: 'blue',   name: '藍・漁港', icon: '⚓', color: '#57b0ff', q: 0.15, soloBonus: 1.5 },
+    { key: 'purple', name: '紫・電廠', icon: '⚡', color: '#c08bff', q: 0.28, soloBonus: 2.5 },
+    { key: 'gold',   name: '金・基地', icon: '🏰', color: '#ffc93c', q: 0.50, soloBonus: 5.0 },
+  ],
+  boxes: [ // 落地開箱：最終倍率＝基準 × 箱子倍率；期望值＝1（受潮箱倍率由程式反推）
+    { key: 'damp',   name: '受潮箱', icon: '🧺', color: '#8f9c95', p: 0.30, mult: null },
+    { key: 'normal', name: '標準箱', icon: '📦', color: '#e6efe9', p: 0.50, mult: 1.0 },
+    { key: 'fine',   name: '精良箱', icon: '🧰', color: '#5fe0ff', p: 0.17, mult: 1.4 },
+    { key: 'legend', name: '傳說箱', icon: '👑', color: '#ff8a3c', p: 0.03, mult: 3.0 },
+  ],
+  timing: { blackoutSec: 3, dropMs: 850, revealMs: 750, shakeMs: 900, tierMs: 550, endMs: 250, residueMs: 2600, chatterMs: 1300, fastScale: 0.04 },
+};
+
+/* ===================== 核心（不碰 DOM） ===================== */
+function binom(n, q) { // 回傳 [P(0 個機器人同點) … P(n 個)]
+  const out = []; let c = 1;
+  for (let j = 0; j <= n; j++) { out.push(c * Math.pow(q, j) * Math.pow(1 - q, n - j)); c = c * (n - j) / (j + 1); }
+  return out;
+}
+// 賠付表反推：同點 k 人時，k≥2 → 物資 base ÷ k（對分）；k=1 → base × soloBonus（獨佔加成）
+// base = rtp ÷ ( P1×soloBonus + Σ_{k≥2} Pk ÷ k )，所以每點 EV 恆＝rtp
+function buildTable(V) {
+  return V.points.map(p => {
+    const pk = binom(V.botCount, p.q);
+    let denom = pk[0] * p.soloBonus;
+    for (let j = 1; j < pk.length; j++) denom += pk[j] / (j + 1);
+    const base = V.rtp / denom;
+    const mult = pk.map((_, j) => j === 0 ? base * p.soloBonus : base / (j + 1));
+    return { base, pk, mult };
+  });
+}
+function buildBoxes(V) {
+  const known = V.boxes.filter(b => b.mult !== null).reduce((s, b) => s + b.p * b.mult, 0);
+  return V.boxes.map(b => ({ ...b, mult: b.mult !== null ? b.mult : (1 - known) / b.p }));
+}
+const TABLE = buildTable(VALUES);
+const BOXES = buildBoxes(VALUES);
+
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function pickWeighted(weights, r) { let acc = 0; for (let i = 0; i < weights.length; i++) { acc += weights[i]; if (r < acc) return i; } return weights.length - 1; }
+const Q = VALUES.points.map(p => p.q), BOXP = VALUES.boxes.map(b => b.p);
+
+// 結果先抽定：機器人落點與箱子等級，都與玩家選哪點無關
+function drawRound(rng) {
+  const bots = []; for (let b = 0; b < VALUES.botCount; b++) bots.push(pickWeighted(Q, rng()));
+  return { bots, box: pickWeighted(BOXP, rng()) };
+}
+function settle(draw, point, bet) {
+  const counts = VALUES.points.map(() => 0); draw.bots.forEach(b => counts[b]++); counts[point]++;
+  const k = counts[point], baseMult = TABLE[point].mult[k - 1], boxMult = BOXES[draw.box].mult;
+  const mult = baseMult * boxMult;
+  return { point, bet, bots: draw.bots.slice(), counts, k, solo: k === 1, baseMult, box: draw.box, boxMult, mult, payout: Math.round(bet * mult) };
+}
+function simulate(n) {
+  const rng = mulberry32(20261113), bet = 100, rtpByPoint = [];
+  for (let i = 0; i < VALUES.points.length; i++) {
+    let paid = 0; for (let r = 0; r < n; r++) paid += settle(drawRound(rng), i, bet).payout;
+    rtpByPoint.push(paid / (n * bet));
+  }
+  return { rtpByPoint };
+}
+function theory() { // 理論值（給 rationale 與自測核對用）
+  return TABLE.map(t => t.pk.reduce((s, p, j) => s + p * t.mult[j], 0) * BOXES.reduce((s, b) => s + b.p * b.mult, 0));
+}
+
+/* ===================== 畫面 ===================== */
+const FAST = /[?&]fast=1/.test(location.search);
+const $ = id => document.getElementById(id);
+const app = $('app'), mapEl = $('map');
+if (FAST) app.classList.add('fast');
+const coreRng = mulberry32((Date.now() ^ (Math.random() * 0x7fffffff)) | 0);
+const wait = ms => new Promise(r => setTimeout(r, FAST ? ms * VALUES.timing.fastScale : ms));
+const fx = (m, d = 2) => m.toFixed(d);
+const BOTS = [{ av: '🐺', nm: '灰狼' }, { av: '🦊', nm: '赤狐' }, { av: '🐻', nm: '棕熊' }];
+const SAY = [
+  ['綠點發育穩穩的', '農場沒人搶吧', '我跳綠，別來'],
+  ['漁港集合？', '藍點撿漏', '這把去藍'],
+  ['電廠我的', '紫點賭一把', '紫的別跟'],
+  ['金點我包了！', '全員搶基地！', '金點衝了', '基地見真章'],
+];
+const state = { wallet: VALUES.walletStart, bet: VALUES.defaultBet, phase: 'idle', sel: -1, cdConfirm: null, hist: [], best: 0, residueUntil: 0, boxTimer: 0 };
+
+// 建畫面
+const zones = VALUES.points.map((p, i) => {
+  const z = document.createElement('button'); z.className = 'zone z' + i; z.style.setProperty('--c', p.color);
+  const m = TABLE[i].mult;
+  z.innerHTML = `<span class="pulse"></span><span class="zn">${p.icon} ${p.name}</span>` +
+    `<span class="zs"><i>獨佔</i><b>${fx(m[0])}<small>x</small></b></span>` +
+    `<span class="zk">${m.slice(1).map((v, j) => `<span>${j + 2}人分<em>${fx(v)}x</em></span>`).join('')}</span>` +
+    `<span class="zq">🤖 每個對手 ${Math.round(p.q * 100)}% 會來</span><span class="cnt"></span><span class="stamp"></span>`;
+  z.addEventListener('click', () => onZone(i));
+  mapEl.insertBefore(z, $('ring'));
+  return z;
+});
+const markers = [0, 1, 2, 3].map(i => {
+  const m = document.createElement('div'); m.className = 'mk' + (i === 0 ? ' me' : ''); m.textContent = i === 0 ? '🪂' : BOTS[i - 1].av;
+  mapEl.insertBefore(m, $('box')); return m;
+});
+const botEls = BOTS.map(b => {
+  const d = document.createElement('div'); d.className = 'bot';
+  d.innerHTML = `<span class="av">${b.av}</span><span class="tx"><div class="nm">${b.nm}</div><div class="say">…</div></span>`;
+  $('radio').appendChild(d); return d.querySelector('.say');
+});
+const chipEls = VALUES.bets.map(b => {
+  const c = document.createElement('button'); c.className = 'chip'; c.textContent = b;
+  c.addEventListener('click', () => { if (state.phase === 'idle' && b <= state.wallet) { state.bet = b; renderBets(); } });
+  $('bets').appendChild(c); return c;
+});
+BOXES.forEach(b => {
+  const t = document.createElement('div'); t.className = 't'; t.style.setProperty('--c', b.color);
+  t.innerHTML = `<b>${b.icon} ×${fx(b.mult)}</b>${b.name} ${Math.round(b.p * 100)}%`; $('legend').appendChild(t);
+});
+
+function slot(zi, person) { const z = zones[zi]; return [z.offsetLeft + 9 + person * 37, z.offsetTop - 15]; }
+function place(mk, x, y, show) { mk.style.transform = `translate(${x}px,${y}px)`; mk.style.opacity = show ? 1 : 0; }
+function setStatus(html) { $('status').innerHTML = '<div>' + html + '</div>'; }
+function renderWallet() { $('wallet').textContent = '💰 ' + state.wallet.toLocaleString('en-US'); }
+function renderBets() {
+  if (state.bet > state.wallet) state.bet = VALUES.bets.filter(b => b <= state.wallet).pop() || VALUES.bets[0];
+  chipEls.forEach((c, i) => { const b = VALUES.bets[i]; c.classList.toggle('on', b === state.bet); c.disabled = b > state.wallet; });
+}
+function renderHist() {
+  $('chips').innerHTML = state.hist.slice(0, 7).map(h => `<span class="h${h.mult >= 1 ? ' w' : ''}" style="--c:${VALUES.points[h.point].color}">${h.solo ? '★' : ''}${fx(h.mult)}x</span>`).join('');
+  $('best').textContent = state.best ? '最高 ' + fx(state.best) + 'x' : '';
+}
+function idleStatus() { setStatus('點一個落點就跳傘｜同點人越少，物資拿越多'); }
+function clearResidue() {
+  zones.forEach(z => { z.classList.remove('sel'); z.querySelector('.cnt').className = 'cnt'; z.querySelector('.stamp').className = 'stamp'; });
+  mapEl.classList.remove('show'); $('box').classList.remove('on'); clearTimeout(state.boxTimer); place(markers[0], 0, 0, false);
+  state.residueUntil = 0;
+}
+
+/* 對手喊話：純氛圍，用 Math.random，與 coreRng／drawRound 完全無關 */
+const intent = [0, 0, 0];
+function chatter(botIdx) {
+  const zi = pickWeighted(Q, Math.random()); intent[botIdx] = zi;
+  const lines = SAY[zi]; botEls[botIdx].textContent = lines[Math.floor(Math.random() * lines.length)];
+  botEls[botIdx].style.color = VALUES.points[zi].color;
+  const [x, y] = slot(zi, botIdx + 1); place(markers[botIdx + 1], x, y, true);
+}
+setInterval(() => {
+  if (state.phase !== 'idle') return;
+  if (state.residueUntil) { if (Date.now() < state.residueUntil) return; clearResidue(); idleStatus(); $('radio').classList.remove('mute'); BOTS.forEach((_, b) => chatter(b)); return; }
+  chatter(Math.floor(Math.random() * BOTS.length));
+}, VALUES.timing.chatterMs);
+
+function selectZone(i) {
+  state.sel = i; zones.forEach((z, j) => z.classList.toggle('sel', j === i));
+  const [x, y] = slot(i, 0); place(markers[0], x, y, true);
+}
+function onZone(i) {
+  if (state.phase === 'idle') { runRound(i); return; }
+  if (state.phase === 'countdown') { if (i === state.sel) { if (state.cdConfirm) state.cdConfirm(); } else { selectZone(i); cdText(); } }
+}
+let cdLeft = 0;
+function cdText() { setStatus(`📡 無線電靜默・封盤倒數 <b style="color:#9fe8ff;font-size:18px">&nbsp;${cdLeft}&nbsp;</b><br><span style="font-size:11px;color:#9fb7a6">已選${VALUES.points[state.sel].name}｜可改點，再點一次立刻跳</span>`); }
+function countdown(skip) {
+  if (FAST || skip) return Promise.resolve();
+  return new Promise(res => {
+    cdLeft = VALUES.timing.blackoutSec; cdText();
+    const ring = $('ring'); ring.classList.remove('on'); void ring.offsetWidth; ring.classList.add('on');
+    const done = () => { clearInterval(iv); state.cdConfirm = null; ring.classList.remove('on'); res(); };
+    const iv = setInterval(() => { cdLeft--; if (cdLeft <= 0) done(); else cdText(); }, 1000);
+    state.cdConfirm = done;
+  });
+}
+
+async function runRound(point, opt) {
+  if (state.phase !== 'idle') return null;
+  if (state.wallet < VALUES.bets[0]) { state.wallet = VALUES.walletStart; renderWallet(); } // Demo 補給
+  renderBets();
+  state.phase = 'countdown';
+  const draw = drawRound(coreRng);            // ← 結果在這裡就抽定，之後演出只讀它
+  clearResidue(); selectZone(point);
+  // 最後 3 秒隱藏對手動向
+  $('radio').classList.add('mute'); botEls.forEach(e => { e.textContent = '📡 靜默中…'; e.style.color = ''; });
+  for (let b = 1; b <= 3; b++) markers[b].style.opacity = 0;
+  await countdown(opt && opt.skipCountdown);
+
+  state.phase = 'show';
+  const bet = state.bet; state.wallet -= bet; renderWallet();
+  const res = settle(draw, state.sel, bet), P = VALUES.points[res.point];
+  mapEl.classList.add('show'); setStatus(`🪂 跳傘！目標 <b style="color:${P.color}">${P.name}</b>`);
+  // 跳傘：四頂傘從機身散開到各自落點
+  const cx = mapEl.clientWidth / 2 - 15, cy = mapEl.clientHeight / 2 - 15;
+  markers.forEach(m => { m.classList.add('nt'); place(m, cx, cy, false); });
+  void mapEl.offsetWidth;
+  const plane = $('plane'); plane.classList.remove('fly'); void plane.offsetWidth; plane.classList.add('fly');
+  markers.forEach((m, i) => { m.classList.remove('nt'); const zi = i === 0 ? res.point : res.bots[i - 1]; const [x, y] = slot(zi, i); place(m, x, y, true); });
+  await wait(VALUES.timing.dropMs);
+  plane.classList.remove('fly');
+  // 揭曉人數
+  $('radio').classList.remove('mute');
+  res.bots.forEach((zi, b) => { botEls[b].textContent = '落在 ' + VALUES.points[zi].name; botEls[b].style.color = VALUES.points[zi].color; });
+  zones.forEach((z, i) => { const c = z.querySelector('.cnt'); c.textContent = res.counts[i] ? res.counts[i] + ' 人' : '空'; c.className = 'cnt on' + (res.counts[i] === 1 ? ' one' : ''); });
+  const st = zones[res.point].querySelector('.stamp');
+  st.textContent = res.solo ? '獨佔！' : `撞車÷${res.k}`; st.className = 'stamp on' + (res.solo ? '' : ' crash');
+  setStatus(res.solo ? `<span class="win">獨佔！基準 ${fx(res.baseMult)}x</span>　開箱中…` : `撞車 ${res.k} 人對分，基準 ${fx(res.baseMult)}x　開箱中…`);
+  await wait(VALUES.timing.revealMs);
+  // 落地開箱
+  const bx = BOXES[res.box], bi = $('bi'), bf = $('bf');
+  $('b0').textContent = (res.solo ? '獨佔基準 ' : `${res.k} 人對分基準 `) + fx(res.baseMult) + 'x';
+  bi.textContent = '📦'; bi.className = 'bi shake'; $('bt').textContent = '落地開箱…'; $('bt').style.color = ''; bf.className = 'bf'; bf.textContent = ''; $('bw').textContent = '';
+  $('box').classList.add('on');
+  await wait(VALUES.timing.shakeMs);
+  bi.textContent = bx.icon; bi.className = 'bi pop'; $('bt').textContent = `${bx.name} ×${fx(bx.mult)}`; $('bt').style.color = bx.color;
+  await wait(VALUES.timing.tierMs);
+  const win = res.mult >= 1, net = res.payout - bet;
+  bf.textContent = fx(res.mult) + 'x'; bf.className = 'bf on ' + (win ? 'win' : 'lose');
+  $('bw').innerHTML = `拿回 ${res.payout}（${net >= 0 ? '+' : ''}${net}）`; $('bw').className = 'bw ' + (win ? 'win' : 'lose');
+  state.wallet += res.payout; renderWallet();
+  state.hist.unshift({ point: res.point, mult: res.mult, solo: res.solo }); state.best = Math.max(state.best, res.mult); renderHist();
+  setStatus(`${res.solo ? '<span class="win">獨佔！</span>' : `撞車÷${res.k}　`}${fx(res.baseMult)}x × ${bx.name} ${fx(bx.mult)} ＝ <b class="${win ? 'win' : 'lose'}">${fx(res.mult)}x</b>　<span class="${win ? 'win' : 'lose'}">${net >= 0 ? '+' : ''}${net}</span><br><span style="font-size:11px;color:#9fb7a6">再點一個落點，直接開下一局</span>`);
+  await wait(VALUES.timing.endMs);
+  renderBets();
+  state.residueUntil = Date.now() + VALUES.timing.residueMs;
+  state.boxTimer = setTimeout(() => $('box').classList.remove('on'), 1700);
+  state.phase = 'idle';
+  return { payout: res.payout, wallet: state.wallet, detail: res };
+}
+
+function fit() { const s = Math.min(window.innerWidth / 375, window.innerHeight / 812); app.style.transform = Math.abs(s - 1) < 0.002 ? '' : `scale(${s})`; }
+window.addEventListener('resize', fit); fit();
+renderWallet(); renderBets(); renderHist(); idleStatus();
+BOTS.forEach((_, b) => chatter(b));
+
+window.__proto = {
+  wallet: () => state.wallet,
+  playRound: async (pointIndex, bet) => {
+    while (state.phase !== 'idle') await new Promise(r => setTimeout(r, 20));
+    if (VALUES.bets.includes(bet) && bet <= state.wallet) state.bet = bet;
+    const r = await runRound(pointIndex, { skipCountdown: false });
+    return { payout: r.payout, wallet: r.wallet };
+  },
+  simulate,
+  table: () => ({ points: VALUES.points.map((p, i) => ({ key: p.key, q: p.q, pk: TABLE[i].pk, mult: TABLE[i].mult })), boxes: BOXES.map(b => ({ key: b.key, p: b.p, mult: b.mult })), theory: theory() }),
+};
+window.__shotReady = true;
+</script>
+</body>
+</html>

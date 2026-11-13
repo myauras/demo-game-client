@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>空投爭奪・全拿制</title>
+<style>
+:root{
+  --g:#38c860; --b:#3d8bff; --p:#a35cff; --y:#ffc22e;
+  --ink:#f4f7fb; --mute:#9db0c6; --bg:#0d1824; --panel:#14263a; --line:#27415c;
+  --win:#ffd45c; --lose:#ff6b6b;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#050b12;overflow:hidden}
+body{font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",system-ui,sans-serif;color:var(--ink);user-select:none;-webkit-user-select:none;touch-action:manipulation}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+#app{position:relative;width:375px;height:812px;margin:0 auto;overflow:hidden;background:var(--bg);
+  display:grid;grid-template-rows:56px 452px 56px 84px 1fr}
+
+/* ---------- 頂列 ---------- */
+#top{display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#0a1320;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:8px}
+.brand .logo{font-size:26px}
+.brand b{display:block;font-size:16px;letter-spacing:1px}
+.brand small{display:block;font-size:11px;color:var(--mute)}
+.wallet{display:flex;flex-direction:column;align-items:flex-end;background:#10243a;border:1px solid var(--line);border-radius:10px;padding:3px 12px;min-width:110px}
+.wallet small{font-size:10px;color:var(--mute);line-height:1.2}
+.wallet b{font-size:20px;color:var(--win);font-variant-numeric:tabular-nums;line-height:1.2}
+
+/* ---------- 地圖 ---------- */
+#map{position:relative;overflow:hidden;background:#1b5e8c}
+#map svg.mapbg{position:absolute;left:0;top:0;width:375px;height:452px}
+.mapnote{position:absolute;left:6px;bottom:3px;font-size:9px;color:rgba(255,255,255,.55);z-index:5;pointer-events:none}
+.plane{position:absolute;left:0;top:6px;width:48px;height:30px;z-index:6;pointer-events:none;transform:translate3d(-60px,0,0)}
+.plane.idle{animation:planeLoop 9s linear infinite}
+@keyframes planeLoop{from{transform:translate3d(-60px,0,0)}to{transform:translate3d(430px,0,0)}}
+.zone{position:absolute;width:150px;height:166px;z-index:2;display:flex;flex-direction:column;align-items:center;text-align:center}
+.zone .disc{position:relative;width:116px;height:116px;border-radius:50%;border:3px solid var(--c);
+  background:radial-gradient(circle,rgba(0,0,0,.05) 0%,var(--c2) 100%);box-shadow:0 2px 8px rgba(0,0,0,.45),inset 0 0 0 4px rgba(255,255,255,.08);
+  transition:transform .15s ease}
+.zone.sel .disc{border-width:5px;transform:scale(1.06)}
+.zone .ic{position:absolute;left:50%;top:50%;margin:-20px 0 0 -20px;width:40px;height:40px;line-height:40px;font-size:30px;opacity:.5}
+.zone .boom,.zone .spark{position:absolute;left:50%;top:50%;margin:-26px 0 0 -26px;width:52px;height:52px;line-height:52px;font-size:42px;opacity:0;z-index:4}
+.zone .pin{position:absolute;left:50%;top:-18px;margin-left:-12px;width:24px;height:24px;font-size:20px;line-height:24px;opacity:0;z-index:5}
+.zone.sel .pin{opacity:1;animation:pinBob .8s ease-in-out infinite alternate}
+@keyframes pinBob{from{transform:translate3d(0,0,0)}to{transform:translate3d(0,-4px,0)}}
+.zone .tag{margin-top:4px;width:142px;background:rgba(8,16,26,.86);border:2px solid var(--c);border-radius:10px;padding:3px 4px 4px}
+.tag .l1{display:flex;align-items:center;justify-content:center;gap:5px}
+.tag .tn{display:inline-block;width:20px;height:20px;border-radius:50%;background:var(--c);color:#10202e;font-size:12px;line-height:20px}
+.tag .mu{font-size:18px;color:#fff;font-variant-numeric:tabular-nums}
+.tag .cr{font-size:12px;color:var(--mute)}
+.tag .l2{font-size:11px;color:var(--mute);margin-top:1px}
+.tag .l2 b{color:#fff}
+.zone[data-i="0"]{--c:var(--g);--c2:rgba(56,200,96,.38)}
+.zone[data-i="1"]{--c:var(--b);--c2:rgba(61,139,255,.38)}
+.zone[data-i="2"]{--c:var(--p);--c2:rgba(163,92,255,.4)}
+.zone[data-i="3"]{--c:var(--y);--c2:rgba(255,194,46,.4)}
+.zone.clash .disc{border-color:#ff5a5a}
+.zone.solo .disc{box-shadow:0 0 0 3px rgba(255,255,255,.7),0 2px 8px rgba(0,0,0,.45)}
+#sprites{position:absolute;inset:0;z-index:3;pointer-events:none}
+.sp{position:absolute;left:0;top:0;width:40px;height:40px;transition:opacity .3s}
+.sp.out{opacity:.4}
+.sp .fc{position:absolute;inset:0;font-size:26px;line-height:40px;text-align:center;border-radius:50%;background:rgba(8,16,26,.55);border:2px solid rgba(255,255,255,.55)}
+.sp.me .fc{background:#fff;border-color:var(--y);border-width:3px}
+.sp.me::after{content:"你";position:absolute;left:50%;bottom:-11px;margin-left:-8px;width:16px;height:14px;border-radius:7px;background:var(--y);color:#222;font-size:10px;line-height:14px;text-align:center;font-weight:700}
+.sp .cv{position:absolute;left:50%;top:-30px;margin-left:-15px;width:30px;height:30px;font-size:26px;line-height:30px;text-align:center;transition:opacity .25s}
+.sp.landed .cv{opacity:0}
+.crate{position:absolute;width:24px;height:24px;font-size:18px;line-height:24px;text-align:center;z-index:4}
+
+/* ---------- 狀態列 ---------- */
+#strip{display:flex;flex-direction:column;justify-content:center;padding:0 14px;background:#0f2133;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+#strip b{font-size:17px;line-height:1.3}
+#strip span{font-size:12px;color:var(--mute);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#strip.win{background:linear-gradient(90deg,#4a3a08,#1a2a3a)}
+#strip.win b{color:var(--win)}
+#strip.lose{background:linear-gradient(90deg,#4a1414,#1a2a3a)}
+#strip.lose b{color:var(--lose)}
+#strip.seal b{color:#ffb35c}
+
+/* ---------- 機器人 ---------- */
+#bots{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:6px 8px;background:#0b1522}
+.bot{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:5px 7px;overflow:hidden;min-width:0}
+.bh{display:flex;align-items:center;gap:5px;height:26px}
+.bh .av{font-size:22px;line-height:26px}
+.bh .nm{font-size:12px;font-weight:700}
+.bub{margin-top:3px;height:32px;border-radius:8px;background:#0b1a2a;border-left:4px solid var(--bc,#445);padding:0 6px;display:flex;align-items:center;font-size:12px;line-height:1.2;color:#dfe9f4;overflow:hidden}
+.bub .tx{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bub.good{background:#2a2406}
+.bub.bad{background:#2c1010}
+
+/* ---------- 下方操作 ---------- */
+#panel{padding:8px 12px 10px;background:#0a1320;display:flex;flex-direction:column;justify-content:center;gap:10px;border-top:1px solid var(--line)}
+.betrow{display:flex;align-items:center;gap:7px}
+.betrow label{font-size:12px;color:var(--mute);width:30px}
+.chip{flex:1;height:40px;border-radius:20px;background:#14263a;border:2px solid var(--line);font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
+.chip.on{background:#ffc22e;color:#1a1400;border-color:#fff2b8}
+.chip:disabled{opacity:.35}
+#act{height:48px;display:flex;align-items:center;justify-content:center}
+#act .hint{font-size:14px;color:#cfe0f2;text-align:center;line-height:1.3}
+#act .hint b{color:var(--win)}
+#act .btn{width:100%;height:48px;border-radius:24px;background:linear-gradient(180deg,#ffd45c,#ff9f2e);color:#2a1700;font-size:18px;font-weight:800;box-shadow:0 3px 0 #a55a00}
+#act .btn.ghost{background:#1a3a58;color:#fff;box-shadow:0 3px 0 #0c2036}
+#hist{display:flex;align-items:center;gap:6px;height:24px}
+#hist .hl{font-size:11px;color:var(--mute);margin-right:2px;white-space:nowrap}
+#hist i{display:inline-block;width:22px;height:22px;border-radius:50%;font-style:normal;font-size:12px;line-height:20px;text-align:center;font-weight:800;border:2px solid var(--c);color:#10202e;background:var(--c)}
+#hist i.lz{background:transparent;color:var(--c)}
+
+/* ---------- 開箱層 ---------- */
+#boxLayer{position:absolute;left:0;top:56px;width:375px;height:452px;z-index:20;background:rgba(3,8,14,.78);opacity:0;pointer-events:none;display:flex;align-items:center;justify-content:center}
+#boxLayer.show{pointer-events:auto}
+#bx{position:relative;width:280px;height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#bxCrate{font-size:110px;line-height:120px;width:130px;height:120px}
+#bxFlash{position:absolute;left:50%;top:50%;width:260px;height:260px;margin:-130px 0 0 -130px;border-radius:50%;background:radial-gradient(circle,#fff 0%,rgba(255,255,255,0) 70%);opacity:0}
+#bxCard{position:absolute;left:0;top:0;width:280px;height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;opacity:0}
+#bxName{font-size:20px;font-weight:800;letter-spacing:2px}
+#bxMult{font-size:64px;font-weight:900;line-height:1.05;font-variant-numeric:tabular-nums;color:var(--tc,#fff);text-shadow:0 3px 0 rgba(0,0,0,.5)}
+#bxFormula{font-size:13px;color:var(--mute)}
+#bxPay{margin-top:6px;font-size:36px;font-weight:900;color:var(--win);font-variant-numeric:tabular-nums}
+#bxSub{font-size:12px;color:var(--mute)}
+#bxTitle{position:absolute;left:0;top:6px;width:280px;font-size:16px;font-weight:800;color:var(--win);opacity:0}
+.confetti{position:absolute;left:50%;top:50%;width:20px;height:20px;margin:-10px 0 0 -10px;font-size:16px;line-height:20px;text-align:center;opacity:0}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="top">
+    <div class="brand"><span class="logo">🪂</span><div><b>空投爭奪</b><small>全拿制・獨佔才有，撞車歸零</small></div></div>
+    <div class="wallet"><small>錢包</small><b id="wallet">1,000</b></div>
+  </header>
+
+  <section id="map">
+    <svg class="mapbg" viewBox="0 0 375 452" aria-hidden="true">
+      <rect width="375" height="452" fill="#1b5e8c"/>
+      <g fill="none" stroke="#2f86bd" stroke-width="2" opacity=".55">
+        <path d="M0 52 Q30 44 60 52 T120 52"/><path d="M250 20 Q280 12 310 20 T370 20"/>
+        <path d="M0 410 Q30 402 60 410 T120 410"/><path d="M280 436 Q310 428 340 436 T375 436"/>
+      </g>
+      <path d="M30 62 C70 26 150 30 200 40 C270 26 340 46 352 110 C364 170 352 230 360 300 C368 372 322 436 236 442 C150 448 80 436 44 400 C10 362 22 296 16 236 C10 176 14 108 30 62Z" fill="#dcc88e"/>
+      <path d="M40 72 C78 42 150 44 200 52 C266 40 330 58 340 114 C350 172 340 230 348 300 C354 362 314 422 234 428 C156 434 90 424 58 392 C28 358 36 296 30 238 C24 180 28 114 40 72Z" fill="#6fae52"/>
+      <g fill="#5d9a44" opacity=".7">
+        <ellipse cx="70" cy="150" rx="30" ry="22"/><ellipse cx="300" cy="260" rx="34" ry="24"/>
+        <ellipse cx="130" cy="380" rx="36" ry="20"/><ellipse cx="310" cy="90" rx="22" ry="16"/>
+      </g>
+      <path d="M52 60 C90 130 150 150 190 210 C230 270 250 330 300 436" fill="none" stroke="#4fb0e8" stroke-width="9" stroke-linecap="round" opacity=".85"/>
+      <g stroke="#ecdfb4" stroke-width="4" stroke-dasharray="9 6" fill="none" opacity=".75" stroke-linecap="round">
+        <path d="M100 114 L275 114"/><path d="M100 114 L100 310"/><path d="M275 114 L275 310"/><path d="M100 310 L275 310"/><path d="M100 114 L275 310"/>
+      </g>
+      <g fill="#3f7f38">
+        <circle cx="52" cy="206" r="8"/><circle cx="64" cy="216" r="7"/><circle cx="46" cy="222" r="6"/>
+        <circle cx="330" cy="170" r="8"/><circle cx="318" cy="182" r="7"/><circle cx="336" cy="190" r="6"/>
+        <circle cx="188" cy="62" r="7"/><circle cx="202" cy="70" r="6"/><circle cx="187" cy="240" r="8"/><circle cx="199" cy="250" r="7"/>
+        <circle cx="188" cy="410" r="7"/><circle cx="60" cy="400" r="7"/><circle cx="320" cy="400" r="7"/>
+      </g>
+      <g>
+        <rect x="150" y="190" width="14" height="10" fill="#8f98a3"/><rect x="168" y="196" width="12" height="9" fill="#a8b0ba"/>
+        <rect x="204" y="300" width="14" height="10" fill="#8f98a3"/><rect x="222" y="306" width="12" height="9" fill="#a8b0ba"/>
+        <rect x="190" y="150" width="12" height="9" fill="#a8b0ba"/><rect x="42" y="260" width="13" height="9" fill="#8f98a3"/>
+        <rect x="330" y="310" width="13" height="9" fill="#a8b0ba"/>
+      </g>
+      <g stroke="rgba(255,255,255,.14)" stroke-width="1">
+        <path d="M62 0V452M125 0V452M187 0V452M250 0V452M312 0V452"/>
+        <path d="M0 75H375M0 150H375M0 226H375M0 301H375M0 376H375"/>
+      </g>
+      <g fill="rgba(255,255,255,.5)" font-size="8" font-family="sans-serif">
+        <text x="28" y="46">A</text><text x="90" y="46">B</text><text x="153" y="46">C</text><text x="216" y="46">D</text><text x="278" y="46">E</text><text x="340" y="46">F</text>
+      </g>
+      <path fill-rule="evenodd" fill="rgba(210,60,60,.16)" d="M0 0H375V452H0Z M9 236 a178 178 0 1 0 356 0 a178 178 0 1 0 -356 0Z"/>
+      <circle cx="187" cy="236" r="178" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="2" stroke-dasharray="7 6"/>
+    </svg>
+    <div class="plane idle" id="plane">
+      <svg viewBox="0 0 48 30" width="48" height="30" aria-hidden="true">
+        <path d="M2 14 L30 11 L38 3 L42 3 L38 12 L46 13 L46 17 L38 18 L42 27 L38 27 L30 19 L2 16Z" fill="#f4f7fb" stroke="#32465c" stroke-width="1.5" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div id="zones"></div>
+    <div id="sprites"></div>
+    <div class="mapnote">美術：佔位（CSS／emoji／內嵌 SVG）</div>
+  </section>
+
+  <section id="strip" class="idle"><b id="stT"></b><span id="stS"></span></section>
+  <section id="bots"></section>
+
+  <footer id="panel">
+    <div class="betrow"><label>下注</label><span id="chips" style="display:contents"></span></div>
+    <div id="act"></div>
+    <div id="hist"></div>
+  </footer>
+
+  <div id="boxLayer">
+    <div id="bx">
+      <div id="bxTitle">獨佔成功！開箱</div>
+      <div id="bxCrate">📦</div>
+      <div id="bxFlash"></div>
+      <div id="bxCard">
+        <div id="bxName"></div>
+        <div id="bxMult"></div>
+        <div id="bxFormula"></div>
+        <div id="bxPay"></div>
+        <div id="bxSub"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* =====================================================================
+   VALUES：唯一數字來源。其餘（賠率、獨佔率、機器人機率）全部由 derive() 反推，禁止手改。
+   ===================================================================== */
+const VALUES = {
+  RTP: 0.96,                 // 目標返還率
+  PLAYERS: 4,                // 玩家 1 ＋ 機器人 3
+  SUPPLY: [1, 2, 3, 4],      // 綠／藍／紫／金 各落點物資數
+  BOX: [                     // 落地開箱：倍率係數 f 與權重 w（期望值必須＝1，程式會檢查）
+    { f: 0.5, w: 49 },
+    { f: 1.0, w: 28 },
+    { f: 1.5, w: 15 },
+    { f: 2.5, w: 6 },
+    { f: 5.0, w: 2 }
+  ],
+  BETS: [10, 50, 100, 500],
+  START_WALLET: 1000
+};
+
+/* ---------- 反推：納許均衡 ----------
+   對手各以 p_i 選落點。玩家選 i 獨佔的機率 q_i=(1-p_i)^(N-1)，賠率 m_i=k*物資_i，要求 m_i*q_i=RTP（所有 i）。
+   Σp_i=1 有閉式解：令 x=(M-1)/Σc_i^(-1/(N-1))，則 1-p_i=x*c_i^(-1/(N-1))，k=RTP/x^(N-1)。 */
+function derive(V) {
+  const N = V.PLAYERS, M = V.SUPPLY.length, e = 1 / (N - 1);
+  const sumInv = V.SUPPLY.reduce((s, c) => s + Math.pow(c, -e), 0);
+  const x = (M - 1) / sumInv;
+  const k = V.RTP / Math.pow(x, N - 1);
+  const mult = V.SUPPLY.map(c => k * c);
+  const botP = V.SUPPLY.map(c => 1 - x * Math.pow(c, -e));
+  const solo = botP.map(p => Math.pow(1 - p, N - 1));
+  const wSum = V.BOX.reduce((s, b) => s + b.w, 0);
+  const boxW = V.BOX.map(b => b.w / wSum);
+  const boxMean = V.BOX.reduce((s, b, i) => s + b.f * boxW[i], 0);
+  if (Math.abs(boxMean - 1) > 1e-9) throw new Error('開箱期望值不等於 1：' + boxMean);
+  if (botP.some(p => p < 0 || p > 1)) throw new Error('機器人機率無解');
+  return { k, mult, botP, solo, boxW, boxMean, exact: mult.map((m, i) => m * solo[i] * boxMean) };
+}
+const D = derive(VALUES);
+
+/* ---------- 核心：結果先抽定（rng 注入，正式用 Math.random） ---------- */
+function pickBy(weights, u) {
+  let c = 0;
+  for (let i = 0; i < weights.length; i++) { c += weights[i]; if (u < c) return i; }
+  return weights.length - 1;
+}
+function drawRound(pointIdx, rng) {
+  const picks = [];
+  for (let b = 0; b < VALUES.PLAYERS - 1; b++) picks.push(pickBy(D.botP, rng()));
+  const tier = pickBy(D.boxW, rng());                       // 無論輸贏都抽，維持亂數消耗一致
+  const win = picks.indexOf(pointIdx) === -1;               // 獨自一人才算
+  const mult = win ? D.mult[pointIdx] * VALUES.BOX[tier].f : 0;
+  return { pointIdx, picks, win, tier, base: D.mult[pointIdx], mult };
+}
+function halton(i, b) { let f = 1, r = 0; while (i > 0) { f /= b; r += f * (i % b); i = Math.floor(i / b); } return r; }
+const HB = [2, 3, 5, 7];
+function simulate(n, opts) {
+  n = Math.max(1, (n === undefined ? 200000 : n) | 0);
+  const mc = !!(opts && opts.mc);
+  const rtpByPoint = [];
+  for (let p = 0; p < VALUES.SUPPLY.length; p++) {
+    let sum = 0;
+    for (let k = 1; k <= n; k++) {
+      let j = 0;
+      const rng = mc ? Math.random : () => halton(k, HB[j++]);
+      sum += drawRound(p, rng).mult;
+    }
+    rtpByPoint.push(sum / n);
+  }
+  return { rtpByPoint, n, method: mc ? 'monte-carlo' : 'quasi-monte-carlo(halton)', exactByPoint: D.exact.slice() };
+}
+
+/* =====================================================================
+   介面
+   ===================================================================== */
+(function () {
+  const FAST = /[?&]fast=1(&|$)/.test(location.search);
+  const S = FAST ? 0.005 : 1;                                 // 演出時間倍率
+  const $ = (s, r) => (r || document).querySelector(s);
+  const sleep = ms => new Promise(r => setTimeout(r, Math.max(0, ms * S)));
+  const realSleep = ms => new Promise(r => setTimeout(r, ms));
+  const anim = (el, kf, dur, o) => {
+    if (FAST) return Promise.resolve();                      // 快速模式：不播動畫，只推進流程
+    const a = el.animate(kf, Object.assign({ duration: Math.max(1, dur * S), fill: 'both', easing: 'ease-out' }, o || {}));
+    return a.finished.catch(() => {});
+  };
+  const fmt = n => Math.round(n).toLocaleString('en-US');
+  const cosRand = Math.random;                                // 氛圍亂數：只做喊話／演出裝飾，不碰結果
+
+  const ZONES = [
+    { tier: '綠', name: '農場', icon: '🌾', color: '#38c860', cx: 100, cy: 114 },
+    { tier: '藍', name: '港口', icon: '⚓', color: '#3d8bff', cx: 275, cy: 114 },
+    { tier: '紫', name: '研究所', icon: '🔬', color: '#a35cff', cx: 100, cy: 310 },
+    { tier: '金', name: '軍事基地', icon: '🪖', color: '#ffc22e', cx: 275, cy: 310 }
+  ];
+  const SLOTS = [[-26, -22], [26, -22], [-26, 26], [26, 26]];
+  const BOTS = [{ face: '🐺', name: '野狼' }, { face: '🦊', name: '狐狸' }, { face: '🐻', name: '阿熊' }];
+  const SHOUT = [
+    ['綠點最穩', '撿個小的', '綠點我先佔'],
+    ['藍點見', '走藍點啦', '藍點歸我'],
+    ['紫點一發', '賭紫點', '紫點我的'],
+    ['金點衝啊', '我要拿金', '金點別搶']
+  ];
+  const TIERS = [
+    { name: '殘破箱', color: '#aab4c0' },
+    { name: '軍用箱', color: '#ffffff' },
+    { name: '精良箱', color: '#ffa94d' },
+    { name: '稀有箱', color: '#ff5d6c' },
+    { name: '傳說箱', color: '#6df0ff' }
+  ];
+  const MIN_BET = Math.min.apply(null, VALUES.BETS);
+
+  let phase = 'idle', selected = -1, bet = VALUES.BETS[1], wallet = VALUES.START_WALLET;
+  let tend = [0, 0, 0], tendHidden = false, hist = [], tok = null;
+
+  /* ---------- 建立 DOM ---------- */
+  const zonesEl = $('#zones'), spritesEl = $('#sprites'), plane = $('#plane');
+  const zoneEls = ZONES.map((z, i) => {
+    const b = document.createElement('button');
+    b.className = 'zone'; b.dataset.i = i;
+    b.style.left = (z.cx - 75) + 'px'; b.style.top = (z.cy - 58) + 'px';
+    b.setAttribute('aria-label', z.tier + '點 ' + z.name);
+    b.innerHTML = '<div class="disc"><span class="ic">' + z.icon + '</span><span class="boom">💥</span><span class="spark">✨</span><span class="pin">📍</span></div>' +
+      '<div class="tag"><div class="l1"><span class="tn">' + z.tier + '</span><b class="mu">' + D.mult[i].toFixed(2) + '×</b><span class="cr">📦×' + VALUES.SUPPLY[i] + '</span></div>' +
+      '<div class="l2">獨佔 <b>' + Math.round(D.solo[i] * 100) + '%</b>・👥<b class="hd">0</b></div></div>';
+    b.addEventListener('click', () => onZone(i));
+    zonesEl.appendChild(b);
+    return b;
+  });
+  const botEls = BOTS.map((bt, i) => {
+    const d = document.createElement('div');
+    d.className = 'bot';
+    d.innerHTML = '<div class="bh"><span class="av">' + bt.face + '</span><span class="nm">' + bt.name + '</span></div><div class="bub"><span class="tx"></span></div>';
+    $('#bots').appendChild(d);
+    return d;
+  });
+  const chipsEl = $('#chips');
+  const chipEls = VALUES.BETS.map(v => {
+    const c = document.createElement('button');
+    c.className = 'chip'; c.textContent = v;
+    c.addEventListener('click', () => { if (phase === 'idle' && v <= wallet) { bet = v; renderChips(); } });
+    chipsEl.appendChild(c);
+    return c;
+  });
+
+  /* ---------- 渲染 ---------- */
+  const walletEl = $('#wallet'), strip = $('#strip'), stT = $('#stT'), stS = $('#stS'), act = $('#act'), histEl = $('#hist');
+  function setStrip(t, s, cls) { stT.textContent = t; stS.textContent = s || ''; strip.className = cls || 'idle'; }
+  function renderWallet() { walletEl.textContent = fmt(wallet); }
+  function clampBet() {
+    if (bet > wallet) { const ok = VALUES.BETS.filter(v => v <= wallet); bet = ok.length ? ok[ok.length - 1] : VALUES.BETS[0]; }
+  }
+  function renderChips() {
+    clampBet();
+    chipEls.forEach((c, i) => {
+      const v = VALUES.BETS[i];
+      c.classList.toggle('on', v === bet);
+      c.disabled = phase !== 'idle' || v > wallet;
+    });
+  }
+  function renderAction() {
+    act.innerHTML = '';
+    if (phase === 'sealing') {
+      const b = document.createElement('button'); b.className = 'btn'; b.textContent = '立即跳傘 ▶';
+      b.addEventListener('click', () => skipSeal()); act.appendChild(b);
+    } else if (phase === 'idle' && wallet < MIN_BET) {
+      const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = '🔄 補給站：補滿 ' + fmt(VALUES.START_WALLET);
+      b.addEventListener('click', () => { wallet = VALUES.START_WALLET; renderWallet(); renderChips(); renderAction(); idleStrip(); });
+      act.appendChild(b);
+    } else {
+      const h = document.createElement('div'); h.className = 'hint';
+      h.innerHTML = phase === 'idle' ? '👆 <b>點地圖上的落點</b>＝直接跳傘<br>顏色越高賠越多，也越容易撞車' : '跳傘中⋯';
+      act.appendChild(h);
+    }
+  }
+  function renderHistory() {
+    histEl.innerHTML = '<span class="hl">近況</span>';
+    hist.slice(-9).forEach(h => {
+      const i = document.createElement('i');
+      i.style.setProperty('--c', ZONES[h.z].color);
+      i.textContent = h.win ? '勝' : '空';
+      if (!h.win) i.className = 'lz';
+      histEl.appendChild(i);
+    });
+  }
+  function idleStrip() {
+    if (wallet < MIN_BET) setStrip('💸 彈盡援絕', '點下方按鈕補給再戰', 'lose');
+    else setStrip('看看對手動向 👀', '喊話不一定是真的・點落點就跳傘', 'idle');
+  }
+  function renderTend() {
+    const cnt = [0, 0, 0, 0];
+    tend.forEach(z => cnt[z]++);
+    zoneEls.forEach((el, i) => { $('.hd', el).textContent = tendHidden ? '?' : cnt[i]; });
+    botEls.forEach((el, i) => {
+      const bub = $('.bub', el), tx = $('.tx', bub);
+      bub.className = 'bub';
+      if (tendHidden) { bub.style.setProperty('--bc', '#556'); tx.textContent = '🤐 封盤中'; }
+      else {
+        bub.style.setProperty('--bc', ZONES[tend[i]].color);
+        tx.textContent = SHOUT[tend[i]][i % 3];
+      }
+    });
+  }
+  function reshout(all) {
+    const list = all ? [0, 1, 2] : [Math.floor(cosRand() * 3)];
+    list.forEach(b => { tend[b] = pickBy(D.botP, cosRand()); });
+    renderTend();
+    if (!all) { const bub = $('.bub', botEls[list[0]]); anim(bub, [{ opacity: 0.2 }, { opacity: 1 }], 280); }
+  }
+  setInterval(() => { if (phase === 'idle' && !tendHidden && !document.hidden) reshout(false); }, 1500);
+
+  function markSel() { zoneEls.forEach((el, i) => el.classList.toggle('sel', i === selected && phase !== 'idle')); }
+  function clearField() {
+    spritesEl.innerHTML = '';
+    zoneEls.forEach(el => { el.classList.remove('clash', 'solo'); $('.boom', el).getAnimations().forEach(a => a.cancel()); $('.spark', el).getAnimations().forEach(a => a.cancel()); });
+  }
+
+  /* ---------- 封盤倒數（動向隱藏） ---------- */
+  function onZone(i) {
+    if (phase === 'idle') {
+      if (wallet < MIN_BET || bet > wallet) return;
+      startSeal(i);
+    } else if (phase === 'sealing') {
+      if (selected === i) skipSeal(); else { selected = i; markSel(); }
+    }
+  }
+  function skipSeal() { if (tok) { tok.skip = true; if (tok.wake) tok.wake(); } }
+  async function startSeal(i) {
+    phase = 'sealing'; selected = i; tendHidden = true;
+    clearField(); renderTend(); renderAction(); renderChips(); markSel();
+    const t = tok = { skip: false, wake: null };
+    for (let n = 3; n > 0 && !t.skip; n--) {
+      setStrip('封盤倒數 ' + n, '動向已隱藏・可改選別點・再點一次立即跳', 'seal');
+      await new Promise(r => { t.wake = r; setTimeout(r, 1000 * S); });
+    }
+    tok = null;
+    await execRound(selected, bet);
+  }
+
+  /* ---------- 一局：先抽定，再演 ---------- */
+  async function execRound(pointIdx, b) {
+    wallet -= b; renderWallet();
+    const res = drawRound(pointIdx, Math.random);
+    const payout = Math.round(b * res.mult);
+    selected = pointIdx;
+    await present(res, b, payout);
+    const from = wallet;
+    wallet += payout;
+    hist.push({ z: pointIdx, win: res.win });
+    await tweenWallet(from, wallet, 500);
+    phase = 'idle'; tendHidden = false; selected = -1;
+    reshout(true); markSel(); renderChips(); renderAction(); renderHistory();
+    return { payout, wallet };
+  }
+  function tweenWallet(from, to, dur) {
+    return new Promise(r => {
+      if (from === to || S < 0.5) { renderWallet(); return r(); }
+      const t0 = performance.now();
+      const id = setInterval(() => {
+        const k = Math.min(1, (performance.now() - t0) / dur);
+        walletEl.textContent = fmt(from + (to - from) * k);
+        if (k >= 1) { clearInterval(id); renderWallet(); r(); }
+      }, 30);
+    });
+  }
+
+  function mkSprite(o, sx, sy, tx, ty) {
+    const el = document.createElement('div');
+    el.className = 'sp' + (o.me ? ' me' : '');
+    el.innerHTML = '<span class="cv">🪂</span><span class="fc">' + o.face + '</span>';
+    el.style.transform = 'translate3d(' + tx + 'px,' + ty + 'px,0)';
+    spritesEl.appendChild(el);
+    return el;
+  }
+
+  async function present(res, b, payout) {
+    phase = 'flying'; tendHidden = true; renderTend(); renderAction(); renderChips(); markSel();
+    clearField();
+    setStrip('飛機通過，大家一起跳！', '看誰獨自一人落地', 'idle');
+    plane.classList.remove('idle');
+    const PD = 1200;
+    const pA = anim(plane, [{ transform: 'translate3d(-60px,0,0)' }, { transform: 'translate3d(430px,0,0)' }], PD, { easing: 'linear' });
+    const occ = [{ me: true, face: '😎', zone: res.pointIdx, who: -1 }].concat(BOTS.map((bt, i) => ({ me: false, face: bt.face, zone: res.picks[i], who: i })));
+    const used = [0, 0, 0, 0];
+    occ.forEach(o => { o.slot = used[o.zone]++; });
+    const order = [0, 1, 2, 3].sort(() => cosRand() - 0.5);
+    const jobs = occ.map((o, idx) => (async () => {
+      const t = 0.22 + 0.17 * order[idx];
+      await sleep(PD * t);
+      const z = ZONES[o.zone], sl = SLOTS[o.slot];
+      const tx = z.cx + sl[0] - 20, ty = z.cy + sl[1] - 20;
+      const sx = -60 + 490 * t - 4, sy = 14;
+      o.el = mkSprite(o, sx, sy, tx, ty);
+      await anim(o.el, [{ transform: 'translate3d(' + sx + 'px,' + sy + 'px,0)' }, { transform: 'translate3d(' + tx + 'px,' + ty + 'px,0)' }], 1050, { easing: 'cubic-bezier(.25,.6,.35,1)', fill: 'backwards' });
+      o.el.classList.add('landed');
+    })());
+    await Promise.all(jobs.concat([pA]));
+    plane.classList.add('idle'); plane.getAnimations().forEach(a => a.cancel());
+
+    /* 落地判定演出 */
+    const cnt = [0, 0, 0, 0];
+    occ.forEach(o => cnt[o.zone]++);
+    const crates = [];
+    zoneEls.forEach((el, i) => {
+      if (cnt[i] >= 2) {
+        el.classList.add('clash');
+        anim($('.boom', el), [{ opacity: 0, transform: 'scale(.3)' }, { opacity: 1, transform: 'scale(1.3)', offset: .5 }, { opacity: 1, transform: 'scale(1)' }], 420);
+        anim($('.disc', el), [{ transform: 'translate3d(0,0,0)' }, { transform: 'translate3d(-4px,0,0)' }, { transform: 'translate3d(4px,0,0)' }, { transform: 'translate3d(0,0,0)' }], 300, { fill: 'none' });
+        occ.filter(o => o.zone === i).forEach(o => o.el && o.el.classList.add('out'));
+      } else if (cnt[i] === 1) {
+        el.classList.add('solo');
+        const o = occ.find(x => x.zone === i);
+        const z = ZONES[i], sl = SLOTS[o.slot];
+        const c = document.createElement('div'); c.className = 'crate'; c.textContent = '📦';
+        const cx = z.cx + sl[0] + 8, cy = z.cy + sl[1] - 26;
+        c.style.transform = 'translate3d(' + cx + 'px,' + cy + 'px,0)';
+        spritesEl.appendChild(c);
+        crates.push(anim(c, [{ transform: 'translate3d(' + cx + 'px,' + (cy - 70) + 'px,0)', opacity: 0 }, { transform: 'translate3d(' + cx + 'px,' + cy + 'px,0)', opacity: 1 }], 420, { fill: 'backwards' }));
+        anim($('.spark', el), [{ opacity: 0, transform: 'scale(.4)' }, { opacity: 1, transform: 'scale(1.1)' }, { opacity: 0, transform: 'scale(1.4)' }], 700);
+      }
+    });
+    botEls.forEach((el, i) => {
+      const z = res.picks[i], bub = $('.bub', el), tx = $('.tx', bub);
+      bub.style.setProperty('--bc', ZONES[z].color);
+      const clash = cnt[z] >= 2;
+      bub.className = 'bub ' + (clash ? 'bad' : 'good');
+      tx.textContent = ZONES[z].tier + '點・' + (clash ? '撞車 💥' : '獨佔 ✨');
+    });
+    await Promise.all(crates);
+    await sleep(350);
+
+    const mates = res.picks.map((p, i) => p === res.pointIdx ? BOTS[i] : null).filter(Boolean);
+    if (res.win) {
+      await openBox(res, b, payout);
+      setStrip('🎉 獨佔 ' + ZONES[res.pointIdx].tier + '點！+' + fmt(payout), '落點 ×' + res.base.toFixed(2) + '・' + TIERS[res.tier].name + ' ×' + VALUES.BOX[res.tier].f + '・淨賺 ' + fmt(payout - b), 'win');
+    } else {
+      await sleep(300);
+      setStrip('💥 撞車歸零 −' + fmt(b), '和 ' + mates.map(m => m.face + m.name).join('、') + ' 同落' + ZONES[res.pointIdx].tier + '點，全員空手', 'lose');
+      await sleep(700);
+    }
+  }
+
+  /* ---------- 開箱（第二段演出） ---------- */
+  async function openBox(res, b, payout) {
+    const layer = $('#boxLayer'), crate = $('#bxCrate'), flash = $('#bxFlash'), card = $('#bxCard'), title = $('#bxTitle');
+    const tier = TIERS[res.tier] || TIERS[0];
+    const f = VALUES.BOX[res.tier].f;
+    $('#bxName').textContent = tier.name;
+    $('#bxName').style.color = tier.color;
+    $('#bxMult').textContent = '×' + (res.base * f).toFixed(2);
+    $('#bxMult').style.setProperty('--tc', tier.color);
+    $('#bxFormula').textContent = '落點 ×' + res.base.toFixed(2) + '　箱子 ×' + f;
+    $('#bxPay').textContent = '+0';
+    $('#bxSub').textContent = '下注 ' + fmt(b) + '　淨賺 ' + fmt(payout - b);
+    layer.classList.add('show');
+    let tapped = false; const onTap = () => { tapped = true; };
+    layer.addEventListener('click', onTap);
+    crate.style.opacity = 1; card.style.opacity = 0; title.style.opacity = 0;
+    [layer, crate, flash, card, title].forEach(e => e.getAnimations().forEach(a => a.cancel()));
+    await anim(layer, [{ opacity: 0 }, { opacity: 1 }], 250);
+    anim(title, [{ opacity: 0 }, { opacity: 1 }], 300);
+    await anim(crate, [{ transform: 'scale(.3)', opacity: 0 }, { transform: 'scale(1.1)', opacity: 1, offset: .7 }, { transform: 'scale(1)', opacity: 1 }], 300);
+    await anim(crate, [
+      { transform: 'rotate(0deg)' }, { transform: 'rotate(-10deg)' }, { transform: 'rotate(10deg)' }, { transform: 'rotate(-12deg)' },
+      { transform: 'rotate(12deg)' }, { transform: 'rotate(-6deg) scale(1.15)' }, { transform: 'rotate(0deg) scale(1.25)' }], 600, { easing: 'ease-in-out' });
+    anim(flash, [{ opacity: 0, transform: 'scale(.3)' }, { opacity: 1, transform: 'scale(1)', offset: .3 }, { opacity: 0, transform: 'scale(1.6)' }], 500);
+    anim(crate, [{ opacity: 1 }, { opacity: 0 }], 200);
+    await sleep(120);
+    anim(card, [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1.08)', offset: .6 }, { opacity: 1, transform: 'scale(1)' }], 420);
+    if (res.tier >= 3) confetti(layer.firstElementChild);
+    await sleep(420);
+    await countUp($('#bxPay'), payout, 450);
+    const hold = Promise.race([sleep(res.tier >= 3 ? 1200 : 600), new Promise(r => { const iv = setInterval(() => { if (tapped) { clearInterval(iv); r(); } }, 40); setTimeout(() => clearInterval(iv), 3000); })]);
+    await hold;
+    layer.removeEventListener('click', onTap);
+    await anim(layer, [{ opacity: 1 }, { opacity: 0 }], 300);
+    layer.classList.remove('show');
+  }
+  function countUp(el, to, dur) {
+    return new Promise(r => {
+      if (S < 0.5) { el.textContent = '+' + fmt(to); return r(); }
+      const t0 = performance.now();
+      const id = setInterval(() => {
+        const k = Math.min(1, (performance.now() - t0) / dur);
+        el.textContent = '+' + fmt(to * (1 - Math.pow(1 - k, 3)));
+        if (k >= 1) { clearInterval(id); r(); }
+      }, 30);
+    });
+  }
+  function confetti(box) {
+    const host = $('#bx');
+    for (let i = 0; i < 14; i++) {
+      const c = document.createElement('div'); c.className = 'confetti'; c.textContent = ['✨', '⭐', '💎', '🎉'][i % 4];
+      host.appendChild(c);
+      const a = (i / 14) * Math.PI * 2, d = 110 + cosRand() * 50;
+      anim(c, [{ transform: 'translate3d(0,0,0) scale(.4)', opacity: 1 }, { transform: 'translate3d(' + Math.cos(a) * d + 'px,' + Math.sin(a) * d + 'px,0) scale(1.2)', opacity: 0 }], 1100).then(() => c.remove());
+    }
+  }
+
+  /* ---------- 測試介面 ---------- */
+  let chain = Promise.resolve();
+  window.__proto = {
+    wallet: () => wallet,
+    playRound: (pointIndex, b) => new Promise(resolve => {
+      chain = chain.then(async () => {
+        try {
+          while (phase !== 'idle') await realSleep(20);
+          if (!(pointIndex >= 0 && pointIndex < ZONES.length) || !(b > 0) || b > wallet) {
+            resolve({ payout: 0, wallet, error: 'invalid pointIndex or bet' }); return;
+          }
+          phase = 'sealing';                                 // 佔住狀態，避免使用者同時點擊
+          if (b <= VALUES.BETS[VALUES.BETS.length - 1] && VALUES.BETS.indexOf(b) >= 0) bet = b;
+          resolve(await execRound(pointIndex, b));
+        } catch (e) { phase = 'idle'; resolve({ payout: 0, wallet, error: String(e) }); }
+      });
+    }),
+    simulate: simulate,
+    table: () => ({ mult: D.mult.slice(), botP: D.botP.slice(), solo: D.solo.slice(), exact: D.exact.slice() })
+  };
+
+  /* ---------- 啟動 ---------- */
+  renderWallet(); reshout(true); renderChips(); renderAction(); renderHistory(); idleStrip();
+  const ready = () => { window.__shotReady = true; };
+  if (document.fonts && document.fonts.ready) Promise.race([document.fonts.ready, realSleep(600)]).then(ready); else ready();
+})();
+</script>
+</body>
+</html>
