@@ -1,0 +1,98 @@
+/* =========================================================================
+ * 三選一冒煙——骨架＋範例玩法樣式（拋棄式；新 demo 整個重做）＋共用元件（toast、無捲軸）
+ * 效能紅線：所有 transition／animation 只動 transform／opacity；陰影靜態；禁 filter
+ * 多語紀律：盒子用 min-width／padding 撐，不鎖死寬度；長字可換行或單行省略（?lang=xx 驗）
+ *
+ * 疊層順序（z-index，定死）：
+ *   引導 50 ＞ toast 45 ＞ log 頁 36 ＞ 設定彈窗 35 ＞ 暗幕 34 ＞ 自動下注槽 33 ＞ 導演台 32 ＞ 遊戲主體
+ * ========================================================================= */
+:root{
+  --appbg:#141A16; --panel:#0E120F; --line:#2C332C; --line2:#1F261F;
+  --edge:#4A4136; --chip:#1A1F1A; --fg:#E9E4D2; --mute:#9AA895; --gold:#E7C86A;
+  --win:#8FD49B; --lose:#E58F94;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden}
+body{background:#0A0D0A;color:var(--fg);font-size:14px;line-height:1.5;
+  font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+button{font:inherit;cursor:pointer}
+
+/* #app：375×812 直式；窄螢幕等比讓步（寬不超 100vw、高不超 100vh）；?vw= 由 env.js 覆寫寬度 */
+#app{position:relative;width:min(375px,100vw);height:min(812px,100vh);margin:0 auto;
+  display:flex;flex-direction:column;background:var(--appbg);
+  overflow:hidden}
+/* 注意：畫面外待命的彈窗／log 頁不可用 translate 推到 #app 外——scrollWidth／scrollHeight 會被撐大，
+   零捲軸檢查（tools/shot.mjs）會誤報。一律用 opacity＋小幅 scale 淡入（只動 transform／opacity） */
+
+/* 無原生捲軸（滾動由 DragScroll 處理；觸控保留原生 pan-y） */
+.dscroll{overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;cursor:grab}
+.dscroll::-webkit-scrollbar{display:none;width:0;height:0}
+.dscroll.dragging{cursor:grabbing;-webkit-user-select:none;user-select:none}
+
+/* ---------- toast ---------- */
+#toast{position:absolute;left:16px;right:16px;bottom:200px;z-index:45;pointer-events:none;
+  text-align:center;font-size:12.5px;color:var(--fg);background:rgba(14,18,15,.94);
+  border:1px solid var(--edge);border-radius:8px;padding:8px 12px;
+  opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s}
+#toast.show{opacity:1;transform:none}
+
+/* ---------- 頂欄 ---------- */
+.ptop{flex:none;display:flex;justify-content:space-between;align-items:center;
+  padding:10px 12px;background:var(--panel);border-bottom:1px solid var(--line)}
+.wallet{font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums;font-size:15px;min-width:0}
+.iconb{border:1px solid var(--edge);background:var(--chip);color:var(--fg);border-radius:6px;
+  font-size:13px;line-height:1;padding:5px 9px}
+
+/* ---------- 導演台（?dev=1 才顯示；in-flow 一列） ---------- */
+#director{flex:none;display:none;align-items:center;gap:6px;flex-wrap:wrap;
+  margin:4px 8px 0;padding:3px 8px;border:1px dashed #6B4E2A;border-radius:6px;
+  background:rgba(60,40,15,.35);font-size:11.5px;color:#E7B97A;position:relative;z-index:32}
+#director.on{display:flex}
+#director select,#director button{font-size:11.5px;color:var(--fg);background:var(--chip);
+  border:1px solid var(--edge);border-radius:5px;padding:2px 6px}
+
+/* ---------- 範例玩法（拋棄式）：舞台＋三張選項卡 ---------- */
+.stage{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:0 10px}
+.banner{flex:none;min-height:24px;max-width:100%;font-size:14px;color:var(--gold);font-weight:700;
+  letter-spacing:.06em;text-align:center;padding:0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cards{display:flex;gap:10px;justify-content:center;width:100%}
+.card{position:relative;flex:1;min-width:0;max-width:112px;height:168px;border-radius:12px;
+  border:1.5px solid var(--edge);background:linear-gradient(#1D2820,#141A16);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  color:var(--fg);padding:6px 4px;text-align:center;
+  transition:transform .25s ease-out,opacity .25s linear}
+.card .cl{font-size:40px;font-weight:900;color:var(--gold);line-height:1}
+.card .cp{font-size:11.5px;color:var(--mute)}
+.card .co{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.card .lamp{position:absolute;inset:0;border-radius:11px;border:2.5px solid var(--gold);
+  background:rgba(231,200,106,.12);opacity:0;transition:opacity .25s linear;pointer-events:none}
+.card:active{transform:scale(.97)}
+.card.picked{border-color:#7C8A7C}
+.card.shake{animation:cshake .35s ease-in-out infinite}
+.card.shake:nth-child(2){animation-delay:.08s}
+.card.shake:nth-child(3){animation-delay:.16s}
+.card.lit{transform:scale(1.07)}
+.card.lit .lamp{opacity:1}
+.card.dim{opacity:.35}
+.card.dis{cursor:default}
+@keyframes cshake{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.net{flex:none;min-height:34px;font-size:24px;font-weight:900;font-variant-numeric:tabular-nums;
+  text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.net.w{color:var(--win)} .net.l{color:#6B7568}
+
+/* ---------- 下注面板 ---------- */
+.panel{flex:none;padding:10px 12px 8px;background:var(--panel);border-top:1px solid var(--line)}
+.stakerow{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.stakelab{flex:none;font-size:12px;color:var(--mute)}
+.stakes{flex:1;min-width:0;display:flex;gap:5px}
+.stakes button{flex:1;min-width:0;border-radius:6px;border:1.5px solid var(--edge);background:var(--chip);
+  color:var(--fg);font-size:12.5px;padding:6px 2px;line-height:1.25;font-variant-numeric:tabular-nums}
+.stakes button.on{border-color:var(--gold);color:var(--gold);font-weight:700;background:#2B2413}
+.autob{flex:none}
+.panel .abar{margin:0}
+
+@media (prefers-reduced-motion: reduce){
+  .card,.card .lamp,#toast{transition:none}
+  .card.shake{animation:none}
+}

@@ -1,0 +1,36 @@
+/* =========================================================================
+ * 三選一冒煙——勝負 log 頁樣式（z-index 36；疊層順序表見 base.css）
+ * 動畫只動 transform；內容區零原生捲軸（滾動由 DragScroll 處理）
+ * ========================================================================= */
+.lgm{position:absolute;inset:0;z-index:36;background:var(--appbg);display:flex;flex-direction:column;
+  opacity:0;visibility:hidden;transform:scale(.97);
+  transition:opacity .22s linear,transform .22s ease-out,visibility 0s linear .22s}
+.lgm.show{opacity:1;visibility:visible;transform:none;transition:opacity .22s linear,transform .22s ease-out}
+.lgh{flex:none;display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--panel);border-bottom:1px solid var(--line)}
+.lgh b{flex:1;min-width:0;font-size:15px;color:var(--gold);letter-spacing:.06em;text-align:center}
+.lgh button{border:1px solid var(--edge);background:var(--chip);color:var(--fg);border-radius:6px;font-size:13px;padding:3px 9px;line-height:1.3}
+.lgh button.hid{visibility:hidden}
+.lgb{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.lgf{flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;
+  background:var(--panel);border-top:1px solid var(--line);font-size:11.5px;color:var(--mute)}
+.lgf .lgfr{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.lgf .lgextra{display:contents}
+.lgf button{border:1px solid var(--edge);background:var(--chip);color:var(--mute);border-radius:6px;font-size:11.5px;padding:3px 9px;line-height:1.3}
+.lgf button.warnb{border-color:#C9666C;color:#E58F94}
+.lgf button.okb{border-color:#5FA06B;color:#8FD49B}
+.lrowi{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:11px 14px;border-bottom:1px solid var(--line2);font-variant-numeric:tabular-nums}
+.lrowi:active{background:var(--chip)}
+.lrowi .lt{color:var(--mute);font-size:12px}
+.lrowi .lv{font-size:15px;font-weight:700;text-align:right}
+.gold{color:var(--gold)}.grey{color:#6B7568}
+.lempty{padding:40px 16px;text-align:center;color:#5C6B5C;font-size:12.5px}
+.ldh{padding:14px;border-bottom:1px solid var(--line);font-size:12.5px;line-height:1.8}
+.ldh .big{font-size:26px;font-weight:900;font-variant-numeric:tabular-nums;margin-bottom:4px}
+.ldh .kv{display:flex;justify-content:space-between;gap:12px;color:var(--mute)}
+.ldh .kv span:last-child{color:var(--fg);font-variant-numeric:tabular-nums;text-align:right;min-width:0;word-break:break-all}
+.ldh .oid{font-size:11px}
+.lrep{padding:14px;text-align:center}
+.lrep .lreport{min-width:96px;padding:7px 18px;border-radius:7px;border:1px solid var(--gold);
+  background:transparent;color:var(--gold);font-size:13px;line-height:1.3}
+.lrep .lreport:disabled{border-color:var(--edge);color:#6B7568}
