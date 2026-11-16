@@ -13,11 +13,11 @@ import {
   createSeededRandom,
   generateRoundEvents,
   settleRound
-} from "./engine.js?v=20261116-full-board";
+} from "./engine.js?v=20261116-test-mode";
 import { loadStore, saveStore } from "./storage.js?v=20261116-full-board";
 
 const elements = Object.fromEntries([
-  "scene", "balanceDisplay", "balancePlus", "multiplierHud", "sceneMultiplier",
+  "scene", "testModeToggle", "balanceDisplay", "balancePlus", "multiplierHud", "sceneMultiplier",
   "fullBoardBadge", "fullBoardBanner", "boardWrap", "board",
   "routeGlowLine", "routeLine", "previewLine", "agent", "eventBubble", "difficultySelect",
   "betMinus", "betPlus", "betInput", "resetButton", "confirmButton", "resultModal", "resultMark",
@@ -40,6 +40,7 @@ const state = {
   dangerIndex: -1,
   fullBoardFailed: false,
   fullBoardAwarded: false,
+  testMode: false,
   speedIndex: 0,
   dragging: false,
   lastDragKey: "",
@@ -145,6 +146,9 @@ function renderControls() {
   const showFullBoard = isFullBoardRoute() && !state.fullBoardFailed;
   elements.balanceDisplay.textContent = formatMoney(store.balance);
   elements.balancePlus.disabled = running;
+  elements.testModeToggle.disabled = running;
+  elements.testModeToggle.classList.toggle("is-active", state.testMode);
+  elements.testModeToggle.setAttribute("aria-pressed", String(state.testMode));
   elements.sceneMultiplier.textContent = formatMultiplier(state.cumulativeMultiplier);
   elements.fullBoardBadge.hidden = !showFullBoard;
   elements.multiplierHud.classList.toggle("has-full-board", showFullBoard);
@@ -407,7 +411,7 @@ function confirmRound() {
     seed = Date.now() >>> 0;
   }
   const random = createSeededRandom(seed);
-  const { events } = generateRoundEvents(difficulty(), state.route, random);
+  const { events } = generateRoundEvents(difficulty(), state.route, random, state.testMode);
   const fullBoard = isFullBoardRoute();
   const round = createRound({
     difficultyId: state.difficultyId,
@@ -460,6 +464,13 @@ function validateMathAtStartup() {
 }
 
 elements.difficultySelect.addEventListener("change", (event) => selectDifficulty(event.target.value));
+
+elements.testModeToggle.addEventListener("click", () => {
+  if (state.phase === "RUNNING" || state.testMode) return;
+  state.testMode = true;
+  renderControls();
+  showToast("不失敗測試模式已啟用");
+});
 
 elements.board.addEventListener("pointerdown", (event) => {
   const node = nodeFromTarget(event.target);

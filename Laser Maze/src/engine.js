@@ -22,11 +22,11 @@ function pickReward(random) {
   return REWARD_TYPES.at(-1);
 }
 
-export function generateRoundEvents(difficulty, route, random = Math.random) {
+export function generateRoundEvents(difficulty, route, random = Math.random, forceSuccess = false) {
   const params = rtpParameters(difficulty, route.length);
   const events = [];
   for (let index = 1; index < route.length; index += 1) {
-    if (random() < params.dangerChance) {
+    if (!forceSuccess && random() < params.dangerChance) {
       events.push({ type: "danger", node: route[index], routeIndex: index, multiplier: 0 });
       break;
     }
