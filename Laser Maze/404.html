@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#071529">
+  <meta name="description" content="雷射潛入 H5 遊戲 Demo">
+  <title>雷射潛入｜H5 Demo</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="game-shell" aria-label="雷射潛入遊戲">
+    <section class="scene" id="scene" aria-label="潛入路線盤面">
+      <div class="scene-grid" aria-hidden="true"></div>
+      <div class="glass-wall glass-wall--left" aria-hidden="true"></div>
+      <div class="glass-wall glass-wall--right" aria-hidden="true"></div>
+      <div class="camera camera--left" aria-hidden="true"><i></i></div>
+      <div class="camera camera--right" aria-hidden="true"><i></i></div>
+      <div class="guard guard--left" aria-hidden="true"></div>
+      <div class="guard guard--right" aria-hidden="true"></div>
+      <div class="laser laser--one" aria-hidden="true"></div>
+      <div class="laser laser--two" aria-hidden="true"></div>
+      <div class="laser laser--three" aria-hidden="true"></div>
+
+      <div class="hud">
+        <div class="wallet" aria-live="polite">
+          <strong id="balanceDisplay">10,000</strong>
+          <button type="button" class="wallet__plus" id="balancePlus" aria-label="增加 1000 點餘額">＋</button>
+        </div>
+      </div>
+
+      <div class="multiplier-hud" aria-live="polite">
+        <span>累積倍率</span>
+        <strong id="sceneMultiplier">0.00X</strong>
+      </div>
+
+      <div class="board-wrap" id="boardWrap">
+        <svg class="route-layer" id="routeLayer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <filter id="routeGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="1.4" result="blur"></feGaussianBlur>
+              <feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+            </filter>
+          </defs>
+          <polyline id="routeGlowLine" class="route-line route-line--glow" points=""></polyline>
+          <polyline id="routeLine" class="route-line" points=""></polyline>
+          <line id="previewLine" class="preview-line" x1="0" y1="0" x2="0" y2="0"></line>
+        </svg>
+        <div class="board" id="board" role="grid" aria-label="路線圓格"></div>
+        <div class="agent" id="agent" aria-label="潛入者"><span></span></div>
+        <div class="event-bubble" id="eventBubble" role="status"></div>
+      </div>
+    </section>
+
+    <section class="control-deck">
+      <div class="wager-stack">
+        <div>
+          <span class="field-label">下注金額</span>
+          <div class="bet-stepper">
+            <button type="button" id="betMinus" aria-label="減少下注金額">−</button>
+            <label><span class="sr-only">下注金額</span><input id="betInput" type="number" inputmode="decimal" min="1" step="100" value="100"></label>
+            <button type="button" id="betPlus" aria-label="增加下注金額">＋</button>
+          </div>
+        </div>
+        <label class="difficulty-field" for="difficultySelect">
+          <span class="field-label">難度</span>
+          <span class="difficulty-select-shell">
+            <select id="difficultySelect" aria-label="難度選擇"></select>
+            <span aria-hidden="true">▼</span>
+          </span>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="secondary-button" id="resetButton">重設路線</button>
+        <button type="button" class="primary-button" id="confirmButton" disabled>
+          <span class="primary-button__icon">⌁</span>
+          <span>投注</span>
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <div class="result-modal" id="resultModal" hidden>
+    <div class="result-card" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+      <div class="result-mark" id="resultMark"></div>
+      <h2 id="resultTitle">潛入成功</h2>
+      <div class="result-figures" aria-label="結算數值">
+        <strong id="resultPayout">0</strong>
+        <strong id="resultMultiplier">0.00X</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>
