@@ -143,12 +143,13 @@ button { touch-action: manipulation; }
 
 .event-bubble { position: absolute; z-index: 8; min-width: 92px; max-width: 140px; padding: 7px 10px; border-radius: 8px; background: rgba(4, 15, 27, .94); border: 1px solid var(--cyan); color: #dffcff; font-weight: 800; font-size: 12px; text-align: center; transform: translate(-50%, -135%) scale(.8); opacity: 0; pointer-events: none; box-shadow: 0 0 16px rgba(37, 226, 255, .25); }
 .event-bubble.is-visible { opacity: 1; transform: translate(-50%, -145%) scale(1); transition: .2s ease; }
-.event-bubble.is-reward { width: 136px; min-height: 126px; padding: 8px 9px 9px; overflow: visible; color: #fff1ad; border-color: rgba(255, 205, 84, .72); background: radial-gradient(circle at 50% 38%, rgba(88, 60, 15, .62), rgba(4, 15, 27, .96) 66%); box-shadow: 0 0 20px rgba(255, 197, 77, .35); animation: reward-card-in .24s cubic-bezier(.2,.85,.28,1.25); }
+.event-bubble.is-reward { width: 94px; min-width: 94px; min-height: 78px; padding: 3px 4px 5px; overflow: visible; color: #fff1ad; border-color: rgba(255, 205, 84, .6); background: radial-gradient(circle at 50% 38%, rgba(88, 60, 15, .52), rgba(4, 15, 27, .9) 68%); box-shadow: 0 0 14px rgba(255, 197, 77, .3); animation: reward-card-in .24s cubic-bezier(.2,.85,.28,1.25); }
+.event-bubble.is-visible.is-reward { transform: translate(-50%, -138%) scale(1); }
 .event-bubble.is-danger { color: #fff; border-color: var(--danger); background: rgba(61, 6, 19, .95); }
 
-.reward-stage { position: relative; display: block; width: 112px; height: 82px; margin: 0 auto 2px; overflow: visible; }
+.reward-stage { position: relative; display: block; width: 112px; height: 82px; margin: -4px -13px -27px; overflow: visible; transform: scale(.62); transform-origin: center top; }
 .reward-copy { position: relative; z-index: 6; display: flex; align-items: baseline; justify-content: center; white-space: nowrap; text-shadow: 0 1px 4px #000; }
-.reward-copy strong { color: #fff5c8; font-size: 17px; line-height: 1; }
+.reward-copy strong { color: #fff5c8; font-size: 14px; line-height: 1; }
 
 .reward-coin { position: absolute; display: block; width: 42px; aspect-ratio: 1; border-radius: 50%; border: 3px solid #ffe88e; background: radial-gradient(circle at 34% 28%, #fffbd0 0 7%, #ffe56d 8% 23%, #f6a81c 54%, #9d4d00 100%); box-shadow: inset 0 0 0 3px #d88710, inset -6px -5px 9px rgba(108, 47, 0, .52), 0 0 14px #ffc236; }
 .reward-coin::after { content: "◆"; position: absolute; inset: 7px; display: grid; place-items: center; border: 1px solid rgba(157, 79, 0, .58); border-radius: 50%; color: #b75d00; font-size: 15px; text-shadow: 0 1px #fff1a3; }
@@ -168,7 +169,7 @@ button { touch-action: manipulation; }
 .reward-stage--bars::before { content: ""; position: absolute; inset: 5px 8px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 226, 91, .65), rgba(255, 168, 20, .2) 42%, transparent 68%); filter: blur(4px); animation: gold-pulse .5s ease-out both; }
 .gold-burst { position: absolute; left: 50%; top: 48%; width: 70px; height: 70px; transform: translate(-50%, -50%); border-radius: 50%; border: 2px solid rgba(255, 231, 133, .75); box-shadow: 0 0 12px #ffbf27, inset 0 0 14px #ffbf27; animation: burst-ring .72s ease-out both; }
 .reward-bar { position: absolute; z-index: 3; width: 52px; height: 24px; border: 2px solid #fff0a0; border-radius: 4px; transform: skewX(-13deg); background: linear-gradient(165deg, #fff7bd 0 12%, #ffd84f 13% 37%, #ec9a12 60%, #8d4500); box-shadow: inset -5px -4px 6px rgba(120, 52, 0, .42), 0 0 14px #ffc02b; }
-.reward-bar::after { content: "GOLD"; position: absolute; inset: 0; display: grid; place-items: center; color: #9d4f00; font-size: 7px; font-weight: 950; letter-spacing: .08em; }
+.reward-bar::after { content: ""; position: absolute; inset: 5px 9px; border: 1px solid rgba(156, 78, 0, .42); border-radius: 2px; }
 .reward-bar--one { left: 20px; top: 44px; transform: skewX(-13deg) rotate(-8deg); animation: bar-rise-left .62s cubic-bezier(.18,.85,.25,1.15) both; }
 .reward-bar--two { right: 18px; top: 43px; transform: skewX(-13deg) rotate(8deg); animation: bar-rise-right .62s cubic-bezier(.18,.85,.25,1.15) both; }
 .reward-bar--three { left: 32px; top: 21px; z-index: 4; animation: bar-rise .7s cubic-bezier(.18,.85,.25,1.15) both; }
@@ -238,7 +239,7 @@ button { touch-action: manipulation; }
 @keyframes laser-alarm { 50% { opacity: .35; } }
 @keyframes scene-alarm { 50% { filter: saturate(1.8) brightness(1.2); } }
 @keyframes modal-in { from { opacity: 0; transform: translateY(15px) scale(.96); } }
-@keyframes reward-card-in { from { opacity: 0; transform: translate(-50%, -132%) scale(.72); } }
+@keyframes reward-card-in { from { opacity: 0; transform: translate(-50%, -122%) scale(.72); } }
 @keyframes coin-rise { from { opacity: 0; transform: translateY(34px) scale(.45) rotateY(90deg); } 65% { transform: translateY(-4px) scale(1.12) rotateY(0); } }
 @keyframes coin-shine { 50% { filter: brightness(1.65); box-shadow: inset 0 0 0 3px #d88710, 0 0 25px #ffe576; } }
 @keyframes coin-scatter-left { from { opacity: 0; transform: translate(24px, 28px) scale(.35) rotate(30deg); } }
