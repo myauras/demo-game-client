@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#071529">
   <meta name="description" content="雷射潛入 H5 遊戲 Demo">
   <title>雷射潛入｜H5 Demo</title>
-  <link rel="stylesheet" href="styles.css?v=20261116-reward-clearance">
+  <link rel="stylesheet" href="styles.css?v=20261116-full-board">
 </head>
 <body>
   <main class="game-shell" aria-label="雷射潛入遊戲">
@@ -27,10 +27,13 @@
         </div>
       </div>
 
-      <div class="multiplier-hud" aria-live="polite">
+      <div class="multiplier-hud" id="multiplierHud" aria-live="polite">
         <span>累積倍率</span>
         <strong id="sceneMultiplier">0.00X</strong>
+        <em class="full-board-badge" id="fullBoardBadge" hidden>全盤 ×2</em>
       </div>
+
+      <div class="full-board-banner" id="fullBoardBanner" hidden>全盤潛入成功</div>
 
       <div class="board-wrap" id="boardWrap">
         <svg class="route-layer" id="routeLayer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
@@ -86,11 +89,12 @@
       <div class="result-figures" aria-label="結算數值">
         <strong id="resultPayout">0</strong>
         <strong id="resultMultiplier">0.00X</strong>
+        <span class="result-full-board" id="resultFullBoard" hidden>全盤 ×2</span>
       </div>
     </div>
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script type="module" src="src/app.js"></script>
+  <script type="module" src="src/app.js?v=20261116-full-board"></script>
 </body>
 </html>

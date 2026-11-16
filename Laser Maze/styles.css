@@ -91,9 +91,17 @@ button { touch-action: manipulation; }
 .wallet__plus:active { transform: translateY(1px); }
 .wallet__plus:disabled { opacity: .45; }
 
-.multiplier-hud { position: absolute; z-index: 7; top: 48px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; border-radius: 5px; overflow: hidden; border: 1px solid rgba(60, 225, 255, .3); box-shadow: 0 0 18px rgba(50, 225, 255, .1); }
+.multiplier-hud { position: absolute; z-index: 7; top: 48px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; border-radius: 5px; border: 1px solid rgba(60, 225, 255, .3); box-shadow: 0 0 18px rgba(50, 225, 255, .1); }
 .multiplier-hud span { padding: 5px 8px; background: #14344c; color: #a9deeb; font-size: 10px; letter-spacing: .05em; }
 .multiplier-hud strong { min-width: 72px; padding: 4px 10px; text-align: center; font-size: 18px; color: #fff; background: rgba(3, 13, 24, .9); }
+.full-board-badge { position: absolute; right: -34px; top: -14px; padding: 3px 7px; border: 1px solid #f4bf45; border-radius: 999px; color: #fff2ae; background: linear-gradient(180deg, #604616, #261a06); box-shadow: 0 0 12px rgba(255, 193, 56, .45); font-size: 9px; font-style: normal; font-weight: 900; white-space: nowrap; }
+.full-board-badge[hidden] { display: none; }
+.multiplier-hud.has-full-board { border-color: rgba(255, 198, 70, .72); box-shadow: 0 0 18px rgba(255, 191, 51, .28); }
+.multiplier-hud.is-awarded .full-board-badge { color: #2b1700; background: linear-gradient(#fff3a9, #ffb92e); box-shadow: 0 0 6px #fff, 0 0 22px #ffc23d; animation: full-board-badge-win .42s ease-in-out 3 alternate; }
+.multiplier-hud.is-awarded strong { color: #fff2a4; text-shadow: 0 0 9px #ffbd36; }
+.multiplier-hud strong.is-boosted { animation: multiplier-boost .7s cubic-bezier(.18,.85,.25,1.2); }
+.full-board-banner { position: absolute; z-index: 8; top: 105px; left: 50%; transform: translateX(-50%); padding: 6px 14px; border: 1px solid #ffd867; border-radius: 999px; color: #fff2a8; background: rgba(46, 29, 4, .92); box-shadow: 0 0 22px rgba(255, 187, 44, .48); font-size: 14px; font-weight: 950; letter-spacing: .08em; white-space: nowrap; animation: full-board-banner-in .35s cubic-bezier(.2,.85,.25,1.2); }
+.full-board-banner[hidden] { display: none; }
 
 .camera { position: absolute; z-index: 1; top: 82px; width: 32px; height: 15px; border-radius: 4px 9px 9px 4px; background: #112b3e; border: 1px solid #1c5974; }
 .camera i { position: absolute; right: 3px; top: 3px; width: 8px; height: 8px; border-radius: 50%; background: #ff4662; box-shadow: 0 0 10px #ff264d; }
@@ -225,6 +233,8 @@ button { touch-action: manipulation; }
 .result-figures strong { display: block; min-width: 120px; padding: 0; color: #e1f9ff; background: transparent; line-height: 1.1; }
 .result-figures #resultPayout { color: #ffd66a; font-size: 50px; }
 .result-figures #resultMultiplier { font-size: 18px; font-weight: 700; color: #c5e8ed; }
+.result-full-board { margin-top: 3px; padding: 3px 9px; border: 1px solid #eebd4c; border-radius: 999px; color: #ffe897; background: rgba(75, 50, 8, .72); font-size: 11px; font-weight: 900; }
+.result-full-board[hidden] { display: none; }
 .result-card.is-fail .result-figures strong { color: #d7dde1; background: transparent; }
 .result-card.is-fail .result-figures #resultPayout { color: #d7dde1; }
 
@@ -255,6 +265,9 @@ button { touch-action: manipulation; }
 @keyframes diamond-glow { to { filter: drop-shadow(0 0 9px #d8ffff) drop-shadow(0 0 22px #885bff); } }
 @keyframes energy-ring { from { opacity: 1; transform: translate(-50%, -50%) scale(.1); } to { opacity: 0; transform: translate(-50%, -50%) scale(1.45); } }
 @keyframes energy-shard { from { opacity: 1; translate: 0 0; scale: .4; } to { opacity: 0; translate: var(--sx) var(--sy); scale: 1.1; } }
+@keyframes full-board-badge-win { to { transform: scale(1.12); filter: brightness(1.25); } }
+@keyframes multiplier-boost { from { transform: scale(.75); opacity: .45; } 55% { transform: scale(1.25); } }
+@keyframes full-board-banner-in { from { opacity: 0; transform: translate(-50%, 8px) scale(.82); } }
 
 @media (max-height: 720px) {
   .control-deck { padding-top: 9px; }
