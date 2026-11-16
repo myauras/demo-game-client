@@ -31,3 +31,15 @@ test("代表性路線的警戒率由 RTP 公式反推", () => {
     assert.ok(Math.abs(rtpParameters(difficulty, length).dangerChance - expected) < 1e-12);
   }
 });
+
+test("全盤路線將乘二獎勵納入 RTP 95% 而非額外疊加", () => {
+  for (const difficulty of Object.values(DIFFICULTIES)) {
+    const length = difficulty.size ** 2;
+    const events = length - 1;
+    const params = rtpParameters(difficulty, length);
+    const expected = 1 - (0.95 / (events * conditionalMean(difficulty) * 2)) ** (1 / events);
+    assert.equal(params.bonusFactor, 2);
+    assert.ok(Math.abs(params.dangerChance - expected) < 1e-12);
+    assert.ok(Math.abs(params.theoreticalRtp - 0.95) < 1e-12);
+  }
+});

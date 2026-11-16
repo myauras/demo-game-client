@@ -14,8 +14,8 @@ for (const difficulty of Object.values(DIFFICULTIES)) {
     let totalReturn = 0;
     let successes = 0;
     for (let trial = 0; trial < trials; trial += 1) {
-      const { events } = generateRoundEvents(difficulty, route, random);
-      const outcome = calculateOutcome(events, length, 1);
+      const { events, params } = generateRoundEvents(difficulty, route, random);
+      const outcome = calculateOutcome(events, length, 1, params.bonusFactor);
       totalReturn += outcome.payout;
       if (outcome.success) successes += 1;
     }

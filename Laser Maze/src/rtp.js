@@ -1,4 +1,4 @@
-import { TARGET_RTP, REWARD_TYPES } from "./config.js";
+import { TARGET_RTP, REWARD_TYPES } from "./config.js?v=20261116-full-board";
 
 export function conditionalMean(difficulty) {
   return REWARD_TYPES.reduce(
@@ -11,7 +11,8 @@ export function rtpParameters(difficulty, routeLength) {
   const events = routeLength - 1;
   if (events < 1) throw new Error("路線至少需要一個事件格");
   const mean = conditionalMean(difficulty);
-  const safeChance = (TARGET_RTP / (events * mean)) ** (1 / events);
+  const bonusFactor = routeLength === difficulty.size ** 2 ? 2 : 1;
+  const safeChance = (TARGET_RTP / (events * mean * bonusFactor)) ** (1 / events);
   const dangerChance = 1 - safeChance;
   if (dangerChance < 0 || dangerChance > 1) {
     throw new Error(
@@ -23,8 +24,9 @@ export function rtpParameters(difficulty, routeLength) {
     events,
     successRate,
     mean,
+    bonusFactor,
     dangerChance,
-    theoreticalRtp: successRate * events * mean
+    theoreticalRtp: successRate * events * mean * bonusFactor
   };
 }
 

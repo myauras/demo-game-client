@@ -54,3 +54,26 @@ test("重複結算不會再次支付", () => {
   assert.equal(second.balance, 970);
   assert.equal(second.changed, false);
 });
+
+test("全盤成功只套用一次乘二獎勵", () => {
+  const fullRoute = Array.from({ length: 9 }, (_, index) => ({
+    row: Math.floor(index / 3),
+    col: index % 3
+  }));
+  const events = Array.from({ length: 8 }, (_, index) => ({
+    type: "reward",
+    multiplier: 0.5,
+    routeIndex: index + 1
+  }));
+  const outcome = calculateOutcome(events, fullRoute.length, 100, 2);
+  assert.equal(outcome.baseMultiplier, 4);
+  assert.equal(outcome.multiplier, 8);
+  assert.equal(outcome.payout, 800);
+  assert.equal(outcome.fullBoardBonusApplied, true);
+
+  const settled = settleRound(0, { route: fullRoute, bet: 100, events, fullBoard: true, paid: false });
+  assert.equal(settled.balance, 800);
+  const repeated = settleRound(settled.balance, settled.round);
+  assert.equal(repeated.balance, 800);
+  assert.equal(repeated.changed, false);
+});

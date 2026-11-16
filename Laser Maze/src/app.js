@@ -4,23 +4,24 @@ import {
   DIFFICULTIES,
   formatMoney,
   formatMultiplier
-} from "./config.js";
-import { appendRouteNode, enumerateReachableLengths, isAdjacent, routeStatus } from "./route.js";
-import { validateReachableLengths } from "./rtp.js";
+} from "./config.js?v=20261116-full-board";
+import { appendRouteNode, enumerateReachableLengths, isAdjacent, routeStatus } from "./route.js?v=20261116-full-board";
+import { validateReachableLengths } from "./rtp.js?v=20261116-full-board";
 import {
   calculateOutcome,
   createRound,
   createSeededRandom,
   generateRoundEvents,
   settleRound
-} from "./engine.js";
-import { loadStore, saveStore } from "./storage.js";
+} from "./engine.js?v=20261116-full-board";
+import { loadStore, saveStore } from "./storage.js?v=20261116-full-board";
 
 const elements = Object.fromEntries([
-  "scene", "balanceDisplay", "balancePlus", "sceneMultiplier", "boardWrap", "board",
+  "scene", "balanceDisplay", "balancePlus", "multiplierHud", "sceneMultiplier",
+  "fullBoardBadge", "fullBoardBanner", "boardWrap", "board",
   "routeGlowLine", "routeLine", "previewLine", "agent", "eventBubble", "difficultySelect",
   "betMinus", "betPlus", "betInput", "resetButton", "confirmButton", "resultModal", "resultMark",
-  "resultTitle", "resultMultiplier", "resultPayout", "toast"
+  "resultTitle", "resultMultiplier", "resultPayout", "resultFullBoard", "toast"
 ].map((id) => [id, document.getElementById(id)]));
 
 const speedModes = [
@@ -37,6 +38,8 @@ const state = {
   cumulativeMultiplier: 0,
   currentIndex: -1,
   dangerIndex: -1,
+  fullBoardFailed: false,
+  fullBoardAwarded: false,
   speedIndex: 0,
   dragging: false,
   lastDragKey: "",
@@ -129,14 +132,23 @@ function currentRouteStatus() {
   return routeStatus(state.route, difficulty().size);
 }
 
+function isFullBoardRoute() {
+  const config = difficulty();
+  return state.route.length === config.size ** 2 && currentRouteStatus().ready;
+}
+
 function renderControls() {
   const status = currentRouteStatus();
   const running = state.phase === "RUNNING";
   const betIsValid = validBet();
   const bet = Number(elements.betInput.value);
+  const showFullBoard = isFullBoardRoute() && !state.fullBoardFailed;
   elements.balanceDisplay.textContent = formatMoney(store.balance);
   elements.balancePlus.disabled = running;
   elements.sceneMultiplier.textContent = formatMultiplier(state.cumulativeMultiplier);
+  elements.fullBoardBadge.hidden = !showFullBoard;
+  elements.multiplierHud.classList.toggle("has-full-board", showFullBoard);
+  elements.multiplierHud.classList.toggle("is-awarded", showFullBoard && state.fullBoardAwarded);
   elements.betInput.classList.toggle("is-invalid", !betIsValid);
   elements.betInput.disabled = running;
   elements.betMinus.disabled = running || !Number.isFinite(bet) || bet <= 1;
@@ -158,6 +170,8 @@ function selectDifficulty(id) {
   state.route = [];
   state.currentIndex = -1;
   state.dangerIndex = -1;
+  state.fullBoardFailed = false;
+  state.fullBoardAwarded = false;
   state.cumulativeMultiplier = 0;
   state.phase = "IDLE";
   hideEventBubble();
@@ -287,8 +301,12 @@ async function runRound(round) {
   state.phase = "RUNNING";
   state.currentIndex = 0;
   state.dangerIndex = -1;
+  state.fullBoardFailed = false;
+  state.fullBoardAwarded = false;
   state.cumulativeMultiplier = 0;
   elements.resultModal.hidden = true;
+  elements.fullBoardBanner.hidden = true;
+  elements.sceneMultiplier.classList.remove("is-boosted");
   renderAll();
   await delay(250);
 
@@ -302,6 +320,7 @@ async function runRound(round) {
     if (event.type === "reward") state.cumulativeMultiplier += event.multiplier;
     if (event.type === "danger") {
       state.dangerIndex = event.routeIndex;
+      state.fullBoardFailed = true;
       state.cumulativeMultiplier = 0;
       elements.scene.classList.add("is-alert");
     }
@@ -328,13 +347,33 @@ async function finishRound(round) {
     store.activeRound = null;
     saveStore(store);
   }
-  const outcome = settlement.round.outcome || calculateOutcome(round.events, round.route.length, round.bet);
+  const outcome = settlement.round.outcome || calculateOutcome(
+    round.events,
+    round.route.length,
+    round.bet,
+    round.fullBoard ? 2 : 1
+  );
+  const fullBoardWin = outcome.success && outcome.fullBoardBonusApplied;
   state.phase = "SETTLED";
-  state.cumulativeMultiplier = outcome.multiplier;
+  state.cumulativeMultiplier = fullBoardWin ? outcome.baseMultiplier : outcome.multiplier;
   elements.scene.classList.remove("is-alert");
   renderBoard();
   renderControls();
-  await delay(outcome.success ? 500 : 180);
+  if (fullBoardWin) {
+    await delay(260);
+    state.fullBoardAwarded = true;
+    state.cumulativeMultiplier = outcome.multiplier;
+    elements.fullBoardBanner.hidden = false;
+    elements.sceneMultiplier.classList.remove("is-boosted");
+    void elements.sceneMultiplier.offsetWidth;
+    elements.sceneMultiplier.classList.add("is-boosted");
+    renderControls();
+    await delay(920);
+    elements.fullBoardBanner.hidden = true;
+    await delay(220);
+  } else {
+    await delay(outcome.success ? 500 : 180);
+  }
   showResult(outcome);
 }
 
@@ -342,9 +381,14 @@ function showResult(outcome) {
   const card = elements.resultModal.querySelector(".result-card");
   card.classList.toggle("is-fail", !outcome.success);
   elements.resultMark.textContent = outcome.success ? "✓" : "!";
-  elements.resultTitle.textContent = outcome.success ? "潛入成功" : "再接再厲!";
-  elements.resultMultiplier.textContent = formatMultiplier(outcome.multiplier);
+  elements.resultTitle.textContent = outcome.fullBoardBonusApplied
+    ? "全盤潛入成功"
+    : outcome.success ? "潛入成功" : "再接再厲!";
+  elements.resultMultiplier.textContent = outcome.fullBoardBonusApplied
+    ? `${formatMultiplier(outcome.baseMultiplier)} → ${formatMultiplier(outcome.multiplier)}`
+    : formatMultiplier(outcome.multiplier);
   elements.resultPayout.textContent = formatMoney(outcome.payout);
+  elements.resultFullBoard.hidden = !outcome.fullBoardBonusApplied;
   elements.resultModal.hidden = false;
   clearTimeout(state.resultTimer);
   state.resultTimer = setTimeout(playAgain, 2500);
@@ -364,12 +408,14 @@ function confirmRound() {
   }
   const random = createSeededRandom(seed);
   const { events } = generateRoundEvents(difficulty(), state.route, random);
+  const fullBoard = isFullBoardRoute();
   const round = createRound({
     difficultyId: state.difficultyId,
     route: state.route.map((node) => ({ ...node })),
     bet,
     events,
-    seed
+    seed,
+    fullBoard
   });
   store.balance -= bet;
   store.activeRound = round;
@@ -386,7 +432,11 @@ function playAgain() {
   state.phase = "IDLE";
   state.currentIndex = -1;
   state.dangerIndex = -1;
+  state.fullBoardFailed = false;
+  state.fullBoardAwarded = false;
   state.cumulativeMultiplier = 0;
+  elements.fullBoardBanner.hidden = true;
+  elements.sceneMultiplier.classList.remove("is-boosted");
   hideEventBubble();
   renderAll();
 }
@@ -460,6 +510,8 @@ elements.resetButton.addEventListener("click", () => {
   state.route = [];
   state.currentIndex = -1;
   state.dangerIndex = -1;
+  state.fullBoardFailed = false;
+  state.fullBoardAwarded = false;
   state.cumulativeMultiplier = 0;
   state.phase = "IDLE";
   hideEventBubble();
@@ -475,10 +527,18 @@ try {
 
 if (store.activeRound && !store.activeRound.paid) {
   let round = store.activeRound;
-  if (round.events.some((event) => event.type === "safe")) {
+  const config = DIFFICULTIES[round.difficultyId];
+  const fullBoard = round.route.length === config.size ** 2;
+  const needsRegeneration = round.events.some((event) => event.type === "safe")
+    || (fullBoard && round.fullBoard !== true);
+  if (needsRegeneration) {
     const random = createSeededRandom(round.seed);
-    const { events } = generateRoundEvents(DIFFICULTIES[round.difficultyId], round.route, random);
-    round = { ...round, events };
+    const { events } = generateRoundEvents(config, round.route, random);
+    round = { ...round, events, fullBoard };
+    store.activeRound = round;
+    saveStore(store);
+  } else if (round.fullBoard !== fullBoard) {
+    round = { ...round, fullBoard };
     store.activeRound = round;
     saveStore(store);
   }
