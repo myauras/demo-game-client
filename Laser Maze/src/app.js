@@ -146,9 +146,13 @@ function renderControls() {
   const showFullBoard = isFullBoardRoute() && !state.fullBoardFailed;
   elements.balanceDisplay.textContent = formatMoney(store.balance);
   elements.balancePlus.disabled = running;
-  elements.testModeToggle.disabled = running;
+  elements.testModeToggle.disabled = state.phase !== "IDLE";
   elements.testModeToggle.classList.toggle("is-active", state.testMode);
   elements.testModeToggle.setAttribute("aria-pressed", String(state.testMode));
+  elements.testModeToggle.setAttribute("aria-label", state.testMode
+    ? "關閉不失敗測試模式"
+    : "啟用不失敗測試模式");
+  elements.testModeToggle.title = state.testMode ? "關閉測試模式" : "測試模式";
   elements.sceneMultiplier.textContent = formatMultiplier(state.cumulativeMultiplier);
   elements.fullBoardBadge.hidden = !showFullBoard;
   elements.multiplierHud.classList.toggle("has-full-board", showFullBoard);
@@ -358,6 +362,7 @@ async function finishRound(round) {
   );
   const fullBoardWin = outcome.success && outcome.fullBoardBonusApplied;
   state.phase = "SETTLED";
+  state.testMode = false;
   state.cumulativeMultiplier = fullBoardWin ? outcome.baseMultiplier : outcome.multiplier;
   elements.scene.classList.remove("is-alert");
   renderBoard();
@@ -462,10 +467,10 @@ function validateMathAtStartup() {
 elements.difficultySelect.addEventListener("change", (event) => selectDifficulty(event.target.value));
 
 elements.testModeToggle.addEventListener("click", () => {
-  if (state.phase === "RUNNING" || state.testMode) return;
-  state.testMode = true;
+  if (state.phase !== "IDLE") return;
+  state.testMode = !state.testMode;
   renderControls();
-  showToast("不失敗測試模式已啟用");
+  showToast(state.testMode ? "不失敗測試模式已啟用" : "不失敗測試模式已關閉");
 });
 
 elements.board.addEventListener("pointerdown", (event) => {
