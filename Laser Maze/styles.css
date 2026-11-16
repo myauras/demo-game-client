@@ -101,11 +101,6 @@ button { touch-action: manipulation; }
 .camera--left { left: 13%; transform: rotate(8deg); }
 .camera--right { right: 13%; transform: scaleX(-1) rotate(8deg); }
 
-.guard { position: absolute; z-index: 0; top: 104px; width: 18px; height: 39px; border-radius: 10px 10px 4px 4px; background: #020814; opacity: .86; box-shadow: 0 0 22px rgba(26, 130, 255, .35); }
-.guard::before { content: ""; position: absolute; left: 4px; top: -10px; width: 11px; height: 12px; border-radius: 50%; background: #020814; }
-.guard--left { left: 21%; }
-.guard--right { right: 21%; }
-
 .laser { position: absolute; z-index: 0; top: 105px; bottom: 5px; width: 1px; background: rgba(255, 61, 91, .35); box-shadow: 0 0 6px #ff274e; opacity: .48; }
 .laser--one { left: 10%; }
 .laser--two { left: 50%; }
