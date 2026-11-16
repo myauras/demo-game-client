@@ -31,6 +31,13 @@ test("警戒立即停止並支付 0", () => {
   assert.deepEqual(calculateOutcome(events, route.length, 100).payout, 0);
 });
 
+test("不失敗測試模式會跳過警戒並走完整條路線", () => {
+  const { events } = generateRoundEvents(DIFFICULTIES.normal, route, () => 0, true);
+  assert.equal(events.length, route.length - 1);
+  assert.ok(events.every((event) => event.type === "reward"));
+  assert.equal(calculateOutcome(events, route.length, 100).success, true);
+});
+
 test("固定 seed 可重現相同事件", () => {
   const first = generateRoundEvents(DIFFICULTIES.normal, route, createSeededRandom(20261113));
   const second = generateRoundEvents(DIFFICULTIES.normal, route, createSeededRandom(20261113));

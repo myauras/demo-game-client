@@ -6,11 +6,12 @@
   <meta name="theme-color" content="#071529">
   <meta name="description" content="雷射潛入 H5 遊戲 Demo">
   <title>雷射潛入｜H5 Demo</title>
-  <link rel="stylesheet" href="styles.css?v=20261116-full-board">
+  <link rel="stylesheet" href="styles.css?v=20261116-test-mode">
 </head>
 <body>
   <main class="game-shell" aria-label="雷射潛入遊戲">
     <section class="scene" id="scene" aria-label="潛入路線盤面">
+      <button type="button" class="test-mode-toggle" id="testModeToggle" aria-label="啟用不失敗測試模式" aria-pressed="false" title="測試模式"></button>
       <div class="scene-grid" aria-hidden="true"></div>
       <div class="glass-wall glass-wall--left" aria-hidden="true"></div>
       <div class="glass-wall glass-wall--right" aria-hidden="true"></div>
@@ -95,6 +96,6 @@
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script type="module" src="src/app.js?v=20261116-full-board-title"></script>
+  <script type="module" src="src/app.js?v=20261116-test-mode"></script>
 </body>
 </html>
