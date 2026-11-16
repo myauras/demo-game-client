@@ -382,7 +382,7 @@ function showResult(outcome) {
   card.classList.toggle("is-fail", !outcome.success);
   elements.resultMark.textContent = outcome.success ? "✓" : "!";
   elements.resultTitle.textContent = outcome.fullBoardBonusApplied
-    ? "全盤潛入成功"
+    ? "全盤贏得"
     : outcome.success ? "贏得" : "再接再厲!";
   elements.resultMultiplier.textContent = outcome.fullBoardBonusApplied
     ? `${formatMultiplier(outcome.baseMultiplier)} → ${formatMultiplier(outcome.multiplier)}`
