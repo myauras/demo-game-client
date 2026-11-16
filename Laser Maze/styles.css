@@ -106,8 +106,6 @@ button { touch-action: manipulation; }
 .multiplier-hud.is-awarded .full-board-badge { color: #2b1700; background: linear-gradient(#fff3a9, #ffb92e); box-shadow: 0 0 6px #fff, 0 0 22px #ffc23d; animation: full-board-badge-win .42s ease-in-out 3 alternate; }
 .multiplier-hud.is-awarded strong { color: #fff2a4; text-shadow: 0 0 9px #ffbd36; }
 .multiplier-hud strong.is-boosted { animation: multiplier-boost .7s cubic-bezier(.18,.85,.25,1.2); }
-.full-board-banner { position: absolute; z-index: 8; top: 105px; left: 50%; transform: translateX(-50%); padding: 6px 14px; border: 1px solid #ffd867; border-radius: 999px; color: #fff2a8; background: rgba(46, 29, 4, .92); box-shadow: 0 0 22px rgba(255, 187, 44, .48); font-size: 14px; font-weight: 950; letter-spacing: .08em; white-space: nowrap; animation: full-board-banner-in .35s cubic-bezier(.2,.85,.25,1.2); }
-.full-board-banner[hidden] { display: none; }
 
 .camera { position: absolute; z-index: 1; top: 82px; width: 32px; height: 15px; border-radius: 4px 9px 9px 4px; background: #112b3e; border: 1px solid #1c5974; }
 .camera i { position: absolute; right: 3px; top: 3px; width: 8px; height: 8px; border-radius: 50%; background: #ff4662; box-shadow: 0 0 10px #ff264d; }
@@ -228,7 +226,7 @@ button { touch-action: manipulation; }
 
 .result-modal { position: fixed; z-index: 40; inset: 0; display: grid; place-items: center; padding: 22px; background: rgba(0, 5, 11, .8); backdrop-filter: blur(7px); }
 .result-modal[hidden] { display: none; }
-.result-card { width: min(100%, 320px); min-height: 218px; padding: 25px 20px 22px; border-radius: 18px; text-align: center; background: linear-gradient(180deg, #102d45, #06121f 70%); border: 1px solid #32d9e7; box-shadow: 0 0 36px rgba(50, 221, 238, .18); animation: modal-in .3s ease-out; }
+.result-card { position: relative; width: min(100%, 320px); min-height: 218px; padding: 25px 20px 22px; border-radius: 18px; text-align: center; background: linear-gradient(180deg, #102d45, #06121f 70%); border: 1px solid #32d9e7; box-shadow: 0 0 36px rgba(50, 221, 238, .18); animation: modal-in .3s ease-out; }
 .result-card.is-fail { width: min(100%, 230px); min-height: 0; padding: 28px 22px; background: linear-gradient(180deg, #2b333b, #11171d 72%); border-color: #8e9aa4; box-shadow: 0 0 36px rgba(157, 169, 179, .18); }
 .result-mark { width: 66px; height: 66px; margin: -54px auto 10px; display: grid; place-items: center; border-radius: 50%; color: #092635; background: #6cf6ff; border: 5px solid #0a1e2c; box-shadow: 0 0 22px #34e2f3; font-size: 30px; font-weight: 900; }
 .result-card.is-fail .result-mark { color: #20272d; background: #aeb7be; border-color: #171d22; box-shadow: 0 0 22px rgba(182, 193, 202, .55); }
@@ -239,8 +237,9 @@ button { touch-action: manipulation; }
 .result-figures strong { display: block; min-width: 120px; padding: 0; color: #e1f9ff; background: transparent; line-height: 1.1; }
 .result-figures #resultPayout { color: #ffd66a; font-size: 50px; }
 .result-figures #resultMultiplier { font-size: 18px; font-weight: 700; color: #c5e8ed; }
-.result-full-board { margin-top: 3px; padding: 3px 9px; border: 1px solid #eebd4c; border-radius: 999px; color: #ffe897; background: rgba(75, 50, 8, .72); font-size: 11px; font-weight: 900; }
+.result-full-board { position: absolute; top: 12px; right: 12px; padding: 3px 9px; border: 1px solid rgba(238, 189, 76, .72); border-radius: 999px; color: #ffe897; background: rgba(75, 50, 8, .68); box-shadow: 0 0 10px rgba(255, 197, 74, .16); font-size: 10px; font-weight: 900; letter-spacing: .03em; }
 .result-full-board[hidden] { display: none; }
+.result-card.is-fail .result-full-board { display: none; }
 .result-card.is-fail .result-figures strong { color: #d7dde1; background: transparent; }
 .result-card.is-fail .result-figures #resultPayout { color: #d7dde1; }
 
@@ -273,7 +272,6 @@ button { touch-action: manipulation; }
 @keyframes energy-shard { from { opacity: 1; translate: 0 0; scale: .4; } to { opacity: 0; translate: var(--sx) var(--sy); scale: 1.1; } }
 @keyframes full-board-badge-win { to { transform: scale(1.12); filter: brightness(1.25); } }
 @keyframes multiplier-boost { from { transform: scale(.75); opacity: .45; } 55% { transform: scale(1.25); } }
-@keyframes full-board-banner-in { from { opacity: 0; transform: translate(-50%, 8px) scale(.82); } }
 
 @media (max-height: 720px) {
   .control-deck { padding-top: 9px; }

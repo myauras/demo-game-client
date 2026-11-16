@@ -18,7 +18,7 @@ import { loadStore, saveStore } from "./storage.js?v=20261116-full-board";
 
 const elements = Object.fromEntries([
   "scene", "testModeToggle", "balanceDisplay", "balancePlus", "multiplierHud", "sceneMultiplier",
-  "fullBoardBadge", "fullBoardBanner", "boardWrap", "board",
+  "fullBoardBadge", "boardWrap", "board",
   "routeGlowLine", "routeLine", "previewLine", "agent", "eventBubble", "difficultySelect",
   "betMinus", "betPlus", "betInput", "resetButton", "confirmButton", "resultModal", "resultMark",
   "resultTitle", "resultMultiplier", "resultPayout", "resultFullBoard", "toast"
@@ -309,7 +309,6 @@ async function runRound(round) {
   state.fullBoardAwarded = false;
   state.cumulativeMultiplier = 0;
   elements.resultModal.hidden = true;
-  elements.fullBoardBanner.hidden = true;
   elements.sceneMultiplier.classList.remove("is-boosted");
   renderAll();
   await delay(250);
@@ -367,13 +366,11 @@ async function finishRound(round) {
     await delay(260);
     state.fullBoardAwarded = true;
     state.cumulativeMultiplier = outcome.multiplier;
-    elements.fullBoardBanner.hidden = false;
     elements.sceneMultiplier.classList.remove("is-boosted");
     void elements.sceneMultiplier.offsetWidth;
     elements.sceneMultiplier.classList.add("is-boosted");
     renderControls();
     await delay(920);
-    elements.fullBoardBanner.hidden = true;
     await delay(220);
   } else {
     await delay(outcome.success ? 500 : 180);
@@ -439,7 +436,6 @@ function playAgain() {
   state.fullBoardFailed = false;
   state.fullBoardAwarded = false;
   state.cumulativeMultiplier = 0;
-  elements.fullBoardBanner.hidden = true;
   elements.sceneMultiplier.classList.remove("is-boosted");
   hideEventBubble();
   renderAll();
