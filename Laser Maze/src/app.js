@@ -383,7 +383,7 @@ function showResult(outcome) {
   elements.resultMark.textContent = outcome.success ? "✓" : "!";
   elements.resultTitle.textContent = outcome.fullBoardBonusApplied
     ? "全盤潛入成功"
-    : outcome.success ? "潛入成功" : "再接再厲!";
+    : outcome.success ? "贏得" : "再接再厲!";
   elements.resultMultiplier.textContent = outcome.fullBoardBonusApplied
     ? `${formatMultiplier(outcome.baseMultiplier)} → ${formatMultiplier(outcome.multiplier)}`
     : formatMultiplier(outcome.multiplier);
