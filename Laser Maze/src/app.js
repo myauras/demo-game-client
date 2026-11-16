@@ -18,7 +18,7 @@ import { loadStore, saveStore } from "./storage.js?v=20261116-full-board";
 
 const elements = Object.fromEntries([
   "scene", "testModeToggle", "balanceDisplay", "balancePlus", "multiplierHud", "sceneMultiplier",
-  "fullBoardBadge", "boardWrap", "board",
+  "fullBoardBadge", "fullBoardConfetti", "boardWrap", "board",
   "routeGlowLine", "routeLine", "previewLine", "agent", "eventBubble", "difficultySelect",
   "betMinus", "betPlus", "betInput", "resetButton", "confirmButton", "resultModal", "resultMark",
   "resultTitle", "resultMultiplier", "resultPayout", "resultFullBoard", "toast"
@@ -304,6 +304,31 @@ function delay(baseMilliseconds) {
   ));
 }
 
+function stopFullBoardParticles() {
+  elements.fullBoardConfetti.classList.remove("is-active");
+  elements.fullBoardConfetti.replaceChildren();
+}
+
+function startFullBoardParticles() {
+  stopFullBoardParticles();
+  const fragment = document.createDocumentFragment();
+  const particleCount = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 12 : 40;
+  for (let index = 0; index < particleCount; index += 1) {
+    const particle = document.createElement("i");
+    particle.className = `gold-confetti${index % 3 === 0 ? " is-round" : ""}`;
+    particle.style.setProperty("--x", `${3 + Math.random() * 94}%`);
+    particle.style.setProperty("--size", `${3 + Math.random() * 5}px`);
+    particle.style.setProperty("--delay", `${Math.random() * 0.42}s`);
+    particle.style.setProperty("--duration", `${1.05 + Math.random() * 0.58}s`);
+    particle.style.setProperty("--drift", `${-34 + Math.random() * 68}px`);
+    particle.style.setProperty("--rotate", `${240 + Math.random() * 620}deg`);
+    fragment.append(particle);
+  }
+  elements.fullBoardConfetti.append(fragment);
+  void elements.fullBoardConfetti.offsetWidth;
+  elements.fullBoardConfetti.classList.add("is-active");
+}
+
 async function runRound(round) {
   if (state.phase === "RUNNING" && state.currentIndex >= 0) return;
   state.phase = "RUNNING";
@@ -313,6 +338,7 @@ async function runRound(round) {
   state.fullBoardAwarded = false;
   state.cumulativeMultiplier = 0;
   elements.resultModal.hidden = true;
+  stopFullBoardParticles();
   elements.sceneMultiplier.classList.remove("is-boosted");
   renderAll();
   await delay(250);
@@ -375,8 +401,10 @@ async function finishRound(round) {
     void elements.sceneMultiplier.offsetWidth;
     elements.sceneMultiplier.classList.add("is-boosted");
     renderControls();
-    await delay(920);
-    await delay(220);
+    startFullBoardParticles();
+    await delay(1450);
+    stopFullBoardParticles();
+    await delay(180);
   } else {
     await delay(outcome.success ? 500 : 180);
   }
@@ -442,6 +470,7 @@ function playAgain() {
   state.fullBoardAwarded = false;
   state.cumulativeMultiplier = 0;
   elements.sceneMultiplier.classList.remove("is-boosted");
+  stopFullBoardParticles();
   hideEventBubble();
   renderAll();
 }
