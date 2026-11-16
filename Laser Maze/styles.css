@@ -237,7 +237,7 @@ button { touch-action: manipulation; }
 .result-figures strong { display: block; min-width: 120px; padding: 0; color: #e1f9ff; background: transparent; line-height: 1.1; }
 .result-figures #resultPayout { color: #ffd66a; font-size: 50px; }
 .result-figures #resultMultiplier { font-size: 18px; font-weight: 700; color: #c5e8ed; }
-.result-full-board { position: absolute; top: 12px; right: 12px; padding: 3px 9px; border: 1px solid rgba(238, 189, 76, .72); border-radius: 999px; color: #ffe897; background: rgba(75, 50, 8, .68); box-shadow: 0 0 10px rgba(255, 197, 74, .16); font-size: 10px; font-weight: 900; letter-spacing: .03em; }
+.result-full-board { position: absolute; z-index: 3; top: -7px; right: -27px; min-width: 118px; padding: 8px 15px; border: 2px solid #b98a2e; border-radius: 999px; color: #ffe9a2; background: linear-gradient(180deg, #604817, #2b210d 72%); box-shadow: inset 0 1px rgba(255, 241, 168, .3), 0 3px 5px rgba(0, 0, 0, .48), 0 0 9px rgba(255, 190, 54, .25); font-size: 15px; font-weight: 950; letter-spacing: .05em; line-height: 1.15; white-space: nowrap; transform: rotate(18deg); transform-origin: center; }
 .result-full-board[hidden] { display: none; }
 .result-card.is-fail .result-full-board { display: none; }
 .result-card.is-fail .result-figures strong { color: #d7dde1; background: transparent; }
