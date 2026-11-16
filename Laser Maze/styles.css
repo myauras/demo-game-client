@@ -108,7 +108,7 @@ button { touch-action: manipulation; }
 .scene.is-alert .laser { width: 2px; opacity: 1; box-shadow: 0 0 5px #fff, 0 0 18px #ff1d45, 0 0 32px #ff1d45; animation: laser-alarm .18s steps(2) infinite; }
 .scene.is-alert { animation: scene-alarm .24s steps(2) 4; }
 
-.board-wrap { position: absolute; z-index: 4; left: 50%; top: 120px; width: min(80vw, 330px); height: calc(var(--scene-height) - 128px); min-height: 250px; max-height: 350px; transform: translateX(-50%); touch-action: none; }
+.board-wrap { position: absolute; z-index: 4; left: 50%; top: 160px; width: min(80vw, 330px); height: calc(var(--scene-height) - 168px); min-height: 250px; max-height: 350px; transform: translateX(-50%); touch-action: none; }
 .board { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(var(--size), 1fr); grid-template-rows: repeat(var(--size), 1fr); align-items: center; justify-items: center; }
 .route-layer { position: absolute; z-index: 2; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 .route-line { fill: none; stroke: #fff1fc; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
