@@ -414,6 +414,7 @@ async function finishRound(round) {
 function showResult(outcome) {
   const card = elements.resultModal.querySelector(".result-card");
   card.classList.toggle("is-fail", !outcome.success);
+  card.classList.toggle("is-full-board", outcome.success && outcome.fullBoardBonusApplied);
   elements.resultMark.textContent = outcome.success ? "✓" : "!";
   elements.resultTitle.textContent = outcome.fullBoardBonusApplied
     ? "全盤贏得"
