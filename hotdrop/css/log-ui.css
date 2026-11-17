@@ -1,0 +1,78 @@
+/* =========================================================================
+ * 空投爭奪——勝負 log 頁樣式（z-index 36；疊層順序表見 base.css）
+ * 動畫只動 transform；內容區零原生捲軸（滾動由 DragScroll 處理）
+ * ========================================================================= */
+.lgm{position:absolute;inset:0;z-index:36;background:var(--appbg);display:flex;flex-direction:column;
+  opacity:0;visibility:hidden;transform:scale(.97);
+  transition:opacity .22s linear,transform .22s ease-out,visibility 0s linear .22s}
+.lgm.show{opacity:1;visibility:visible;transform:none;transition:opacity .22s linear,transform .22s ease-out}
+.lgh{flex:none;display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--sheetbg);border-bottom:1px solid var(--line)}
+.lgh b{flex:1;min-width:0;font-size:15px;color:var(--gold);letter-spacing:.06em;text-align:center}
+.lgh button{border:1px solid var(--edge);background:var(--chip);color:var(--fg);border-radius:6px;font-size:13px;padding:3px 9px;line-height:1.3}
+.lgh button.hid{visibility:hidden}
+.lgb{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.lgf{flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;
+  background:var(--sheetbg);border-top:1px solid var(--line);font-size:11.5px;color:var(--mute)}
+.lgf .lgfr{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.lgf .lgextra{display:contents}
+.lgf button{border:1px solid var(--edge);background:var(--chip);color:var(--mute);border-radius:6px;font-size:11.5px;padding:3px 9px;line-height:1.3}
+.lgf button.warnb{border-color:var(--lose);color:var(--lose)}
+.lgf button.okb{border-color:var(--win);color:var(--win)}
+.lrowi{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:11px 14px;border-bottom:1px solid var(--line2);font-variant-numeric:tabular-nums}
+.lrowi:active{background:var(--chip)}
+.lrowi .lt{color:var(--mute);font-size:12px}
+.lrowi .lv{font-size:15px;font-weight:700;text-align:right}
+.gold{color:var(--gold)}.grey{color:var(--grey)}   /* 輸額灰字：#8FA6C4，在 #0A1626 上對比 7.3:1（≥ 4.5:1） */
+.lempty{padding:40px 16px;text-align:center;color:var(--mute);font-size:12.5px}
+.ldh{padding:14px;border-bottom:1px solid var(--line);font-size:12.5px;line-height:1.8}
+.ldh .big{font-size:26px;font-weight:900;font-variant-numeric:tabular-nums;margin-bottom:4px}
+.ldh .kv{display:flex;justify-content:space-between;gap:12px;color:var(--mute)}
+.ldh .kv span:last-child{color:var(--fg);font-variant-numeric:tabular-nums;text-align:right;min-width:0;word-break:break-all}
+.ldh .oid{font-size:11px}
+.lrep{padding:14px;text-align:center}
+.lrep .lreport{min-width:96px;padding:7px 18px;border-radius:7px;border:1px solid var(--gold);
+  background:transparent;color:var(--gold);font-size:13px;line-height:1.3}
+.lrep .lreport:disabled{border-color:var(--edge);color:var(--grey)}
+/* 詳細頁「落點」列名前的小圓點（落點色 --rc0～--rc3，定義在 base.css :root） */
+.ldh .ptd{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:baseline}
+.ldh .pd0{background:var(--rc0)}.ldh .pd1{background:var(--rc1)}.ldh .pd2{background:var(--rc2)}.ldh .pd3{background:var(--rc3)}
+
+/* ---------- 詳細頁圖解（R2-1）：主畫面縮小版的無互動小地圖＋結論行；無動畫、不可點；色用 :root 變數 ---------- */
+.lfg{padding:10px 14px 0;pointer-events:none}
+.lfm{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.lfm::before{content:"";display:block;padding-top:114.67%}          /* 430／375：與 SVG 視窗同比例，落點用百分比定位 */
+.lfs,.gzs{position:absolute;left:0;top:0;width:100%;height:100%}
+.gz{position:absolute;width:0;height:0}
+.gzp{position:absolute;left:-34px;top:-34px;width:68px;height:68px;border-radius:50%;border:3px solid var(--c);
+  background:radial-gradient(circle,rgba(var(--r),.16) 0,rgba(var(--r),.42) 100%);box-shadow:0 0 0 5px rgba(var(--r),.2)}
+.gzp::after{content:"";position:absolute;inset:-9px;border-radius:50%;border:2px dashed rgba(var(--r),.7)}
+.gzi{position:absolute;left:0;top:0;width:100%;height:100%;display:grid;place-items:center;font-size:26px;line-height:1}
+.gz.solo .gzi,.gz.clash .gzi{opacity:.25}
+.gzv{position:absolute;left:0;top:0;width:100%;height:100%;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:2px;padding:3px}
+.gzf{width:24px;height:24px;border-radius:50%;background:var(--chip);border:2px solid var(--fg);display:grid;place-items:center;
+  font-style:normal;font-size:13px;line-height:1}
+.gzf.you{background:var(--fg);color:var(--appbg);border-color:var(--gold);font-size:11px;font-weight:900;white-space:nowrap;overflow:hidden;padding:0}
+.gzb{position:absolute;right:-12px;top:-12px;font-size:22px;line-height:1;z-index:2}
+/* 獨佔＝亮起（你的獨佔改金環）；撞車＝紅圈＋💥；沒人＝虛線淡化 */
+.gz.solo .gzp{box-shadow:0 0 0 5px rgba(var(--r),.55),0 0 0 10px rgba(var(--r),.2)}
+.gz.solo.mine .gzp{box-shadow:0 0 0 5px var(--gold),0 0 0 10px rgba(var(--r),.2)}
+.gz.clash .gzp{border-color:var(--lose);box-shadow:0 0 0 5px var(--lose-bg)}
+.gz.emp{opacity:.55}
+.gz.emp .gzp{border-style:dashed;background:rgba(var(--r),.06);box-shadow:none}
+.gz.emp .gzp::after{display:none}
+/* 你選的點：白色虛線外環＋頂上「你選這裡」 */
+.gz.mine .gzp::after{inset:-13px;border:2px dashed var(--fg)}
+.gzm{position:absolute;left:-60px;width:120px;top:-60px;display:flex;justify-content:center;z-index:2}
+.gzm span{background:var(--fg);color:var(--appbg);border-radius:12px;padding:1px 8px;font-size:11px;font-weight:900;line-height:1.4;
+  max-width:100%;text-align:center;overflow-wrap:anywhere}
+.gzt{position:absolute;left:-85px;width:170px;top:46px;display:flex;justify-content:center}
+.gzg{width:max-content;max-width:150px;background:var(--appbg);border:2px solid var(--c);border-radius:10px;padding:2px 7px 3px 5px}
+.gl1{display:flex;align-items:center;gap:5px}
+.gbd{flex:none;min-width:20px;height:20px;border-radius:6px;background:var(--c);color:var(--appbg);font-size:12px;font-weight:900;
+  display:grid;place-items:center;padding:0 3px}
+.god{font-size:19px;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--fg);min-width:0;overflow-wrap:anywhere}
+.gwho{font-size:11px;line-height:1.3;font-weight:700;overflow-wrap:anywhere}
+.gwho.ow{color:var(--gold)}.gwho.ok{color:var(--win)}.gwho.no{color:var(--lose)}.gwho.em{color:var(--mute);font-weight:400}
+.lfc{padding:10px 4px 2px;text-align:center;font-size:19px;font-weight:900;line-height:1.3;overflow-wrap:anywhere}
+.lfc.ok{color:var(--gold)}.lfc.no{color:var(--lose)}

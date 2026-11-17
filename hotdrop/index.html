@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0A1626">
+<title>空投爭奪</title>
+<!-- 樣式：base 最先（變數與疊層表），其餘模組樣式在後 -->
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/log-ui.css">
+<link rel="stylesheet" href="css/autobet.css">
+<link rel="stylesheet" href="css/onboard.css">
+<link rel="stylesheet" href="css/recent.css">
+</head>
+<body>
+<!--
+  script 載入順序（固定，不可調換）：
+    values.js        數值單點（EV、DEMO_KEY）
+    js/env.js        DEMO 命名空間、網址參數、DEMO.ls 存檔 helper、?vw=
+    js/strings.js    字典＋t()＋data-t 自動填骨架字（其餘 UI 檔取字時字典要先在）
+    js/toast.js      Toast（無依賴小元件）
+    js/core.js       零 DOM 核心 DemoCore（盤面公告／下注契約／存檔）
+    js/drag-scroll.js 拖曳滾動（log 頁、彈窗內容區用）
+    js/log-ui.js     勝負 log 頁（不認識玩法，吃 LogUI.push(rec)）
+    js/autobet.js    自動下注（不認識玩法，吃 adapter）
+    js/onboard.js    新手引導骨架（吃 steps）
+    js/ui-main.js    主畫面與演出（地圖、落點、封盤倒數、揭曉、結果彈窗）＋把上面幾個模組接起來
+    js/dev.js        ?dev=1 導演台＋?shot= 自動駕駛（最後載入，設 __shotReady）
+    （H04 的 js/recent.js 會追加在 dev.js 之後；ui-main 的 Recent 區段會等它出現再掛）
+-->
+<div id="app">
+  <!-- 頂欄：標題＋錢包＋紀錄鈕（只留這三樣） -->
+  <div class="ptop">
+    <span class="logo">🪂</span>
+    <div class="ttl" data-t="top.title"></div>
+    <div class="wallet"><small data-t="top.wallet"></small><b id="wal">10,000</b></div>
+    <button id="logBtn" class="iconb" type="button" data-t="top.log" data-t-attr="title">📜</button>
+  </div>
+
+  <!-- 導演台（?dev=1 才顯示；dev.js 填內容） -->
+  <div id="director"></div>
+
+  <!-- 地圖：俯視島嶼＋四個落點（落點座標以 375×594 為基準換算成百分比，見 ui-main ZONE） -->
+  <div class="map" id="map" data-ph="idle">
+    <svg class="msvg" viewBox="0 0 375 594" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<defs><linearGradient id="oc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d3a5e"/><stop offset="1" stop-color="#092743"/></linearGradient>
+<radialGradient id="gr" cx=".5" cy=".5" r=".65"><stop offset="0" stop-color="#76c25a"/><stop offset="1" stop-color="#4b9645"/></radialGradient></defs>
+<rect width="375" height="594" fill="url(#oc)"/>
+<g fill="none" stroke="#fff" stroke-opacity=".08" stroke-width="2"><path d="M10 40q20-8 40 0t40 0"/><path d="M280 60q20-8 40 0t40 0"/><path d="M8 500q20-8 40 0t40 0"/><path d="M290 500q20-8 40 0t40 0"/><path d="M12 220q14-6 28 0t28 0" opacity=".6"/><path d="M60 570q20-8 40 0t40 0"/><path d="M250 28q20-8 40 0t40 0" opacity=".5"/></g>
+<g transform="translate(0 27)"><path d="M 60 150 C 40 110, 120 92, 190 98 C 260 90, 340 110, 350 170 C 360 230, 340 300, 352 360 C 358 420, 300 470, 220 468 C 150 480, 70 470, 40 410 C 20 350, 40 290, 28 240 C 20 200, 40 180, 60 150 Z" fill="none" stroke="#2f86b3" stroke-opacity=".5" stroke-width="28"/>
+<path d="M 60 150 C 40 110, 120 92, 190 98 C 260 90, 340 110, 350 170 C 360 230, 340 300, 352 360 C 358 420, 300 470, 220 468 C 150 480, 70 470, 40 410 C 20 350, 40 290, 28 240 C 20 200, 40 180, 60 150 Z" fill="#e6cd8f" stroke="#c9ad6a" stroke-width="3"/>
+<path d="M 60 150 C 40 110, 120 92, 190 98 C 260 90, 340 110, 350 170 C 360 230, 340 300, 352 360 C 358 420, 300 470, 220 468 C 150 480, 70 470, 40 410 C 20 350, 40 290, 28 240 C 20 200, 40 180, 60 150 Z" transform="translate(188 285) scale(.92) translate(-188 -285)" fill="url(#gr)"/>
+<ellipse cx="150" cy="130" rx="38" ry="18" fill="#5aa84c" opacity=".6"/><ellipse cx="300" cy="420" rx="40" ry="20" fill="#3f8c47" opacity=".5"/><ellipse cx="70" cy="410" rx="30" ry="16" fill="#3f8c47" opacity=".5"/>
+<circle cx="70" cy="205" r="7" fill="#2d6e3a"/><circle cx="68" cy="203" r="4" fill="#3f8c47"/><circle cx="165" cy="120" r="9" fill="#2d6e3a"/><circle cx="163" cy="118" r="5" fill="#3f8c47"/><circle cx="210" cy="240" r="11" fill="#2d6e3a"/><circle cx="208" cy="238" r="6" fill="#3f8c47"/><circle cx="150" cy="310" r="7" fill="#2d6e3a"/><circle cx="148" cy="308" r="4" fill="#3f8c47"/><circle cx="215" cy="300" r="9" fill="#2d6e3a"/><circle cx="213" cy="298" r="5" fill="#3f8c47"/><circle cx="330" cy="250" r="11" fill="#2d6e3a"/><circle cx="328" cy="248" r="6" fill="#3f8c47"/><circle cx="330" cy="440" r="7" fill="#2d6e3a"/><circle cx="328" cy="438" r="4" fill="#3f8c47"/><circle cx="60" cy="300" r="9" fill="#2d6e3a"/><circle cx="58" cy="298" r="5" fill="#3f8c47"/><circle cx="180" cy="455" r="11" fill="#2d6e3a"/><circle cx="178" cy="453" r="6" fill="#3f8c47"/><circle cx="120" cy="440" r="7" fill="#2d6e3a"/><circle cx="118" cy="438" r="4" fill="#3f8c47"/><circle cx="255" cy="135" r="9" fill="#2d6e3a"/><circle cx="253" cy="133" r="5" fill="#3f8c47"/><circle cx="40" cy="330" r="11" fill="#2d6e3a"/><circle cx="38" cy="328" r="6" fill="#3f8c47"/><circle cx="196" cy="170" r="7" fill="#2d6e3a"/><circle cx="194" cy="168" r="4" fill="#3f8c47"/><circle cx="160" cy="260" r="9" fill="#2d6e3a"/><circle cx="158" cy="258" r="5" fill="#3f8c47"/>
+<rect x="170" y="150" width="16" height="11" rx="2" fill="#aab4c0"/><rect x="190" y="152" width="10" height="9" rx="2" fill="#8f9aa8"/><rect x="204" y="430" width="16" height="11" rx="2" fill="#aab4c0"/><rect x="60" y="262" width="12" height="9" rx="2" fill="#8f9aa8"/>
+<path d="M 24 238 C 80 262, 130 244, 188 266 C 244 288, 300 268, 354 296" fill="none" stroke="#3ba3d6" stroke-width="9" stroke-linecap="round"/>
+<path d="M 24 238 C 80 262, 130 244, 188 266 C 244 288, 300 268, 354 296" fill="none" stroke="#7fd0f0" stroke-opacity=".5" stroke-width="3" stroke-linecap="round"/>
+</g>
+<g stroke="#fff" stroke-opacity=".16" stroke-width="1"><line x1="62.5" y1="0" x2="62.5" y2="594"/><line x1="125" y1="0" x2="125" y2="594"/><line x1="187.5" y1="0" x2="187.5" y2="594"/><line x1="250" y1="0" x2="250" y2="594"/><line x1="312.5" y1="0" x2="312.5" y2="594"/><line x1="0" y1="74.25" x2="375" y2="74.25"/><line x1="0" y1="148.5" x2="375" y2="148.5"/><line x1="0" y1="222.75" x2="375" y2="222.75"/><line x1="0" y1="297" x2="375" y2="297"/><line x1="0" y1="371.25" x2="375" y2="371.25"/><line x1="0" y1="445.5" x2="375" y2="445.5"/><line x1="0" y1="519.75" x2="375" y2="519.75"/></g>
+<g transform="translate(0 27)"><path fill-rule="evenodd" fill="#ff3b3b" fill-opacity=".14" d="M0 -27H375V567H0Z M3 285 a185 185 0 1 0 370 0 a185 185 0 1 0 -370 0"/>
+<circle cx="188" cy="285" r="185" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="2" stroke-dasharray="9 7"/>
+</g>
+<path d="M 166 60 C 178 215, 200 400, 210 594" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="2.5" stroke-dasharray="8 6"/>
+</svg>
+    <span class="gl" style="left:8.27%;top:13.47%">A</span><span class="gl" style="left:24.93%;top:13.47%">B</span><span class="gl" style="left:41.6%;top:13.47%">C</span><span class="gl" style="left:58.27%;top:13.47%">D</span><span class="gl" style="left:74.93%;top:13.47%">E</span><span class="gl" style="left:91.6%;top:13.47%">F</span><span class="gl" style="left:1.07%;top:10.14%">1</span><span class="gl" style="left:1.07%;top:22.64%">2</span><span class="gl" style="left:1.07%;top:35.14%">3</span><span class="gl" style="left:1.07%;top:47.64%">4</span><span class="gl" style="left:1.07%;top:60.14%">5</span><span class="gl" style="left:1.07%;top:72.64%">6</span><span class="gl" style="left:1.07%;top:85.14%">7</span>
+    <span class="plane" id="plane">✈️</span>
+
+    <!-- 對手喊話（待命才顯示；封盤後隱藏） -->
+    <div class="disc" data-t="map.disc"></div>
+    <div class="ban" id="ban"></div>
+    <div class="chipr" data-t="map.land"></div>
+
+    <!-- 四個落點（ui-main 建） -->
+    <div class="zones" id="zones"></div>
+    <!-- 跳傘的傘兵（ui-main 建） -->
+    <div class="sprites" id="sprites"></div>
+
+    <!-- 封盤倒數：警示條＋紅框＋大字倒數卡 -->
+    <div class="hz"></div>
+    <div class="frame"></div>
+    <div class="cd" id="cd">
+      <div class="num" id="cdNum">3</div>
+      <div class="tx"><b data-t="lock.title"></b><span id="cdSub"></span><div class="seg" id="cdSeg"></div></div>
+      <div class="hid"><div class="av3"><i>🐺</i><i>🦊</i><i>🐻</i></div><small data-t="lock.hidden"></small></div>
+    </div>
+    <div class="rib lockrib"><b data-t="lock.tip"></b>｜<span data-t="lock.tip2"></span></div>
+
+    <!-- 常駐提示（onboard.js 填內容；版位在地圖下緣） -->
+    <div id="hint"></div>
+
+    <!-- 大獎：金光＋爆金幣層（ui-main 的 coinBurst 填） -->
+    <div class="glow" id="glow"></div>
+    <div class="coins" id="coins"></div>
+
+    <!-- 結果彈窗（蓋在地圖中央；點任一處收起） -->
+    <div class="popveil" id="popveil"><div class="pop" id="pop"></div></div>
+  </div>
+
+  <!-- 下注面板：自動下注狀態槽（固定 40px）＋單注列／封盤列＋近況掛點 -->
+  <div class="panel" id="panel">
+    <!-- Autobet slot：autobet.js 會把 #abar 當浮條（固定高度槽，不跳版） -->
+    <div class="aslot"><div id="abar"></div></div>
+    <div class="brow">
+      <div class="stakerow">
+        <span class="stakelab" data-t="bet.stake"></span>
+        <div class="stakes" id="stakes"></div>
+        <!-- Autobet entryBtn：「⟳ 自動」文字鈕 -->
+        <button class="autob" id="autoBtn" type="button" data-t="auto.btn" data-t-attr="title"><i>⟳</i><span data-t="auto.entry"></span></button>
+      </div>
+      <div class="lockrow">
+        <div class="info" id="lkInfo"></div>
+        <button class="go" id="goBtn" type="button"><span id="goT"></span><small id="goS"></small></button>
+      </div>
+    </div>
+    <!-- 近況掛點：內容由 H04（js/recent.js）填；H02 只留位置與固定高度 -->
+    <div id="recent"></div>
+  </div>
+  <span class="ph" data-t="ph.art"></span>
+  <!-- toast／log 頁／自動下注彈窗／引導覆蓋層由各模組自建，掛進 #app -->
+</div>
+<script src="values.js"></script>
+<script src="js/env.js"></script>
+<script src="js/strings.js"></script>
+<script src="js/toast.js"></script>
+<script src="js/core.js"></script>
+<script src="js/drag-scroll.js"></script>
+<script src="js/log-ui.js"></script>
+<script src="js/autobet.js"></script>
+<script src="js/onboard.js"></script>
+<script src="js/ui-main.js"></script>
+<script src="js/dev.js"></script>
+<script src="js/recent.js"></script>
+</body>
+</html>

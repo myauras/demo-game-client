@@ -1,0 +1,30 @@
+/* =========================================================================
+ * 近況列（H04）：一排 12 顆，最新在右（最右一顆放大＋同色外圈），灰＝全撞，無資料＝空位圈
+ * 落點色 --rc0～--rc3／--rcx 定義在 base.css 的 :root（H05 收成共用變數，色值不變）
+ * 動畫只動 transform／opacity；高度固定（標題＋一排＋圖例），無資料時版面不變
+ * ========================================================================= */
+#recent.rc{
+  display:flex;flex-direction:column;justify-content:center;gap:1px;overflow:hidden;pointer-events:none}
+.rc-ht{flex:none;font-size:12px;font-weight:800;color:#CFE0F5;line-height:1.25;white-space:nowrap;overflow:hidden}
+.rc-t{display:block;overflow:hidden;text-overflow:ellipsis}
+.rc-row{flex:none;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));align-items:center;height:26px}
+.rc-cell{display:grid;place-items:center;height:26px;min-width:0}
+.rc-d{display:block;width:20px;height:20px;border-radius:50%;background:var(--rcx)}
+.rc-p0{background:var(--rc0)}
+.rc-p1{background:var(--rc1)}
+.rc-p2{background:var(--rc2)}
+.rc-p3{background:var(--rc3)}
+.rc-x{background:var(--rcx)}
+.rc-e{background:transparent;border:2px dashed var(--edge);opacity:.55}
+.rc-d.rc-nw{width:22px;height:22px;box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--rcx)}
+.rc-d.rc-nw.rc-p0{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--rc0)}
+.rc-d.rc-nw.rc-p1{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--rc1)}
+.rc-d.rc-nw.rc-p2{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--rc2)}
+.rc-d.rc-nw.rc-p3{box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--rc3)}
+.rc-lg{flex:none;font-size:11px;color:#7F95B3;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* 新增一局：舊點從右邊一格滑回原位、最新那顆彈出（transform／opacity；時長乘 --tm 以跟隨縮時） */
+.rc-sh{animation:rcshift calc(.28s * var(--tm,1)) ease-out both}
+.rc-in{animation:rcpop calc(.34s * var(--tm,1)) cubic-bezier(.3,1.5,.5,1) both}
+@keyframes rcshift{from{transform:translate3d(29px,0,0)}to{transform:none}}
+@keyframes rcpop{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:none}}

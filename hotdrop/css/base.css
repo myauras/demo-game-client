@@ -1,0 +1,325 @@
+/* =========================================================================
+ * 空投爭奪——主畫面樣式（H02）＋共用元件（toast、無捲軸）
+ * 效能紅線：所有 transition／animation 只動 transform／opacity；陰影靜態；禁 filter
+ * 多語紀律：盒子用 min-width／padding 撐，不鎖死寬度；長字可換行或單行省略（?lang=xx 驗）
+ * 演出時間：全部乘上 --tm（#app 上的 CSS 變數；1＝正常，<1＝縮時，由 ui-main 依 fast 設定）
+ *
+ * 疊層順序（z-index，定死）：
+ *   引導 50 ＞ toast 45 ＞ log 頁 36 ＞ 設定彈窗 35 ＞ 暗幕 34 ＞ 自動下注槽 33 ＞ 導演台 32 ＞ 遊戲主體
+ *   遊戲主體（#map 內，不得超過 13，免得蓋過引導說明 14）：
+ *     底圖 0 ＜ 飛機／落點 2 ＜ 傘兵／喊話／常駐提示 3 ＜ 飛機 4 ＜ 警示條／紅框 6 ＜ 倒數卡 7
+ *     ＜ 金光 8 ＜ 結果彈窗幕 9 ＜ 金幣 10
+ *
+ * 區段：① 變數與基礎 ② 頂欄 ③ 導演台 ④ 地圖與落點 ⑤ 封盤倒數 ⑥ 傘兵與揭曉 ⑦ 結果彈窗與大獎
+ *       ⑧ 底部面板（自動槽／單注列／封盤列／近況掛點） ⑨ 動畫 keyframes
+ * ========================================================================= */
+
+/* ---------- ① 變數與基礎（深藍系，與靜態稿一致；紀錄頁、自動下注彈窗也吃這組變數） ---------- */
+:root{
+  --appbg:#0A1626; --panel:#0A1626; --line:#1D3350; --line2:#15283F;
+  --edge:#2B4666; --chip:#15283F; --fg:#E9F1FB; --mute:#8FA6C4; --gold:#FFD24A;
+  --win:#5FF0A0; --lose:#FF7B7B;
+  /* 落點色（綠／藍／紫／金）與「全撞」灰：近況列、紀錄頁落點點點共用（色值＝ui-main 的 ZONE／靜態稿 home-A） */
+  --rc0:#35D07F; --rc1:#4AA8FF; --rc2:#B56BFF; --rc3:#FFC531; --rcx:#6B7686;
+  /* 紀錄頁／自動下注彈窗專用（深藍系）：輸額灰字對比 ≥ 4.5:1（#8FA6C4 在 #0A1626 上 7.3:1、在 #15283F 上 6.0:1） */
+  --grey:#8FA6C4; --sheetbg:#0F2036; --veil:rgba(4,10,20,.62);
+  --run:#17314F; --win-bg:#143626; --lose-bg:#3A1B24;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden}
+body{background:#06101C;color:var(--fg);font-size:14px;line-height:1.5;
+  font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+button{font:inherit;cursor:pointer}
+
+/* #app：375×812 直式；窄螢幕等比讓步（寬不超 100vw、高不超 100vh）；?vw= 由 env.js 覆寫寬度 */
+#app{position:relative;width:min(375px,100vw);height:min(812px,100vh);margin:0 auto;
+  display:flex;flex-direction:column;background:var(--appbg);
+  overflow:hidden;--tm:1}
+/* 注意：畫面外待命的彈窗／log 頁不可用 translate 推到 #app 外——scrollWidth／scrollHeight 會被撐大，
+   零捲軸檢查（tools/shot.mjs）會誤報。一律用 opacity＋小幅 scale 淡入（只動 transform／opacity） */
+
+/* 無原生捲軸（滾動由 DragScroll 處理；觸控保留原生 pan-y） */
+.dscroll{overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;cursor:grab}
+.dscroll::-webkit-scrollbar{display:none;width:0;height:0}
+.dscroll.dragging{cursor:grabbing;-webkit-user-select:none;user-select:none}
+
+/* ---------- toast ---------- */
+#toast{position:absolute;left:16px;right:16px;bottom:200px;z-index:45;pointer-events:none;
+  text-align:center;font-size:12.5px;color:var(--fg);background:rgba(7,16,29,.94);
+  border:1px solid var(--edge);border-radius:8px;padding:8px 12px;
+  opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s}
+#toast.show{opacity:1;transform:none}
+
+/* ---------- ② 頂欄（只留標題、錢包、紀錄鈕） ---------- */
+.ptop{flex:none;height:50px;display:flex;align-items:center;gap:8px;padding:0 10px;
+  background:var(--panel);border-bottom:1px solid var(--line);position:relative;z-index:12}
+.logo{flex:none;font-size:26px;line-height:1}
+.ttl{flex:1;min-width:0;font-size:18px;font-weight:800;letter-spacing:1px;line-height:1.15;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wallet{flex:none;display:flex;flex-direction:column;align-items:flex-end;padding:2px 10px;
+  background:var(--chip);border:1px solid var(--edge);border-radius:10px}
+.wallet small{font-size:11px;color:var(--mute);line-height:1.1}
+.wallet b{font-size:20px;color:var(--gold);line-height:1.1;font-variant-numeric:tabular-nums}
+.iconb{flex:none;width:34px;height:34px;border-radius:50%;background:var(--chip);border:1px solid var(--edge);
+  display:grid;place-items:center;font-size:16px;line-height:1;color:#CFE0F5;padding:0}
+
+/* ---------- ③ 導演台（?dev=1 才顯示；in-flow 一列） ---------- */
+#director{flex:none;display:none;align-items:center;gap:6px;flex-wrap:wrap;
+  margin:4px 8px 0;padding:3px 8px;border:1px dashed #6B4E2A;border-radius:6px;
+  background:rgba(60,40,15,.35);font-size:11.5px;color:#E7B97A;position:relative;z-index:32}
+#director.on{display:flex}
+#director select,#director button{font-size:11.5px;color:var(--fg);background:var(--chip);
+  border:1px solid var(--edge);border-radius:5px;padding:2px 6px}
+
+/* ---------- ④ 地圖與落點 ---------- */
+.map{position:relative;flex:1;min-height:0;overflow:hidden;background:#0A2A47}
+.msvg{position:absolute;left:0;top:0;width:100%;height:100%}
+.gl{position:absolute;font-size:11px;color:rgba(255,255,255,.6);line-height:1;font-weight:700;z-index:1}
+.plane{position:absolute;left:45.9%;top:44.3%;font-size:24px;line-height:1;z-index:4;
+  transform:rotate(125deg);pointer-events:none}
+.plane.fly{animation:planefly calc(var(--plane,1.2s) * var(--tm)) linear both}
+.plane.gone{opacity:0}
+
+/* 對手喊話（待命才顯示；封盤後隱藏） */
+.disc{position:absolute;left:8px;top:5px;z-index:3;font-size:11px;color:#CFE0F5;background:rgba(8,18,32,.85);
+  border:1px solid #2C4A6E;border-radius:9px;padding:1px 8px;line-height:1.4;max-width:calc(100% - 16px)}
+.ban{position:absolute;left:8px;right:8px;top:26px;z-index:3;display:flex;gap:5px}
+.chip{flex:1;min-width:0;background:rgba(8,18,32,.88);border:1px solid #2C4A6E;border-radius:10px;padding:3px 6px 4px}
+.chip .r1{display:flex;align-items:center;gap:4px}
+.chip .em{font-size:15px;line-height:1}
+.chip .nm{font-size:11px;color:#9FB6D4;min-width:0;overflow-wrap:anywhere}
+.chip .say{font-size:13px;font-weight:700;line-height:1.25;overflow-wrap:anywhere;margin-top:1px}
+.chip .say::before{content:"“";color:var(--gold)}
+.chip .say::after{content:"”";color:var(--gold)}
+.chip.chg .say{animation:fadein calc(.28s * var(--tm)) linear both}
+.map:not([data-ph="idle"]) .disc,.map:not([data-ph="idle"]) .ban{visibility:hidden}
+/* 落地結果小標（跳傘後～結果彈窗期間；封盤倒數中不顯示） */
+.chipr{display:none;position:absolute;left:8px;top:8px;z-index:3;font-size:12px;font-weight:800;
+  background:rgba(7,16,29,.9);border:1px solid #3A5A82;border-radius:10px;padding:2px 10px;color:#CFE0F5}
+.map[data-ph="jump"] .chipr,.map[data-ph="reveal"] .chipr,.map[data-ph="popup"] .chipr{display:block}
+
+/* 四個落點：.zone 是零尺寸錨點（left/top＝落點圓心，百分比），圓、標籤都相對它擺 */
+.zones{position:absolute;inset:0;z-index:2}
+.zone{position:absolute;width:0;height:0}
+.pt{position:absolute;left:-54px;top:-54px;width:108px;height:108px;border-radius:50%;display:grid;place-items:center;
+  font-size:36px;line-height:1;cursor:pointer;
+  border:4px solid var(--c);background:radial-gradient(circle,rgba(var(--r),.16) 0,rgba(var(--r),.42) 100%);
+  box-shadow:0 0 0 7px rgba(var(--r),.2),0 6px 14px rgba(0,0,0,.5)}
+.pt::after{content:"";position:absolute;inset:-13px;border-radius:50%;border:2px dashed rgba(var(--r),.7)}
+.pt .ic{line-height:1}
+.pt .boom{position:absolute;right:-10px;top:-16px;font-size:34px;line-height:1;opacity:0;z-index:2}
+.pt .spark{position:absolute;left:-8px;top:-10px;font-size:20px;line-height:1;opacity:0;z-index:2}
+.tagw{position:absolute;left:-100px;width:200px;top:48px;display:flex;justify-content:center;pointer-events:none}
+.tag{pointer-events:auto;cursor:pointer;width:max-content;max-width:158px;background:rgba(7,16,29,.94);
+  border:2px solid var(--c);border-radius:12px;padding:3px 9px 4px 6px;box-shadow:0 3px 8px rgba(0,0,0,.5)}
+.tag .l1{display:flex;align-items:center;gap:6px}
+.tag .bd{flex:none;min-width:22px;height:22px;border-radius:7px;background:var(--c);color:#06101C;
+  font-size:13px;font-weight:900;display:grid;place-items:center;padding:0 3px}
+.tag .od{display:inline-block;font-size:26px;font-weight:900;line-height:1.05;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+.tag .l2{font-size:11px;color:#B9CBE3;line-height:1.3;margin-top:1px;overflow-wrap:anywhere}
+.tag .who{display:none;font-size:12px;line-height:1.3;margin-top:1px;font-weight:700;overflow-wrap:anywhere}
+.who.ow{color:#FFE08A}.who.ok{color:#5FF0A0}.who.no{color:#FF7B7B}.who.em{color:#8EA3C0;font-weight:400}
+.tag.swap{animation:tagswap calc(.45s * var(--tm)) ease-out both}
+.zone.rv .tag .l2{display:none}
+.zone.rv .tag .who{display:block}
+.meb{position:absolute;left:-100px;width:200px;top:-80px;display:none;justify-content:center;pointer-events:none;z-index:2}
+.meb span{background:#fff;color:#2A1450;border-radius:14px;padding:2px 9px 2px 5px;font-size:12px;font-weight:900;
+  line-height:1.3;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.5);max-width:100%;overflow:hidden;text-overflow:ellipsis}
+
+/* 常駐提示：onboard.js 填內容，版位在地圖下緣（用 #hint.obhint 蓋過 onboard.css 的 in-flow 版位） */
+.map #hint.obhint{position:absolute;left:8px;right:8px;bottom:8px;margin:0;z-index:3;min-height:0;
+  padding:6px 10px;justify-content:center;flex-wrap:wrap;gap:2px 7px;
+  background:rgba(7,16,29,.94);border:1.5px solid var(--gold);border-radius:12px;
+  font-size:13px;line-height:1.35;text-align:center;color:#E9F1FB}
+.map #hint .oht{font-size:15px;font-weight:800}
+.map #hint .oht::after{content:"｜";color:#E9F1FB;font-weight:400;margin-left:7px}
+.map #hint .ohs{flex:0 1 auto;white-space:normal;overflow:visible;text-overflow:clip}
+.map #hint .ohm{color:#7F95B3}
+.map:not([data-ph="idle"]) #hint{visibility:hidden}
+
+/* ---------- ⑤ 封盤倒數（大字、紅框、警示條；只在 data-ph="lock" 顯示） ---------- */
+.hz,.frame,.cd,.lockrib{display:none}
+.hz{position:absolute;left:0;top:0;right:0;height:7px;z-index:6;
+  background:repeating-linear-gradient(135deg,#FF4D4D 0 10px,#1A0B0E 10px 20px)}
+.frame{position:absolute;inset:0;border:4px solid #FF4D4D;z-index:6;pointer-events:none}
+.cd{position:absolute;left:8px;right:8px;top:12px;z-index:7;align-items:center;gap:10px;padding:6px 10px 6px 8px;
+  background:linear-gradient(#C01624,#7C0C18);border:2px solid #FF8A8A;border-radius:16px;box-shadow:0 4px 12px rgba(0,0,0,.55)}
+.cd .num{flex:none;width:64px;height:64px;border-radius:50%;background:#fff;color:#C01624;font-size:48px;font-weight:900;
+  display:grid;place-items:center;line-height:1;border:4px solid #FFD24A;font-variant-numeric:tabular-nums}
+.cd .num.pulse{animation:numpulse calc(.5s * var(--tm)) ease-out}
+.cd .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.cd .tx>b{font-size:24px;font-weight:900;line-height:1.1;letter-spacing:1px;color:#fff}
+.cd .tx>span{font-size:12px;color:#FFE3E3;line-height:1.3;overflow-wrap:anywhere}
+.cd .seg{display:flex;gap:4px}
+.cd .sgm{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.22);overflow:hidden}
+.cd .sgm i{display:block;height:100%;background:#FFD24A;transform-origin:left center;
+  transition:transform calc(1s * var(--tm)) linear}
+.cd .sgm i.dr{transform:scaleX(0)}
+.cd .hid{flex:none;display:flex;flex-direction:column;align-items:center;gap:2px}
+.cd .hid .av3{display:flex;gap:3px}
+.cd .hid .av3 i{font-style:normal;width:26px;height:26px;border-radius:50%;background:#3A0A10;border:1.5px solid #FF8A8A;
+  display:grid;place-items:center;font-size:13px}
+.cd .hid small{font-size:11px;color:#FFE3E3;line-height:1.2;text-align:center;max-width:90px;overflow-wrap:anywhere}
+.rib{position:absolute;left:8px;right:8px;bottom:8px;z-index:3;background:rgba(7,16,29,.94);border:1.5px solid var(--gold);
+  border-radius:12px;padding:6px 10px;font-size:13px;line-height:1.35;text-align:center;color:#E9F1FB}
+.rib b{color:var(--gold);font-size:15px}
+.lockrib{border-color:#FF8A8A}
+.map[data-ph="lock"] .hz,.map[data-ph="lock"] .frame,.map[data-ph="lock"] .lockrib{display:block}
+.map[data-ph="lock"] .cd{display:flex}
+.map[data-ph="lock"] .frame{animation:framepulse calc(.5s * var(--tm)) ease-in-out infinite alternate}
+/* 封盤中：選中的落點放大、其餘壓暗；不是選中的仍可點（改跳） */
+.zone.dim{opacity:.5}
+.zone.sel .pt{border-width:6px;box-shadow:0 0 0 9px rgba(var(--r),.35),0 0 0 18px rgba(var(--r),.15),0 8px 18px rgba(0,0,0,.6)}
+.zone.sel .pt::after{inset:-24px;border:3px dashed #fff}
+.zone.sel .pt .ic{font-size:44px}
+.zone.sel .meb{display:flex}
+
+/* ---------- ⑥ 傘兵與落地揭曉（各落點就地，彈窗之前） ---------- */
+.sprites{position:absolute;inset:0;z-index:3;pointer-events:none}
+.sp{position:absolute;left:0;top:0;width:30px;height:30px;opacity:0;
+  animation:drop calc(var(--fall,.95s) * var(--tm)) cubic-bezier(.25,.6,.35,1) calc(var(--dl,0s) * var(--tm)) both}
+.sp .fc{width:30px;height:30px;border-radius:50%;background:#1C2F48;border:2px solid #fff;
+  display:grid;place-items:center;font-size:16px;line-height:1}
+.sp.you .fc{background:#fff;color:#2A1450;font-size:13px;font-weight:900;border-color:var(--gold)}
+.sp .cv{position:absolute;left:2px;top:-25px;font-size:22px;line-height:1;
+  animation:chute calc(var(--fall,.95s) * var(--tm)) linear calc(var(--dl,0s) * var(--tm)) both}
+/* 揭曉：獨佔＝亮起＋跳出倍率＋星星；撞車＝紅圈＋爆開＋抖動；沒人＝虛線淡出 */
+.zone.occ .pt .ic{opacity:.25}
+.zone.solo .pt{box-shadow:0 0 0 7px rgba(var(--r),.55),0 0 0 14px rgba(var(--r),.2),0 6px 14px rgba(0,0,0,.5)}
+.zone.solo.mine .pt{box-shadow:0 0 0 7px rgba(255,210,74,.55),0 0 0 16px rgba(255,210,74,.22),0 6px 14px rgba(0,0,0,.5)}
+.zone.solo .tag .od{animation:odpop calc(.55s * var(--tm)) ease-out both}
+.zone.solo .pt .spark{animation:sparkpop calc(.7s * var(--tm)) ease-out both}
+.zone.clash .pt{border-color:#FF4D4D;box-shadow:0 0 0 7px rgba(255,77,77,.35),0 6px 14px rgba(0,0,0,.5);
+  animation:shake calc(.32s * var(--tm)) linear both}
+.zone.clash .pt .boom{animation:boompop calc(.45s * var(--tm)) ease-out both}
+.zone.emp .pt{border-style:dashed;background:rgba(var(--r),.06);box-shadow:none;opacity:.7}
+.zone.emp .pt::after{display:none}
+
+/* ---------- ⑦ 結果彈窗（地圖中央；不蓋底部）與大獎 ---------- */
+.glow{position:absolute;left:-12px;right:-12px;top:14%;height:70%;z-index:8;border-radius:50%;pointer-events:none;opacity:0;
+  background:radial-gradient(ellipse at center,rgba(255,210,74,.55) 0,rgba(255,210,74,.22) 45%,rgba(255,210,74,0) 72%)}
+.glow.on{animation:glowin calc(1.2s * var(--tm)) ease-out both}
+.popveil{position:absolute;inset:0;z-index:9;cursor:pointer;opacity:0;visibility:hidden;
+  transition:opacity calc(.2s * var(--tm)) linear,visibility 0s linear calc(.2s * var(--tm))}
+.popveil.on{opacity:1;visibility:visible;transition:opacity calc(.15s * var(--tm)) linear}
+.pop{position:absolute;left:50%;top:35%;width:237px;max-width:calc(100% - 24px);margin-left:-118px;
+  background:linear-gradient(#162D49,#0B1626);border:2px solid var(--c,#FFD24A);border-radius:18px;padding:9px 12px 8px;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  box-shadow:0 8px 20px rgba(0,0,0,.6),0 0 0 4px rgba(var(--r,255,210,74),.18)}
+.pop.in{animation:popin calc(.3s * var(--tm)) cubic-bezier(.2,.9,.3,1.2) both}
+.pop .st{animation:fadeup calc(.28s * var(--tm)) ease-out calc(var(--d,0s) * var(--tm)) both}
+.pop .hd2{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
+.pop .hd2 h1{margin:0;min-width:0;font-size:21px;font-weight:900;line-height:1.15;color:var(--tt,#fff);overflow-wrap:anywhere;text-align:center}
+.pop .hd2 .sb{position:absolute;right:-2px;top:-22px;font-size:12px;font-weight:800;padding:2px 10px;border-radius:11px;
+  background:var(--pc);color:#06101C;line-height:1.3;border:2px solid #0A1626;white-space:nowrap}
+.pop .bxr{display:flex;align-items:center;gap:9px;margin-top:2px;max-width:100%}
+.pop .bi{flex:none;position:relative;width:46px;height:46px;border-radius:12px;background:linear-gradient(#2B4768,#13243A);
+  border:2px solid var(--t);display:grid;place-items:center;font-size:28px;line-height:1}
+.pop .bi.shk{animation:boxshake calc(.45s * var(--tm)) ease-in-out calc(.15s * var(--tm)) both}
+.pop .bi.open{animation:boxopen calc(.35s * var(--tm)) cubic-bezier(.2,.9,.3,1.4) both}
+.pop .bn{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+.pop .bn span{font-size:14px;font-weight:800;color:#DBE7F7;overflow-wrap:anywhere}
+.pop .bn b{font-size:22px;font-weight:900;color:var(--t)}
+.pop .fm{font-size:12px;color:#9FB6D4;line-height:1.3;text-align:center;overflow-wrap:anywhere}
+.pop .fm b{color:#DBE7F7}
+.pop .big{font-size:54px;font-weight:900;line-height:1;letter-spacing:-1px;color:var(--gold);margin:1px 0 2px;
+  font-variant-numeric:tabular-nums;max-width:100%;
+  animation:bigpop calc(.45s * var(--tm)) cubic-bezier(.2,.9,.3,1.3) calc(var(--bd,.5s) * var(--tm)) both}
+.pop .pay2{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;border-top:1px solid var(--edge);padding-top:5px}
+.pop .pay2 .a{min-width:0;font-size:12.5px;color:#CFE0F5;line-height:1.3;overflow-wrap:anywhere}
+.pop .pay2 .a b{font-size:17px;color:#fff}
+.pop .pay2 .d2{flex:none;font-size:24px;font-weight:900;line-height:1}
+.pop .phint{font-size:11px;color:#7F95B3;line-height:1.3;text-align:center;overflow-wrap:anywhere;margin-top:1px}
+/* 撞車：低調 */
+.pop.cr{background:linear-gradient(#211A22,#120F15);box-shadow:0 8px 20px rgba(0,0,0,.6)}
+.pop.cr .big{color:#C9777D;font-size:46px}
+.pop.cr .bi{opacity:.5;border-style:dashed;background:#16202E}
+.pop.cr .bi::after{content:"✕";position:absolute;inset:0;display:grid;place-items:center;font-size:34px;font-weight:900;color:#FF6B6B;opacity:.95}
+.pop.cr .bn span,.pop.cr .bn b{opacity:.75}
+.pop.cr .bn b{text-decoration:line-through}
+.pop.cr .pay2{border-top-color:#4A3A44}
+/* 大獎：金色彈窗（金幣另由 coinBurst 負責，可獨立關閉） */
+.pop.bw{border-width:3px;background:linear-gradient(#3A2A10,#1A1208 60%,#0F0B06);
+  box-shadow:0 8px 22px rgba(0,0,0,.65),0 0 0 5px rgba(255,210,74,.3),0 0 0 11px rgba(255,210,74,.12)}
+.pop.bw .hd2 h1{font-size:25px;color:#FFE08A;letter-spacing:1px}
+.pop.bw .big{font-size:58px}
+.pop.bw .bi{background:linear-gradient(#5A3A22,#2A1710)}
+.pop.bw .fm b{color:#FFE08A}
+.pop.bw .pay2{border-top-color:#6A5220}
+/* 金幣（獨立小元素，只動 transform／opacity）：起點、頂點、終點由 coinBurst 以 CSS 變數給 */
+.coins{position:absolute;inset:0;z-index:10;pointer-events:none}
+.coin{position:absolute;left:0;top:0;width:var(--s);height:var(--s);border-radius:50%;opacity:0;
+  background:radial-gradient(circle at 35% 30%,#FFF3A6 0,#FFD24A 45%,#E39A0C 100%);border:2px solid #B8780A;
+  box-shadow:0 2px 3px rgba(0,0,0,.45);
+  animation:coinfly calc(var(--ms) * var(--tm)) cubic-bezier(.3,.6,.5,1) calc(var(--dl) * var(--tm)) both}
+.coin::after{content:"";position:absolute;inset:22%;border-radius:50%;border:2px solid rgba(184,120,10,.75)}
+
+/* ---------- ⑧ 底部面板：自動槽（固定 40px）＋單注列／封盤列＋近況掛點 ---------- */
+.panel{flex:none;height:168px;padding:6px 10px 0;background:var(--panel);border-top:1px solid var(--line);
+  display:flex;flex-direction:column;gap:6px}
+.aslot{flex:none;height:40px;display:flex;align-items:center}
+.panel .aslot .abar{flex:1;margin:0}
+/* 靜態稿的狀態槽待命時是空的：隱藏 autobet.css 的虛線待命占位，進行中（.on）才顯示浮條；槽高 40px 固定不變 */
+.panel .aslot .abar:not(.on){visibility:hidden}
+.brow{flex:none;height:46px}
+.stakerow{display:flex;align-items:center;gap:6px;height:46px}
+.stakelab{flex:none;font-size:12px;color:#9FB6D4;font-weight:700}
+.stakes{flex:1;min-width:0;display:flex;gap:6px}
+.stakes button{flex:1;min-width:0;height:42px;border-radius:21px;border:1.5px solid var(--edge);background:var(--chip);
+  color:#CFE0F5;font-size:18px;font-weight:800;padding:0 2px;line-height:1;font-variant-numeric:tabular-nums}
+.stakes button.on{background:linear-gradient(#FFD24A,#F0A516);border-color:#FFE38A;color:#3B2600}
+.stakes.dis{opacity:.4}
+/* Autobet entryBtn：「⟳ 自動」文字鈕（autobet.css 預設是 30px 圓鈕、非待命隱藏；這裡用更高的權重改成常駐、忙碌時淡化） */
+.panel .stakerow .autob{flex:none;width:auto;height:42px;padding:0 12px 0 10px;border-radius:21px;
+  display:flex;align-items:center;gap:4px;background:var(--chip);border:1.5px solid var(--gold);color:var(--gold);
+  font-size:15px;font-weight:800;line-height:1;white-space:nowrap}
+.panel .stakerow .autob i{font-style:normal;font-size:19px;line-height:1}
+.panel .stakerow .autob:not(.show){opacity:.4;pointer-events:none}
+/* 封盤列：封盤倒數與跳傘期間蓋掉單注列（同高 46px，不跳版） */
+.lockrow{display:none;gap:8px;align-items:stretch;height:46px}
+.panel.lk .stakerow{display:none}
+.panel.lk .lockrow{display:flex}
+.lockrow .info{flex:1;min-width:0;background:var(--chip);border:2px solid var(--c,#B56BFF);border-radius:14px;padding:3px 10px;
+  display:flex;flex-direction:column;justify-content:center}
+.lockrow .info small{font-size:11px;color:#A9BDDB;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lockrow .info b{font-size:19px;line-height:1.1;color:#fff;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lockrow .info b em{font-style:normal;color:var(--c,#D9B3FF)}
+.lockrow .go{flex:1.15;min-width:0;border-radius:14px;background:linear-gradient(#FF6A3D,#D9261C);border:2px solid #FFB199;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:21px;font-weight:900;line-height:1.1;
+  padding:2px 6px;text-align:center;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,.5)}
+.lockrow .go small{font-size:11px;font-weight:600;color:#FFE3D9}
+.lockrow .go.dis{opacity:.55;cursor:default}
+/* 近況掛點：內容由 H04（recent.js）填；先保留固定高度，空著也不壞版 */
+#recent{flex:1;min-height:0}
+/* 佔位美術標記 */
+.ph{position:absolute;right:6px;bottom:3px;font-size:11px;color:#58708F;z-index:9;line-height:1;pointer-events:none}
+
+/* ---------- ⑨ 動畫（全部只動 transform／opacity） ---------- */
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+@keyframes fadeup{from{opacity:0;transform:translate3d(0,6px,0)}to{opacity:1;transform:none}}
+@keyframes planefly{
+  from{transform:translate3d(var(--fx0),var(--fy0),0) rotate(125deg)}
+  to{transform:translate3d(var(--fx1),var(--fy1),0) rotate(125deg)}}
+@keyframes drop{
+  0%{opacity:0;transform:translate3d(var(--sx),var(--sy),0) scale(.5)}
+  12%{opacity:1}
+  100%{opacity:1;transform:translate3d(var(--tx),var(--ty),0) scale(1)}}
+@keyframes chute{0%,70%{opacity:1}100%{opacity:0}}
+@keyframes numpulse{0%{transform:scale(1.35)}100%{transform:scale(1)}}
+@keyframes framepulse{from{opacity:.45}to{opacity:1}}
+@keyframes tagswap{0%{opacity:.25;transform:scale(.9)}60%{opacity:1;transform:scale(1.07)}100%{opacity:1;transform:scale(1)}}
+@keyframes odpop{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+@keyframes sparkpop{0%{opacity:0;transform:scale(.4)}40%{opacity:1;transform:scale(1.2)}100%{opacity:1;transform:scale(1)}}
+@keyframes boompop{0%{opacity:0;transform:scale(.3)}50%{opacity:1;transform:scale(1.35)}100%{opacity:1;transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translate3d(0,0,0)}25%{transform:translate3d(-4px,0,0)}75%{transform:translate3d(4px,0,0)}}
+@keyframes popin{from{opacity:0;transform:scale(.65)}to{opacity:1;transform:scale(1)}}
+@keyframes bigpop{0%{opacity:0;transform:scale(.4)}100%{opacity:1;transform:scale(1)}}
+@keyframes boxshake{0%,100%{transform:rotate(0)}20%{transform:rotate(-10deg)}40%{transform:rotate(10deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(8deg)}}
+@keyframes boxopen{0%{transform:scale(.7)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+@keyframes glowin{0%{opacity:0;transform:scale(.6)}30%{opacity:1;transform:scale(1)}100%{opacity:.4;transform:scale(1.05)}}
+@keyframes coinfly{
+  0%{opacity:0;transform:translate3d(var(--cx),var(--cy),0) scale(.3,.3) rotate(0deg)}
+  12%{opacity:1}
+  45%{opacity:1;transform:translate3d(calc(var(--cx) + var(--mx)),calc(var(--cy) + var(--my)),0) scale(var(--sx),1) rotate(var(--rt))}
+  100%{opacity:0;transform:translate3d(calc(var(--cx) + var(--dx)),calc(var(--cy) + var(--dy)),0) scale(var(--sx),.9) rotate(calc(var(--rt) * 2))}}
