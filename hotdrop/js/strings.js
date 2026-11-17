@@ -2,7 +2,7 @@
  * 空投爭奪——字串字典＋取字函式 t()（可移植；轉引擎時文案整包照搬）
  *
  * 約定：
- *  - 所有面向玩家的字串集中在這（含 autobet／log／onboard／導演台），key 用「區塊.用途」。
+ *  - 所有面向玩家的字串集中在這（含 autobet／log／導演台），key 用「區塊.用途」。
  *  - UI 一律 t('key', {vars}) 取字，禁止在版面檔寫死中文。
  *  - 骨架（index.html）的固定字掛 data-t="key"，載入時自動填好：
  *      data-t-attr="title" 改填屬性；data-t-html="1" 走 innerHTML（字串含標記時）。
@@ -18,10 +18,6 @@
 var ZH = {
 
   /* ===== 共用 ===== */
-  'btn.next'   : '下一步',
-  'btn.done'   : '開始玩',
-  'btn.skip'   : '跳過',
-  'btn.close'  : '收合',
   'btn.back'   : '‹ 返回',
   'btn.cancel' : '取消',
 
@@ -36,75 +32,40 @@ var ZH = {
   'map.disc'   : '💬 對手喊話，不一定是真的',
   'map.land'   : '🛬 落地結果',
   'pt.name'    : '{n}點',
-  'zone.info'  : '📦 {n} 箱 · 獨佔率 {p}%',
+  'zone.wr'    : '勝率 {p}%',
+  /* 喊話：[cN]字[/c]＝該字上落點色（N＝0 綠 1 藍 2 紫 3 金，色取 base.css 的 --rc0～--rc3；渲染見 ui-main 的 rich()） */
   'bot.0'      : '野狼',
   'bot.1'      : '狐狸',
   'bot.2'      : '阿熊',
-  'shout.0.0'  : '綠點穩穩拿',
-  'shout.0.1'  : '先拿個保底',
-  'shout.0.2'  : '綠點沒人搶吧',
-  'shout.1.0'  : '這把跳藍',
-  'shout.1.1'  : '藍點最划算',
-  'shout.1.2'  : '藍點我先佔',
-  'shout.2.0'  : '紫點我的',
-  'shout.2.1'  : '紫點走起',
-  'shout.2.2'  : '賭一把紫點',
-  'shout.3.0'  : '金點衝啊',
-  'shout.3.1'  : '金點我來了',
-  'shout.3.2'  : '金點拚一把',
+  'shout.0.0'  : '[c0]綠點[/c]穩穩拿',
+  'shout.0.1'  : '先拿個[c0]保底[/c]',
+  'shout.0.2'  : '[c0]綠點[/c]沒人搶吧',
+  'shout.1.0'  : '這把跳[c1]藍[/c]',
+  'shout.1.1'  : '[c1]藍點[/c]最划算',
+  'shout.1.2'  : '[c1]藍點[/c]我先佔',
+  'shout.2.0'  : '[c2]紫點[/c]我的',
+  'shout.2.1'  : '[c2]紫點[/c]走起',
+  'shout.2.2'  : '賭一把[c2]紫點[/c]',
+  'shout.3.0'  : '[c3]金點[/c]衝啊',
+  'shout.3.1'  : '[c3]金點[/c]我來了',
+  'shout.3.2'  : '[c3]金點[/c]拚一把',
   'rej.insufficient' : '餘額不足',
   'rej.busy'   : '演出中，請稍等',
 
   /* ===== 封盤倒數 ===== */
-  'lock.title'  : '封盤倒數',
-  'lock.sub'    : '{n} 秒後鎖定，鎖定後不能改',
-  'lock.hidden' : '🔒 喊話已隱藏',
-  'lock.tip'    : '點別的落點可改跳',
-  'lock.tip2'   : '或按「立即跳傘」',
-  'lock.me'     : '你已選這裡',
-  'lock.picked' : '已選 {pt} · 下注',
+  'lock.sub'    : '倒數結束前可改點',
   'lock.go'     : '立即跳傘',
-  'lock.go2'    : '不用等倒數',
   'lock.flying' : '跳傘中…',
-  'lock.flying2': '看誰獨自落地',
 
-  /* ===== 落地揭曉（各落點就地） ===== */
+  /* ===== 落地揭曉（頭像＋圈色表示，不放文字）、結果彈窗 ===== */
   'who.you'     : '你',
-  'who.solo'    : '{n} 獨佔',
-  'who.soloYou' : '你 獨佔 ✓',
-  'who.clash'   : '{n} 撞車',
-  'who.none'    : '沒人落這裡',
-  'who.join'    : '＋',
-
-  /* ===== 結果彈窗 ===== */
   'pop.win'     : '🎉 獨佔成功',
   'pop.big'     : '🏆 大獎！',
   'pop.crash'   : '💥 撞車！',
-  'pop.with'    : '跟 {who} 撞在{pt}',
-  'pop.miss'    : '錯過：{box}',
-  'pop.formula' : '{pt} <b>{odds}x</b> × {box} <b>{bm}</b>',
-  'pop.pay'     : '下注 <b>{stake}</b> → 拿回 <b>{back}</b>',
-  'pop.hint'    : '點任一處收起，再點落點開下一局',
+  'pop.earn'    : '贏得',
 
   /* ===== 近況（H04 填內容；H02 只建字串鍵與掛點 #recent） ===== */
-  'recent.title'  : '近況 · 每局最高獨佔落點',
-  'recent.legend' : '灰＝全部撞車　右邊是最新',
-
-  /* ===== 新手引導（常駐提示＋首次多步） ===== */
-  'hint.title'  : '點落點就跳傘',
-  'hint.short'  : '只有你一個人落在那裡才拿得到',
-  'hint.more'   : '說明',
-  'hint.detail' : '選一個落點跳傘，只有你一個人落在那裡才拿得到物資；跟別人撞在同一點就什麼都沒有。顏色越高賠越多，但對手也越愛去。',
-  'tut.step'    : '{n}/{total}',
-  'tut.s1.title': '選一個落點跳傘',
-  'tut.s1.body' : '只有你一個人落在那裡才拿得到物資；跟別人撞在同一點就什麼都沒有。',
-  'tut.s2.title': '顏色越高賠越多',
-  'tut.s2.body' : '但對手也越愛去，越容易撞在一起。',
-  'tut.s3.title': '獨佔之後會開箱',
-  'tut.s3.body' : '運氣好開到稀有箱，拿回的錢會再往上加。',
-  'tut.replay'  : '重看教學',
-  'tut.replayed': '教學從第一步重播',
-  'tut.blocked' : '自動下注進行中，教學稍後再看',
+  'recent.title'  : '近況',
 
   /* ===== 自動下注 ===== */
   'auto.btn'     : '自動下注',
@@ -168,7 +129,6 @@ var ZH = {
   'log.hit'      : '獨佔',
   'log.miss'     : '撞車',
   /* 詳細頁圖解（R2-1）：小地圖＋結論行；落點上的人／獨佔／撞車字樣沿用主畫面的 who.* */
-  'log.fig.me'   : '你選這裡',
   'log.fig.alt'  : '本局落點圖解',
   'log.fig.solo' : '獨佔 · {box} ×{m} · {x}x',
   'log.fig.miss' : '跟 {who} 撞車 · 錯過 {box} ×{m}',
@@ -205,7 +165,7 @@ if(DEMO.q.lang && DEMO.persist){ try{ localStorage.setItem(LS_KEY, lang); }catch
 /* 偽語系：每字串加長 30%（含標記的字串只在尾端補，不插進標籤裡） */
 function pseudo(s){
   if(typeof s !== 'string' || !s) return s;
-  var n = Math.max(1, Math.ceil(s.replace(/<[^>]+>/g, '').length * 0.3)), tail = '';
+  var n = Math.max(1, Math.ceil(s.replace(/<[^>]+>|\[\/?c\d?\]/g, '').length * 0.3)), tail = '';
   while(tail.length < n) tail += '長';
   return s + tail;
 }

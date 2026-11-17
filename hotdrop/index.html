@@ -9,7 +9,6 @@
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/log-ui.css">
 <link rel="stylesheet" href="css/autobet.css">
-<link rel="stylesheet" href="css/onboard.css">
 <link rel="stylesheet" href="css/recent.css">
 </head>
 <body>
@@ -23,8 +22,7 @@
     js/drag-scroll.js 拖曳滾動（log 頁、彈窗內容區用）
     js/log-ui.js     勝負 log 頁（不認識玩法，吃 LogUI.push(rec)）
     js/autobet.js    自動下注（不認識玩法，吃 adapter）
-    js/onboard.js    新手引導骨架（吃 steps）
-    js/ui-main.js    主畫面與演出（地圖、落點、封盤倒數、揭曉、結果彈窗）＋把上面幾個模組接起來
+    js/ui-main.js    主畫面與演出（地圖、落點、封盤倒數、揭曉、結果彈窗）＋把 log／autobet／recent 接起來
     js/dev.js        ?dev=1 導演台＋?shot= 自動駕駛（最後載入，設 __shotReady）
     （H04 的 js/recent.js 會追加在 dev.js 之後；ui-main 的 Recent 區段會等它出現再掛）
 -->
@@ -62,10 +60,9 @@
 </g>
 <path d="M 166 60 C 178 215, 200 400, 210 594" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="2.5" stroke-dasharray="8 6"/>
 </svg>
-    <span class="gl" style="left:8.27%;top:13.47%">A</span><span class="gl" style="left:24.93%;top:13.47%">B</span><span class="gl" style="left:41.6%;top:13.47%">C</span><span class="gl" style="left:58.27%;top:13.47%">D</span><span class="gl" style="left:74.93%;top:13.47%">E</span><span class="gl" style="left:91.6%;top:13.47%">F</span><span class="gl" style="left:1.07%;top:10.14%">1</span><span class="gl" style="left:1.07%;top:22.64%">2</span><span class="gl" style="left:1.07%;top:35.14%">3</span><span class="gl" style="left:1.07%;top:47.64%">4</span><span class="gl" style="left:1.07%;top:60.14%">5</span><span class="gl" style="left:1.07%;top:72.64%">6</span><span class="gl" style="left:1.07%;top:85.14%">7</span>
     <span class="plane" id="plane">✈️</span>
 
-    <!-- 對手喊話（待命才顯示；封盤後隱藏） -->
+    <!-- 對手喊話（待命才顯示；封盤時喊話處只放 🔒） -->
     <div class="disc" data-t="map.disc"></div>
     <div class="ban" id="ban"></div>
     <div class="chipr" data-t="map.land"></div>
@@ -75,18 +72,14 @@
     <!-- 跳傘的傘兵（ui-main 建） -->
     <div class="sprites" id="sprites"></div>
 
-    <!-- 封盤倒數：警示條＋紅框＋大字倒數卡 -->
+    <!-- 封盤倒數：警示條＋紅框＋大字倒數卡（數字、一行提示、進度條、🔒） -->
     <div class="hz"></div>
     <div class="frame"></div>
     <div class="cd" id="cd">
       <div class="num" id="cdNum">3</div>
-      <div class="tx"><b data-t="lock.title"></b><span id="cdSub"></span><div class="seg" id="cdSeg"></div></div>
-      <div class="hid"><div class="av3"><i>🐺</i><i>🦊</i><i>🐻</i></div><small data-t="lock.hidden"></small></div>
+      <div class="tx"><span id="cdSub"></span><div class="seg" id="cdSeg"></div></div>
+      <div class="lk" aria-hidden="true">🔒</div>
     </div>
-    <div class="rib lockrib"><b data-t="lock.tip"></b>｜<span data-t="lock.tip2"></span></div>
-
-    <!-- 常駐提示（onboard.js 填內容；版位在地圖下緣） -->
-    <div id="hint"></div>
 
     <!-- 大獎：金光＋爆金幣層（ui-main 的 coinBurst 填） -->
     <div class="glow" id="glow"></div>
@@ -108,15 +101,14 @@
         <button class="autob" id="autoBtn" type="button" data-t="auto.btn" data-t-attr="title"><i>⟳</i><span data-t="auto.entry"></span></button>
       </div>
       <div class="lockrow">
-        <div class="info" id="lkInfo"></div>
-        <button class="go" id="goBtn" type="button"><span id="goT"></span><small id="goS"></small></button>
+        <button class="go" id="goBtn" type="button"></button>
       </div>
     </div>
     <!-- 近況掛點：內容由 H04（js/recent.js）填；H02 只留位置與固定高度 -->
     <div id="recent"></div>
   </div>
   <span class="ph" data-t="ph.art"></span>
-  <!-- toast／log 頁／自動下注彈窗／引導覆蓋層由各模組自建，掛進 #app -->
+  <!-- toast／log 頁／自動下注彈窗由各模組自建，掛進 #app -->
 </div>
 <script src="values.js"></script>
 <script src="js/env.js"></script>
@@ -126,7 +118,6 @@
 <script src="js/drag-scroll.js"></script>
 <script src="js/log-ui.js"></script>
 <script src="js/autobet.js"></script>
-<script src="js/onboard.js"></script>
 <script src="js/ui-main.js"></script>
 <script src="js/dev.js"></script>
 <script src="js/recent.js"></script>

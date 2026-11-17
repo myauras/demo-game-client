@@ -11,8 +11,7 @@
 
 var N = 12;                                  // 顯示局數
 var DEF = {                                  // strings.js 缺鍵時的退回文字
-  'recent.title':  '近況 · 每局最高獨佔落點',
-  'recent.legend': '灰＝全部撞車　右邊是最新'
+  'recent.title':  '近況'
 };
 var list = [];                               // [{id, p}]，舊→新，p：0～3 或 -1（全撞）
 var root = null, rowEl = null;
@@ -51,9 +50,8 @@ function mount(el){
   if(root || !el) return;
   root = el;
   root.className = (root.className ? root.className + ' ' : '') + 'rc';
-  root.innerHTML = '<div class="rc-ht"><span class="rc-t"></span></div><div class="rc-row"></div><div class="rc-lg"></div>';
+  root.innerHTML = '<div class="rc-ht"><span class="rc-t"></span></div><div class="rc-row"></div>';
   root.querySelector('.rc-t').textContent = tx('recent.title');
-  root.querySelector('.rc-lg').textContent = tx('recent.legend');
   rowEl = root.querySelector('.rc-row');
   render(false);
 }
