@@ -11,7 +11,7 @@
  * 截圖自動駕駛：DEMO.shots[名] = function(done)，跑到該畫面呼叫 done() → 本檔設 window.__shotReady
  *   （tools/shot.mjs 靠它截圖）。沒帶 ?shot 時 init 完直接 __shotReady = true。?shot 模式不讀寫 localStorage。
  *   全部 shots 登錄在 ui-main.js 區段 [E]：idle／lock／reveal／win／bigwin／crash／auto-modal／auto-run／
- *   log-list／log-detail／log-detail-crash／tut-1～tut-3／recent。
+ *   log-list／log-detail／log-detail-crash／log-detail-old／recent。
  * 最後載入（依賴 ui-main.js 已建好 DEMO.game／DEMO.ui）。
  * ========================================================================= */
 (function(){

@@ -15,10 +15,9 @@
 | 參數 | 作用 |
 |---|---|
 | `?dev=1` | 導演台（頁面上方一列）：結果「照機率／強制獨佔／強制撞車」、箱子「照機率／軍用×1／精良×1.5／稀有×2／傳說×5」（兩個下拉持續生效，直到切回照機率）、**🏆 大獎**（一鍵：金點獨佔＋傳說箱，立刻開一局看爆金幣）、爆金幣 開／關、重置錢包、＋1,000。只包亂數、不動核心；不帶 `?dev=1` 時頁面上完全看不到，`DEMO.dev` 是 `undefined` |
-| `?shot=<名>` | 截圖自動駕駛，跑 `DEMO.shots[名]`，完成設 `window.__shotReady`；此模式不讀寫 localStorage、亂數固定種子。名單：`idle`／`lock`／`reveal`／`win`／`bigwin`／`crash`／`auto-modal`／`auto-run`／`log-list`／`log-detail`／`log-detail-crash`／`tut-1`／`tut-2`／`tut-3`／`recent` |
+| `?shot=<名>` | 截圖自動駕駛，跑 `DEMO.shots[名]`，完成設 `window.__shotReady`；此模式不讀寫 localStorage、亂數固定種子。名單：`idle`／`lock`／`reveal`／`win`／`bigwin`／`crash`／`auto-modal`／`auto-run`／`log-list`／`log-detail`／`log-detail-crash`／`log-detail-old`／`recent` |
 | `?vw=375` | 鎖 app 寬 375 並靠左（桌面瀏覽器檢視用） |
 | `?lang=<code>` | 介面語言；`?lang=xx` 為偽語系（每字串加長 30%，版面壓力測試），其他代號會記進 localStorage |
-| `?tut=1｜0` | 強制重播／關閉首次引導 |
 
 頁面對外訊號（工具靠這些判斷）：`window.__demoReady`（可操作）、`window.__shotReady`（可截圖；沒帶 `?shot` 時等於 `__demoReady`）、`window.DEMO`（`game`／`shots`／`t`／`ui`／`q`／`ls`；`dev` 只在 `?dev=1`）。
 
@@ -26,12 +25,12 @@
 
 ## script 載入順序（固定）
 
-`values.js → js/env.js → js/strings.js → js/toast.js → js/core.js → js/drag-scroll.js → js/log-ui.js → js/autobet.js → js/onboard.js → js/ui-main.js → js/dev.js → js/recent.js`
+`values.js → js/env.js → js/strings.js → js/toast.js → js/core.js → js/drag-scroll.js → js/log-ui.js → js/autobet.js → js/ui-main.js → js/dev.js → js/recent.js`
 
 - `values.js` 最先（只有 `EV`、`DEMO_KEY`，零依賴）；`env.js` 建 `DEMO` 命名空間與 `DEMO.ls`，之後每支都靠它。
 - `strings.js` 必須早於所有 UI 檔（它在載入當下把骨架的 `data-t` 填好，其餘 UI 檔取字時字典要先在）。
 - `core.js` 只依賴 `values.js`（Node 測試即 eval 這兩支）。
-- `log-ui`／`autobet`／`onboard` 彼此不認識玩法，由 `ui-main.js` 接線；`dev.js` 在 `ui-main.js` 之後（要拿到 `DEMO.game`／`DEMO.ui`）；`recent.js` 最後，`ui-main` 會等它出現再掛近況列。
+- `log-ui`／`autobet` 彼此不認識玩法，由 `ui-main.js` 接線；`dev.js` 在 `ui-main.js` 之後（要拿到 `DEMO.game`／`DEMO.ui`）；`recent.js` 最後，`ui-main` 會等它出現再掛近況列。
 - 樣式：`css/base.css` 最先（變數與疊層順序表），其餘模組樣式在後。
 
 ## 檔案分界（轉引擎時的所有權約定）
@@ -42,21 +41,21 @@
 |---|---|---|
 | `values.js` | **可移植・凍結**：數值單點（CFG→賠率全表由程式導出、禁手改單點） | 常數與公式即規格，照搬 |
 | `js/core.js` | **可移植・凍結**：零 DOM 核心——盤面先公告、結果先抽定、錢包、下注契約（bet→emit result→ack 才結算）、注單號、存檔與重整接回、可注入 rng | 邏輯照搬；rng 與持久化換成後台 |
-| `js/strings.js` | **可移植**：字串字典＋`t()`（含 autobet／log／onboard／導演台的字）、偽語系 | 文案整包照搬，只換取字介面 |
+| `js/strings.js` | **可移植**：字串字典＋`t()`（含 autobet／log／導演台的字；喊話字串帶 `[cN]字[/c]` 標記，由 `ui-main.js` 的 `rich()` 換成落點色 span）、偽語系 | 文案整包照搬，只換取字介面 |
 | `js/env.js` | 半可移植：`DEMO` 命名空間、網址參數、`DEMO.ls` 存檔 helper | 換成引擎的環境與存檔層 |
 | `test/mc-test.js` | 半可移植：Node 無頭蒙地卡羅＋端到端單元回歸（52 項） | 改寫為 CI 腳本 |
 | `js/autobet.js`＋`css/autobet.css` | 拋棄式（**不認識玩法**，吃 adapter）：入口→設定彈窗→進行中狀態條；停止條件與設定項可沿用 | 畫面重做；流程規則（局數／停利／停損／餘額不足／重整中止）照搬 |
 | `js/log-ui.js`＋`css/log-ui.css` | 拋棄式（**公司定死規格，勿改設計**）：總覽＋詳細頁＋回報鈕＋錢包重置，封頂 50 筆 | 畫面重做，資料接後台 |
-| `js/onboard.js`＋`css/onboard.css` | 拋棄式：常駐一句提示＋首次三步聚光引導＋log 頁「重看教學」 | 畫面重做，步驟與文案可沿用 |
+| `js/onboard.js`＋`css/onboard.css` | **已停用**：R3 起不做任何教學（三步引導、提示條、說明鈕、「重看教學」、`?tut=1` 全拿掉），檔案留著但 `index.html` 不再載入 | 不進產品；要做教學時再重做 |
 | `js/recent.js`＋`css/recent.css` | 拋棄式：近況列（每局最高獨佔落點，一排 12 顆、最新在右） | 畫面重做，資料讀注單的 `topSoloPoint` |
 | `js/drag-scroll.js`、`js/toast.js` | 拋棄式（通用工具） | 引擎元件取代 |
-| `js/ui-main.js`＋`css/base.css` | 拋棄式：主畫面與演出（地圖、落點、封盤倒數、跳傘、揭曉、結果彈窗、大獎爆金幣）＋模組接線（autobet adapter、log 列、引導步驟、`DEMO.ui`／`DEMO.shots`） | 畫面重做（接線方式與演出時序常數可參考） |
+| `js/ui-main.js`＋`css/base.css` | 拋棄式：主畫面與演出（地圖、落點、封盤倒數、跳傘、揭曉、結果彈窗、大獎爆金幣）＋模組接線（autobet adapter、log 列與詳細頁圖解、近況、`DEMO.ui`／`DEMO.shots`） | 畫面重做（接線方式與演出時序常數可參考） |
 | `js/dev.js` | 拋棄式：導演台（只包亂數，不動核心與 RTP）＋`?shot=` 分派 | 不進產品 |
 | `index.html` | 拋棄式：骨架與掛點 | 重做 |
 
 ## 疊層順序（z-index，定死）
 
-引導 50 ＞ toast 45 ＞ log 頁 36 ＞ 設定彈窗 35 ＞ 暗幕 34 ＞ 自動下注槽 33 ＞ 導演台 32 ＞ 遊戲主體（地圖內 ≤ 13）。
+toast 45 ＞ log 頁 36 ＞ 設定彈窗 35 ＞ 暗幕 34 ＞ 自動下注槽 33 ＞ 導演台 32 ＞ 遊戲主體（地圖內 ≤ 13）。
 
 ## localStorage key 表
 
@@ -68,7 +67,6 @@
 | `hotdrop.log` | 勝負紀錄（UI 層，封頂 50 筆） |
 | `hotdrop.autocfg` | 自動下注上次的設定 |
 | `hotdrop.auto` | 自動下注進行中旗標（重整即中止並 toast 提示） |
-| `hotdrop.tut` | 首次引導看完或跳過的旗標（`'done'`）；清掉即恢復首次進場引導，或在 log 頁按「重看教學」 |
 | `hotdrop.lang` | 介面語言代號（預設 `zh-TW`；`?lang=` 會覆蓋並記住） |
 | `hotdrop.stake` | 上次選的單注 |
 
@@ -95,8 +93,8 @@
 - **單注輸入**：正式版是「輸入框＋自訂鍵盤」，Demo 只用四顆固定面額鈕（10／50／100／500）；自動下注的單注也只能選這四個面額。
 - **自動下注**：只做「固定落點（或輪流）＋固定金額」，每局照新盤賠率；自動時省略封盤倒數、演出縮時、結果彈窗自動收起，但結算不跳過；進行中不接手動開局。
 - **美術全為佔位，無音效**（畫面上有「佔位美術」小字）。佔位清單：
-  - 落點圖示：🌿 綠、⚓ 藍、🔮 紫、👑 金；封盤中選中的落點換成 🪂。
-  - 角色與道具：✈️ 飛機、🪂 傘兵、📦／🎁 箱子、🐺🦊🐻 三個機器人頭像、🧑「你」標籤、💥✨ 揭曉特效。
+  - 落點：純 CSS 圓圈（圓內是賠率與勝率），沒有圖示、色名牌或座標字。
+  - 角色與道具：✈️ 飛機、🪂 傘兵、📦／🎁 箱子、🐺🦊🐻 三個機器人頭像、「你」頭像、🔒、✓／💥 揭曉標記。
   - 地圖：自繪 SVG 俯視島嶼＋格線（`index.html` 內嵌）。
   - 大獎：CSS 畫的金幣與金光（約 20 顆小圓，只動 transform／opacity）。
   - 頂欄與按鈕：🪂 logo、📜 紀錄鈕、「⟳ 自動」鈕；箱子等級色與落點色為暫定。

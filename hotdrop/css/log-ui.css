@@ -38,41 +38,36 @@
 .ldh .ptd{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:baseline}
 .ldh .pd0{background:var(--rc0)}.ldh .pd1{background:var(--rc1)}.ldh .pd2{background:var(--rc2)}.ldh .pd3{background:var(--rc3)}
 
-/* ---------- 詳細頁圖解（R2-1）：主畫面縮小版的無互動小地圖＋結論行；無動畫、不可點；色用 :root 變數 ---------- */
+/* ---------- 詳細頁圖解（R2-1／R3-11）：主畫面縮小版的無互動小地圖＋結論行；落點＝與主畫面同一種圓圈（圓內賠率＋頭像）；無動畫、不可點；色用 :root 變數 ---------- */
 .lfg{padding:10px 14px 0;pointer-events:none}
 .lfm{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
 .lfm::before{content:"";display:block;padding-top:114.67%}          /* 430／375：與 SVG 視窗同比例，落點用百分比定位 */
 .lfs,.gzs{position:absolute;left:0;top:0;width:100%;height:100%}
 .gz{position:absolute;width:0;height:0}
-.gzp{position:absolute;left:-34px;top:-34px;width:68px;height:68px;border-radius:50%;border:3px solid var(--c);
-  background:radial-gradient(circle,rgba(var(--r),.16) 0,rgba(var(--r),.42) 100%);box-shadow:0 0 0 5px rgba(var(--r),.2)}
+.gzp{position:absolute;left:-42px;top:-42px;width:84px;height:84px;border-radius:50%;border:3px solid var(--c);
+  display:grid;place-items:center;
+  background:radial-gradient(circle,rgba(7,16,29,.84) 0,rgba(7,16,29,.7) 60%,rgba(var(--r),.5) 100%);
+  box-shadow:0 0 0 5px rgba(var(--r),.2)}
 .gzp::after{content:"";position:absolute;inset:-9px;border-radius:50%;border:2px dashed rgba(var(--r),.7)}
-.gzi{position:absolute;left:0;top:0;width:100%;height:100%;display:grid;place-items:center;font-size:26px;line-height:1}
-.gz.solo .gzi,.gz.clash .gzi{opacity:.25}
-.gzv{position:absolute;left:0;top:0;width:100%;height:100%;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:2px;padding:3px}
-.gzf{width:24px;height:24px;border-radius:50%;background:var(--chip);border:2px solid var(--fg);display:grid;place-items:center;
-  font-style:normal;font-size:13px;line-height:1}
-.gzf.you{background:var(--fg);color:var(--appbg);border-color:var(--gold);font-size:11px;font-weight:900;white-space:nowrap;overflow:hidden;padding:0}
-.gzb{position:absolute;right:-12px;top:-12px;font-size:22px;line-height:1;z-index:2}
-/* 獨佔＝亮起（你的獨佔改金環）；撞車＝紅圈＋💥；沒人＝虛線淡化 */
-.gz.solo .gzp{box-shadow:0 0 0 5px rgba(var(--r),.55),0 0 0 10px rgba(var(--r),.2)}
+.gzin{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;max-width:76px}
+.gzv{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;max-width:60px;margin-bottom:2px}
+.gzv.q4{max-width:40px}                                            /* 4 人＝2×2 */
+.gzf{flex:none;width:18px;height:18px;border-radius:50%;background:var(--chip);border:2px solid var(--fg);display:grid;place-items:center;
+  font-style:normal;font-size:10px;line-height:1}
+.gzf.you{background:var(--fg);color:var(--appbg);border-color:var(--gold);font-size:9px;font-weight:900;white-space:nowrap;overflow:hidden;padding:0}
+.god{font-size:17px;font-weight:900;line-height:17px;height:17px;color:var(--fg);white-space:nowrap;font-variant-numeric:tabular-nums}
+.god.n6{font-size:15px}.god.n7{font-size:13px}
+.gzk,.gzb{position:absolute;z-index:2;line-height:1}
+.gzk{right:-8px;top:-8px;width:20px;height:20px;border-radius:50%;background:var(--win);color:var(--appbg);font-size:12px;font-weight:900;
+  display:grid;place-items:center;border:2px solid var(--appbg)}
+.gzb{right:-12px;top:-12px;font-size:22px}
+/* 獨佔＝亮起＋✓（你的獨佔改金環）；撞車＝紅圈＋💥；沒人＝虛線淡化 */
+.gz.solo .gzp{box-shadow:0 0 0 5px rgba(var(--r),.6),0 0 0 10px rgba(var(--r),.2)}
 .gz.solo.mine .gzp{box-shadow:0 0 0 5px var(--gold),0 0 0 10px rgba(var(--r),.2)}
-.gz.clash .gzp{border-color:var(--lose);box-shadow:0 0 0 5px var(--lose-bg)}
-.gz.emp{opacity:.55}
-.gz.emp .gzp{border-style:dashed;background:rgba(var(--r),.06);box-shadow:none}
+.gz.clash .gzp{border-color:var(--lose);background:radial-gradient(circle,rgba(40,8,14,.88) 0,rgba(40,8,14,.74) 60%,rgba(255,77,77,.5) 100%);
+  box-shadow:0 0 0 5px var(--lose-bg)}
+.gz.clash .gzp::after{border-color:rgba(255,77,77,.75)}
+.gz.emp .gzp{border-style:dashed;background:rgba(7,16,29,.78);box-shadow:none;opacity:.88}
 .gz.emp .gzp::after{display:none}
-/* 你選的點：白色虛線外環＋頂上「你選這裡」 */
-.gz.mine .gzp::after{inset:-13px;border:2px dashed var(--fg)}
-.gzm{position:absolute;left:-60px;width:120px;top:-60px;display:flex;justify-content:center;z-index:2}
-.gzm span{background:var(--fg);color:var(--appbg);border-radius:12px;padding:1px 8px;font-size:11px;font-weight:900;line-height:1.4;
-  max-width:100%;text-align:center;overflow-wrap:anywhere}
-.gzt{position:absolute;left:-85px;width:170px;top:46px;display:flex;justify-content:center}
-.gzg{width:max-content;max-width:150px;background:var(--appbg);border:2px solid var(--c);border-radius:10px;padding:2px 7px 3px 5px}
-.gl1{display:flex;align-items:center;gap:5px}
-.gbd{flex:none;min-width:20px;height:20px;border-radius:6px;background:var(--c);color:var(--appbg);font-size:12px;font-weight:900;
-  display:grid;place-items:center;padding:0 3px}
-.god{font-size:19px;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--fg);min-width:0;overflow-wrap:anywhere}
-.gwho{font-size:11px;line-height:1.3;font-weight:700;overflow-wrap:anywhere}
-.gwho.ow{color:var(--gold)}.gwho.ok{color:var(--win)}.gwho.no{color:var(--lose)}.gwho.em{color:var(--mute);font-weight:400}
 .lfc{padding:10px 4px 2px;text-align:center;font-size:19px;font-weight:900;line-height:1.3;overflow-wrap:anywhere}
 .lfc.ok{color:var(--gold)}.lfc.no{color:var(--lose)}

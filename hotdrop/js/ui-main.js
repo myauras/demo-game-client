@@ -3,8 +3,8 @@
  *
  * 流程（核心先抽定結果，UI 只演，演完才算結算）：
  *   待命（盤面公告、喊話）─點落點→ 封盤倒數 3 秒（可改點／立即跳傘）→ 飛機＋跳傘
- *   → 落地揭曉（各落點就地 1.5 秒：誰落在這、獨佔亮起跳倍率、撞車爆開）
- *   → 結果彈窗（地圖中央；大獎轉金色＋爆金幣）→ 玩家點任一處收起 → 換上下一局盤面，落點才可點
+ *   → 落地揭曉（各落點就地 1.5 秒：圓內放頭像，獨佔亮起＋✓、撞車變紅＋💥、沒人變虛線）
+ *   → 結果彈窗（地圖中央；獨佔外框用落點色，大獎轉金色＋爆金幣）→ 玩家點任一處收起 → 換上下一局盤面，落點才可點
  *
  * 核心對接（見 tasks/H01-核心.md 完成註記）：
  *   result → 開始演出；repick → 封盤中改點；settled → 彈窗出現時呼叫 game.ack() 觸發，
@@ -19,7 +19,7 @@
  *   [A] LogUI 區段（H05 授權）
  *   [B] Recent 呼叫點（H04 的掛點 #recent；呼叫點由 H02 留好）
  *   [C] Autobet adapter 區段（H05 授權）
- *   [D] Onboard 區段（H03 授權）
+ *   （無教學：R3-4 起不做任何引導、提示條、說明鈕；舊的 [D] Onboard 區段已拿掉）
  *   [E] DEMO.ui 對外介面＋DEMO.shots 自動駕駛（H05 授權）
  *
  * 對外（DEMO.ui）：
@@ -65,12 +65,12 @@ var BIGWIN_COIN_DELAY_MS = 650; // 彈窗出現後多久爆金幣（對齊倍率
 /* =====================================================================
  * [1] 小工具與視覺常數（佔位美術：emoji／CSS）
  * ===================================================================== */
-/* 落點圓心（以 375×594 地圖為基準的比例，與 home-A 靜態稿一致；落點全程不移動）＋顏色＋佔位圖示 */
+/* 落點圓心（以 375×594 地圖為基準的比例，與 home-A 靜態稿一致；落點全程不移動）＋顏色（色值＝base.css 的 --rc0～--rc3） */
 var ZONE = [
-  { cx:92/375,  cy:176/594, c:'#35D07F', r:'53,208,127',  ic:'🌿' },   // 綠
-  { cx:285/375, cy:202/594, c:'#4AA8FF', r:'74,168,255',  ic:'⚓' },   // 藍
-  { cx:95/375,  cy:378/594, c:'#B56BFF', r:'181,107,255', ic:'🔮' },   // 紫
-  { cx:282/375, cy:406/594, c:'#FFC531', r:'255,197,49',  ic:'👑' }    // 金
+  { cx:92/375,  cy:176/594, c:'#35D07F', r:'53,208,127'  },   // 綠
+  { cx:285/375, cy:202/594, c:'#4AA8FF', r:'74,168,255'  },   // 藍
+  { cx:95/375,  cy:378/594, c:'#B56BFF', r:'181,107,255' },   // 紫
+  { cx:282/375, cy:406/594, c:'#FFC531', r:'255,197,49'  }    // 金
 ];
 var BOTS = ['🐺', '🦊', '🐻'];                         // 三個機器人的頭像；名字在字典 bot.0～2
 var BOXC = ['#9AA9BD', '#4AA8FF', '#B56BFF', '#FFC531']; // 箱子等級色（依 EV.BOX.tiers 順序：灰／藍／紫／金）
@@ -134,47 +134,51 @@ $('stakes').onclick = function(e){
   stake = +b.getAttribute('data-v'); D.ls('stake', stake); renderStakes();
 };
 
-/* ---------- 四個落點（結構固定，內容隨盤面換） ---------- */
+/* ---------- 四個落點（結構固定，內容隨盤面換）：圓圈內＝（揭曉時的頭像）＋賠率大字＋勝率 ---------- */
 function buildZones(){
   var h = '';
   EV.POINTS.forEach(function(p, i){
     var z = ZONE[i];
     h += '<div class="zone" data-i="' + i + '" style="--c:' + z.c + ';--r:' + z.r +
       ';left:' + (z.cx * 100).toFixed(2) + '%;top:' + (z.cy * 100).toFixed(2) + '%">' +
-      '<div class="meb"><span>🧑 ' + T('lock.me') + '</span></div>' +
-      '<div class="pt"><span class="ic">' + z.ic + '</span><span class="boom">💥</span><span class="spark">✨</span></div>' +
-      '<div class="tagw"><div class="tag"><div class="l1"><span class="bd">' + p.name + '</span><b class="od"></b></div>' +
-      '<div class="l2"></div><div class="who"></div></div></div></div>';
+      '<div class="pt"><div class="in"><div class="avs"></div><b class="od"></b><span class="wr"></span></div>' +
+      '<span class="ok">✓</span><span class="boom">💥</span></div>' +
+      '<span class="me">' + D.esc(T('who.you')) + '</span></div>';
   });
   zoneBox.innerHTML = h;
   zones = Array.prototype.slice.call(zoneBox.children);
 }
-function setIc(i, txt){ zones[i].querySelector('.ic').textContent = txt; }
 
-/* 盤面：賠率（最醒目）、物資箱數、獨佔率，全讀核心；anim＝換盤提示動作 */
+/* 盤面：賠率（最醒目）、勝率（＝核心的獨佔率 q），全讀核心；anim＝換盤提示動作。
+   賠率字數多（≥6、≥7 字）時加 n6／n7 縮字，圓內放得下 */
 function renderBoard(b, anim){
   view.board = b;
   zones.forEach(function(z, i){
-    z.querySelector('.od').textContent = EV.fmtX(b.odds[i]) + 'x';
-    z.querySelector('.l2').textContent = T('zone.info', { n:b.supply[i], p:Math.round(b.q[i] * 100) });
-    if(anim) restartClass(z.querySelector('.tag'), 'swap');
+    var od = z.querySelector('.od'), tx = EV.fmtX(b.odds[i]) + 'x';
+    od.textContent = tx;
+    od.className = 'od' + (tx.length >= 7 ? ' n7' : tx.length === 6 ? ' n6' : '');
+    z.querySelector('.wr').textContent = T('zone.wr', { p:Math.round(b.q[i] * 100) });
+    if(anim) restartClass(z.querySelector('.in'), 'in-swap');
   });
 }
 
 /* ---------- 對手喊話：純氛圍，用氛圍亂數 cos，不碰核心 rng、不讀 botPicks／botP ---------- */
 var shoutSt = [], shoutTm = null, chips = [];
+/* 喊話字串帶 [cN]字[/c] 標記：先跳脫 HTML，再把標記換成帶落點色 class 的 span（.sc0～.sc3，色取 base.css 的 --rc0～--rc3） */
+function rich(s){
+  return D.esc(s).replace(/\[c([0-3])\]([\s\S]*?)\[\/c\]/g, '<span class="sc$1">$2</span>');
+}
 function buildShouts(){
   var h = '';
-  BOTS.forEach(function(face, b){
-    h += '<div class="chip"><div class="r1"><span class="em">' + face + '</span><span class="nm">' + T('bot.' + b) +
-      '</span></div><div class="say"></div></div>';
+  BOTS.forEach(function(face){
+    h += '<div class="chip"><span class="em">' + face + '</span><span class="say"></span></div>';
   });
   $('ban').innerHTML = h;
   chips = Array.prototype.slice.call($('ban').children);
 }
 function rollShout(b){ shoutSt[b] = { p:Math.floor(cos() * EV.POINTS.length), k:Math.floor(cos() * 3) }; }
 function renderShout(b, flash){
-  chips[b].querySelector('.say').textContent = T('shout.' + shoutSt[b].p + '.' + shoutSt[b].k);
+  chips[b].querySelector('.say').innerHTML = rich(T('shout.' + shoutSt[b].p + '.' + shoutSt[b].k));
   if(flash) restartClass(chips[b], 'chg');
 }
 function shoutAll(){ for(var b = 0; b < BOTS.length; b++){ rollShout(b); renderShout(b, false); } }
@@ -193,18 +197,13 @@ function renderLock(){
   zones.forEach(function(z, i){
     z.classList.toggle('sel', i === sel);
     z.classList.toggle('dim', i !== sel);
-    setIc(i, i === sel ? '🪂' : ZONE[i].ic);
   });
-  var odds = EV.fmtX(cur.board.odds[sel]);
-  $('lkInfo').innerHTML = '<small>' + T('lock.picked', { pt:ptName(sel) }) + '</small><b>' + D.fmt(cur.stake) +
-    ' <em>→ ' + odds + 'x</em></b>';
-  $('lkInfo').style.setProperty('--c', ZONE[sel].c);
-  $('goT').textContent = T('lock.go'); $('goS').textContent = T('lock.go2');
+  $('goBtn').textContent = T('lock.go');
   $('goBtn').classList.remove('dis');
 }
 function startLock(){
   setPhase('lock'); showLockRow(true);
-  $('cdSub').textContent = T('lock.sub', { n:TIMING.LOCK_SEC });
+  $('cdSub').textContent = T('lock.sub');
   var sg = '';
   for(var i = 0; i < TIMING.LOCK_SEC; i++) sg += '<span class="sgm"><i></i></span>';
   $('cdSeg').innerHTML = sg;
@@ -230,14 +229,11 @@ function jumpNow(){
 }
 
 /* ---------- 飛機＋跳傘 ---------- */
-function slotPos(n, idx){                                           // 落點圓內第 idx 個人的左上角偏移（圓心為原點，頭像 30px）
-  var S = {
-    1:[[-15,-15]],
-    2:[[-31,-15],[1,-15]],
-    3:[[-31,-27],[1,-27],[-15,1]],
-    4:[[-31,-29],[1,-29],[-31,1],[1,1]]
-  };
-  return (S[n] || S[4])[idx] || [-15, -15];
+/* 落點圓內第 idx 個人的頭像左上角偏移（圓心為原點，頭像 24px）；與 base.css 揭曉時 .avs＋賠率行的排法一致，
+   傘兵落在這裡、揭曉換成圓內頭像時不會跳位：≤3 人一排（置中），4 人 2×2；賠率行固定 24px、頭像列與賠率行間距 2px */
+function slotPos(n, idx){
+  if(n >= 4) return [-25 + (idx % 2) * 26, -38 + Math.floor(idx / 2) * 26];
+  return [-(n * 24 + (n - 1) * 2) / 2 + idx * 26, -25];
 }
 function occupants(r){                                              // 各落點上的人：[{me}｜{bot:b}, ...]
   var occ = [], i;
@@ -250,18 +246,21 @@ function clearField(){
   spriteBox.innerHTML = '';
   zones.forEach(function(z, i){
     z.className = 'zone';
-    setIc(i, ZONE[i].ic);
-    z.querySelector('.who').className = 'who';
+    z.querySelector('.avs').innerHTML = '';
+    z.querySelector('.avs').className = 'avs';
   });
   plane.className = 'plane';
   glow.classList.remove('on'); coinBox.innerHTML = '';
 }
+function avatar(o){                                                 // 頭像：你＝白底「你」金框；機器人＝emoji
+  return o.me ? '<span class="av you">' + D.esc(T('who.you')) + '</span>' : '<span class="av">' + BOTS[o.bot] + '</span>';
+}
 function startJump(){
   lockTimer = null;
   setPhase('jump');
-  zones.forEach(function(z, i){ z.classList.remove('sel', 'dim'); setIc(i, ZONE[i].ic); });
+  zones.forEach(function(z){ z.classList.remove('sel', 'dim'); });
   if(panel.classList.contains('lk')){
-    $('goT').textContent = T('lock.flying'); $('goS').textContent = T('lock.flying2');
+    $('goBtn').textContent = T('lock.flying');
     $('goBtn').classList.add('dis');
   }
   var W = map.clientWidth, H = map.clientHeight;
@@ -284,77 +283,60 @@ function startJump(){
   who.forEach(function(o, k){
     var z = ZONE[o.zone], n = occ[o.zone].length, sl = slotPos(n, used[o.zone]++);
     var f = TIMING.JUMP_AT[order[k] % TIMING.JUMP_AT.length];
-    var sx = W * (PLANE_ROUTE[0] + (PLANE_ROUTE[1] - PLANE_ROUTE[0]) * f) - 15, sy = -30 + (H + 60) * f - 15;
+    var sx = W * (PLANE_ROUTE[0] + (PLANE_ROUTE[1] - PLANE_ROUTE[0]) * f) - 12, sy = -30 + (H + 60) * f - 12;
     var tx = z.cx * W + sl[0], ty = z.cy * H + sl[1];
     var dl = Math.round(f * TIMING.PLANE_MS);
     end = Math.max(end, dl + TIMING.FALL_MS);
     h += '<div class="sp' + (o.me ? ' you' : '') + '" style="--sx:' + sx.toFixed(1) + 'px;--sy:' + sy.toFixed(1) +
       'px;--tx:' + tx.toFixed(1) + 'px;--ty:' + ty.toFixed(1) + 'px;--dl:' + dl + 'ms;--fall:' + TIMING.FALL_MS + 'ms">' +
-      '<span class="cv">🪂</span><span class="fc">' + (o.me ? T('who.you') : BOTS[o.bot]) + '</span></div>';
+      '<span class="cv">🪂</span>' + avatar(o) + '</div>';
   });
   spriteBox.innerHTML = h;
   after(end * scale() + 80, startReveal);
 }
 
-/* ---------- 落地揭曉：各落點就地（獨佔亮起＋跳倍率／撞車爆開／沒人淡出），此時還沒有彈窗 ---------- */
+/* ---------- 落地揭曉：各落點就地（圓內換成頭像；獨佔亮起＋✓／撞車變紅＋💥／沒人變虛線），此時還沒有彈窗 ---------- */
 function startReveal(){
   setPhase('reveal');
+  spriteBox.innerHTML = '';                                         // 傘兵已落在圓內頭像的位置，換成圓內真正的頭像（位置相同）
   var occ = occupants(cur);
   zones.forEach(function(z, i){
-    var list = occ[i], who = z.querySelector('.who'), names = [], me = false;
-    list.forEach(function(o){
-      if(o.me){ me = true; names.push(T('who.you')); } else names.push(T('bot.' + o.bot));
-    });
+    var list = occ[i], avs = z.querySelector('.avs'), me = false, h = '';
+    list.forEach(function(o){ if(o.me) me = true; h += avatar(o); });
+    avs.innerHTML = h;
+    avs.className = 'avs' + (list.length >= 4 ? ' q4' : '');
     z.classList.add('rv');
-    if(list.length === 0){
-      z.classList.add('emp'); setIc(i, '⊘');
-      who.className = 'who em'; who.textContent = T('who.none');
-    }else if(list.length === 1){
-      z.classList.add('solo', 'occ'); if(me) z.classList.add('mine');
-      who.className = 'who ' + (me ? 'ok' : 'ow');
-      who.textContent = me ? T('who.soloYou') : T('who.solo', { n:names[0] });
-    }else{
-      z.classList.add('clash', 'occ');
-      who.className = 'who no';
-      who.textContent = T('who.clash', { n:names.join(T('who.join')) });
-    }
+    if(list.length === 0) z.classList.add('emp');
+    else if(list.length === 1){ z.classList.add('solo'); if(me) z.classList.add('mine'); }
+    else z.classList.add('clash');
   });
   if(pend && pend.onReveal) pend.onReveal();
   if(pend && pend.hold === 'reveal') return;
   after(TIMING.REVEAL_MS * scale(), showPopup);
 }
 
-/* ---------- 結果彈窗（地圖中央，蓋住落點；底部不蓋） ---------- */
+/* ---------- 結果彈窗（地圖中央，蓋住落點；底部不蓋）：沒有算式、沒有提示字、沒有落點名牌 ---------- */
 function showPopup(){
   setPhase('popup'); showLockRow(false);
   var d = cur, big = d.solo && d.mult >= BIGWIN_MULT;
-  var pc = ZONE[d.pointIdx].c, bx = boxOf(d.boxIdx), bc = BOXC[d.boxIdx] || BOXC[0];
-  var net = d.payout - d.stake, h, ptn = ptName(d.pointIdx);
-  var netCol = net > 0 ? '#5FF0A0' : (net < 0 ? '#FF7B7B' : '#FFD24A');
-  var payRow = '<div class="pay2 st" style="--d:PDs"><div class="a">' + T('pop.pay', { stake:D.fmt(d.stake), back:D.fmt(d.payout) }) +
-    '</div><div class="d2" style="color:' + netCol + '">' + D.signed(net) + '</div></div>';
-  var hint = '<div class="phint st" style="--d:HDs">' + T('pop.hint') + '</div>';
+  var z = ZONE[d.pointIdx], bx = boxOf(d.boxIdx), bc = BOXC[d.boxIdx] || BOXC[0], h;
   pop.className = 'pop in';
   if(d.solo){
+    /* 外框＝玩家選的落點色（綠藍紫金）；大獎＝金色版（.bw 另帶金色底與光暈） */
     pop.classList.add(big ? 'bw' : 'wn');
-    pop.setAttribute('style', '--c:#FFD24A;--r:255,210,74;--pc:' + pc + ';--t:' + bc);
-    h = '<div class="hd2 st" style="--d:0s"><h1>' + T(big ? 'pop.big' : 'pop.win') + '</h1><span class="sb">' + ptn + '</span></div>' +
-      '<div class="bxr"><span class="bi shk" id="popBox">📦</span><div class="bn st" style="--d:.55s"><span>' + bx.name +
-      '</span><b>×' + bx.mult + '</b></div></div>' +
-      '<div class="fm st" style="--d:.65s">' + T('pop.formula', { pt:ptn, odds:EV.fmtX(d.baseOdds), box:bx.name, bm:String(bx.mult) }) + '</div>' +
-      '<div class="big" style="--bd:.7s">' + EV.fmtX(d.mult) + 'x</div>' +
-      payRow.replace('PDs', '.95s') + hint.replace('HDs', '1.2s');
+    pop.setAttribute('style', big ? '--c:#FFD24A;--r:255,210,74;--t:' + bc : '--c:' + z.c + ';--r:' + z.r + ';--t:' + bc);
+    h = '<h1 class="st" style="--d:0s">' + D.esc(T(big ? 'pop.big' : 'pop.win')) + '</h1>' +
+      '<div class="bxr st" style="--d:.1s"><span class="bi shk" id="popBox">📦</span><b class="bx">×' + bx.mult + '</b></div>' +
+      '<div class="big" style="--bd:.55s">' + EV.fmtX(d.mult) + 'x</div>' +
+      '<div class="earn st" style="--d:.85s"><span>' + D.esc(T('pop.earn')) + '</span><b>' + D.fmt(d.payout) + '</b></div>';
   }else{
     var mates = [];
-    d.botPicks.forEach(function(p, b){ if(p === d.pointIdx) mates.push(BOTS[b] + ' ' + T('bot.' + b)); });
+    d.botPicks.forEach(function(p, b){ if(p === d.pointIdx) mates.push('<span class="av">' + BOTS[b] + '</span>'); });
     pop.classList.add('cr');
-    pop.setAttribute('style', '--c:#7A4A52;--r:122,74,82;--pc:' + pc + ';--tt:#FF9A9A;--t:' + bc);
-    h = '<div class="hd2 st" style="--d:0s"><h1>' + T('pop.crash') + '</h1><span class="sb">' + ptn + '</span></div>' +
-      '<div class="fm st" style="--d:.1s;font-size:13px;color:#D9B9BD">' + T('pop.with', { who:mates.join('、'), pt:ptn }) + '</div>' +
-      '<div class="bxr st" style="--d:.25s"><span class="bi">📦</span><div class="bn"><span>' + T('pop.miss', { box:bx.name }) +
-      '</span><b>×' + bx.mult + '</b></div></div>' +
-      '<div class="big" style="--bd:.4s">0x</div>' +
-      payRow.replace('PDs', '.65s') + hint.replace('HDs', '.85s');
+    pop.setAttribute('style', '--c:#5A4750;--r:90,71,80');
+    h = '<h1 class="st" style="--d:0s">' + D.esc(T('pop.crash')) + '</h1>' +
+      '<div class="who st" style="--d:.1s">' + avatar({ me:true }) + '<span class="x">✕</span>' + mates.join('') + '</div>' +
+      '<div class="big" style="--bd:.35s">0x</div>';
   }
   pop.innerHTML = h;
   popveil.classList.add('on');
@@ -501,24 +483,17 @@ var FIG_SVG = '<svg class="lfs" viewBox="0 ' + FIG_VB_Y + ' 375 ' + FIG_VB_H + '
   '<circle cx="165" cy="120" r="9" fill="#2d6e3a"/><circle cx="210" cy="240" r="11" fill="#2d6e3a"/><circle cx="150" cy="310" r="7" fill="#2d6e3a"/><circle cx="215" cy="300" r="9" fill="#2d6e3a"/>' +
   '<circle cx="330" cy="250" r="11" fill="#2d6e3a"/><circle cx="60" cy="300" r="9" fill="#2d6e3a"/><circle cx="180" cy="455" r="11" fill="#2d6e3a"/><circle cx="255" cy="135" r="9" fill="#2d6e3a"/>' +
   '<path d="M 24 238 C 80 262, 130 244, 188 266 C 244 288, 300 268, 354 296" fill="none" stroke="#3ba3d6" stroke-width="9" stroke-linecap="round"/></g></svg>';
-/* 一個落點：誰在這（你／機器人頭像）＋獨佔／撞車／沒人，字樣與主畫面揭曉同一套（who.*） */
+/* 一個落點（R3-11：與主畫面同一種圓圈）：圓內＝頭像＋賠率；獨佔＝亮起＋✓（你獨佔金環）、撞車＝紅圈＋💥、沒人＝虛線；不放文字 */
 function figZone(f, i){
-  var z = ZONE[i], list = [], names = [], me = (f.p === i), h = '';
-  if(me){ list.push('<i class="gzf you">' + T('who.you') + '</i>'); names.push(T('who.you')); }
-  f.b.forEach(function(p, b){ if(p === i){ list.push('<i class="gzf">' + BOTS[b] + '</i>'); names.push(T('bot.' + b)); } });
+  var z = ZONE[i], list = [], me = (f.p === i), tx = EV.fmtX(f.o[i]) + 'x';
+  if(me) list.push('<i class="gzf you">' + D.esc(T('who.you')) + '</i>');
+  f.b.forEach(function(p, b){ if(p === i) list.push('<i class="gzf">' + BOTS[b] + '</i>'); });
   var n = list.length, st = n === 0 ? 'emp' : n === 1 ? 'solo' : 'clash';
-  var who = n === 0 ? T('who.none')
-          : n === 1 ? (me ? T('who.soloYou') : T('who.solo', { n:names[0] }))
-          : T('who.clash', { n:names.join(T('who.join')) });
-  h = '<div class="gz ' + st + (me ? ' mine' : '') + '" style="--c:var(--rc' + i + ');--r:' + z.r +
+  return '<div class="gz ' + st + (me ? ' mine' : '') + '" style="--c:var(--rc' + i + ');--r:' + z.r +
     ';left:' + (z.cx * 100).toFixed(2) + '%;top:' + (((z.cy * 594 - FIG_VB_Y) / FIG_VB_H) * 100).toFixed(2) + '%">' +
-    (me ? '<div class="gzm"><span>' + D.esc(T('log.fig.me')) + '</span></div>' : '') +
-    '<div class="gzp"><span class="gzi">' + (n ? z.ic : '⊘') + '</span><span class="gzv">' + list.join('') + '</span>' +
-    (st === 'clash' ? '<span class="gzb">💥</span>' : '') + '</div>' +
-    '<div class="gzt"><div class="gzg"><div class="gl1"><span class="gbd">' + D.esc(EV.POINTS[i].name) + '</span><b class="god">' +
-    D.esc(EV.fmtX(f.o[i])) + 'x</b></div><div class="gwho ' + (st === 'emp' ? 'em' : st === 'solo' ? (me ? 'ok' : 'ow') : 'no') + '">' +
-    D.esc(who) + '</div></div></div></div>';
-  return h;
+    '<div class="gzp"><div class="gzin">' + (n ? '<div class="gzv' + (n >= 4 ? ' q4' : '') + '">' + list.join('') + '</div>' : '') +
+    '<b class="god' + (tx.length >= 7 ? ' n7' : tx.length === 6 ? ' n6' : '') + '">' + D.esc(tx) + '</b></div>' +
+    (st === 'solo' ? '<span class="gzk">✓</span>' : '') + (st === 'clash' ? '<span class="gzb">💥</span>' : '') + '</div></div>';
 }
 function figOk(f){
   function idx(v){ return typeof v === 'number' && v >= 0 && v < EV.POINTS.length && v % 1 === 0; }
@@ -601,23 +576,6 @@ if(window.MutationObserver) new MutationObserver(syncAutoBtn).observe(autoBtn, {
 syncAutoBtn();
 
 /* =====================================================================
- * [D] Onboard 區段（H03 授權）：三步聚光引導（文案在 strings.js 的 tut.s1～s3）
- *     ① 紫點（圓＋賠率標籤，含 👆）→ 規則一句話　② 四個落點全部 → 顏色越高賠越多也越容易撞
- *     ③ 金點 → 獨佔之後開箱。target 回傳元素陣列＝取聯集框，座標全讀版面、不寫死
- * ===================================================================== */
-function zoneParts(i){ var z = zones[Math.min(i, zones.length - 1)]; return [z.querySelector('.pt'), z.querySelector('.tag')]; }
-Onboard.mount({
-  root:$('app'), hintEl:$('hint'),
-  steps:[
-    { key:'s1', pad:14, target:function(){ return zoneParts(2); }, hand:function(){ return zoneParts(2)[0]; } },
-    { key:'s2', pad:12, target:function(){ return zones.reduce(function(a, _, i){ return a.concat(zoneParts(i)); }, []); } },
-    { key:'s3', pad:14, target:function(){ return zoneParts(zones.length - 1); } }
-  ],
-  canStart:function(){ return !Autobet.isRunning() && phase === 'idle'; },
-  autoStart:true
-});
-
-/* =====================================================================
  * [E] DEMO.ui 對外介面＋自動駕駛（H05 授權 DEMO.ui；shots 的 idle／lock／win／bigwin／crash 由 H02 先備）
  * ===================================================================== */
 /* 強制下一局結果（只在 ?dev=1／?shot= 掛，正式網址沒有）：bots＝三個機器人各選哪個落點、boxIdx＝箱子等級。
@@ -673,9 +631,6 @@ var SEED_RECENT = (function(){                     // 近況列：固定種子�
 })();
 
 D.shots.idle = function(done){ after(50, done); };
-D.shots['tut-1'] = function(done){ Onboard.start(0); after(450, done); };         // 首次引導 1～3 步
-D.shots['tut-2'] = function(done){ Onboard.start(1); after(450, done); };
-D.shots['tut-3'] = function(done){ Onboard.start(2); after(450, done); };
 D.shots.lock = function(done){                       // 紫點封盤倒數，停在「3」
   rig([3, 0, 1], 0);
   play(2, stake, { hold:'lock' }).catch(noop);
