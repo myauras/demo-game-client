@@ -150,13 +150,8 @@ button { touch-action: manipulation; }
 .node.is-danger::before { border-color: #fff; background: #ff294e; box-shadow: 0 0 4px #fff, 0 0 18px #ff264c, 0 0 34px #ff173f; }
 .node.is-invalid { animation: invalid-node .22s ease; }
 
-.agent { position: absolute; z-index: 6; width: 26px; height: 34px; transform: translate(-50%, -72%); opacity: 0; pointer-events: none; transition: left .42s cubic-bezier(.22,.8,.25,1), top .42s cubic-bezier(.22,.8,.25,1), opacity .2s; filter: drop-shadow(0 0 7px #2ae7ff); }
+.agent { position: absolute; z-index: 6; width: 48px; height: 48px; transform: translate(-50%, -78%); opacity: 0; pointer-events: none; background: url("assets/agent-infiltrator.png") center / contain no-repeat; transition: left .42s cubic-bezier(.22,.8,.25,1), top .42s cubic-bezier(.22,.8,.25,1), opacity .2s; filter: drop-shadow(0 0 6px rgba(42, 231, 255, .72)); }
 .agent.is-visible { opacity: 1; }
-.agent::before { content: ""; position: absolute; left: 7px; top: 1px; width: 13px; height: 13px; border-radius: 50% 50% 42% 42%; background: #06121f; border: 2px solid #2ac9e9; box-shadow: inset 5px -2px #132e55; }
-.agent::after { content: ""; position: absolute; left: 5px; top: 14px; width: 16px; height: 18px; border-radius: 7px 7px 3px 3px; transform: skew(-8deg); background: linear-gradient(135deg, #1dd8f4, #14345b 38%, #050e1c 39%); border: 1px solid #24799b; }
-.agent span::before, .agent span::after { content: ""; position: absolute; top: 28px; width: 5px; height: 10px; background: #07111d; border: 1px solid #1f7f9e; }
-.agent span::before { left: 6px; transform: rotate(13deg); }
-.agent span::after { right: 5px; transform: rotate(-13deg); }
 .agent.is-moving { animation: agent-bob .24s ease-in-out infinite alternate; }
 
 .event-bubble { position: absolute; z-index: 8; min-width: 92px; max-width: 140px; padding: 7px 10px; border-radius: 8px; background: rgba(4, 15, 27, .94); border: 1px solid var(--cyan); color: #dffcff; font-weight: 800; font-size: 12px; text-align: center; transform: translate(-50%, -135%) scale(.8); opacity: 0; pointer-events: none; box-shadow: 0 0 16px rgba(37, 226, 255, .25); }
