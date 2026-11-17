@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#071529">
   <meta name="description" content="雷射潛入 H5 遊戲 Demo">
   <title>雷射潛入｜H5 Demo</title>
-  <link rel="stylesheet" href="styles.css?v=20261117-agent-art">
+  <link rel="stylesheet" href="styles.css?v=20261117-result-effects">
 </head>
 <body>
   <main class="game-shell" aria-label="雷射潛入遊戲">
@@ -85,6 +85,9 @@
 
   <div class="result-modal" id="resultModal" hidden>
     <div class="result-card" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+      <div class="result-decor" aria-hidden="true">
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+      </div>
       <span class="result-full-board" id="resultFullBoard" hidden>全盤 ×2</span>
       <div class="result-mark" id="resultMark"></div>
       <h2 id="resultTitle">贏得</h2>
@@ -96,6 +99,6 @@
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script type="module" src="src/app.js?v=20261116-gold-particles"></script>
+  <script type="module" src="src/app.js?v=20261117-result-effects"></script>
 </body>
 </html>
