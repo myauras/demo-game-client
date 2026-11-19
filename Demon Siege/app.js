@@ -251,7 +251,7 @@ async function showSilencedDialogs() {
 
 function payoutFor(role) { return role.step === 0 ? 0 : state.bet * role.numbers[role.step - 1]; }
 
-async function resolveAdvance(roleKey) {
+async function resolveAdvance(roleKey, settleAfter = null) {
   const role = roles[roleKey];
   role.step = Math.min(role.step + 1, role.values.length);
   const ring = document.querySelector(`[data-role="${roleKey}"]`);
@@ -262,6 +262,8 @@ async function resolveAdvance(roleKey) {
 
   const reachedEnd = role.step === role.values.length;
   if (!reachedEnd) return;
+
+  if (settleAfter) await settleAfter;
 
   if (roleKey === 'warrior') {
     await runBonus();
@@ -322,8 +324,11 @@ async function placeBet() {
   const type = pickEvent();
   await animateResult(type);
   if (events[type].role) {
-    await playRoleEffect(events[type].role);
-    await resolveAdvance(events[type].role);
+    const roleEffect = playRoleEffect(events[type].role);
+    await Promise.all([
+      roleEffect,
+      resolveAdvance(events[type].role, roleEffect),
+    ]);
   } else if (type === 'BOSS') {
     await playEventEffect('boss', () => {
       Object.values(roles).forEach(role => role.step = Math.max(0, role.step - 1));
