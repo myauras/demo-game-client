@@ -143,11 +143,11 @@ button { font: inherit; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 0 10px 7px;
+  padding: 8px 10px 12px;
 }
 
 .rings {
-  --ring-size: min(88vw, 390px, 46svh);
+  --ring-size: min(94vw, 420px, 54svh);
   position: relative;
   width: var(--ring-size);
   aspect-ratio: 1;
@@ -627,6 +627,6 @@ button { font: inherit; }
 @keyframes reward-sparkle { from{filter:brightness(.7);transform:scale(.98)} to{filter:brightness(1.5);transform:scale(1.04)} }
 
 @media (min-width: 461px) { body { padding:20px 0; } .game-shell { min-height:min(930px,calc(100svh - 40px)); border:1px solid #2f3336; } }
-@media (max-height: 700px) { .topbar { padding-top:8px; } .rings { --ring-size:min(78vw,340px,48svh); } .command-panel { padding-top:9px; } .action { min-height:48px; } }
+@media (max-height: 700px) { .topbar { padding-top:8px; } .arena { padding-top:6px; padding-bottom:9px; } .rings { --ring-size:min(86vw,360px,51svh); } .command-panel { padding-top:9px; } .action { min-height:48px; } }
 
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important; } }
