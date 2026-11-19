@@ -83,6 +83,8 @@ function renderBoard() {
       const button = document.createElement("button");
       const key = `${row}:${col}`;
       const index = selected.get(key);
+      const isGoal = state.route.length > 0 && row === config.size - 1;
+      const isFinish = Boolean(tail && tail.row === config.size - 1 && tail.row === row && tail.col === col);
       button.type = "button";
       button.className = "node";
       button.dataset.row = row;
@@ -91,12 +93,18 @@ function renderBoard() {
       button.setAttribute("aria-label", `第 ${row + 1} 排，第 ${col + 1} 格`);
       if (state.route.length === 0 && row === 0) button.classList.add("is-entry");
       if (state.route.length === 0 && row !== 0) button.disabled = true;
-      if (state.route.length > 0 && row === config.size - 1) button.classList.add("is-goal-row");
+      if (isGoal) button.classList.add("is-goal-row");
       if (index !== undefined) button.classList.add("is-selected");
       if (tail && tail.row === row && tail.col === col) button.classList.add("is-tail");
-      if (tail && tail.row === config.size - 1 && tail.row === row && tail.col === col) button.classList.add("is-finish");
+      if (isFinish) button.classList.add("is-finish");
       if (state.currentIndex === index) button.classList.add("is-current");
       if (state.dangerIndex === index) button.classList.add("is-danger");
+      if (isGoal && index === undefined) {
+        const arrow = document.createElement("span");
+        arrow.className = "goal-arrow";
+        arrow.setAttribute("aria-hidden", "true");
+        button.append(arrow);
+      }
       elements.board.append(button);
     }
   }
