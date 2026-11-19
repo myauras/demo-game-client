@@ -99,12 +99,6 @@ function renderBoard() {
       if (isFinish) button.classList.add("is-finish");
       if (state.currentIndex === index) button.classList.add("is-current");
       if (state.dangerIndex === index) button.classList.add("is-danger");
-      if (isGoal && index === undefined) {
-        const arrow = document.createElement("span");
-        arrow.className = "goal-arrow";
-        arrow.setAttribute("aria-hidden", "true");
-        button.append(arrow);
-      }
       elements.board.append(button);
     }
   }
