@@ -213,8 +213,8 @@ async function animateResult(finalType) {
 
 async function playEventEffect(type, onImpact) {
   const isBoss = type === 'boss';
-  const impactDelay = isBoss ? 410 : 520;
-  const duration = isBoss ? 1280 : 1360;
+  const impactDelay = isBoss ? 410 : 180;
+  const duration = isBoss ? 1280 : 760;
   eventFx.className = 'event-fx';
   ringsEl.classList.remove('effect-silence', 'effect-boss');
   void eventFx.offsetWidth;
@@ -245,7 +245,7 @@ async function playRoleEffect(roleKey) {
 
 async function showSilencedDialogs() {
   ringsEl.classList.add('silence-muted');
-  await sleep(2100);
+  await sleep(1050);
   ringsEl.classList.remove('silence-muted');
 }
 
