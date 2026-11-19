@@ -76,6 +76,7 @@ function renderBoard() {
   const selected = new Map(state.route.map((node, index) => [`${node.row}:${node.col}`, index]));
   const tail = state.route.at(-1);
   elements.board.style.setProperty("--size", config.size);
+  elements.board.classList.toggle("is-performing", state.phase === "RUNNING" || state.phase === "SETTLED");
   elements.board.innerHTML = "";
 
   for (let row = 0; row < config.size; row += 1) {
