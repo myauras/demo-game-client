@@ -45,6 +45,7 @@ const ringsEl = $('#rings');
 const resultCore = $('#resultCore');
 const resultIcon = $('#resultIcon');
 const eventFx = $('#eventFx');
+const roleFxIcon = $('#roleFxIcon');
 const rewardPopup = $('#rewardPopup');
 const rewardAmount = $('#rewardAmount');
 const rewardMultiplier = $('#rewardMultiplier');
@@ -228,6 +229,20 @@ async function playEventEffect(type, onImpact) {
   ringsEl.classList.remove(`effect-${type}`);
 }
 
+async function playRoleEffect(roleKey) {
+  const role = roles[roleKey];
+  eventFx.className = 'event-fx';
+  roleFxIcon.textContent = role.icon;
+  void eventFx.offsetWidth;
+  eventFx.classList.add('fx-role', `fx-role-${roleKey}`, 'play');
+  resultCore.classList.add('role-hit');
+
+  await sleep(860);
+
+  eventFx.className = 'event-fx';
+  resultCore.classList.remove('role-hit');
+}
+
 async function showSilencedDialogs() {
   ringsEl.classList.add('silence-muted');
   await sleep(2100);
@@ -307,6 +322,7 @@ async function placeBet() {
   const type = pickEvent();
   await animateResult(type);
   if (events[type].role) {
+    await playRoleEffect(events[type].role);
     await resolveAdvance(events[type].role);
   } else if (type === 'BOSS') {
     await playEventEffect('boss', () => {
