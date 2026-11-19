@@ -452,7 +452,37 @@ button { font: inherit; }
 .fx-slashes::before,.fx-slashes::after { content:""; position:absolute; left:2%; width:96%; height:32%; border-radius:100%; background:linear-gradient(90deg,transparent,var(--fx-color) 12% 88%,transparent); box-shadow:0 0 8px #fff,0 0 20px var(--fx-color),0 0 34px rgba(var(--fx-rgb),.9); }
 .fx-slashes::before { top:-90%; transform:translateX(4%); }
 .fx-slashes::after { top:160%; transform:translateX(-4%); }
+.fx-role-burst { left:50%; top:50%; width:40%; aspect-ratio:1; opacity:0; transform:translate(-50%,-50%) scale(.25) rotate(-18deg); }
+.fx-role-icon {
+  left:50%;
+  top:50%;
+  z-index:2;
+  color:#fff;
+  font:900 clamp(35px,12vw,54px)/1 Georgia,serif;
+  text-shadow:0 0 5px #fff,0 0 15px var(--fx-color),0 0 34px rgba(var(--fx-rgb),.95);
+  filter:drop-shadow(0 0 12px var(--fx-color));
+  opacity:0;
+  transform:translate(-50%,-50%) scale(.2) rotate(-18deg);
+}
 .fx-particles { inset:17%; border-radius:50%; opacity:0; }
+
+.event-fx.fx-role-warrior { --fx-color:#ff315d; --fx-rgb:255,49,93; }
+.event-fx.fx-role-archer { --fx-color:#45e66b; --fx-rgb:69,230,107; }
+.event-fx.fx-role-mage { --fx-color:#48cfff; --fx-rgb:72,207,255; }
+.fx-role .fx-role-burst {
+  background:repeating-conic-gradient(from 4deg,transparent 0 8deg,rgba(var(--fx-rgb),.08) 8deg 11deg,transparent 11deg 19deg,var(--fx-color) 19deg 21deg,transparent 21deg 31deg);
+  clip-path:polygon(50% 0,57% 37%,82% 9%,68% 42%,100% 50%,68% 58%,88% 86%,57% 64%,50% 100%,43% 64%,13% 90%,32% 58%,0 50%,32% 42%,12% 14%,43% 37%);
+  filter:drop-shadow(0 0 8px var(--fx-color));
+  animation:role-burst-hit .82s cubic-bezier(.12,.72,.18,1) both;
+}
+.fx-role .fx-role-icon { animation:role-icon-hit .82s cubic-bezier(.16,.86,.24,1.14) both; }
+.fx-role .fx-particles {
+  background:radial-gradient(circle at 8% 38%,#fff 0 2px,transparent 3px),radial-gradient(circle at 24% 12%,var(--fx-color) 0 3px,transparent 4px),radial-gradient(circle at 75% 8%,#fff 0 2px,transparent 3px),radial-gradient(circle at 94% 48%,var(--fx-color) 0 3px,transparent 4px),radial-gradient(circle at 72% 91%,#fff 0 2px,transparent 3px),radial-gradient(circle at 18% 84%,var(--fx-color) 0 3px,transparent 4px);
+  border-radius:0;
+  filter:drop-shadow(0 0 7px var(--fx-color));
+  animation:role-particles-hit .82s ease-out both;
+}
+.result-core.role-hit { animation:role-core-hit .86s ease-out both; }
 
 .event-fx.fx-silence { --fx-color:#bfe8ff; --fx-rgb:112,210,255; }
 .fx-silence .fx-vignette { background:radial-gradient(circle,rgba(175,231,255,.18),rgba(15,69,98,.38) 55%,rgba(1,12,22,.7)); animation:silence-vignette 1.36s ease-out both; }
@@ -496,6 +526,10 @@ button { font: inherit; }
 @keyframes boss-shake { 0%,100%{transform:translate(0,0)} 15%{transform:translate(-5px,2px) rotate(-.7deg)} 28%{transform:translate(6px,-3px) rotate(.8deg)} 42%{transform:translate(-4px,4px) rotate(-.5deg)} 56%{transform:translate(4px,-2px) rotate(.45deg)} 72%{transform:translate(-2px,2px)} }
 @keyframes boss-rings-hit { 0%,100%{filter:none} 28%{filter:brightness(.72) saturate(.7)} 42%{filter:brightness(1.45) drop-shadow(0 0 14px #ff2f8a)} 70%{filter:brightness(.82) saturate(.8)} }
 @keyframes boss-core-hit { 0%,100%{filter:none} 26%{filter:brightness(1.4) drop-shadow(0 0 18px #ff2f8a)} 46%{filter:brightness(.65) saturate(.7)} }
+@keyframes role-icon-hit { 0%{opacity:0;transform:translate(-50%,-50%) scale(.18) rotate(-22deg);filter:blur(3px) drop-shadow(0 0 4px var(--fx-color))} 24%{opacity:1;transform:translate(-50%,-50%) scale(1.3) rotate(5deg);filter:blur(0) drop-shadow(0 0 15px var(--fx-color))} 58%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0)} 100%{opacity:0;transform:translate(-50%,-50%) scale(1.2) rotate(3deg);filter:drop-shadow(0 0 24px var(--fx-color))} }
+@keyframes role-burst-hit { 0%{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(-20deg)} 22%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(3deg)} 100%{opacity:0;transform:translate(-50%,-50%) scale(1.7) rotate(26deg)} }
+@keyframes role-particles-hit { 0%{opacity:0;transform:scale(.35)} 24%{opacity:1} 100%{opacity:0;transform:scale(1.35) rotate(12deg)} }
+@keyframes role-core-hit { 0%,100%{filter:none} 24%{filter:brightness(1.55) saturate(1.22) drop-shadow(0 0 18px var(--event-color))} 58%{filter:brightness(1.12) saturate(1.1)} }
 
 .command-panel {
   flex: 0 0 auto;
