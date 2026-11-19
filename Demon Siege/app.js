@@ -5,7 +5,7 @@ const roles = {
 };
 
 const events = {
-  WARRIOR: { label: '戰士突擊', image: './assets/event-warrior.webp', role: 'warrior', color: '#ff2f73', rgb: '255,47,115' },
+  WARRIOR: { label: '戰士突擊', image: './assets/event-warrior.webp?v=20261119', role: 'warrior', color: '#ff2f73', rgb: '255,47,115' },
   ARCHER: { label: '箭雨突襲', image: './assets/event-archer.webp', role: 'archer', color: '#20dd54', rgb: '32,221,84' },
   MAGE: { label: '秘法湧現', image: './assets/event-mage.webp', role: 'mage', color: '#00b8f4', rgb: '0,184,244' },
   SILENCE: { label: '沉默術', image: './assets/event-silence.webp', color: '#b9ddff', rgb: '185,221,255' },
