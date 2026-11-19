@@ -220,7 +220,7 @@ button { font: inherit; }
 
 .node.value-node {
   width: auto;
-  min-width: 34px;
+  min-width: 46px;
   height: auto;
   padding: 0;
   transform: translate(-50%,-50%) rotate(var(--angle)) translateY(calc(var(--radius) * -1)) rotate(var(--text-flip, 0deg));
@@ -228,10 +228,16 @@ button { font: inherit; }
   background: transparent;
   border: 0;
   border-radius: 0;
-  font: 900 clamp(9px,2.55vw,12px)/1 Georgia,serif;
-  letter-spacing: -.02em;
+  font: 900 clamp(13px,calc(var(--ring-size) * .041),17px)/1 Georgia,serif;
+  letter-spacing: -.035em;
+  white-space: nowrap;
+  text-align: center;
   text-shadow: 0 2px 3px #000, 0 0 4px #000;
 }
+
+.ring-warrior .node.value-node { --radius: calc(var(--ring-size) * .44); }
+.ring-archer .node.value-node { --radius: calc(var(--ring-size) * .32); }
+.ring-mage .node.value-node { --radius: calc(var(--ring-size) * .198); }
 
 .node.reached {
   color: #fff8e8;
