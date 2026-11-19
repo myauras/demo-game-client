@@ -10,6 +10,7 @@
   --archer: #6fc36b;
   --mage: #54a9d7;
   --shell-width: 460px;
+  --role-start-size: 32px;
 }
 
 @property --progress {
@@ -240,8 +241,13 @@ button { font: inherit; }
 .node.current { transform: translate(-50%,-50%) rotate(var(--angle)) translateY(calc(var(--radius) * -1)) rotate(calc(var(--angle) * -1)) scale(1.12); color: #fff; }
 
 .node.start-node {
-  width: 30px;
-  height: 30px;
+  width: var(--role-start-size);
+  min-width: var(--role-start-size);
+  max-width: var(--role-start-size);
+  height: var(--role-start-size);
+  min-height: var(--role-start-size);
+  max-height: var(--role-start-size);
+  aspect-ratio: 1;
   padding: 0;
   border-radius: 50%;
   color: #fff7dc;
