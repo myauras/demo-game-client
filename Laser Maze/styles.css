@@ -149,7 +149,7 @@ button { touch-action: manipulation; }
 .node.is-tail::before { transform: scale(1.08); }
 .node.is-finish::before { border-color: #ffe6a2; box-shadow: 0 0 5px #fff, 0 0 15px #ffca58, 0 0 28px #ff992f, inset 0 0 12px #ffe4a3; }
 .node.is-selected .goal-arrow { display: none; }
-.node.is-finish::after { content: "⚑"; inset: auto; top: -7px; right: -1px; color: #ffce59; border: 0; font-size: 18px; text-shadow: 0 0 7px #ff922e; }
+.node.is-finish::after { content: "⚑"; inset: auto; top: -11px; right: -4px; color: #ffce59; border: 0; font-size: 24px; line-height: 1; text-shadow: 0 0 7px #ff922e; }
 .node.is-current::before { animation: current-node .5s ease-in-out infinite alternate; }
 .node.is-danger::before { border-color: #fff; background: #ff294e; box-shadow: 0 0 4px #fff, 0 0 18px #ff264c, 0 0 34px #ff173f; }
 .node.is-invalid { animation: invalid-node .22s ease; }
