@@ -62,6 +62,11 @@ function buildNodes() {
     start.style.setProperty('--angle', '0deg');
     start.textContent = role.icon;
     start.title = `${role.label}起點`;
+    const dialogue = document.createElement('span');
+    dialogue.className = 'silence-dialog';
+    dialogue.setAttribute('aria-hidden', 'true');
+    dialogue.textContent = '...';
+    start.appendChild(dialogue);
     host.appendChild(start);
 
     role.values.forEach((value, index) => {
@@ -206,7 +211,7 @@ async function animateResult(finalType) {
 async function playEventEffect(type, onImpact) {
   const isBoss = type === 'boss';
   const impactDelay = isBoss ? 410 : 180;
-  const duration = isBoss ? 1280 : 760;
+  const duration = isBoss ? 1280 : 900;
   eventFx.className = 'event-fx';
   ringsEl.classList.remove('effect-silence', 'effect-boss');
   void eventFx.offsetWidth;
