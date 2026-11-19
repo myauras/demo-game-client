@@ -290,7 +290,7 @@ button { font: inherit; }
   background:#25292c;
   transform:translateX(-50%) rotate(45deg);
 }
-.rings.effect-silence .start-node { z-index:11; }
+.rings.effect-silence .start-node { z-index:11; animation:silence-start-gray .9s ease both; }
 .rings.effect-silence .silence-dialog { animation:silence-dialog-pop .72s cubic-bezier(.16,.84,.24,1.08) .1s both; }
 
 .node.value-node.reached {
@@ -473,18 +473,11 @@ button { font: inherit; }
 .result-core.role-hit { animation:role-core-hit .86s ease-out both; }
 
 .event-fx.fx-silence { --fx-color:#d6dadd; --fx-rgb:214,218,221; }
-.fx-silence .fx-vignette {
-  inset:8.333%;
-  background:radial-gradient(circle,rgba(220,224,227,.08) 0 44%,rgba(23,26,28,.42) 74%,rgba(4,5,6,.66));
-  box-shadow:inset 0 0 48px rgba(0,0,0,.52),0 0 12px rgba(214,218,221,.28);
-  backdrop-filter:grayscale(1) saturate(0) brightness(.76) contrast(1.12);
-  animation:silence-gray-wash .88s ease both;
-}
+.fx-silence .fx-vignette { display:none; }
 .fx-silence .fx-sigil { display:none; }
 .fx-silence .fx-wave { display:none; }
 .fx-silence .fx-slashes { display:none; }
 .fx-silence .fx-particles { display:none; }
-.rings.effect-silence { animation:silence-disk-gray .9s ease both; }
 
 .event-fx.fx-boss { --fx-color:#ff2f8a; --fx-rgb:236,25,115; }
 .fx-boss .fx-vignette { background:radial-gradient(circle,rgba(255,43,147,.22),rgba(83,0,88,.5) 50%,rgba(15,0,18,.74)); animation:boss-vignette 1.28s ease-out both; }
@@ -499,8 +492,7 @@ button { font: inherit; }
 .rings.effect-boss .ring { animation:boss-rings-hit 1.28s ease-out both; }
 .rings.effect-boss .result-core { animation:boss-core-hit 1.28s ease-out both; }
 
-@keyframes silence-gray-wash { 0%,100%{opacity:0} 16%,78%{opacity:.92} }
-@keyframes silence-disk-gray { 0%,100%{filter:drop-shadow(0 14px 18px rgba(0,0,0,.78))} 16%,78%{filter:grayscale(1) saturate(0) brightness(.72) contrast(1.14) drop-shadow(0 8px 16px rgba(0,0,0,.9))} }
+@keyframes silence-start-gray { 0%,100%{filter:none} 16%,78%{filter:grayscale(1) saturate(0) brightness(.62) contrast(1.15) drop-shadow(0 0 7px rgba(230,233,235,.55))} }
 @keyframes silence-dialog-pop { 0%{opacity:0;transform:translateX(-50%) translateY(4px) scale(.62)} 20%{opacity:1;transform:translateX(-50%) translateY(-2px) scale(1.08)} 34%,72%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)} 100%{opacity:0;transform:translateX(-50%) translateY(-3px) scale(.88)} }
 @keyframes boss-vignette { 0%{opacity:0} 18%{opacity:.72} 38%{opacity:1} 72%{opacity:.62} 100%{opacity:0} }
 @keyframes boss-charge { 0%{opacity:0;transform:translate(-50%,-50%) scale(.18) rotate(-55deg)} 70%{opacity:1;transform:translate(-50%,-50%) scale(1.12) rotate(8deg)} 100%{opacity:.2;transform:translate(-50%,-50%) scale(.82) rotate(18deg)} }
