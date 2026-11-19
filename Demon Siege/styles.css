@@ -249,6 +249,7 @@ button { font: inherit; }
   max-height: var(--role-start-size);
   aspect-ratio: 1;
   padding: 0;
+  transform: translate(-50%,-50%) rotate(var(--angle)) translateY(calc(var(--radius) * -1)) rotate(calc(var(--angle) * -1)) scale(1.12);
   border-radius: 50%;
   color: #fff7dc;
   font-size: 16px;
