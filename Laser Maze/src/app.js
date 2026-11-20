@@ -150,15 +150,9 @@ function isFullBoardRoute() {
 function renderControls() {
   const status = currentRouteStatus();
   const running = state.phase === "RUNNING";
-  const firstGoalIndex = state.route.findIndex((node) => node.row === difficulty().size - 1);
-  const goalConnected = firstGoalIndex !== -1;
-  const endsOutsideGoalRow = goalConnected && state.route.at(-1)?.row !== difficulty().size - 1;
-  const connectedGoals = new Set(state.route
-    .filter((node) => node.row === difficulty().size - 1)
-    .map((node) => node.col));
-  const allGoalsConnected = connectedGoals.size === difficulty().size;
-  const routeInstructionHidden = !endsOutsideGoalRow && (allGoalsConnected
-    || (state.route.length > 0 && !canReachUnvisitedGoal(state.route, difficulty().size)));
+  const goalConnected = state.route.some((node) => node.row === difficulty().size - 1);
+  const routeInstructionHidden = goalConnected
+    || (state.route.length > 0 && !canReachUnvisitedGoal(state.route, difficulty().size));
   const betIsValid = validBet();
   const bet = Number(elements.betInput.value);
   const showFullBoard = isFullBoardRoute() && !state.fullBoardFailed;
@@ -175,11 +169,7 @@ function renderControls() {
   elements.routeInstruction.hidden = routeInstructionHidden;
   elements.routeInstruction.textContent = state.route.length === 0
     ? "拖曳任意起點進行連線"
-    : endsOutsideGoalRow
-      ? "終點必須是最後一排"
-      : goalConnected
-        ? "可選擇延伸終點繼續連線"
-        : "連線至任意終點進行投注";
+    : "連線至任意終點進行投注";
   elements.fullBoardBadge.hidden = !showFullBoard;
   elements.multiplierHud.classList.toggle("has-full-board", showFullBoard);
   elements.multiplierHud.classList.toggle("is-awarded", showFullBoard && state.fullBoardAwarded);
