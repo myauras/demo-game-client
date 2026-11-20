@@ -47,6 +47,12 @@ export function appendRouteNode(route, node, size) {
   return [...route, node];
 }
 
+export function truncateRouteAtNode(route, node) {
+  const index = route.findIndex((item) => item.row === node.row && item.col === node.col);
+  if (index < 0 || index === route.length - 1) return route;
+  return route.slice(0, index + 1);
+}
+
 export function canReachUnvisitedGoal(route, size) {
   if (!Array.isArray(route) || route.length === 0) return true;
   const visited = new Set(route.map(keyOf));

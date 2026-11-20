@@ -10,8 +10,9 @@ import {
   canReachUnvisitedGoal,
   enumerateReachableLengths,
   isAdjacent,
-  routeStatus
-} from "./route.js?v=20261120-route-guide-hide";
+  routeStatus,
+  truncateRouteAtNode
+} from "./route.js?v=20261120-route-click-rewind";
 import { validateReachableLengths } from "./rtp.js?v=20261116-full-board";
 import {
   calculateOutcome,
@@ -221,6 +222,16 @@ function applyNodeIntent(node) {
   state.phase = routeStatus(state.route, difficulty().size).ready ? "READY" : "IDLE";
   renderBoard();
   renderControls();
+}
+
+function rewindRouteToNode(node) {
+  const next = truncateRouteAtNode(state.route, node);
+  if (next === state.route) return false;
+  state.route = next;
+  state.phase = routeStatus(state.route, difficulty().size).ready ? "READY" : "IDLE";
+  renderBoard();
+  renderControls();
+  return true;
 }
 
 function nodeFromTarget(target) {
@@ -525,7 +536,9 @@ elements.board.addEventListener("pointerdown", (event) => {
   event.preventDefault();
   state.dragging = true;
   state.lastDragKey = `${node.row}:${node.col}`;
-  applyNodeIntent(node);
+  const isRouteNode = state.route.some((item) => item.row === node.row && item.col === node.col);
+  if (isRouteNode) rewindRouteToNode(node);
+  else applyNodeIntent(node);
 });
 
 elements.boardWrap.addEventListener("pointermove", (event) => {
