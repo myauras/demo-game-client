@@ -157,8 +157,8 @@ function renderControls() {
     .filter((node) => node.row === difficulty().size - 1)
     .map((node) => node.col));
   const allGoalsConnected = connectedGoals.size === difficulty().size;
-  const routeInstructionHidden = allGoalsConnected
-    || (state.route.length > 0 && !canReachUnvisitedGoal(state.route, difficulty().size));
+  const routeInstructionHidden = !endsOutsideGoalRow && (allGoalsConnected
+    || (state.route.length > 0 && !canReachUnvisitedGoal(state.route, difficulty().size)));
   const betIsValid = validBet();
   const bet = Number(elements.betInput.value);
   const showFullBoard = isFullBoardRoute() && !state.fullBoardFailed;
