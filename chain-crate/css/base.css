@@ -1,0 +1,347 @@
+/* =========================================================================
+ * 連鎖開箱——主畫面樣式（A 案「夜間軍械庫」＋B 案戰利品清單；C02）
+ * 效能紅線：所有 transition／animation 只動 transform／opacity；陰影與漸層一律靜態；禁 filter／backdrop-filter
+ * 多語紀律：按鈕與標籤字不換行、盒子用 min-width／padding 撐（?lang=xx 驗）
+ *
+ * 版面：#app 固定 375×812，子元素以絕對座標定位（座標與 mockups/home-A.css 一致）。
+ * 疊層順序（z-index，定死）：
+ *   引導 50 ＞ toast 45 ＞ log 頁 36 ＞ 設定彈窗 35 ＞ 暗幕 34 ＞ 自動下注槽 33 ＞ 導演台 32 ＞ 遊戲主體
+ *   遊戲主體內：大獎覆蓋層 20 ＞ 特效層 15 ＞ 其餘
+ * 命名：本檔的 class 避開底板模組已用的名字（autobet 用 .seg／.sheet／.veil、log-ui 用 .gold／.grey），
+ *       所以階梯格叫 .lseg、金箱叫 .isg。
+ * 速度：#app 的 --sp（1 正常、2.5 加速）除進所有演出時間；ui-main.js 管。
+ * ========================================================================= */
+:root{
+  /* 底板模組（autobet／log-ui／onboard／toast）讀的變數，一併換成夜間配色 */
+  --appbg:#0b1019; --panel:#121a29; --panel2:#1a2437; --line:#25314a; --line2:#1b2538; --edge:#3a4968;
+  --chip:#1a2437; --fg:#eaf0fa; --mute:#8696b3; --gold:#ffc933; --win:#8fd49b; --lose:#e58f94;
+  /* 本頁用 */
+  --bg0:#080b12; --bg1:#0e1522; --txt:#eaf0fa; --dim:#55637f; --gold2:#ffe27a; --gold3:#f59e0b;
+  --cell:53px; --gap:5px;
+  --font:"Bahnschrift","Segoe UI","Microsoft JhengHei","PingFang TC","Noto Sans TC",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--bg0)}
+body{font-family:var(--font);color:var(--txt);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+button{font:inherit;cursor:pointer;touch-action:manipulation}
+svg{display:block}
+
+#app{--sp:1;position:relative;width:375px;height:812px;overflow:hidden;margin:0 auto;
+  background:
+    radial-gradient(ellipse 80% 40% at 50% 0%,rgba(70,100,160,.18),transparent 70%),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.018) 0 1px,transparent 1px 41px),
+    linear-gradient(180deg,var(--bg0),var(--bg1) 60%,#0a0f19)}
+#app > *{position:absolute}
+/* 注意：畫面外待命的彈窗／log 頁不可用 translate 推到 #app 外（scrollWidth 會被撐大）；一律 opacity＋小幅 scale */
+
+/* 無原生捲軸（滾動由 DragScroll 處理；觸控保留原生 pan-y） */
+.dscroll{overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;cursor:grab}
+.dscroll::-webkit-scrollbar{display:none;width:0;height:0}
+.dscroll.dragging{cursor:grabbing;-webkit-user-select:none;user-select:none}
+
+/* ---------- toast ---------- */
+#toast{left:16px;right:16px;bottom:200px;z-index:45;pointer-events:none;
+  text-align:center;font-size:12.5px;color:var(--fg);background:rgba(14,20,32,.96);
+  border:1px solid var(--edge);border-radius:8px;padding:8px 12px;
+  opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s}
+#toast.show{opacity:1;transform:none}
+
+/* ---------- 不顯示的掛點與 dev 掛點 ---------- */
+#hint{display:none !important}
+#director{left:6px;right:6px;top:54px;z-index:32;display:none;align-items:center;gap:6px;flex-wrap:wrap;
+  padding:3px 8px;border:1px dashed #6B4E2A;border-radius:6px;background:rgba(40,28,10,.92);font-size:11.5px;color:#E7B97A}
+#director.on{display:flex}
+#director select,#director button{font-size:11.5px;color:var(--fg);background:var(--chip);
+  border:1px solid var(--edge);border-radius:5px;padding:2px 6px}
+/* 自動下注進行中浮條：蓋在檔位列上（進行中不能換檔）；待命時整個隱藏 */
+#abar{left:10px;top:60px;width:355px;height:40px;margin:0;z-index:33;display:none;padding:0 14px;border-radius:11px;
+  background:linear-gradient(180deg,#9a7418,#5e430a);border:1px solid #c79a2e;color:#ffe9a6;font-size:13px}
+#abar.on{display:flex}
+#abar .astop{border-color:rgba(255,233,166,.7);background:rgba(20,12,0,.35);color:#ffe9a6}
+
+/* ---------- 頂欄 ---------- */
+.bar{left:0;top:8px;width:375px;height:44px}
+.bal{position:absolute;left:12px;top:2px;height:40px;display:flex;align-items:center;gap:8px;
+  padding:0 18px 0 7px;border-radius:20px;background:var(--panel);border:1px solid var(--line)}
+.bal b{font-size:22px;font-weight:800;letter-spacing:.3px;font-variant-numeric:tabular-nums;color:var(--txt)}
+.coin{width:26px;height:26px;border-radius:50%;flex:none;
+  background:radial-gradient(circle at 35% 30%,#fff3b0,#ffc933 50%,#c98a00);
+  border:2px solid #7a5200;display:flex;align-items:center;justify-content:center}
+.coin i{width:10px;height:10px;border-radius:50%;border:2px solid #7a5200;opacity:.75}
+.logb{position:absolute;right:12px;top:2px;width:40px;height:40px;border-radius:50%;padding:0;
+  background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--mute)}
+
+/* ---------- 檔位 ---------- */
+.tiers{left:10px;top:60px;width:355px;height:40px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tier{display:flex;align-items:center;gap:7px;padding:0 9px;border-radius:11px;min-width:0;margin:0;
+  background:var(--panel);border:1px solid var(--line);color:var(--dim);text-align:left}
+.tier .lb{font-size:16px;font-weight:800;flex:none;white-space:nowrap}
+.tier .dots{display:flex;gap:2px;flex:1;min-width:0;opacity:.5}
+.tier .dots i{flex:1;max-width:9px;height:9px;border-radius:2px;background:var(--base);box-shadow:inset 0 -2px 0 rgba(0,0,0,.28)}
+.tier.on{background:var(--panel2);border-color:#9db0d2;color:var(--txt)}
+.tier.on .dots{opacity:1}
+
+/* ---------- 倍率階梯（電量條） ---------- */
+.ladder{left:10px;top:110px;width:355px;height:56px;border-radius:13px;
+  background:linear-gradient(180deg,#080c14,#0c121d);border:1px solid #1d283c;
+  padding:5px 12px;display:grid;grid-template-columns:repeat(6,1fr);gap:7px;align-items:center}
+.lseg{position:relative;height:44px;border-radius:7px;transform:skewX(-12deg);transition:transform .18s ease-out;
+  background:#111927;border:1px solid #223049;display:flex;align-items:center;justify-content:center}
+.lseg span{display:block;transform:skewX(12deg);font-size:19px;font-weight:800;color:#3d4c68;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.lseg.done{background:linear-gradient(180deg,#9a7418,#5e430a);border-color:#c79a2e}
+.lseg.done span{color:#ffe9a6}
+.lseg.cur{z-index:3;transform:skewX(-12deg) scale(1.16);
+  background:linear-gradient(180deg,#fffbe0,#ffd54a 42%,#f59e0b);border:2px solid #fff6cf;
+  box-shadow:0 0 0 3px rgba(255,201,51,.28),0 0 14px 4px rgba(255,190,40,.45)}
+.lseg.cur span{color:#2b1700;font-size:20px;font-weight:900}
+.lseg.cur.pop{animation:lpop .34s ease-out both}
+/* 沒回本：階梯停格不發光、不放大 */
+.ladder.mute .lseg.done{background:linear-gradient(180deg,#5b5338,#3b3522);border-color:#6f6444}
+.ladder.mute .lseg.done span{color:#cfc5a1}
+.ladder.mute .lseg.cur{transform:skewX(-12deg);background:linear-gradient(180deg,#6d6040,#453c25);border:1px solid #8a7a50;box-shadow:none;animation:none}
+.ladder.mute .lseg.cur span{color:#e6dcb8;font-size:19px;font-weight:800}
+@keyframes lpop{
+  0%{transform:skewX(-12deg) scale(.9)}
+  55%{transform:skewX(-12deg) scale(1.3)}
+  100%{transform:skewX(-12deg) scale(1.16)}
+}
+
+/* ---------- 盤面 ---------- */
+/* clip-path：上緣貼著外框裁切（落下的箱子從盤面上緣冒出來），左右下各放寬 10px／8px 讓圈出的光暈不被切 */
+.rack{left:10px;top:176px;width:355px;height:414px;border-radius:14px;padding:4px;
+  background:linear-gradient(180deg,#0a0e16,#0c121e);border:2px solid #222d42;
+  clip-path:inset(0 -10px -8px -10px);
+  box-shadow:inset 0 0 0 1px #05080e,inset 0 10px 24px rgba(0,0,0,.35)}
+.grid{position:relative;width:343px;height:401px}
+/* 箱子分兩層：.cw 管位置與落下／退場，.crate 管樣子與圈出／打開 */
+.cw{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);transform:translate(var(--x),var(--y))}
+.cw.zh{z-index:2}
+.cw.mv{animation:cfall calc(var(--d) / var(--sp)) linear calc(var(--dl) / var(--sp)) both}
+.cw.exit{animation:cexit calc(220ms / var(--sp)) ease-in both}
+.cw.fadein{animation:cfade .2s linear both}
+@keyframes cfall{
+  0%{transform:translate(var(--x),var(--fy));animation-timing-function:cubic-bezier(.5,0,.9,.55)}
+  74%{transform:translate(var(--x),var(--y));animation-timing-function:ease-out}
+  87%{transform:translate(var(--x),calc(var(--y) - 5px));animation-timing-function:ease-in}
+  100%{transform:translate(var(--x),var(--y))}
+}
+@keyframes cexit{to{transform:translate(var(--x),calc(var(--y) + 110px));opacity:0}}
+@keyframes cfade{from{opacity:0}to{opacity:1}}
+
+.k0{--hi:#ff8793;--base:#e8283e;--lo:#8f1022;--ink:#fff}
+.k1{--hi:#7aa3ff;--base:#2457ea;--lo:#12318f;--ink:#fff}
+.k2{--hi:#7df0a0;--base:#1fc45a;--lo:#0a6e30;--ink:#fff}
+.k3{--hi:#ffc06a;--base:#ff8a1a;--lo:#a64b00;--ink:#fff}
+.k4{--hi:#dba4ff;--base:#ad4cff;--lo:#6620b5;--ink:#fff}
+.k5{--hi:#9ff6fc;--base:#22d2e6;--lo:#0b7d8c;--ink:#053640}
+.k6{--hi:#ffffff;--base:#dde4ee;--lo:#8493a8;--ink:#1d2536}
+.crate{position:relative;width:var(--cell);height:var(--cell);border-radius:9px;overflow:visible;
+  transition:transform .18s ease-out,opacity .2s linear;
+  background:
+    radial-gradient(circle at 6px 6px,rgba(255,255,255,.7) 0 1.4px,transparent 2px),
+    radial-gradient(circle at calc(100% - 6px) 6px,rgba(255,255,255,.7) 0 1.4px,transparent 2px),
+    radial-gradient(circle at 6px calc(100% - 7px),rgba(0,0,0,.35) 0 1.4px,transparent 2px),
+    radial-gradient(circle at calc(100% - 6px) calc(100% - 7px),rgba(0,0,0,.35) 0 1.4px,transparent 2px),
+    linear-gradient(180deg,var(--hi) 0,var(--hi) 22%,rgba(0,0,0,.45) 22%,rgba(0,0,0,.45) 25%,var(--base) 25%,var(--base) 60%,var(--lo) 100%);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.45),inset 0 -3px 0 rgba(0,0,0,.25),0 1px 0 #000}
+.crate::before{content:"";position:absolute;left:50%;top:15%;width:13px;height:10px;margin-left:-6.5px;border-radius:3px;
+  background:linear-gradient(180deg,#3a4458,#171d2a);border:1px solid rgba(0,0,0,.55)}
+.crate svg.sy{position:absolute;left:50%;top:63%;width:24px;height:24px;margin:-12px 0 0 -12px;
+  fill:var(--ink);stroke:var(--lo);stroke-width:1.4;paint-order:stroke;stroke-linejoin:round}
+.k5 svg.sy,.k6 svg.sy{stroke:rgba(255,255,255,0);stroke-width:0}
+.crate .g{position:absolute;right:-4px;top:-5px;z-index:2;min-width:21px;height:14px;padding:0 3px;border-radius:7px;
+  background:linear-gradient(180deg,#fff0a0,#ffc933);border:1.5px solid #7a4a00;color:#3a2200;
+  font-size:10.5px;font-weight:900;line-height:11px;text-align:center;letter-spacing:-.2px}
+.crate.isg{box-shadow:0 0 0 2px var(--gold),inset 0 1.5px 0 rgba(255,255,255,.45),inset 0 -3px 0 rgba(0,0,0,.25),0 1px 0 #000}
+.crate.dim{opacity:.27}
+.crate.hot{transform:scale(1.07);outline:3px solid #fff4c2;outline-offset:1px;
+  box-shadow:0 0 0 6px rgba(255,214,90,.40),inset 0 1.5px 0 rgba(255,255,255,.45),inset 0 -3px 0 rgba(0,0,0,.25)}
+
+/* ---------- 開箱：箱體 ---------- */
+/* 箱蓋、光、金幣在特效層（#fx，不被盤面裁切）；箱體這邊只有「蓋子位置露出暗色箱口」＋整箱膨脹→縮小淡出 */
+.crate .int{position:absolute;left:0;right:0;top:0;height:25%;z-index:1;border-radius:9px 9px 0 0;opacity:0;
+  background:linear-gradient(180deg,#1a0f08 0,#2a1a0a 45%,#a8741c 100%)}
+.crate.open{animation:cpop calc(450ms / var(--sp)) linear both}
+.crate.open .int{animation:intin calc(70ms / var(--sp)) linear both}
+@keyframes cpop{
+  0%{transform:scale(1.07);opacity:1}
+  44%{transform:scale(1.16)}
+  67%{transform:scale(1.07);opacity:1}
+  100%{transform:scale(.8);opacity:0}
+}
+@keyframes intin{from{opacity:0}to{opacity:1}}
+
+/* ---------- 特效層：箱蓋／光／金幣／飛向餘額的金幣／大贏字 ---------- */
+#fx{left:0;top:0;width:375px;height:812px;z-index:15;pointer-events:none}
+#fx > *{position:absolute}
+/* 箱蓋：掀起 0～140ms（ease-out-back，幅度加大並傾斜），停住後 300ms 起跟箱子一起淡出 */
+.flid{width:55px;height:13px;margin:0;border-radius:8px 8px 3px 3px;transform-origin:50% 100%;
+  background:linear-gradient(180deg,var(--hi),var(--base));
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.5),0 1px 0 #000,0 0 0 1px rgba(0,0,0,.25);
+  animation:flid calc(450ms / var(--sp)) linear both}
+.flid::after{content:"";position:absolute;left:50%;bottom:2px;width:11px;height:7px;margin-left:-5.5px;border-radius:2px;
+  background:linear-gradient(180deg,#3a4458,#171d2a)}
+@keyframes flid{
+  0%{transform:translate(0,0) rotate(0) scaleY(1);animation-timing-function:cubic-bezier(.3,1.7,.55,1)}
+  31%{transform:translate(5px,-32px) rotate(-26deg) scaleY(.8);animation-timing-function:ease-in-out}
+  60%{transform:translate(5px,-26px) rotate(-20deg) scaleY(.8);opacity:1}
+  100%{transform:translate(5px,-30px) rotate(-22deg) scaleY(.8);opacity:0}
+}
+/* 光：80ms 起 scaleY .3→1（原點在箱口）、約 180ms，300ms 起淡出 */
+.fbeam{width:47px;height:36px;border-radius:12px 12px 0 0;transform-origin:50% 100%;opacity:0;
+  background:radial-gradient(ellipse 60% 85% at 50% 100%,rgba(255,244,190,.95) 0,rgba(255,206,70,.55) 45%,rgba(255,190,40,0) 80%);
+  animation:fbeam calc(450ms / var(--sp)) linear both}
+@keyframes fbeam{
+  0%{transform:scaleY(.3);opacity:0}
+  18%{transform:scaleY(.3);opacity:0}
+  58%{transform:scaleY(1);opacity:1}
+  67%{transform:scaleY(1);opacity:1}
+  100%{transform:scaleY(1.12);opacity:0}
+}
+/* 金幣：120ms 起每顆錯開 40ms，往上 34～44px、略微左右漂、淡出，約 540ms */
+.fcn{width:12px;height:12px;border-radius:50%;opacity:0;
+  background:radial-gradient(circle at 35% 30%,#fff3b0,#ffc933 55%,#c98a00);border:1.5px solid #7a5200;
+  animation:fcn calc(540ms / var(--sp)) cubic-bezier(.2,.7,.3,1) calc(var(--cd) / var(--sp)) both}
+.fcn.n2{width:14px;height:14px}
+.fcn.n3{width:10px;height:10px}
+@keyframes fcn{
+  0%{transform:translate(0,0) scale(.6);opacity:0}
+  14%{opacity:1}
+  70%{opacity:1}
+  100%{transform:translate(var(--dx),var(--dy)) scale(1);opacity:0}
+}
+/* 飛向餘額的金幣：外層走 X、內層走 Y，合起來是一條弧線 */
+.fly{width:18px;height:18px;opacity:0;animation:flyx calc(var(--d) / var(--sp)) linear calc(var(--dl) / var(--sp)) both}
+.fly i{display:block;width:18px;height:18px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff3b0,#ffc933 55%,#c98a00);border:2px solid #7a5200;
+  animation:flyy calc(var(--d) / var(--sp)) cubic-bezier(.45,0,.9,.6) calc(var(--dl) / var(--sp)) both}
+@keyframes flyx{
+  0%{transform:translateX(0);opacity:0}
+  10%{opacity:1}
+  85%{opacity:1}
+  100%{transform:translateX(var(--tx));opacity:0}
+}
+@keyframes flyy{from{transform:translateY(0) scale(1)}to{transform:translateY(var(--ty)) scale(.7)}}
+/* 大贏字：中央放大浮現，停留後淡出 */
+.bw{left:0;right:0;top:340px;text-align:center}
+.bw b{display:inline-block;padding:4px 22px 8px;border-radius:20px;font-size:60px;font-weight:900;line-height:1.1;
+  letter-spacing:-1px;font-variant-numeric:tabular-nums;color:#fff3b8;background:rgba(6,9,16,.8);
+  text-shadow:0 4px 0 #9a5a00,0 7px 0 #4a2800;animation:bwin calc(300ms / var(--sp)) cubic-bezier(.3,1.5,.5,1) both}
+.bw.s6 b{font-size:50px}
+.bw.s7 b{font-size:42px}
+.bw.out{animation:bwout calc(240ms / var(--sp)) linear both}
+@keyframes bwin{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes bwout{to{opacity:0}}
+
+/* ---------- 這局戰利品（盤面正下方、盤面外） ---------- */
+.loot{left:10px;top:598px;width:355px;height:66px;border-radius:13px;padding:6px 8px 5px 10px;display:flex;gap:8px;
+  background:linear-gradient(180deg,#0d1422,#0a101a);border:1px solid #1f2a40}
+.loot .lh{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.loot .cap{display:flex;align-items:center;gap:5px;height:14px;font-size:11px;font-weight:800;color:var(--mute);white-space:nowrap;line-height:14px}
+.loot .slots{display:flex;gap:3px}
+.slot{width:44px;display:flex;flex-direction:column;align-items:center;gap:1px}
+.slot em{font-style:normal;height:14px;font-size:12.5px;line-height:14px;font-weight:800;color:#cfd8ea;font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:-.3px}
+.chip{position:relative;width:30px;height:26px;border-radius:7px;
+  background:linear-gradient(180deg,var(--hi) 0,var(--base) 45%,var(--lo) 100%);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.45),inset 0 -2px 0 rgba(0,0,0,.25),0 1px 0 #000}
+.chip svg{position:absolute;left:50%;top:50%;width:15px;height:15px;margin:-7.5px 0 0 -7.5px;fill:var(--ink);stroke:var(--lo);stroke-width:1.4;paint-order:stroke;stroke-linejoin:round}
+.chip.k5 svg,.chip.k6 svg{stroke-width:0}
+.chip .gd{position:absolute;right:-3px;top:-3px;width:10px;height:10px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff3b0,#ffc933 60%,#c98a00);border:1.5px solid #7a4a00}
+.chip.empty{background:none;box-shadow:none;border:1.5px dashed #26324a}
+.chip.nxt{background:rgba(255,201,51,.06);box-shadow:none;border:2px dashed var(--gold)}
+.slot.new{animation:slotin calc(200ms / var(--sp)) ease-out both}
+.slot.new .chip{outline:2.5px solid #fff4c2;outline-offset:1px;box-shadow:0 0 0 5px rgba(255,214,90,.35),inset 0 1.5px 0 rgba(255,255,255,.45),inset 0 -2px 0 rgba(0,0,0,.25)}
+.slot.new em{color:var(--gold2);font-weight:900}
+.slot .more{width:30px;height:26px;border-radius:7px;background:#16203a;border:1.5px solid #34466a;color:#9db0d2;
+  font-size:13px;font-weight:900;line-height:23px;text-align:center;white-space:nowrap}
+@keyframes slotin{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
+.loot .tot{width:92px;flex:none;border-radius:11px;background:#0a0f19;border:1px solid #26324c;
+  display:flex;align-items:center;justify-content:center;overflow:hidden}
+.loot .tot b{font-size:27px;font-weight:900;color:var(--gold2);font-variant-numeric:tabular-nums;letter-spacing:-.3px;text-shadow:0 2px 0 #5a3500;white-space:nowrap}
+.loot .tot.s6 b{font-size:23px}
+.loot .tot.s7 b{font-size:20px}
+.loot .tot.s8 b{font-size:17px}
+.loot .tot.zero b{color:#33425e;text-shadow:none}
+.loot .tot.pop{animation:totpop calc(320ms / var(--sp)) ease-out}
+@keyframes totpop{0%{transform:scale(1)}40%{transform:scale(1.12)}100%{transform:scale(1)}}
+.loot.win .tot{background:linear-gradient(180deg,#fff0a0,#ffc933 55%,#f59e0b);border-color:#fff1b0}
+.loot.win .tot b{color:#2b1700;text-shadow:0 1px 0 rgba(255,255,255,.5)}
+.loot.mute .tot b{color:#8795ad;text-shadow:none;font-weight:800}
+.loot.mute .slot em{color:#7d8aa3;font-weight:700}
+.chip.mute{--hi:#7a8598;--base:#566074;--lo:#363e4f;--ink:#d3dae6}
+
+/* ---------- 底部操作 ---------- */
+.deck{left:0;top:672px;width:375px;height:140px;border-radius:24px 24px 0 0;
+  background:linear-gradient(180deg,#121a2a,#0b111b 60%);border-top:1px solid #243049;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.04)}
+.deck::before{content:"";position:absolute;left:0;right:0;top:0;height:5px;border-radius:24px 24px 0 0;
+  background:repeating-linear-gradient(-45deg,rgba(255,255,255,.07) 0 6px,transparent 6px 12px)}
+.col{top:696px;width:96px;height:92px;display:flex;flex-direction:column;gap:6px}
+.col.l{left:12px}.col.r{right:12px}
+.bet{flex:1;min-height:0;border-radius:10px;background:var(--panel);border:1px solid var(--line);padding:0;margin:0;
+  display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;color:#8896b2;font-variant-numeric:tabular-nums}
+.bet.on{background:var(--panel2);border-color:#9db0d2;color:#fff}
+.btn2{flex:1;min-height:0;border-radius:12px;background:var(--panel);border:1px solid var(--line);color:#9fb0cf;margin:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-size:15px;font-weight:800;padding:0 6px;min-width:0}
+.btn2 span,.best small,.tier .lb{white-space:nowrap}
+.btn2 svg{width:20px;height:20px}
+.best{flex:1;min-height:0;border-radius:12px;background:#0d1320;border:1px solid #232f47;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:0;padding:0 4px}
+.best small{font-size:11px;font-weight:700;color:var(--dim);line-height:1.1}
+.best b{display:flex;align-items:center;gap:4px;font-size:17px;font-weight:900;color:#c9d4e8;font-variant-numeric:tabular-nums;white-space:nowrap}
+.col.dis .bet,.col.dis .btn2{opacity:.45}
+
+/* 開箱大圓鈕：待命時唯一發光（光暈與外圈做呼吸，只動 transform／opacity） */
+.go{left:50%;top:690px;width:104px;height:104px;margin:0 0 0 -52px;padding:0;border:0;background:none;border-radius:50%}
+.go .halo{position:absolute;left:50%;top:50%;width:136px;height:136px;margin:-68px 0 0 -68px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,196,40,.55) 0,rgba(255,170,20,.28) 45%,transparent 70%);
+  animation:halo 2.2s ease-in-out infinite}
+.go .ring2{position:absolute;left:50%;top:50%;width:122px;height:122px;margin:-61px 0 0 -61px;border-radius:50%;border:2px solid rgba(255,201,51,.55);
+  animation:ring2 2.2s ease-out infinite}
+.go .rim{position:absolute;left:0;top:0;right:0;bottom:0;border-radius:50%;background:linear-gradient(180deg,#46536f,#1a2335);border:2px solid #0a0e16;
+  box-shadow:0 6px 0 #05080d}
+.go .disc{position:absolute;left:8px;top:8px;right:8px;bottom:8px;border-radius:50%;
+  background:radial-gradient(circle at 50% 22%,#fff0a0 0,#ffc933 45%,#f08a00 100%);
+  box-shadow:inset 0 -6px 0 rgba(150,70,0,.45),inset 0 3px 0 rgba(255,255,255,.6);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#2b1600}
+.go .disc b{font-size:26px;font-weight:900;letter-spacing:1px;line-height:1;text-shadow:0 1px 0 rgba(255,255,255,.55);white-space:nowrap}
+.go .disc b.long{font-size:21px;letter-spacing:0}
+.go.off .halo,.go.off .ring2{display:none}
+.go.off .disc{background:radial-gradient(circle at 50% 22%,#566179,#2a3347 60%,#1f2738);color:#6a7893;box-shadow:inset 0 -6px 0 rgba(0,0,0,.35),inset 0 3px 0 rgba(255,255,255,.12)}
+.go.off .disc b{text-shadow:none}
+@keyframes halo{0%,100%{transform:scale(.9);opacity:.7}50%{transform:scale(1);opacity:1}}
+@keyframes ring2{0%{transform:scale(.92);opacity:.75}100%{transform:scale(1.1);opacity:0}}
+
+.ph{left:10px;top:794px;padding:1px 6px;border:1px dashed #3a4968;border-radius:4px;font-size:9px;color:#56647f;letter-spacing:.5px;white-space:nowrap}
+
+/* ---------- 大獎覆蓋層（≥20 倍；金額是主角；可點掉） ---------- */
+.jp{left:0;top:0;width:375px;height:812px;z-index:20;overflow:hidden;background:rgba(2,4,9,.9);
+  display:none;opacity:0;transition:opacity .25s linear}
+.jp.on{display:block}
+.jp.show{opacity:1}
+.jp .core{position:absolute;left:50%;top:41%;width:560px;height:560px;margin:-280px 0 0 -280px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,214,102,.75) 0,rgba(255,170,30,.32) 34%,transparent 66%);animation:jpcore 1s ease-out both}
+.jp .beams{position:absolute;left:50%;top:41%;width:1300px;height:1300px;margin:-650px 0 0 -650px;
+  background:repeating-conic-gradient(from 0deg,rgba(255,222,120,.34) 0 5deg,rgba(255,222,120,0) 5deg 15deg);
+  animation:jpspin 26s linear infinite}
+.jp .fade{position:absolute;left:0;top:0;right:0;bottom:0;background:radial-gradient(circle at 50% 41%,rgba(2,4,9,0) 0,rgba(2,4,9,0) 22%,rgba(2,4,9,.78) 72%,rgba(2,4,9,.96) 100%)}
+.jp .amt{position:absolute;left:0;right:0;top:41%;margin-top:-55px;text-align:center}
+.jp .amt b{display:block;font-size:92px;font-weight:900;line-height:1;letter-spacing:-1px;font-variant-numeric:tabular-nums;white-space:nowrap;
+  color:#fff3b8;text-shadow:0 5px 0 #9a5a00,0 9px 0 #4a2800;animation:jpamt .5s cubic-bezier(.3,1.4,.5,1) .12s both}
+.jp .amt.s6 b{font-size:80px}
+.jp .amt.s7 b{font-size:66px}
+.jp .crown{position:absolute;left:50%;top:41%;margin:-155px 0 0 -48px;animation:jpcrown .55s cubic-bezier(.3,1.6,.5,1) both}
+.jp .bit{position:absolute;width:var(--cell);height:var(--cell)}
+.jp .bob{animation:jpbob 2.2s ease-in-out infinite alternate}
+.jp .bit .crate{transition:none}
+.coinp{position:absolute;width:22px;height:22px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff3b0,#ffc933 55%,#c98a00);border:2px solid #7a5200;
+  animation:jpcoin 1.8s ease-in-out infinite alternate}
+@keyframes jpcore{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes jpspin{to{transform:rotate(360deg)}}
+@keyframes jpamt{from{transform:scale(.55);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes jpcrown{from{transform:scale(.3) translateY(30px);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes jpbob{from{transform:translateY(-7px)}to{transform:translateY(7px)}}
+@keyframes jpcoin{from{transform:translateY(-10px) scale(.92)}to{transform:translateY(10px) scale(1.05)}}
