@@ -4,7 +4,8 @@ import {
   appendRouteNode,
   canReachUnvisitedGoal,
   enumerateReachableLengths,
-  routeStatus
+  routeStatus,
+  truncateRouteAtNode
 } from "../src/route.js";
 
 test("三種盤面可達路線長度完整", () => {
@@ -51,6 +52,16 @@ test("回拖上一格只撤銷最後一段", () => {
     { row: 0, col: 0 }, { row: 1, col: 0 }, { row: 1, col: 1 }
   ];
   assert.deepEqual(appendRouteNode(route, { row: 1, col: 0 }, 3), route.slice(0, -1));
+});
+
+test("點擊連線內圓格可將路線退回該格", () => {
+  const route = [
+    { row: 0, col: 0 }, { row: 1, col: 0 },
+    { row: 1, col: 1 }, { row: 2, col: 1 }
+  ];
+  assert.deepEqual(truncateRouteAtNode(route, { row: 1, col: 0 }), route.slice(0, 2));
+  assert.equal(truncateRouteAtNode(route, { row: 2, col: 1 }), route);
+  assert.equal(truncateRouteAtNode(route, { row: 0, col: 2 }), route);
 });
 
 test("判斷拖曳尾端是否仍可抵達未連線終點", () => {
