@@ -1,7 +1,7 @@
 const roles = {
-  warrior: { label: '戰士', icon: '⚔', values: ['3.9X','12.5X','28X','52X','85X','133X','200X','BONUS'], numbers: [3.9,12.5,28,52,85,133,200,0], step: 0 },
-  archer: { label: '弓箭手', icon: '➶', values: ['2.5X','7.7X','16X','27.5X','44X','+20.5X'], numbers: [2.5,7.7,16,27.5,44,20.5], step: 0 },
-  mage: { label: '法師', icon: '✦', values: ['1.55X','4.85X','10X','+7X'], numbers: [1.55,4.85,10,7], step: 0 },
+  warrior: { label: '戰士', icon: '⚔', values: ['3.12X','10X','22.4X','41.6X','68X','106.4X','160X','BONUS'], numbers: [3.12,10,22.4,41.6,68,106.4,160,0], step: 0 },
+  archer: { label: '弓箭手', icon: '➶', values: ['2X','6.16X','12.8X','22X','35.2X','+16.4X'], numbers: [2,6.16,12.8,22,35.2,16.4], step: 0 },
+  mage: { label: '法師', icon: '✦', values: ['1.24X','3.88X','8X','+5.6X'], numbers: [1.24,3.88,8,5.6], step: 0 },
 };
 
 const events = {
@@ -14,11 +14,11 @@ const events = {
 
 const GAME_RTP = 0.95;
 const eventChances = Object.freeze({
-  WARRIOR: 0.10,
-  ARCHER: 0.10,
-  MAGE: 0.20,
-  SILENCE: 0.25,
-  BOSS: 0.35,
+  WARRIOR: 0.125,
+  ARCHER: 0.125,
+  MAGE: 0.25,
+  SILENCE: 0.20,
+  BOSS: 0.30,
 });
 
 const firstStepRtp = (
