@@ -10,9 +10,10 @@ import {
   canReachUnvisitedGoal,
   enumerateReachableLengths,
   isAdjacent,
+  routeEffectLevel,
   routeStatus,
   truncateRouteAtNode
-} from "./route.js?v=20261120-route-click-rewind";
+} from "./route.js?v=20261120-route-effects";
 import { validateReachableLengths } from "./rtp.js?v=20261116-full-board";
 import {
   calculateOutcome,
@@ -25,8 +26,8 @@ import { loadStore, saveStore } from "./storage.js?v=20261116-full-board";
 
 const elements = Object.fromEntries([
   "scene", "testModeToggle", "balanceDisplay", "balancePlus", "multiplierHud", "sceneMultiplier",
-  "routeInstruction", "fullBoardBadge", "fullBoardConfetti", "boardWrap", "board",
-  "routeGlowLine", "routeLine", "previewLine", "agent", "eventBubble", "difficultySelect",
+  "routeInstruction", "fullBoardBadge", "fullBoardConfetti", "boardWrap", "board", "routeLayer",
+  "routeGlowLine", "routeLine", "routeSparkLine", "previewLine", "agent", "eventBubble", "difficultySelect",
   "betMinus", "betPlus", "betInput", "resetButton", "confirmButton", "resultModal", "resultMark",
   "resultTitle", "resultMultiplier", "resultPayout", "resultFullBoard", "toast"
 ].map((id) => [id, document.getElementById(id)]));
@@ -121,6 +122,8 @@ function renderRouteLine() {
   }).join(" ");
   elements.routeLine.setAttribute("points", points);
   elements.routeGlowLine.setAttribute("points", points);
+  elements.routeSparkLine.setAttribute("points", points);
+  elements.routeLayer.dataset.effect = routeEffectLevel(state.route.length, difficulty().size);
 }
 
 function renderAgent() {
