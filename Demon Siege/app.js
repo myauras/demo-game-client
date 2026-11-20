@@ -1,7 +1,8 @@
+const RING_MULTIPLIER_SCALE = 10 / 9;
 const roles = {
-  warrior: { label: '戰士', icon: '⚔', values: ['3.12X','10X','22.4X','41.6X','68X','106.4X','160X','BONUS'], numbers: [3.12,10,22.4,41.6,68,106.4,160,0], step: 0 },
-  archer: { label: '弓箭手', icon: '➶', values: ['2X','6.16X','12.8X','22X','35.2X','+16.4X'], numbers: [2,6.16,12.8,22,35.2,16.4], step: 0 },
-  mage: { label: '法師', icon: '✦', values: ['1.24X','3.88X','8X','+5.6X'], numbers: [1.24,3.88,8,5.6], step: 0 },
+  warrior: { label: '戰士', icon: '⚔', values: ['3.47X','11.11X','24.89X','46.22X','75.56X','118.22X','177.78X','BONUS'], numbers: [3.12,10,22.4,41.6,68,106.4,160,0].map(value => value * RING_MULTIPLIER_SCALE), step: 0 },
+  archer: { label: '弓箭手', icon: '➶', values: ['2.22X','6.84X','14.22X','24.44X','39.11X','+18.2X'], numbers: [2,6.16,12.8,22,35.2,16.4].map(value => value * RING_MULTIPLIER_SCALE), step: 0 },
+  mage: { label: '法師', icon: '✦', values: ['1.38X','4.31X','8.89X','+6.2X'], numbers: [1.24,3.88,8,5.6].map(value => value * RING_MULTIPLIER_SCALE), step: 0 },
 };
 
 const events = {
@@ -14,11 +15,11 @@ const events = {
 
 const GAME_RTP = 0.95;
 const eventChances = Object.freeze({
-  WARRIOR: 0.125,
-  ARCHER: 0.125,
-  MAGE: 0.25,
+  WARRIOR: 0.1125,
+  ARCHER: 0.1125,
+  MAGE: 0.225,
   SILENCE: 0.20,
-  BOSS: 0.30,
+  BOSS: 0.35,
 });
 
 const firstStepRtp = (
@@ -26,7 +27,7 @@ const firstStepRtp = (
   + eventChances.ARCHER * roles.archer.numbers[0]
   + eventChances.MAGE * roles.mage.numbers[0]
 );
-if (Math.abs(firstStepRtp - GAME_RTP) > Number.EPSILON) {
+if (Math.abs(firstStepRtp - GAME_RTP) > 1e-12) {
   throw new Error('Event chances do not match the configured RTP.');
 }
 
