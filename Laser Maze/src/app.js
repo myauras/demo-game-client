@@ -178,7 +178,7 @@ function renderControls() {
     : endsOutsideGoalRow
       ? "終點必須是最後一排"
       : goalConnected
-        ? "可繼續延伸終點進行連線"
+        ? "可選擇延伸終點繼續連線"
         : "連線至任意終點進行投注";
   elements.fullBoardBadge.hidden = !showFullBoard;
   elements.multiplierHud.classList.toggle("has-full-board", showFullBoard);
