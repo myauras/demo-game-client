@@ -169,7 +169,7 @@ function renderControls() {
   elements.routeInstruction.hidden = routeInstructionHidden;
   elements.routeInstruction.textContent = state.route.length === 0
     ? "拖曳任意起點進行連線"
-    : "可連線單個或多個終點進行投注";
+    : "可連線至單個或多個終點進行投注";
   elements.fullBoardBadge.hidden = !showFullBoard;
   elements.multiplierHud.classList.toggle("has-full-board", showFullBoard);
   elements.multiplierHud.classList.toggle("is-awarded", showFullBoard && state.fullBoardAwarded);
