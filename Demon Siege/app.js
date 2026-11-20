@@ -13,22 +13,22 @@ const events = {
 };
 
 const GAME_RTP = 0.95;
-const baseHitWeights = Object.freeze({ WARRIOR: 0.29, ARCHER: 0.25, MAGE: 0.24 });
-const firstStepReturn = (
-  baseHitWeights.WARRIOR * roles.warrior.numbers[0]
-  + baseHitWeights.ARCHER * roles.archer.numbers[0]
-  + baseHitWeights.MAGE * roles.mage.numbers[0]
-);
-const hitChanceScale = GAME_RTP / firstStepReturn;
-const calibratedHitTotal = Object.values(baseHitWeights).reduce((sum, chance) => sum + chance * hitChanceScale, 0);
-const nonRewardChance = (1 - calibratedHitTotal) / 2;
 const eventChances = Object.freeze({
-  WARRIOR: baseHitWeights.WARRIOR * hitChanceScale,
-  ARCHER: baseHitWeights.ARCHER * hitChanceScale,
-  MAGE: baseHitWeights.MAGE * hitChanceScale,
-  SILENCE: nonRewardChance,
-  BOSS: nonRewardChance,
+  WARRIOR: 0.10,
+  ARCHER: 0.10,
+  MAGE: 0.20,
+  SILENCE: 0.25,
+  BOSS: 0.35,
 });
+
+const firstStepRtp = (
+  eventChances.WARRIOR * roles.warrior.numbers[0]
+  + eventChances.ARCHER * roles.archer.numbers[0]
+  + eventChances.MAGE * roles.mage.numbers[0]
+);
+if (Math.abs(firstStepRtp - GAME_RTP) > Number.EPSILON) {
+  throw new Error('Event chances do not match the configured RTP.');
+}
 
 const state = { balance: 3000, bet: 10, lastWin: 0, locked: false, hasProgress: false, forceNextSuccess: false };
 const $ = (selector) => document.querySelector(selector);
