@@ -1,6 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { appendRouteNode, enumerateReachableLengths, routeStatus } from "../src/route.js";
+import {
+  appendRouteNode,
+  canReachUnvisitedGoal,
+  enumerateReachableLengths,
+  routeStatus
+} from "../src/route.js";
 
 test("三種盤面可達路線長度完整", () => {
   for (const size of [3, 4, 5]) {
@@ -46,4 +51,27 @@ test("回拖上一格只撤銷最後一段", () => {
     { row: 0, col: 0 }, { row: 1, col: 0 }, { row: 1, col: 1 }
   ];
   assert.deepEqual(appendRouteNode(route, { row: 1, col: 0 }, 3), route.slice(0, -1));
+});
+
+test("判斷拖曳尾端是否仍可抵達未連線終點", () => {
+  assert.equal(canReachUnvisitedGoal([
+    { row: 0, col: 0 }, { row: 1, col: 0 }, { row: 2, col: 0 }
+  ], 3), true);
+  assert.equal(canReachUnvisitedGoal([
+    { row: 0, col: 0 }, { row: 1, col: 0 },
+    { row: 2, col: 0 }, { row: 2, col: 1 }, { row: 2, col: 2 }
+  ], 3), false);
+
+  const trapped = [
+    { row: 0, col: 0 }, { row: 1, col: 0 }, { row: 2, col: 0 },
+    { row: 3, col: 0 }, { row: 4, col: 0 }, { row: 4, col: 1 },
+    { row: 4, col: 2 }, { row: 4, col: 3 }, { row: 3, col: 3 },
+    { row: 3, col: 4 }, { row: 2, col: 4 }, { row: 2, col: 3 },
+    { row: 2, col: 2 }, { row: 3, col: 2 }, { row: 3, col: 1 },
+    { row: 2, col: 1 }, { row: 1, col: 1 }, { row: 1, col: 2 },
+    { row: 1, col: 3 }, { row: 1, col: 4 }, { row: 0, col: 4 },
+    { row: 0, col: 3 }, { row: 0, col: 2 }, { row: 0, col: 1 }
+  ];
+  assert.equal(routeStatus(trapped, 5).valid, true);
+  assert.equal(canReachUnvisitedGoal(trapped, 5), false);
 });

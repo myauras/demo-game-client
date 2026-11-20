@@ -47,6 +47,24 @@ export function appendRouteNode(route, node, size) {
   return [...route, node];
 }
 
+export function canReachUnvisitedGoal(route, size) {
+  if (!Array.isArray(route) || route.length === 0) return true;
+  const visited = new Set(route.map(keyOf));
+  const queue = [route.at(-1)];
+  const reachable = new Set([keyOf(route.at(-1))]);
+
+  for (let index = 0; index < queue.length; index += 1) {
+    for (const next of neighbors(queue[index], size)) {
+      const key = keyOf(next);
+      if (visited.has(key) || reachable.has(key)) continue;
+      if (next.row === size - 1) return true;
+      reachable.add(key);
+      queue.push(next);
+    }
+  }
+  return false;
+}
+
 const directions = [
   { row: 1, col: 0 },
   { row: 0, col: 1 },
