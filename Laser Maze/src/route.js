@@ -53,6 +53,19 @@ export function truncateRouteAtNode(route, node) {
   return route.slice(0, index + 1);
 }
 
+export function routeEffectLevel(routeLength, size) {
+  if (!Number.isInteger(routeLength) || !Number.isInteger(size) || routeLength <= 1 || size <= 1) {
+    return "none";
+  }
+  const total = size ** 2;
+  if (routeLength >= total) return "full";
+  const progress = (routeLength - 1) / (total - 1);
+  if (progress < 0.25) return "low";
+  if (progress < 0.5) return "medium";
+  if (progress < 0.75) return "high";
+  return "ultra";
+}
+
 export function canReachUnvisitedGoal(route, size) {
   if (!Array.isArray(route) || route.length === 0) return true;
   const visited = new Set(route.map(keyOf));
