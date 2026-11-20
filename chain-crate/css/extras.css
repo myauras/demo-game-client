@@ -1,0 +1,35 @@
+/* =========================================================================
+ * 連鎖開箱——再玩動機與加分演出樣式（C04）
+ * 紀律同 base.css：動畫只動 transform／opacity、禁 filter、陰影靜態。
+ * 內容：#recordBadge（最高紀錄徽章）的長數字縮字與破紀錄慶祝。位置與外框是 base.css 的，這裡不動。
+ * ========================================================================= */
+
+/* 長數字縮一級：×12.34（6 字）→ 15px、×123.45（7 字以上）→ 13px，框內放得下 */
+#recordBadge b.rk-s6{font-size:15px;gap:3px}
+#recordBadge b.rk-s7{font-size:13px;gap:3px}
+#recordBadge b.rk-s6 svg,#recordBadge b.rk-s7 svg{width:14px;height:12px}
+
+/* 慶祝層：放在徽章裡，不吃點擊、不佔版面 */
+#recordBadge{position:relative}
+#recordBadge .rk-fx{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none}
+#recordBadge .rk-fx i{position:absolute;display:block;opacity:0}
+#recordBadge .rk-glow{left:0;top:0;right:0;bottom:0;border-radius:12px;
+  background:radial-gradient(ellipse at center,rgba(255,210,74,.55) 0,rgba(255,170,20,.22) 60%,transparent 100%)}
+#recordBadge .rk-ring{left:-1px;top:-1px;right:-1px;bottom:-1px;border-radius:13px;border:2px solid #ffd24a}
+#recordBadge .rk-sp{left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:1px;background:#ffd24a}
+
+/* 一次性：徽章彈一下、數字放大回彈、皇冠跳一下、光暈與兩圈外擴、六顆金星噴出 */
+#recordBadge.rk-on{animation:rkpop .7s cubic-bezier(.3,1.5,.5,1) 1}
+#recordBadge.rk-on .rv{animation:rknum .6s cubic-bezier(.3,1.6,.5,1) 1}
+#recordBadge.rk-on b svg{animation:rkcrown .8s ease-out 1}
+#recordBadge.rk-on .rk-glow{animation:rkglow .9s ease-out 1}
+#recordBadge.rk-on .rk-ring{animation:rkring .8s ease-out 1}
+#recordBadge.rk-on .rk-ring.r2{animation:rkring .8s ease-out .22s 1 forwards}
+#recordBadge.rk-on .rk-sp{animation:rksp .75s ease-out var(--dl,0ms) 1 both}
+
+@keyframes rkpop{0%{transform:scale(1)}25%{transform:scale(1.14)}55%{transform:scale(.97)}100%{transform:scale(1)}}
+@keyframes rknum{0%{transform:scale(.6);opacity:.3}40%{transform:scale(1.2);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes rkcrown{0%{transform:translateY(0) rotate(0) scale(1)}30%{transform:translateY(-5px) rotate(-14deg) scale(1.25)}60%{transform:translateY(0) rotate(8deg) scale(1)}100%{transform:translateY(0) rotate(0) scale(1)}}
+@keyframes rkglow{0%{opacity:0}20%{opacity:.85}100%{opacity:0}}
+@keyframes rkring{0%{transform:scale(1,1);opacity:.95}100%{transform:scale(1.2,1.5);opacity:0}}
+@keyframes rksp{0%{transform:translate(0,0) scale(.4) rotate(45deg);opacity:0}15%{opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1) rotate(45deg);opacity:0}}
