@@ -131,23 +131,8 @@ button { touch-action: manipulation; }
 .board-wrap { position: absolute; z-index: 4; left: 50%; top: 180px; width: min(80vw, 330px); height: calc(var(--scene-height) - 188px); min-height: 250px; max-height: 350px; transform: translateX(-50%); touch-action: none; }
 .board { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(var(--size), 1fr); grid-template-rows: repeat(var(--size), 1fr); align-items: center; justify-items: center; }
 .route-layer { position: absolute; z-index: 2; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
-.route-line { fill: none; stroke: #fff1fc; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; transition: stroke .25s ease, stroke-width .25s ease, opacity .25s ease; }
-.route-line--glow { stroke: #ff29ce; stroke-width: 7; opacity: .38; filter: url(#routeGlow); }
-.route-line--spark { stroke: #fff; stroke-width: 2; stroke-dasharray: 1 10; opacity: 0; filter: url(#routeGlow); }
-.route-layer[data-effect="medium"] .route-line:not(.route-line--glow):not(.route-line--spark),
-.route-layer[data-effect="high"] .route-line:not(.route-line--glow):not(.route-line--spark),
-.route-layer[data-effect="ultra"] .route-line:not(.route-line--glow):not(.route-line--spark) { stroke: url(#routeEnergyGradient); }
-.route-layer[data-effect="medium"] .route-line--glow { stroke-width: 9; opacity: .48; animation: route-glow-pulse 1.8s ease-in-out infinite alternate; }
-.route-layer[data-effect="medium"] .route-line--spark { opacity: .42; animation: route-energy-flow 2.2s linear infinite; }
-.route-layer[data-effect="high"] .route-line:not(.route-line--glow):not(.route-line--spark) { stroke-width: 2.7; }
-.route-layer[data-effect="high"] .route-line--glow { stroke: #bd31ff; stroke-width: 11; opacity: .62; animation: route-glow-pulse 1.35s ease-in-out infinite alternate; }
-.route-layer[data-effect="high"] .route-line--spark { stroke-width: 2.5; stroke-dasharray: 1 7; opacity: .72; animation: route-energy-flow 1.45s linear infinite; }
-.route-layer[data-effect="ultra"] .route-line:not(.route-line--glow):not(.route-line--spark) { stroke-width: 3.1; filter: url(#routeGlow); }
-.route-layer[data-effect="ultra"] .route-line--glow { stroke: #704cff; stroke-width: 14; opacity: .78; animation: route-ultra-pulse .9s ease-in-out infinite alternate; }
-.route-layer[data-effect="ultra"] .route-line--spark { stroke-width: 3; stroke-dasharray: .8 5; opacity: .95; animation: route-energy-flow .85s linear infinite; }
-.route-layer[data-effect="full"] .route-line:not(.route-line--glow):not(.route-line--spark) { stroke: url(#routeFullGradient); stroke-width: 3.6; filter: url(#routeGlow); animation: route-full-flare .7s ease-in-out infinite alternate; }
-.route-layer[data-effect="full"] .route-line--glow { stroke: #ffae24; stroke-width: 17; opacity: .92; animation: route-full-glow .65s ease-in-out infinite alternate; }
-.route-layer[data-effect="full"] .route-line--spark { stroke: #fffbd3; stroke-width: 3.5; stroke-dasharray: .5 4; opacity: 1; animation: route-energy-flow .52s linear infinite; }
+.route-line { fill: none; stroke: #fff1fc; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.route-line--glow { stroke: #ff29ce; stroke-width: 8; opacity: .52; }
 .preview-line { stroke: #ff80e6; stroke-width: 1; stroke-dasharray: 2.6 2; opacity: 0; vector-effect: non-scaling-stroke; }
 .preview-line.is-visible { opacity: .75; }
 
@@ -320,11 +305,6 @@ button { touch-action: manipulation; }
 @keyframes multiplier-boost { from { transform: scale(.75); opacity: .45; } 55% { transform: scale(1.25); } }
 @keyframes full-board-gold-glow { 0% { opacity: 0; transform: translateX(-50%) scale(.45); } 28% { opacity: 1; } 100% { opacity: 0; transform: translateX(-50%) scale(1.25); } }
 @keyframes full-board-confetti-fall { 0% { opacity: 0; transform: translate3d(0, -12px, 0) rotate(0deg) scale(.6); } 12% { opacity: 1; } 78% { opacity: 1; } 100% { opacity: 0; transform: translate3d(var(--drift), calc(var(--scene-height) + 32px), 0) rotate(var(--rotate)) scale(1); } }
-@keyframes route-energy-flow { to { stroke-dashoffset: -44; } }
-@keyframes route-glow-pulse { to { opacity: .72; stroke-width: 11; } }
-@keyframes route-ultra-pulse { to { opacity: .98; stroke-width: 17; } }
-@keyframes route-full-glow { to { opacity: 1; stroke-width: 21; } }
-@keyframes route-full-flare { to { stroke-width: 4.4; filter: url(#routeGlow) brightness(1.45); } }
 
 @media (max-height: 720px) {
   .control-deck { padding-top: 9px; }

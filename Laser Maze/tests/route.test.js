@@ -4,7 +4,6 @@ import {
   appendRouteNode,
   canReachUnvisitedGoal,
   enumerateReachableLengths,
-  routeEffectLevel,
   routeStatus,
   truncateRouteAtNode
 } from "../src/route.js";
@@ -63,20 +62,6 @@ test("點擊連線內圓格可將路線退回該格", () => {
   assert.deepEqual(truncateRouteAtNode(route, { row: 1, col: 0 }), route.slice(0, 2));
   assert.equal(truncateRouteAtNode(route, { row: 2, col: 1 }), route);
   assert.equal(truncateRouteAtNode(route, { row: 0, col: 2 }), route);
-});
-
-test("各難度依連線占比提升特效且全盤最華麗", () => {
-  assert.equal(routeEffectLevel(1, 3), "none");
-  assert.equal(routeEffectLevel(2, 3), "low");
-  assert.equal(routeEffectLevel(4, 3), "medium");
-  assert.equal(routeEffectLevel(6, 3), "high");
-  assert.equal(routeEffectLevel(8, 3), "ultra");
-  assert.equal(routeEffectLevel(9, 3), "full");
-  assert.equal(routeEffectLevel(4, 4), "low");
-  assert.equal(routeEffectLevel(8, 4), "medium");
-  assert.equal(routeEffectLevel(16, 4), "full");
-  assert.equal(routeEffectLevel(5, 5), "low");
-  assert.equal(routeEffectLevel(25, 5), "full");
 });
 
 test("判斷拖曳尾端是否仍可抵達未連線終點", () => {
