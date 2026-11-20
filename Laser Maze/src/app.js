@@ -144,7 +144,9 @@ function isFullBoardRoute() {
 function renderControls() {
   const status = currentRouteStatus();
   const running = state.phase === "RUNNING";
-  const goalConnected = state.route.some((node) => node.row === difficulty().size - 1);
+  const firstGoalIndex = state.route.findIndex((node) => node.row === difficulty().size - 1);
+  const goalConnected = firstGoalIndex !== -1;
+  const extendedPastGoal = goalConnected && firstGoalIndex < state.route.length - 1;
   const betIsValid = validBet();
   const bet = Number(elements.betInput.value);
   const showFullBoard = isFullBoardRoute() && !state.fullBoardFailed;
@@ -160,9 +162,11 @@ function renderControls() {
   elements.sceneMultiplier.textContent = formatMultiplier(state.cumulativeMultiplier);
   elements.routeInstruction.textContent = state.route.length === 0
     ? "拖曳任意起點進行連線"
-    : goalConnected
-      ? "可繼續延伸終點進行連線"
-      : "連線至終點列進行投注";
+    : extendedPastGoal
+      ? "終點必須是最後一排"
+      : goalConnected
+        ? "可繼續延伸終點進行連線"
+        : "連線至任意終點進行投注";
   elements.fullBoardBadge.hidden = !showFullBoard;
   elements.multiplierHud.classList.toggle("has-full-board", showFullBoard);
   elements.multiplierHud.classList.toggle("is-awarded", showFullBoard && state.fullBoardAwarded);
