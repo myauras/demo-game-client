@@ -5,7 +5,13 @@ import {
   formatMoney,
   formatMultiplier
 } from "./config.js?v=20261116-full-board";
-import { appendRouteNode, enumerateReachableLengths, isAdjacent, routeStatus } from "./route.js?v=20261116-full-board";
+import {
+  appendRouteNode,
+  canReachUnvisitedGoal,
+  enumerateReachableLengths,
+  isAdjacent,
+  routeStatus
+} from "./route.js?v=20261120-route-guide-hide";
 import { validateReachableLengths } from "./rtp.js?v=20261116-full-board";
 import {
   calculateOutcome,
@@ -147,6 +153,12 @@ function renderControls() {
   const firstGoalIndex = state.route.findIndex((node) => node.row === difficulty().size - 1);
   const goalConnected = firstGoalIndex !== -1;
   const endsOutsideGoalRow = goalConnected && state.route.at(-1)?.row !== difficulty().size - 1;
+  const connectedGoals = new Set(state.route
+    .filter((node) => node.row === difficulty().size - 1)
+    .map((node) => node.col));
+  const allGoalsConnected = connectedGoals.size === difficulty().size;
+  const routeInstructionHidden = allGoalsConnected
+    || (state.route.length > 0 && !canReachUnvisitedGoal(state.route, difficulty().size));
   const betIsValid = validBet();
   const bet = Number(elements.betInput.value);
   const showFullBoard = isFullBoardRoute() && !state.fullBoardFailed;
@@ -160,6 +172,7 @@ function renderControls() {
     : "啟用不失敗測試模式");
   elements.testModeToggle.title = state.testMode ? "關閉測試模式" : "測試模式";
   elements.sceneMultiplier.textContent = formatMultiplier(state.cumulativeMultiplier);
+  elements.routeInstruction.hidden = routeInstructionHidden;
   elements.routeInstruction.textContent = state.route.length === 0
     ? "拖曳任意起點進行連線"
     : endsOutsideGoalRow

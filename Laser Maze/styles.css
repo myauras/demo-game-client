@@ -101,6 +101,7 @@ button { touch-action: manipulation; }
 .multiplier-hud span { padding: 5px 8px; background: #14344c; color: #a9deeb; font-size: 10px; letter-spacing: .05em; }
 .multiplier-hud strong { min-width: 72px; padding: 4px 10px; text-align: center; font-size: 18px; color: #fff; background: rgba(3, 13, 24, .9); }
 .route-instruction { position: absolute; z-index: 7; top: 89px; left: 50%; width: max-content; max-width: calc(100% - 40px); margin: 0; padding: 4px 11px; border: 1px solid rgba(74, 217, 241, .2); border-radius: 999px; color: #bfeaf1; background: rgba(4, 16, 29, .72); box-shadow: 0 0 13px rgba(40, 211, 240, .08); font-size: 12px; font-weight: 700; line-height: 1.35; text-align: center; white-space: nowrap; transform: translateX(-50%); }
+.route-instruction[hidden] { display: none; }
 .full-board-badge { position: absolute; right: -34px; top: -14px; padding: 3px 7px; border: 1px solid #f4bf45; border-radius: 999px; color: #fff2ae; background: linear-gradient(180deg, #604616, #261a06); box-shadow: 0 0 12px rgba(255, 193, 56, .45); font-size: 9px; font-style: normal; font-weight: 900; white-space: nowrap; }
 .full-board-badge[hidden] { display: none; }
 .multiplier-hud.has-full-board { border-color: rgba(255, 198, 70, .72); box-shadow: 0 0 18px rgba(255, 191, 51, .28); }
