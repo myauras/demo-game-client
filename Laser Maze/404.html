@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#071529">
   <meta name="description" content="雷射潛入 H5 遊戲 Demo">
   <title>雷射潛入｜H5 Demo</title>
-  <link rel="stylesheet" href="styles.css?v=20261120-route-effects">
+  <link rel="stylesheet" href="styles.css?v=20261120-route-effects-removed">
 </head>
 <body>
   <main class="game-shell" aria-label="雷射潛入遊戲">
@@ -44,21 +44,9 @@
               <feGaussianBlur stdDeviation="1.4" result="blur"></feGaussianBlur>
               <feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
             </filter>
-            <linearGradient id="routeEnergyGradient" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#ff9deb"></stop>
-              <stop offset=".5" stop-color="#fff4ff"></stop>
-              <stop offset="1" stop-color="#59eaff"></stop>
-            </linearGradient>
-            <linearGradient id="routeFullGradient" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#ff9c27"></stop>
-              <stop offset=".38" stop-color="#fff4a2"></stop>
-              <stop offset=".68" stop-color="#ffffff"></stop>
-              <stop offset="1" stop-color="#ffbd36"></stop>
-            </linearGradient>
           </defs>
           <polyline id="routeGlowLine" class="route-line route-line--glow" points=""></polyline>
           <polyline id="routeLine" class="route-line" points=""></polyline>
-          <polyline id="routeSparkLine" class="route-line route-line--spark" points=""></polyline>
           <line id="previewLine" class="preview-line" x1="0" y1="0" x2="0" y2="0"></line>
         </svg>
         <div class="board" id="board" role="grid" aria-label="路線圓格"></div>
@@ -112,6 +100,6 @@
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script type="module" src="src/app.js?v=20261120-route-effects"></script>
+  <script type="module" src="src/app.js?v=20261120-route-effects-removed"></script>
 </body>
 </html>
