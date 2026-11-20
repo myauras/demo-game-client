@@ -18,7 +18,7 @@ import { loadStore, saveStore } from "./storage.js?v=20261116-full-board";
 
 const elements = Object.fromEntries([
   "scene", "testModeToggle", "balanceDisplay", "balancePlus", "multiplierHud", "sceneMultiplier",
-  "fullBoardBadge", "fullBoardConfetti", "boardWrap", "board",
+  "routeInstruction", "fullBoardBadge", "fullBoardConfetti", "boardWrap", "board",
   "routeGlowLine", "routeLine", "previewLine", "agent", "eventBubble", "difficultySelect",
   "betMinus", "betPlus", "betInput", "resetButton", "confirmButton", "resultModal", "resultMark",
   "resultTitle", "resultMultiplier", "resultPayout", "resultFullBoard", "toast"
@@ -144,6 +144,7 @@ function isFullBoardRoute() {
 function renderControls() {
   const status = currentRouteStatus();
   const running = state.phase === "RUNNING";
+  const goalConnected = state.route.some((node) => node.row === difficulty().size - 1);
   const betIsValid = validBet();
   const bet = Number(elements.betInput.value);
   const showFullBoard = isFullBoardRoute() && !state.fullBoardFailed;
@@ -157,6 +158,11 @@ function renderControls() {
     : "啟用不失敗測試模式");
   elements.testModeToggle.title = state.testMode ? "關閉測試模式" : "測試模式";
   elements.sceneMultiplier.textContent = formatMultiplier(state.cumulativeMultiplier);
+  elements.routeInstruction.textContent = state.route.length === 0
+    ? "拖曳任意起點進行連線"
+    : goalConnected
+      ? "可繼續延伸終點進行連線"
+      : "連線至終點列進行投注";
   elements.fullBoardBadge.hidden = !showFullBoard;
   elements.multiplierHud.classList.toggle("has-full-board", showFullBoard);
   elements.multiplierHud.classList.toggle("is-awarded", showFullBoard && state.fullBoardAwarded);
