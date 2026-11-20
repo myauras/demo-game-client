@@ -146,7 +146,7 @@ function renderControls() {
   const running = state.phase === "RUNNING";
   const firstGoalIndex = state.route.findIndex((node) => node.row === difficulty().size - 1);
   const goalConnected = firstGoalIndex !== -1;
-  const extendedPastGoal = goalConnected && firstGoalIndex < state.route.length - 1;
+  const endsOutsideGoalRow = goalConnected && state.route.at(-1)?.row !== difficulty().size - 1;
   const betIsValid = validBet();
   const bet = Number(elements.betInput.value);
   const showFullBoard = isFullBoardRoute() && !state.fullBoardFailed;
@@ -162,7 +162,7 @@ function renderControls() {
   elements.sceneMultiplier.textContent = formatMultiplier(state.cumulativeMultiplier);
   elements.routeInstruction.textContent = state.route.length === 0
     ? "拖曳任意起點進行連線"
-    : extendedPastGoal
+    : endsOutsideGoalRow
       ? "終點必須是最後一排"
       : goalConnected
         ? "可繼續延伸終點進行連線"
