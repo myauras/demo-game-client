@@ -212,8 +212,8 @@ console.log('\n=== E 單元 ===');
     CFG.MAX_CHAIN === 30 && CFG.MAX_WIN_X === 500 && CFG.RTP === 0.965 && CFG.RTP_MIN === 0.96 && CFG.RTP_MAX === 0.97 &&
     CFG.BIG_X === 5 && CFG.JACKPOT_X === 20 && eq(CFG.STAKES, [100, 500, 1000]) && CFG.DEFAULT_STAKE === 100 && CFG.WALLET === 10000 &&
     eq(CFG.TIERS.map(t => t.id), ['stable', 'mid', 'wild']) && eq(CFG.TIERS.map(t => t.kinds), [5, 6, 7]) &&
-    eq(CFG.TIERS.map(t => t.ladder), [[1, 2, 3, 4, 6, 10], [1, 2, 3, 5, 10, 25], [1, 2, 4, 8, 20, 60]]) &&
-    eq(CFG.TIERS.map(t => t.shape), [[1, 1.4, 2, 3, 4.5, 7, 10], [1, 1.5, 2.5, 4, 7, 12, 20], [1, 1.6, 3, 6, 12, 25, 50]]));
+    eq(CFG.TIERS.map(t => t.ladder), [[1, 1.5, 2, 2.5, 3, 4], [1, 2, 3, 5, 10, 25], [1, 2, 4, 8, 20, 60]]) &&
+    eq(CFG.TIERS.map(t => t.shape), [[1, 1.2, 1.5, 2, 2.5, 3, 4], [1, 1.5, 2.5, 4, 7, 12, 20], [1, 1.6, 3, 6, 12, 25, 50]]));
   const G = EV.TUNED.generated;
   unit(`E2 賠率表區塊有產生紀錄且非占位（${G ? G.cmd + '，n=' + G.n.toLocaleString('en-US') + '，seed ' + G.seed + '，' + G.date : '無'}）`,
     !EV.TUNED.untuned && G && G.n >= 1e7 && G.cmd && G.date);
