@@ -648,5 +648,6 @@
   applyTheme();
   renderWorld(true);
   renderDie(state.die); renderHud();
-  window.DiceHeroDebug = { state, tryMove, orientOf };
+  // 測試用的後門：只有在本機開（localhost）才有，放上網站的版本沒有。
+  if (['localhost', '127.0.0.1', '[::1]'].includes(location.hostname)) window.DiceHeroDebug = { state, tryMove, orientOf };
 })();
