@@ -1,0 +1,173 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #07090d; overflow: hidden; }
+body { display: flex; justify-content: center; align-items: center; font-family: "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif; }
+button { font: inherit; color: inherit; cursor: pointer; }
+
+.shell {
+  --w: min(100vw, 430px);
+  --cell: calc(var(--w) / 7.2);
+  --die: calc(var(--cell) * 0.6);
+  --tilt: 45deg;
+  --bg: #11151c; --panel: #1a202b; --line: #2b3444; --text: #e8edf5; --dim: #8b96a8;
+  --tile: #1d2533; --tile-line: #2f3a4e; --adj: #3d7dff;
+  --monster-small: #ff9a8a; --monster-elite: #ff4d4d; --monster-boss: #d11a5b; --monster-dark: #20232c;
+  --chest: #ffc247; --chest-wood: #c98a4b; --chest-iron: #b9c6d8; --chest-gold: #ffc247; --unknown: #a78bfa; --potion: #ff7ad1; --swamp: #6f4aa8; --village: #c9703c; --town: #9aa7bd; --wheat: #b8943a; --teleport: #35d0ba;
+  --mountain: #6b7689; --river: #2f6fd6; --forest: #3fa66b; --good: #4ade80; --bad: #ff6b6b; --gold: #ffd166;
+  --radius: 10px;
+  position: relative; width: var(--w); height: min(100dvh, 880px);
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--bg); color: var(--text); user-select: none; -webkit-user-select: none;
+}
+.shell[data-theme="pixel"] {
+  --bg: #1b1b2f; --panel: #2a2a46; --line: #50507a; --text: #f4f4e8; --dim: #a5a5c8;
+  --tile: #3b6b3b; --tile-line: #2c522c; --adj: #f4f4e8;
+  --monster-small: #f08a70; --monster-elite: #e03030; --monster-boss: #b01060; --monster-dark: #18181f;
+  --chest: #e8a020; --chest-wood: #a8683a; --chest-iron: #9aa8bc; --chest-gold: #f0b020; --unknown: #9060d8; --potion: #e858b8; --swamp: #7a3fb0; --village: #c05a28; --town: #b8b8c8; --wheat: #d8b040; --teleport: #30c8c8;
+  --mountain: #8a8a8a; --river: #3070e0; --forest: #175c2c; --good: #60e060; --bad: #ff6060; --gold: #ffd040;
+  --radius: 0px;
+  font-family: "Courier New", "Noto Sans TC", "Microsoft JhengHei", monospace; font-weight: 700;
+}
+
+.topbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px 6px; }
+.wallet { display: flex; align-items: baseline; gap: 6px; font-size: 14px; color: var(--dim); }
+.wallet strong { font-size: 22px; color: var(--text); font-variant-numeric: tabular-nums; }
+
+.statuses { display: flex; gap: 6px; padding: 0 16px; min-height: 28px; flex-wrap: wrap; }
+.status { font-size: 12px; padding: 4px 8px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--panel); }
+.status.bless { color: var(--good); border-color: var(--good); }
+.status.curse, .status.poison { color: var(--bad); border-color: var(--bad); }
+
+.stage { position: relative; flex: 1; min-height: 0; overflow: hidden; isolation: isolate; z-index: 0; perspective: 890px; perspective-origin: 50% 58%; }
+.stage::after { content: ""; position: absolute; inset: 0 0 auto 0; height: 14%; pointer-events: none;
+  background: linear-gradient(var(--bg), transparent); }
+.board { position: absolute; left: 50%; top: 54%; width: 0; height: 0; transform-style: preserve-3d; transform: rotateX(var(--tilt)); }
+.world { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-style: preserve-3d; transition: transform 0.25s linear; }
+.world.instant { transition: none; }
+
+.cell { position: absolute; width: var(--cell); height: var(--cell); margin: calc(var(--cell) / -2) 0 0 calc(var(--cell) / -2);
+  transform-style: preserve-3d; background: var(--tile); border: 1px solid var(--tile-line); border-radius: calc(var(--radius) * 0.6); }
+.cell.adj { cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; border: 2px dashed var(--adj); }
+.cell.adj:hover { background: color-mix(in srgb, var(--adj) 25%, var(--tile)); }
+/* 麥田：鄉村、城鎮旁邊的裝飾地磚，可以走 */
+.cell.wheat { background: repeating-linear-gradient(90deg, var(--wheat) 0 18%, color-mix(in srgb, var(--wheat) 78%, #000) 18% 25%); border-color: color-mix(in srgb, var(--wheat) 60%, #000); }
+.cell.river { background: var(--river); border-color: color-mix(in srgb, var(--river) 70%, #000); }
+.cell.mountain { background: color-mix(in srgb, var(--mountain) 45%, var(--tile)); }
+.cell.forest { background: color-mix(in srgb, var(--forest) 40%, var(--tile)); }
+.cell.river svg { position: absolute; inset: 12%; width: 76%; height: 76%; }
+.cell.swamp svg { position: absolute; inset: -8%; width: 116%; height: 116%; }
+/* 毒潭是可以踩的：地磚照舊，只在中間畫一灘毒水，跟整格塗滿的河流、山、森林區隔 */
+
+.prop { position: absolute; inset: 0; transform-origin: 50% 82%; transform: rotateX(calc(var(--tilt) * -1)); pointer-events: none;
+  display: flex; align-items: center; justify-content: center; }
+.prop svg { position: absolute; inset: 4%; width: 92%; height: 92%; overflow: visible; }
+.prop .label { position: relative; font-size: calc(var(--cell) * 0.42); font-weight: 800; line-height: 1; color: #fff;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.55); padding-top: calc(var(--cell) * 0.1); }
+.prop.potion .label { font-size: calc(var(--cell) * 0.3); padding-top: calc(var(--cell) * 0.28); }
+.prop.monster .label { font-size: calc(var(--cell) * 0.36); padding-top: calc(var(--cell) * 0.34); }
+.prop.chest .label { color: #2a1a00; font-weight: 900;
+  text-shadow: 0 0 2px #fff, 1.5px 0 0 #fff, -1.5px 0 0 #fff, 0 1.5px 0 #fff, 0 -1.5px 0 #fff, 1px 1px 0 #fff, -1px 1px 0 #fff, 1px -1px 0 #fff, -1px -1px 0 #fff; font-size: calc(var(--cell) * 0.29); padding-top: calc(var(--cell) * 0.18); }
+.prop.chest.iron svg { filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.7)); }
+.prop.chest.gold svg { scale: 1.12; transform-origin: 50% 90%; filter: drop-shadow(0 0 3px #ffe9a8) drop-shadow(0 0 6px #ffb300); }
+/* 怪物外圍一圈邊：用各自顏色調淡的版本，比純白不刺眼 */
+.prop.monster.small { --edge: #ffd9d2; }
+.prop.monster.elite { --edge: #ffb3b3; }
+.prop.monster.boss { --edge: #f08fb4; }
+.prop.monster svg { filter: drop-shadow(1px 0 0 var(--edge)) drop-shadow(-1px 0 0 var(--edge)) drop-shadow(0 1px 0 var(--edge)) drop-shadow(0 -1px 0 var(--edge)); }
+.prop.monster.dark svg { filter: drop-shadow(0 0 1.5px #dfe5f2) drop-shadow(0 0 1.5px #dfe5f2); }
+.prop.monster.boss svg { scale: 1.12; transform-origin: 50% 90%; }
+.prop.monster.small .label { font-size: calc(var(--cell) * 0.32); padding-top: calc(var(--cell) * 0.4); }
+.tries { position: absolute; left: 0; right: 0; top: 8%; display: flex; justify-content: center; gap: calc(var(--cell) * 0.05); }
+.tries i { width: calc(var(--cell) * 0.11); height: calc(var(--cell) * 0.11); border-radius: 50%; background: rgba(0, 0, 0, 0.55); border: 1px solid #fff; }
+.tries i.on { background: #fff; }
+.shell[data-theme="pixel"] .tries i { border-radius: 0; }
+.shell[data-theme="pixel"] .prop.chest .label { color: #fff; text-shadow: 0 0 3px #000, 0 2px 0 #000, 2px 0 0 #000, -2px 0 0 #000, 0 -2px 0 #000; }
+.prop.mountain { transform-origin: 50% 90%; }
+.prop.enter { animation: drop 0.35s ease-out backwards; }
+@keyframes drop { from { opacity: 0; translate: 0 calc(var(--cell) * -1.2); } }
+.prop.leave { transition: opacity 0.25s; opacity: 0; }
+.prop.shatter { animation: shatter 0.35s ease-in forwards; }
+@keyframes shatter { 40% { scale: 1.25; opacity: 1; } to { scale: 0.2; opacity: 0; rotate: 40deg; } }
+.prop.shake { animation: shake 0.3s linear; }
+@keyframes shake { 25% { translate: -8% 0; } 50% { translate: 8% 0; } 75% { translate: -5% 0; } }
+.prop.flip { animation: flip 0.4s ease-in-out; }
+@keyframes flip { 50% { scale: 0.05 1; } }
+
+/* 骰子整顆往鏡頭方向拉近，永遠畫在怪物、寶箱這些立牌前面 */
+.die-anchor { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-style: preserve-3d; pointer-events: none;
+  transform: rotateX(calc(var(--tilt) * -1)) translateZ(calc(var(--cell) * 0.45)) rotateX(var(--tilt)); }
+.cube { position: absolute; width: var(--die); height: var(--die); margin: calc(var(--die) / -2) 0 0 calc(var(--die) / -2);
+  transform-style: preserve-3d; transform: translateZ(calc(var(--die) / 2)); }
+/* 祝福／詛咒的 +1／−1：立在骰子右上角，面向玩家 */
+.die-mod { position: absolute; width: calc(var(--die) * 0.8); height: calc(var(--die) * 0.58); margin: calc(var(--die) * -0.29) 0 0 calc(var(--die) * -0.4);
+  transform: translate3d(calc(var(--die) * 0.7), calc(var(--die) * -0.5), calc(var(--die) * 1.2)) rotateX(calc(var(--tilt) * -1));
+  display: flex; align-items: center; justify-content: center; border-radius: 999px; border: 2px solid #20242e;
+  font-size: calc(var(--die) * 0.44); font-weight: 800; line-height: 1; color: #10131a; }
+.die-mod[hidden] { display: none; }
+.die-mod.bless { background: var(--good); }
+.die-mod.curse { background: var(--bad); color: #fff; }
+.shell[data-theme="pixel"] .die-mod { border-radius: 0; border-width: 3px; }
+.face { position: absolute; inset: 0; background: #f6f7fb; border: 2px solid #20242e; border-radius: calc(var(--radius) * 0.5);
+  display: grid; grid-template-columns: repeat(3, 1fr); padding: 12%; gap: 6%; backface-visibility: hidden; }
+.face i { border-radius: 50%; }
+.face i.on { background: #171a22; }
+.shell[data-theme="pixel"] .face i { border-radius: 0; }
+.shell[data-theme="pixel"] .face { background: #fffbe8; border-width: 3px; }
+.f-top { transform: translateZ(calc(var(--die) / 2)); }
+.f-bottom { transform: rotateY(180deg) translateZ(calc(var(--die) / 2)); }
+.f-south { transform: rotateX(-90deg) translateZ(calc(var(--die) / 2)); }
+.f-north { transform: rotateX(90deg) translateZ(calc(var(--die) / 2)); }
+.f-east { transform: rotateY(90deg) translateZ(calc(var(--die) / 2)); }
+.f-west { transform: rotateY(-90deg) translateZ(calc(var(--die) / 2)); }
+.f-south { filter: brightness(0.86); }
+
+.floats { position: absolute; left: 50%; top: 36%; width: 0; height: 0; pointer-events: none; }
+.float { position: absolute; left: 0; top: 0; transform: translate(-50%, 0); font-size: 20px; font-weight: 800; white-space: nowrap;
+  animation: rise 0.9s ease-out forwards; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.6); }
+.float.cost { color: var(--bad); }
+.float.win { color: var(--gold); font-size: 26px; }
+@keyframes rise { from { opacity: 0; translate: 0 10px; } 15% { opacity: 1; } to { opacity: 0; translate: 0 -70px; } }
+/* 打贏怪物時全畫面震動 */
+.shell.quake { animation: quake var(--quake, 350ms) linear; }
+@keyframes quake { 10% { translate: -7px 3px; } 25% { translate: 6px -4px; } 40% { translate: -5px -3px; } 55% { translate: 4px 3px; } 70% { translate: -3px 2px; } 85% { translate: 2px -1px; } }
+.flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+.flash.on { animation: flash 0.45s ease-out; }
+@keyframes flash { 30% { opacity: 0.95; } to { opacity: 0; } }
+
+.message { margin: 0; padding: 8px 16px; min-height: 38px; font-size: 14px; color: var(--dim); text-align: center; }
+.message .good { color: var(--good); }
+.message .bad { color: var(--bad); }
+.message .gold { color: var(--gold); }
+
+.controls { padding: 0 16px calc(14px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 8px; }
+.bets, .buttons { display: flex; gap: 8px; align-items: center; }
+.bets > span { font-size: 13px; color: var(--dim); }
+.bets button, .buttons button { flex: 1; min-height: 42px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 15px; }
+.bets button.current { border-color: var(--gold); color: var(--gold); }
+.bets button.locked { color: var(--dim); cursor: not-allowed; }
+.bets button svg { width: 14px; height: 14px; }
+.buttons button:disabled { opacity: 0.4; cursor: not-allowed; }
+.buttons button { font-size: 14px; }
+
+.modal, .bigwin { position: absolute; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.6); }
+.modal[hidden], .bigwin[hidden] { display: none; }
+.modal-card { width: 86%; max-height: 84%; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+.modal-card h2 { margin: 0 0 10px; font-size: 18px; }
+.modal-body { font-size: 14px; line-height: 1.7; color: var(--text); }
+.modal-body ul { margin: 6px 0; padding-left: 20px; }
+.modal-body h3 { margin: 12px 0 2px; font-size: 14px; color: var(--gold); }
+.modal-body table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.modal-body td, .modal-body th { border-bottom: 1px solid var(--line); padding: 4px 2px; text-align: left; }
+.modal-actions { display: flex; gap: 8px; margin-top: 14px; }
+.modal-actions button { flex: 1; min-height: 42px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); }
+.modal-actions button.primary { border-color: var(--gold); color: var(--gold); }
+
+.bigwin { cursor: pointer; overflow: hidden; }
+.bigwin-card { position: relative; text-align: center; animation: pop 0.35s ease-out; }
+.bigwin-card span { display: block; font-size: 22px; color: var(--gold); letter-spacing: 0.3em; }
+.bigwin-card strong { font-size: 64px; color: var(--gold); text-shadow: 0 4px 0 #7a4a00; }
+@keyframes pop { from { scale: 0.3; opacity: 0; } }
+.coins i { position: absolute; top: -8%; width: 16px; height: 16px; border-radius: 50%; background: var(--gold); border: 2px solid #b37a00;
+  animation: fall 1.4s linear forwards; }
+.shell[data-theme="pixel"] .coins i { border-radius: 0; }
+@keyframes fall { to { translate: 0 115vh; rotate: 540deg; } }
