@@ -22,8 +22,8 @@ const sum = a => a.reduce((x, y) => x + y, 0);
 function faceUp(cube) {
   const m = new DOMMatrix(getComputedStyle(cube).transform);
   const N = { 1: [0, 0, 1], 6: [0, 0, -1], 3: [1, 0, 0], 4: [-1, 0, 0], 2: [0, -1, 0], 5: [0, 1, 0] };
-  let best = 0, bz = -9;
-  for (const k in N) { const p = m.transformPoint(new DOMPoint(N[k][0], N[k][1], N[k][2], 0)); if (p.z > bz) { bz = p.z; best = +k; } }
+  let best = 0, bz = 9;   // 朝上＝畫面座標 y 最小（CSS y 向下）；2026-11-24 修正：原本量的是朝向觀看者（+z）的面
+  for (const k in N) { const p = m.transformPoint(new DOMPoint(N[k][0], N[k][1], N[k][2], 0)); if (p.y < bz) { bz = p.y; best = +k; } }
   return best;
 }
 const fullHearts = () => [...$('advh').querySelectorAll('i')].filter(i => i.querySelector('use').getAttribute('href') === '#ic-heart').length;
