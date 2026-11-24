@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#030718" />
+  <title>彈跳球 Bounce Ball</title>
+  <link rel="stylesheet" href="neon.css" />
+</head>
+<body>
+  <main class="cabinet" aria-label="彈跳球遊戲機台">
+    <div class="cabinet-glow" aria-hidden="true"></div>
+    <header class="top-panel">
+      <div class="brand-row">
+        <button class="balance" id="balanceButton" aria-label="目前餘額">
+          <span id="balance">$100,000.00</span><b>＋</b>
+        </button>
+      </div>
+      <div class="history" id="history" aria-label="最近五局倍率"></div>
+    </header>
+
+    <section class="playfield" aria-label="遊戲區">
+      <canvas id="gameCanvas" width="750" height="1020" aria-label="旋轉圓環與彈跳球動畫"></canvas>
+    </section>
+
+    <section class="controls" aria-label="投注控制區">
+      <button class="bonus-button" id="bonusButton"><span>✦</span><b>購買加成</b></button>
+      <button id="autoButton" class="auto-button" aria-label="自動下注">自動</button>
+
+      <div class="control-grid">
+        <div class="bet-controls">
+          <div class="bet-input-wrap"><span>$</span><input id="betInput" type="number" min="1" step="1" value="10" inputmode="decimal" /></div>
+          <div class="quick-bets" id="quickBets">
+            <button data-value="10">10</button><button data-value="50">50</button>
+            <button data-value="100">100</button><button data-value="3000">3000</button>
+          </div>
+        </div>
+
+        <button class="bet-button" id="betButton"><strong>投注</strong></button>
+
+        <div class="side-controls">
+          <div class="difficulty-picker">
+            <button type="button" class="difficulty-trigger" id="difficultyTrigger" aria-haspopup="listbox" aria-expanded="false"><span>簡單</span><b>▾</b></button>
+            <div class="difficulty-menu" id="difficultyMenu" role="listbox" aria-label="遊戲難度">
+              <button type="button" data-value="easy" role="option" aria-selected="true">簡單</button>
+              <button type="button" data-value="normal" role="option" aria-selected="false">普通</button>
+              <button type="button" data-value="hard" role="option" aria-selected="false">困難</button>
+            </div>
+          </div>
+          <select id="difficulty" class="native-difficulty" aria-hidden="true" tabindex="-1">
+            <option value="easy">簡單</option>
+            <option value="normal">普通</option>
+            <option value="hard">困難</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <div class="mode-sheet" id="modeSheet" aria-hidden="true">
+      <div class="sheet-head"><button id="closeModes" aria-label="關閉">×</button></div>
+      <button class="mode-card" data-mode="super">
+        <span class="mode-icon super">★</span><span class="mode-copy"><strong>超級球</strong><small>額外倍率隨機 ×3 至 ×20</small></span><span class="mode-action">開啟<b>下注額 ×5</b></span>
+      </button>
+      <button class="mode-card" data-mode="ten">
+        <span class="mode-icon ten">10</span><span class="mode-copy"><strong>10 球</strong><small>一次投入 10 顆，每顆獨立結算</small></span><span class="mode-action">開啟<b>下注額 ×10</b></span>
+      </button>
+    </div>
+
+    <div class="modal" id="autoModal" aria-hidden="true">
+      <div class="modal-card">
+        <button class="modal-close" id="closeAuto" aria-label="關閉">×</button>
+        <h2>自動下注次數</h2>
+        <div class="auto-options" id="autoOptions">
+          <button data-count="10">10</button><button data-count="25">25</button><button data-count="50">50</button>
+          <button data-count="100">100</button><button data-count="500">500</button><button data-count="1000">1000</button>
+          <button data-count="Infinity">∞</button>
+        </div>
+        <button class="confirm-auto" id="confirmAuto" disabled>開始</button>
+      </div>
+    </div>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
