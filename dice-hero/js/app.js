@@ -37,6 +37,7 @@
     teleport: ['..XXXX..', '.X....X.', 'X..XX..X', 'X.X..X.X', 'X.X..X.X', 'X..XX..X', '.X....X.', '..XXXX..'],
     mountain: ['...ww...', '...ww...', '..wXXw..', '..XXXX..', '.XXXXXX.', '.XXdXXX.', 'XXddXXXX', 'XdddXXXX'],
     forest: ['..XX....', '.XXXX.X.', 'XXXXXXXX', '.XXXXXXX', '..kk.XXX', '..kk..k.', '..kk..k.', '........'],
+    reroll: ['..XXXX..', '.X....XX', 'X..kk..X', 'X.kwwk..', '..kwwk.X', 'X..kk..X', 'XX....X.', '..XXXX..'],
     swamp: ['........', '..XXXX..', '.XXpXXX.', 'XXXXXXpX', 'XpXXXXXX', 'XXXXpXX.', '.XXXXX..', '........'],
     river: ['........', 'ww...ww.', '..www..w', '........', '.ww...ww', 'w..www..', '........', '........']
   };
@@ -72,6 +73,10 @@
     mountain: c => '<path d="M2 28L12 8l6 10 3-5 9 15z" fill="' + c + '"/><path d="M12 8l-3 6 3-1.5 3 2z" fill="#fff"/>',
     forest: c => '<path d="M10 28v-5H3.5l4.5-6H5.5L11 9.5 16.5 17H14l4.5 6H12v5z" fill="' + c + '"/>' +
       '<path d="M21.5 28v-4h-5l3.6-5h-2l4.4-6 4.4 6h-2l3.6 5h-5v4z" fill="' + c + '" opacity=".8"/>',
+    // 重骰：兩個繞圈的箭頭圍著一顆小骰子
+    reroll: c => '<g fill="none" stroke="' + c + '" stroke-width="2.6" stroke-linecap="round"><path d="M26 14a10.5 10.5 0 0 0-19-4.5"/><path d="M6 18a10.5 10.5 0 0 0 19 4.5"/></g>' +
+      '<path d="M4.2 4.5l2.4 6 5.6-2.6z" fill="' + c + '"/><path d="M27.8 27.5l-2.4-6-5.6 2.6z" fill="' + c + '"/>' +
+      '<rect x="11.5" y="11.5" width="9" height="9" rx="1.6" fill="' + c + '"/><circle cx="14" cy="14" r="1.1" fill="#16161e"/><circle cx="18" cy="18" r="1.1" fill="#16161e"/><circle cx="16" cy="16" r="1.1" fill="#16161e"/>',
     swamp: c => '<path d="M5 18c-2-6 3-11 9-10 3-4 11-2 12 3 4 2 4 9-1 11-2 5-10 5-13 2-4 1-7-2-7-6z" fill="' + c + '" stroke="rgba(0,0,0,.45)" stroke-width="1.2"/>' +
       '<g fill="#b6ff5c"><circle cx="12" cy="17" r="2.4"/><circle cx="20" cy="13" r="1.7"/><circle cx="19" cy="20.5" r="1.3"/></g>',
     river: () => '<path d="M3 11q5-5 10 0t10 0 6 0M3 21q5-5 10 0t10 0 6 0" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="2.4" stroke-linecap="round"/>'
@@ -142,6 +147,8 @@
         else if (!object && G.siteAt(state, x, y)) inner = '<div class="prop site">' + icon(G.siteAt(state, x, y)) + '</div>';
         // 毒潭平貼在地上，踩過不會消失
         else if (object && object.type === 'swamp') { classes += ' swamp'; inner = icon('swamp'); }
+        // 重骰也是平貼在地上、踩過不會消失
+        else if (object && object.type === 'reroll') { classes += ' reroll'; inner = icon('reroll'); }
         else if (object) inner = '<div class="' + propClass(object) + (entering ? ' enter' : '') + '" data-key="' + key + '">' + propHtml(object) + '</div>';
         html += '<div class="' + classes + '"' + attrs + ' style="' + place(x, y) + '">' + inner + '</div>';
       }
@@ -452,6 +459,10 @@
         message('喝下藥水，' + OUTCOME[event.outcome]);
       } else if (event.type === 'place') {
         message('來到' + (event.kind === 'town' ? '城鎮' : '鄉村'));
+      } else if (event.type === 'reroll') {
+        message('踩到重骰，骰子重新骰一次');
+        await spinAnimation(event.die);
+        message('重骰成 <span class="gold">' + event.die.top + ' 點</span>');
       } else if (event.type === 'swamp') {
         message('踩進毒潭，' + OUTCOME.poison);
       } else if (event.type === 'status') {
@@ -601,7 +612,7 @@
     if (bet === state.bet) return;
     if (state.betLock > 0) { message('換注後要再走 ' + state.betLock + ' 步才能再換'); return; }
     const ok = await modal('更換底注為 ' + bet + '？',
-      '<ul><li>地圖會<b>立刻刷新</b>，場上的怪物、寶箱、藥水、毒潭和山、河、森林全部換一批。</li><li>換注後要<b>再走 ' + state.config.betLockSteps + ' 步</b>才能再次更改。</li></ul>',
+      '<ul><li>地圖會<b>立刻刷新</b>，場上的怪物、寶箱、藥水、毒潭、重骰和山、河、森林全部換一批。</li><li>換注後要<b>再走 ' + state.config.betLockSteps + ' 步</b>才能再次更改。</li></ul>',
       '確定更換', '取消');
     if (!ok || !G.changeBet(state, bet)) return;
     busy = true;
@@ -636,7 +647,7 @@
     }).join('');
     modal('規則', [
       '<h3>怎麼玩</h3><ul><li>點骰子旁邊的格子（或鍵盤方向鍵）往那邊翻一格，每步花一次底注。</li><li>骰子是真的在滾：朝上的點數照翻滾方向變化。</li><li>走遠之後，被拋在後面的東西會收走；新的只會出現在畫面外，往前走才遇得到。</li></ul>',
-      '<h3>格子</h3><ul><li><b>怪物</b>：你的點數要<b>大於</b>怪物點數才贏，一樣大算輸。怪物是 1～5 點。分小怪（1～2 點）、菁英（3～4 點）、BOSS（5 點）三檔；點數越高獎金越多，越高檔打輸被擊退得越遠。</li><li><b>黑色怪物</b>：標「?」，踩上去才知道幾點，獎金是 ' + config.hiddenMonsterFactor + ' 倍。點數揭曉後換回一般顏色，獎金不變。</li><li><b>寶箱</b>：標「大」要 4～6 點，標「小」要 1～3 點，符合就開。分三種：' + Object.keys(config.chestTiers).map(tier => CHEST_NAMES[tier] + ' ' + config.chestTiers[tier].mult + ' 倍').join('、') + '；鐵箱和金箱很少見，獎池累積得多時比較容易出現。木箱最多試 ' + config.chestTiers.wood.tries + ' 次，鐵箱和金箱最多試 ' + config.chestTiers.gold.tries + ' 次，用完寶箱就消失。</li><li><b>隨機藥水</b>：喝下去隨機得到祝福或詛咒，機率各半。祝福和詛咒會互相取代，身上只會有其中一個。</li><li><b>毒潭</b>：踩上去就中毒。踩過不會消失，可以繞開。</li><li><b>鄉村、城鎮</b>：可以走上去，目前沒有作用。</li><li><b>傳送點</b>：傳到遠方，周圍換一批新的，換注鎖也解開。</li><li><b>山脈、河流、森林</b>：過不去，撞到不花錢。</li></ul>',
+      '<h3>格子</h3><ul><li><b>怪物</b>：你的點數要<b>大於</b>怪物點數才贏，一樣大算輸。怪物是 1～5 點。分小怪（1～2 點）、菁英（3～4 點）、BOSS（5 點）三檔；點數越高獎金越多，越高檔打輸被擊退得越遠。</li><li><b>黑色怪物</b>：標「?」，踩上去才知道幾點，獎金是 ' + config.hiddenMonsterFactor + ' 倍。點數揭曉後換回一般顏色，獎金不變。</li><li><b>寶箱</b>：標「大」要 4～6 點，標「小」要 1～3 點，符合就開。分三種：' + Object.keys(config.chestTiers).map(tier => CHEST_NAMES[tier] + ' ' + config.chestTiers[tier].mult + ' 倍').join('、') + '；鐵箱和金箱很少見，獎池累積得多時比較容易出現。木箱最多試 ' + config.chestTiers.wood.tries + ' 次，鐵箱和金箱最多試 ' + config.chestTiers.gold.tries + ' 次，用完寶箱就消失。</li><li><b>隨機藥水</b>：喝下去隨機得到祝福或詛咒，機率各半。祝福和詛咒會互相取代，身上只會有其中一個。</li><li><b>毒潭</b>：踩上去就中毒。踩過不會消失，可以繞開。</li><li><b>重骰</b>：踩上去骰子重新骰一次。踩過不會消失，走開再踩回來可以一直重骰。</li><li><b>鄉村、城鎮</b>：可以走上去，目前沒有作用。</li><li><b>傳送點</b>：傳到遠方，周圍換一批新的，換注鎖也解開。</li><li><b>山脈、河流、森林</b>：過不去，撞到不花錢。</li></ul>',
       '<h3>打輸或開不了</h3><ul><li>骰子被彈回去並重骰，那一步的錢照扣。怪物留在原地，可以走回去再打。</li><li>被擊退時撞到山、河、森林就停下來。</li></ul>',
       '<h3>狀態</h3><ul><li>祝福：' + STEPS.bless + ' 步內點數 +1。詛咒：' + STEPS.curse + ' 步內點數 −1。對怪物和寶箱都算，所以詛咒有時反而開得了「小」寶箱。</li><li>中毒：' + STEPS.poison + ' 步內步費加倍。</li></ul>',
       '<h3>怪物獎金（底注的倍數）</h3><table><tr><th></th><th>一般</th><th>原本是黑色的</th><th>打輸擊退</th></tr>' + rows + '</table>',

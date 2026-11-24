@@ -19,7 +19,7 @@ function aimDie(state, dir, want) {
 }
 const find = (events, type) => events.find(event => event.type === type);
 const FLAT = { mountainChance: 0, riverChance: 0, forestChance: 0 };
-const EMPTY = Object.assign({ publicMonsters: 0, hiddenMonsters: 0, chests: 0, potions: 0, swamps: 0, publicTeleports: 0 }, FLAT);
+const EMPTY = Object.assign({ publicMonsters: 0, hiddenMonsters: 0, chests: 0, potions: 0, swamps: 0, rerolls: 0, publicTeleports: 0 }, FLAT);
 const monster = (n, dark, mult) => {
   const tier = G.monsterTier(n);
   return { type: 'monster', n, tier, hidden: !!dark, dark: !!dark, mult: mult || G.CONFIG.monsterMults[n - 1] * (dark ? 1.5 : 1) };
@@ -185,7 +185,7 @@ for (let seed = 1; seed <= 200; seed++) {
     if (object.type === 'chest') { visibleWorth += object.mult; assert.equal(object.mult, G.CONFIG.chestTiers[object.tier].mult); }
   }
   assert.equal(teleports, 1);
-  assert.ok(state.objects.size <= 29, '最多 28 個目標加 1 個傳送點；獎池付不起的怪物、寶箱先不擺');
+  assert.ok(state.objects.size <= 31, '最多 30 個目標加 1 個傳送點；獎池付不起的怪物、寶箱先不擺');
   const kindCount = kind => Array.from(state.objects.values()).filter(object => object.type === kind).length;
   assert.ok(kindCount('potion') === 2 && kindCount('swamp') === 2, '藥水和毒潭不花獎池，開場就各有 2 個');
   assert.equal(kindCount('unknown'), 0, '沒有「？」了');
@@ -505,6 +505,57 @@ assert.ok(G.chestOpens('big', 4) && !G.chestOpens('big', 3) && G.chestOpens('sma
   const share = kinds.town / (kinds.town + kinds.village);
   assert.ok(share > 0.25 && share < 0.35, '約三成是城鎮：' + share.toFixed(2));
 }
+// ---- 重骰 ----
+{
+  // 踩上去骰子換成隨機的新朝向、只收步費、不彈回；地塊不會消失，可以走開再踩回來。
+  const tops = new Set(), back = { N: 'S', S: 'N', E: 'W', W: 'E' };
+  let changed = 0;
+  for (let seed = 1; seed <= 120; seed++) {
+    const { state, dir, key } = arena({ random: seeded(seed), config: EMPTY });
+    state.objects.set(key, { type: 'reroll' });
+    const events = G.move(state, dir);
+    const rolled = find(events, 'step').die, reroll = find(events, 'reroll');
+    assert.ok(reroll && !find(events, 'bounce') && !find(events, 'status'));
+    assert.deepEqual(state.die, reroll.die, '骰子變成重骰出來的朝向');
+    assert.ok(G.ORIENTATIONS.some(o => o.top === state.die.top && o.front === state.die.front && o.right === state.die.right), '重骰出來的是合法的朝向');
+    if (state.die.top !== rolled.top || state.die.front !== rolled.front) changed++;
+    tops.add(state.die.top);
+    assert.equal(state.balance, 990, '只收步費');
+    assert.equal(state.x + ',' + state.y, key, '骰子留在重骰那格');
+    assert.equal(state.objects.get(key).type, 'reroll', '踩過不會消失');
+    G.move(state, back[dir]);
+    const again = G.move(state, dir);
+    assert.ok(find(again, 'reroll'), '走開再踩回來可以再重骰');
+    assert.equal(state.balance, 970);
+    assert.equal(state.objects.get(key).type, 'reroll');
+  }
+  assert.equal(tops.size, 6, '六種點數都骰得出來');
+  assert.ok(changed > 100, '多數時候朝向會變：' + changed);
+}
+{
+  // 兩個重骰之間至少隔 10 格（直線距離）；因此場上有時只有一個。
+  let pairs = 0, two = 0, samples = 0;
+  for (let seed = 1; seed <= 40; seed++) {
+    const state = G.createGame({ random: seeded(seed), balance: 1e9, pool: 1e7 });
+    for (let i = 0; i < 300; i++) {
+      const dir = ['N', 'E', 'W', 'S'].find(d => !G.terrainAt(state, state.x + G.DIRS[d][0], state.y + G.DIRS[d][1]) &&
+        !G.objectAt(state, state.x + G.DIRS[d][0], state.y + G.DIRS[d][1]));
+      if (!dir) break;
+      G.move(state, dir);
+      const spots = [];
+      for (const [key, object] of state.objects) if (object.type === 'reroll') spots.push(key.split(',').map(Number));
+      assert.ok(spots.length <= 2);
+      samples++;
+      if (spots.length === 2) {
+        two++; pairs++;
+        const gap = Math.hypot(spots[0][0] - spots[1][0], spots[0][1] - spots[1][1]);
+        assert.ok(gap >= G.CONFIG.rerollMinDistance, '兩個重骰相距 ' + gap.toFixed(1) + ' 格');
+      }
+    }
+  }
+  assert.ok(pairs > 100, '有檢查到同時存在兩個重骰的情況：' + pairs);
+  console.log('  重骰：' + (two / samples * 100).toFixed(0) + '% 的時間場上有兩個，其餘只有一個或沒有');
+}
 // ---- 毒潭 ----
 {
   // 踩上去中毒 5 步、只收步費、不彈回；毒潭不會消失，再踩一次重新算 5 步。
@@ -562,14 +613,14 @@ assert.ok(G.chestOpens('big', 4) && !G.chestOpens('big', 3) && G.chestOpens('sma
     const before = new Set(state.objects.keys());
     const events = G.move(state, 'N');
     if (find(events, 'teleport')) break;
-    const counts = { monster: 0, chest: 0, potion: 0, swamp: 0, teleport: 0 };
+    const counts = { monster: 0, chest: 0, potion: 0, swamp: 0, reroll: 0, teleport: 0 };
     for (const [key, object] of state.objects) {
       const [x, y] = key.split(',').map(Number), dx = x - state.x, dy = y - state.y;
       counts[object.type]++;
       assert.ok(Math.abs(dx) <= 6 && dy <= 13 && dy >= -8, '離太遠的目標已回收');
       if (!before.has(key)) assert.ok(Math.abs(dx) > 5 || dy > 12 || dy < -7, '新補的目標只出現在畫面外');
     }
-    assert.ok(counts.chest === 9 && counts.teleport === 1 && counts.potion === 2 && counts.swamp === 2 && counts.monster === 15,
+    assert.ok(counts.chest === 9 && counts.teleport === 1 && counts.potion === 2 && counts.swamp === 2 && counts.reroll >= 1 && counts.reroll <= 2 && counts.monster === 15,
       '獎池充足時維持 15 隻怪、9 箱、2 瓶藥水、2 個毒潭、1 個傳送點：' + JSON.stringify(counts));
     checked++;
   }
@@ -579,7 +630,8 @@ assert.ok(G.chestOpens('big', 4) && !G.chestOpens('big', 3) && G.chestOpens('sma
   // 獎池付不起時，怪物和寶箱先不擺（那格留空）；藥水和毒潭不花獎池，照樣出現。
   const state = G.createGame({ random: seeded(6), balance: 1e9, pool: 0, config: FLAT });
   const kinds = Array.from(state.objects.values()).filter(object => object.type !== 'teleport').map(object => object.type).sort();
-  assert.deepEqual(kinds, ['potion', 'potion', 'swamp', 'swamp']);
+  assert.deepEqual(kinds.filter(kind => kind !== 'reroll'), ['potion', 'potion', 'swamp', 'swamp']);
+  assert.ok(kinds.filter(kind => kind === 'reroll').length >= 1);
 }
 {
   // 站在原地打掉怪物：畫面內不會冒出新目標。
@@ -591,7 +643,7 @@ assert.ok(G.chestOpens('big', 4) && !G.chestOpens('big', 3) && G.chestOpens('sma
     const [x, y] = objectKey.split(',').map(Number), dx = x - state.x, dy = y - state.y;
     assert.ok(Math.abs(dx) > 5 || dy > 12 || dy < -7, '打掉怪物後補的目標都在畫面外');
   }
-  assert.equal(state.objects.size, 29, '缺的目標照樣補滿，只是補在看不到的地方');
+  assert.ok(state.objects.size === 31 || state.objects.size === 30, '缺的目標照樣補滿，只是補在看不到的地方（重骰要隔得夠遠，偶爾只擺得下一個）');
 }
 
 // ---- 死角：三面被障礙包住的空格，留給 BOSS 和金箱 ----
@@ -608,7 +660,7 @@ assert.ok(G.chestOpens('big', 4) && !G.chestOpens('big', 3) && G.chestOpens('sma
       for (let dx = -6; dx <= 6; dx++) for (let dy = -8; dy <= 13; dy++) {
         const x = state.x + dx, y = state.y + dy;
         const here = G.objectAt(state, x, y);
-        if (here && here.type === 'swamp') {
+        if (here && (here.type === 'swamp' || here.type === 'reroll')) {
           for (let ax = -1; ax <= 1; ax++) for (let ay = -1; ay <= 1; ay++) assert.ok(!G.terrainAt(state, x + ax, y + ay), '毒潭周圍八格都沒有障礙，不會堵住通道');
           swamps++;
         }
@@ -702,4 +754,4 @@ assert.ok(G.chestOpens('big', 4) && !G.chestOpens('big', 3) && G.chestOpens('sma
   assert.ok(result.rtp > 0.93 && result.rtp <= 0.95 + 1150 / result.spent + 1e-9, '憑感覺玩 RTP ' + result.rtp);
 }
 
-console.log('PASS: 骰子翻滾、地形、擺放、怪物三檔與擊退、寶箱次數、狀態、隨機藥水、毒潭、隨走隨補、沒有換波、傳送、換注鎖、獎池帳、RTP。');
+console.log('PASS: 骰子翻滾、地形、擺放、怪物三檔與擊退、寶箱次數、狀態、隨機藥水、重骰、毒潭、隨走隨補、沒有換波、傳送、換注鎖、獎池帳、RTP。');

@@ -37,8 +37,8 @@ function pathsByPosition(state, limit) {
         if (seen.has(key) || G.terrainAt(state, nx, ny)) continue;
         seen.set(key, true);
         const object = G.objectAt(state, nx, ny);
-        // 毒潭看得到又不會消失，當成障礙繞開
-        if (object && object.type === 'swamp') continue;
+        // 毒潭和重骰看得到又不會消失，沒有獎可拿，當成障礙繞開
+        if (object && (object.type === 'swamp' || object.type === 'reroll')) continue;
         if (object) found.push({ object, depth, first: first || dir });
         else next.push([nx, ny, first || dir]);
       }
