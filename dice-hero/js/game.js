@@ -37,6 +37,10 @@
     potions: 2,
     // 毒潭：看得到，踩上去中毒；踩過不會消失
     swamps: 2,
+    // 重骰：看得到，踩上去骰子重骰成隨機的新朝向；踩過不會消失，可以重複踩
+    rerolls: 2,
+    // 兩個重骰之間至少隔幾格（直線距離）；找不到夠遠的空位就先不補
+    rerollMinDistance: 10,
     publicTeleports: 1,
     teleportMinDistance: 8,
     // 怪物點數 1～6 的出現權重（6 點不出現）
@@ -431,8 +435,8 @@
   // 怪物和寶箱的獎金總額不超過獎池撥給它們的份額；付不起的怪物先試小怪，再不行就先不擺。
   function fillTargets(state, cells) {
     const config = state.config, random = state.random;
-    const quota = { public: config.publicMonsters, hidden: config.hiddenMonsters, chest: config.chests, potion: config.potions, swamp: config.swamps };
-    const counts = { public: 0, hidden: 0, chest: 0, potion: 0, swamp: 0 };
+    const quota = { public: config.publicMonsters, hidden: config.hiddenMonsters, chest: config.chests, potion: config.potions, swamp: config.swamps, reroll: config.rerolls };
+    const counts = { public: 0, hidden: 0, chest: 0, potion: 0, swamp: 0, reroll: 0 };
     for (const object of state.objects.values()) {
       if (object.type === 'monster') counts[object.dark ? 'hidden' : 'public'] += 1;
       else if (object.type in counts) counts[object.type] += 1;
@@ -451,7 +455,7 @@
       if (kind === 'chest') {
         object = makeChest(state, budget);
         worth = object ? object.mult : Infinity;
-      } else if (kind === 'potion' || kind === 'swamp') {
+      } else if (kind === 'potion' || kind === 'swamp' || kind === 'reroll') {
         object = { type: kind };
       } else {
         // 抽到付不起的怪物就先記著，等獎池夠了再擺同一隻（不換成便宜的，不然場上只會剩小怪）。
@@ -462,11 +466,17 @@
       }
       // 獎池付不起：這一種這次先不補（那格留空），等獎池回來再補。
       if (worth > budget) { quota[kind] = counts[kind]; continue; }
-      if (kind === 'swamp') {
-        // 毒潭不會消失，所以只擺在空曠的地方（周圍八格都沒有山、河、森林），不然可能堵住唯一的通道，逼玩家非踩不可。
+      if (kind === 'swamp' || kind === 'reroll') {
+        // 毒潭和重骰不會消失，所以只擺在空曠的地方（周圍八格都沒有山、河、森林），不然可能堵住唯一的通道，逼玩家非踩不可。
+        // 重骰另外要跟場上其他重骰保持距離，不然兩個靠在一起等於隨時都能重骰。
+        const others = [];
+        if (kind === 'reroll') {
+          for (const [key, other] of state.objects) if (other.type === 'reroll') others.push(key.split(',').map(Number));
+        }
+        const apart = config.rerollMinDistance * config.rerollMinDistance;
         let at = -1;
         for (let i = cells.length - 1; i >= 0 && at < 0; i--) {
-          let open = true;
+          let open = !others.some(o => (o[0] - cells[i][0]) ** 2 + (o[1] - cells[i][1]) ** 2 < apart);
           for (let dx = -1; dx <= 1 && open; dx++) for (let dy = -1; dy <= 1; dy++) {
             if (terrainAt(state, cells[i][0] + dx, cells[i][1] + dy)) { open = false; break; }
           }
@@ -657,6 +667,10 @@
     } else if (!object && siteAt(state, tx, ty)) {
       // 鄉村、城鎮：目前沒有作用，只回報走到了哪裡。
       events.push({ type: 'place', kind: siteAt(state, tx, ty) });
+    } else if (object && object.type === 'reroll') {
+      // 重骰：骰子換成隨機的新朝向，地塊留著，可以走開再踩回來
+      state.die = randomDie(state.random);
+      events.push({ type: 'reroll', die: Object.assign({}, state.die) });
     } else if (object && object.type === 'swamp') {
       // 毒潭：踩上去中毒，踩過不會消失
       gained.poison = true;
