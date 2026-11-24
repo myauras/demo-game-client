@@ -167,7 +167,7 @@ svg text{font-family:var(--font)}
 .dl{left:0;top:0;width:100%;height:100%;z-index:7;pointer-events:none}
 .dl > *{position:absolute}
 .dp{left:0;top:0;width:0;height:0;perspective:420px;opacity:0;will-change:transform,opacity}
-.tilt{position:absolute;left:0;top:0;width:0;height:0;transform-style:preserve-3d;transform:rotateX(-22deg) rotateY(-30deg)}
+.tilt{position:absolute;left:0;top:0;width:0;height:0;transform-style:preserve-3d;transform:rotateX(-64deg) rotateY(-20deg)}
 .cube{position:absolute;left:calc(var(--cs) / -2);top:calc(var(--cs) / -2);width:var(--cs);height:var(--cs);transform-style:preserve-3d;
   --base:#f6edd4;--ce:#b79f66;--pip:#2a1b10;--pip1:#b3261e}
 .dl.win .cube{--base:#ffd95e;--ce:#9c6a14;--pip:#4a2e08;--pip1:#4a2e08}

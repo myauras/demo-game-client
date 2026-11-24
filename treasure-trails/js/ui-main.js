@@ -222,7 +222,8 @@ var TENT = '<svg viewBox="-40 -44 80 70" width="80" height="70" style="position:
   '<path d="M-8 23 L0 4 L8 23 Z" fill="' + INK + '"/><path d="M-36 23.5 H36" stroke="' + INK + '" stroke-width="2.4" stroke-linecap="round"/></svg>';
 var SPARK = '<svg viewBox="-9 -9 18 18"><path d="M0 -8 L2 -2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2 -2 Z" fill="#fff3b8" stroke="#d9962a" stroke-width="1" stroke-linejoin="round"/></svg>';
 
-/* 骰子：立方體六面（點數 1～6），ORI＝要讓點數 n 的面朝向觀看者（+z）所需的 rotateX／rotateY */
+/* 骰子：立方體六面（點數 1～6），ORI＝要讓點數 n 的面朝 +z 所需的 rotateX／rotateY；
+ * 擲骰時外層再加 rotateX(90deg) 把 +z 那面翻到正上方——結果一律是「朝上的那一面」，鏡頭從斜上方往下看（.tilt） */
 var ORI = { 1: [0, 0], 2: [-90, 0], 3: [0, -90], 4: [0, 90], 5: [90, 0], 6: [0, 180] };
 var PIPS = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
 function cubeHTML(){
@@ -787,7 +788,7 @@ function throwDice(k, vals, mode){
         var p = pl.pose(v), r = 1 - Math.pow(1 - Math.min(1, v / .9), 2.4);
         d.dp.style.opacity = 1;
         d.dp.style.transform = 'translate(' + p.x.toFixed(1) + 'px,' + p.y.toFixed(1) + 'px) scale(' + p.sx.toFixed(3) + ',' + p.sy.toFixed(3) + ')';
-        d.cube.style.transform = 'rotateX(' + (pl.rx0 + (pl.rxT - pl.rx0) * r).toFixed(1) + 'deg) rotateY(' + (pl.ry0 + (pl.ryT - pl.ry0) * r).toFixed(1) + 'deg)';
+        d.cube.style.transform = 'rotateX(90deg) rotateX(' + (pl.rx0 + (pl.rxT - pl.rx0) * r).toFixed(1) + 'deg) rotateY(' + (pl.ry0 + (pl.ryT - pl.ry0) * r).toFixed(1) + 'deg)';
         var sc = clamp(1 - p.h / 150, .4, 1);
         d.sh.style.width = (cs * 1.05) + 'px'; d.sh.style.height = (cs * .22) + 'px';
         d.sh.style.opacity = v > .02 ? clamp(.9 - p.h / 160, .3, .9) : 0;
