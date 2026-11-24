@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1d130b">
+<title>三路尋寶</title>
+<!-- 樣式：base 最先（變數與疊層表），其餘模組樣式在後 -->
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/log-ui.css">
+<link rel="stylesheet" href="css/autobet.css">
+<link rel="stylesheet" href="css/onboard.css">
+</head>
+<body>
+<!--
+  script 載入順序（固定，不可調換）：
+    values.js        數值單點（EV、DEMO_KEY）
+    js/env.js        DEMO 命名空間、網址參數、DEMO.ls 存檔 helper、?vw=
+    js/strings.js    字典＋t()＋DEMO.addStrings＋data-t 自動填骨架字
+    js/toast.js      Toast
+    js/core.js       零 DOM 核心 DemoCore（錢包／下注契約／存檔）
+    js/drag-scroll.js 拖曳滾動
+    js/log-ui.js     勝負 log 頁（不認識玩法）
+    js/autobet.js    自動下注（不認識玩法）
+    js/onboard.js    新手引導骨架（本作不啟動，只保留載入）
+    js/ui-main.js    主畫面與闖關、擲骰演出（T02）；對外 DEMO.ui
+    js/wire.js       接線：LogUI／Autobet（T03，目前空殼）
+    js/dev.js        ?dev=1 導演台＋?shot= 自動駕駛（T03）。
+                     目前 dev.js 還是底板範例（用到舊核心的 EV.rngFor 等，載入會報錯），所以先不載入；
+                     T03 改寫後把下面那行註解打開。在那之前 ?shot= 由 ui-main.js 自己處理（見其檔頭）。
+-->
+<div id="app">
+  <!-- 符號表：愛心、金幣、寶石、寶箱、對錯、兩顆骰子（門檻小標用） -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <linearGradient id="gHeart" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff8a96"/><stop offset="1" stop-color="#e02848"/></linearGradient>
+    <linearGradient id="gGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".55" stop-color="#ffc933"/><stop offset="1" stop-color="#d98200"/></linearGradient>
+    <radialGradient id="gCoin" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff6c0"/><stop offset=".55" stop-color="#ffcf3a"/><stop offset="1" stop-color="#c98a00"/></radialGradient>
+    <linearGradient id="gGem" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d2faff"/><stop offset=".5" stop-color="#45d2ee"/><stop offset="1" stop-color="#168aa9"/></linearGradient>
+    <linearGradient id="gWood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a8702e"/><stop offset="1" stop-color="#5e3815"/></linearGradient>
+    <linearGradient id="gWood2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c58a3c"/><stop offset="1" stop-color="#7a4a1c"/></linearGradient>
+    <symbol id="ic-heart" viewBox="0 0 24 22"><path d="M12 21C4 14.5 1 11 1 7.2 1 3.9 3.5 1.5 6.6 1.5c2.2 0 4.2 1.2 5.4 3.3 1.2-2.1 3.2-3.3 5.4-3.3C20.5 1.5 23 3.9 23 7.2 23 11 20 14.5 12 21z" fill="url(#gHeart)" stroke="#6a0f24" stroke-width="1.8" stroke-linejoin="round"/><path d="M5.5 6.5a3 3 0 0 1 2.6-2" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="ic-heart0" viewBox="0 0 24 22"><path d="M12 21C4 14.5 1 11 1 7.2 1 3.9 3.5 1.5 6.6 1.5c2.2 0 4.2 1.2 5.4 3.3 1.2-2.1 3.2-3.3 5.4-3.3C20.5 1.5 23 3.9 23 7.2 23 11 20 14.5 12 21z" fill="rgba(0,0,0,.28)" stroke="#8a7a68" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="3 2.4"/></symbol>
+    <symbol id="ic-dice" viewBox="0 0 26 16"><rect x="1" y="3" width="11" height="11" rx="2.4" fill="currentColor" fill-opacity=".22" stroke="currentColor" stroke-width="1.7"/><circle cx="4.6" cy="6.6" r="1.2" fill="currentColor"/><circle cx="8.4" cy="10.4" r="1.2" fill="currentColor"/><rect x="14" y="2" width="11" height="11" rx="2.4" fill="currentColor" fill-opacity=".22" stroke="currentColor" stroke-width="1.7"/><circle cx="17.4" cy="5.4" r="1.2" fill="currentColor"/><circle cx="19.5" cy="7.5" r="1.2" fill="currentColor"/><circle cx="21.6" cy="9.6" r="1.2" fill="currentColor"/></symbol>
+    <symbol id="ic-ok" viewBox="0 0 12 12"><path d="M1.5 6.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="ic-no" viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="ic-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10.5" fill="url(#gCoin)" stroke="#8a5a00" stroke-width="2"/><circle cx="12" cy="12" r="6" fill="none" stroke="#b57a00" stroke-width="1.6"/><path d="M6.5 8.5A7 7 0 0 1 11 5.4" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="ic-gem" viewBox="0 0 24 24"><path d="M5 3h14l4.5 6L12 22 .5 9z" fill="url(#gGem)" stroke="#0d5f7a" stroke-width="1.6" stroke-linejoin="round"/><path d="M5 3h14l-1.8 6H6.8z" fill="rgba(255,255,255,.38)"/><path d="M.8 9h22.4M8 3l-1.2 6L12 21.6M16 3l1.2 6L12 21.6" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="1" stroke-linejoin="round"/></symbol>
+    <symbol id="ic-chest" viewBox="0 0 32 28"><path d="M2 13C2 6 8 2 16 2s14 4 14 11z" fill="url(#gWood2)" stroke="#2e1a08" stroke-width="1.6" stroke-linejoin="round"/><rect x="2" y="12" width="28" height="14" rx="3" fill="url(#gWood)" stroke="#2e1a08" stroke-width="1.6"/><rect x="2" y="11" width="28" height="3.4" fill="url(#gGold)" stroke="#6b4300" stroke-width="1"/><rect x="12.5" y="2.4" width="7" height="23" fill="url(#gGold)" stroke="#6b4300" stroke-width="1"/><rect x="13.8" y="12" width="4.4" height="6.5" rx="1.2" fill="#fff0b0" stroke="#7a5000" stroke-width="1"/></symbol>
+  </defs></svg>
+
+  <!-- 頂欄：餘額、佔位標記、紀錄入口 -->
+  <div class="bar">
+    <div class="bal"><span class="coin"><i></i></span><b id="wal">10,000</b></div>
+    <div class="ph" data-t="main.placeholder"></div>
+    <button id="spdBtn" class="logb spd" type="button" aria-pressed="false">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path class="a1" d="M4 5l8 7-8 7z"/><path class="a2" d="M13 5l8 7-8 7z"/></svg>
+    </button>
+    <button id="logBtn" class="logb" type="button" data-t="top.log" data-t-attr="title">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+    </button>
+  </div>
+
+  <!-- 新手引導常駐提示：本作不做引導，永遠不顯示（掛點保留） -->
+  <div id="hint"></div>
+  <!-- 導演台（?dev=1 才顯示；dev.js 填內容） -->
+  <div id="director"></div>
+  <!-- 自動下注進行中浮條（autobet.js 管；待命隱藏，進行中蓋在路線分頁上） -->
+  <div id="abar"></div>
+
+  <!-- 路線分頁：穩／中／拚（心形圖示＝這條路有幾顆心） -->
+  <div class="tabs" id="tabs"></div>
+
+  <!-- 地圖區（卷軸紙；只畫選中的那條路；吃掉剩餘高度） -->
+  <div class="map" id="map"><div class="paper"></div><div class="rl t"></div><div class="rl b"></div><div class="stage" id="stage"></div></div>
+
+  <!-- 戰利品列：每收一顆多一格，最右「拿回」累計 -->
+  <div class="loot" id="loot"></div>
+
+  <!-- 注額與自動 -->
+  <div class="bets" id="bets">
+    <div class="stakes" id="stakes"></div>
+    <button id="autoBtn" class="bet auto" type="button" data-t-attr="title" data-t="auto.btn">
+    </button>
+  </div>
+
+  <button class="go" id="goBtn" type="button"><span class="gt" id="goTxt"></span></button>
+
+  <!-- 特效層（飛進戰利品列的寶物、飛向餘額的金幣、大贏字）與大獎覆蓋層 -->
+  <div id="fx"></div>
+  <div class="ov" id="ov"></div>
+  <!-- toast／log 頁／自動下注彈窗由各模組自建，掛進 #app -->
+</div>
+<script src="values.js"></script>
+<script src="js/env.js"></script>
+<script src="js/strings.js"></script>
+<script src="js/toast.js"></script>
+<script src="js/core.js"></script>
+<script src="js/drag-scroll.js"></script>
+<script src="js/log-ui.js"></script>
+<script src="js/autobet.js"></script>
+<script src="js/onboard.js"></script>
+<script src="js/ui-main.js"></script>
+<script src="js/wire.js"></script>
+<!-- T03：dev.js 改寫完成後打開 -->
+<script src="js/dev.js"></script>
+</body>
+</html>
