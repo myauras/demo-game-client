@@ -47,10 +47,10 @@ const SHARDS = 30;      // 固定切 30 份
 
 /* 合併 maps 工作的統計（R＝全部結果、idx＝要合併的工作編號）→ { n, spreadMax, bruteMaps, S:[3 條路] } */
 function mergeMaps(R, idx) {
-  const sum = ['p0', 'ge1', 'ge5', 'ge20', 'sd', 'pEnd', 'rolls', 'evSum', 'sumAll', 'meanSum', 'maxNeedSum', 'minNeedSum', 'n',
+  const sum = ['p0', 'lt05', 'ge1', 'ge5', 'ge20', 'sd', 'pEnd', 'rolls', 'evSum', 'sumAll', 'meanSum', 'maxNeedSum', 'minNeedSum', 'n',
     'structBad', 'valBad', 'bandBad', 'stagBad', 'tierBad', 'gridBad', 'tplBad'];
   const mn = ['evMin', 'p0Min', 'ge1Min', 'ge20Min', 'sdMin', 'greenMin', 'spreadMin'];
-  const mx = ['evMax', 'p0Max', 'ge1Max', 'ge20Max', 'sdMax', 'maxPrize', 'sumAllMax', 'bruteGap', 'hiMax', 'redMax', 'dropMax', 'meanMax', 'rollsMaxBound'];
+  const mx = ['evMax', 'p0Max', 'ge1Max', 'ge20Max', 'lt05Max', 'sdMax', 'maxPrize', 'sumAllMax', 'bruteGap', 'hiMax', 'redMax', 'dropMax', 'meanMax', 'rollsMaxBound'];
   const hist = ['lenHist', 'tpl', 'needHist', 'nEnemyHist', 'firstEnemyHist'];
   const out = { n: 0, spreadMax: 0, bruteMaps: 0, S: [0, 1, 2].map(() => ({ big: [], badMsg: [] })) };
   idx.forEach(i => {

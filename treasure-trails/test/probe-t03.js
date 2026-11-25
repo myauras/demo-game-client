@@ -237,7 +237,7 @@ if (dev) {
   }
   // 預期一定找得到的（這些組合在每張圖都有解）
   const mustFind = [];
-  IDS.forEach(id => ['small', 'back', 'end'].forEach(k => mustFind.push(id + '/' + k)));   // 穩路線不一定有「什麼都沒拿到」（第一個節點是寶物的圖不可能），不列入
+  IDS.forEach(id => ['small', 'back', 'end'].forEach(k => { if (id + '/' + k !== 'risk/back') mustFind.push(id + '/' + k); }));   // 2026-11-24：拚路線有些圖只有拿到大寶藏才回本（1～5 倍不存在），不列入   // 穩路線不一定有「什麼都沒拿到」（第一個節點是寶物的圖不可能），不列入
   mustFind.push('mid/none', 'risk/none', 'safe/retry', 'mid/retry', 'mid/big', 'risk/jackpot');
   mustFind.forEach(k => { const r = rows.find(x => x.route + '/' + x.kind === k); check(r && r.found, '預期找得到卻沒有：' + k + ' ' + JSON.stringify(r)); });
   ['safe/big', 'safe/jackpot', 'mid/jackpot', 'risk/retry'].forEach(k => check(skipped.indexOf(k) >= 0 || rows.some(x => x.route + '/' + x.kind === k), '預期被擋或找到：' + k));
