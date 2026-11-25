@@ -58,19 +58,21 @@ var CFG = {
    *   val    反推＋湊整後各種寶物允許的倍率範圍，超出就重抽
    *   jslack 大寶物湊整時允許再微調的格數（小寶物 ±CSLACK 格）
    *   band   每張圖這條路線的目標帶（鐵表三組目標，以精確分布逐張檢查，不在帶內就整條路線重抽）：
-   *          p0＝沒拿到、ge1＝拿回 ≥1 倍、ge20＝拿回 ≥20 倍、sd＝每局標準差（最大寶物倍率範圍由 val.J 管）
+   *          p0＝沒拿到、lt05＝拿回不到半注、ge1＝拿回 ≥1 倍、ge20＝拿回 ≥20 倍、sd＝每局標準差（最大寶物倍率範圍由 val.J 管）
    */
   ROUTES: [
     { id:'safe', label:'穩', hearts:3,
-      tpl:['checeJ', 'echecJ', 'gehceJ',
-           'ecmhceJ', 'egheceJ', 'echgmhJ',
-           'chgecemJ', 'cehgeghJ', 'checeghJ', 'ghcegmhJ',
-           'eghgcechJ', 'echgegehJ', 'gehgecchJ', 'cghgegmmJ'],
-      need:{ e:[3,6], m:[7,8], h:[9,10] },
-      w:{ c:[0.3,1], g:[0.8,2], J:[2,5] },
-      val:{ c:[0.1,3], g:[0.1,3], J:[2,8] }, jslack:1,
-      stag:{ high:10, hiMax:1, red:9, redMax:2, green:6, greenMin:1, spread:3, drop:3, meanMax:7.5 },
-      band:{ p0:[0,0.10], ge1:[0.35,0.45], sd:[1,1.5] } },
+      /* 2026-11-24 重調（用戶「重調穩的路線，可以把較困難的敵人較少出現」）：不再靠一隻 10+ 當關卡，改成多隻 7～8+ 慢慢扣心；
+       * 紅色（9+）最多 1 隻、沒有 10+、不排第一隻；寶物往中段挪，目標「拿回不到半注」逐張 ≤45%（band.lt05）。
+       * 代價：每局標準差由 1～1.5 降到 0.7～1.0、最大寶物多半 ×1.5（走到底合計約 2 倍）。 */
+      tpl:['cmegmhJ', 'mgemchJ', 'cmgehmJ',
+           'cmgmcemJ', 'emgmcemJ', 'cmegmchJ',
+           'cmgmcegmJ', 'mcmgemcmJ', 'emcmgecmJ', 'cmgecmghJ'],
+      need:{ e:[3,6], m:[7,8], h:[9,9] },
+      w:{ c:[0.2,0.8], g:[0.8,2], J:[1.5,6] },
+      val:{ c:[0.1,3], g:[0.1,3], J:[1.5,6] }, jslack:1,
+      stag:{ high:10, hiMax:0, red:9, redMax:1, green:6, greenMin:1, spread:2, drop:2, meanMax:7.5 },
+      band:{ p0:[0,0.10], ge1:[0.30,0.45], lt05:[0,0.45], sd:[0.5,1.5] } },
     { id:'mid',  label:'中', hearts:2,
       tpl:['aghgehJ', 'aeghghJ', 'acehchJ',
            'aghegghJ', 'agehgchJ', 'aeghgchJ', 'achegchJ', 'emcehghJ', 'mecheghJ',
@@ -186,17 +188,18 @@ function routeDist(route){
   return { D:D, pEnd:pEnd, rolls:rolls, maxRolls:nEnemy + h - 1, nEnemy:nEnemy };
 }
 function distStats(D){
-  var ev = 0, ev2 = 0, p0 = 0, ge1 = 0, ge5 = 0, ge20 = 0, max = 0;
+  var lt05 = 0, ev = 0, ev2 = 0, p0 = 0, ge1 = 0, ge5 = 0, ge20 = 0, max = 0;
   D.forEach(function(x){
     if(x[1] <= 0) return;
     ev += x[0] * x[1]; ev2 += x[0] * x[0] * x[1];
     if(x[0] <= 0) p0 += x[1];
     if(x[0] >= 1) ge1 += x[1];
+    if(x[0] < 0.5) lt05 += x[1];
     if(x[0] >= CFG.MID_X) ge5 += x[1];
     if(x[0] >= CFG.BIG_X) ge20 += x[1];
     if(x[0] > max) max = x[0];
   });
-  return { ev:ev, sd:Math.sqrt(Math.max(0, ev2 - ev * ev)), p0:p0, ge1:ge1, ge5:ge5, ge20:ge20, max:max };
+  return { lt05:lt05, ev:ev, sd:Math.sqrt(Math.max(0, ev2 - ev * ev)), p0:p0, ge1:ge1, ge5:ge5, ge20:ge20, max:max };
 }
 function routeStats(route){
   var d = routeDist(route), s = distStats(d.D);

@@ -49,7 +49,7 @@ function jobMaps() {
   let spreadMax = 0, bruteMaps = 0;
   const S = [0, 1, 2].map(() => ({
     n: 0, evMin: 9, evMax: 0, evSum: 0, bruteGap: 0, p0: 0, ge1: 0, ge5: 0, ge20: 0, sd: 0, pEnd: 0, rolls: 0,
-    p0Min: 9, p0Max: -1, ge1Min: 9, ge1Max: -1, ge20Min: 9, ge20Max: -1, sdMin: 99, sdMax: -1,
+    p0Min: 9, p0Max: -1, ge1Min: 9, ge1Max: -1, ge20Min: 9, ge20Max: -1, lt05: 0, lt05Max: -1, sdMin: 99, sdMax: -1,
     big: [], maxPrize: 0, sumAll: 0, sumAllMax: 0, lenHist: {}, tpl: {}, needHist: {}, nEnemyHist: {},
     structBad: 0, valBad: 0, bandBad: 0, stagBad: 0, tierBad: 0, gridBad: 0, tplBad: 0,
     hiMax: 0, redMax: 0, greenMin: 99, dropMax: 0, spreadMin: 99, meanSum: 0, meanMax: 0, maxNeedSum: 0, minNeedSum: 0,
@@ -66,6 +66,7 @@ function jobMaps() {
       s.n++; s.evMin = Math.min(s.evMin, st.ev); s.evMax = Math.max(s.evMax, st.ev); s.evSum += st.ev; evs.push(st.ev);
       s.p0 += st.p0; s.ge1 += st.ge1; s.ge5 += st.ge5; s.ge20 += st.ge20; s.sd += st.sd; s.pEnd += st.pEnd; s.rolls += st.rolls;
       s.p0Min = Math.min(s.p0Min, st.p0); s.p0Max = Math.max(s.p0Max, st.p0);
+      s.lt05 += st.lt05; s.lt05Max = Math.max(s.lt05Max, st.lt05);
       s.ge1Min = Math.min(s.ge1Min, st.ge1); s.ge1Max = Math.max(s.ge1Max, st.ge1);
       s.ge20Min = Math.min(s.ge20Min, st.ge20); s.ge20Max = Math.max(s.ge20Max, st.ge20);
       s.sdMin = Math.min(s.sdMin, st.sd); s.sdMax = Math.max(s.sdMax, st.sd);

@@ -147,9 +147,11 @@ async function main() {
   {
     const a = M.S[0], b = M.S[1], c = M.S[2];
     unit('C', `穩：每張圖 沒拿到 ≤ 10%`, a.p0Max <= 0.10 + 1e-9, `最高 ${pc(a.p0Max)}（平均 ${pc(a.p0 / a.n)}）`);
-    unit('C', `穩：每張圖 拿回 ≥1 倍 35%～45%`, a.ge1Min >= 0.35 - 1e-9 && a.ge1Max <= 0.45 + 1e-9, `${pc(a.ge1Min)}～${pc(a.ge1Max)}（平均 ${pc(a.ge1 / a.n)}）`);
-    unit('C', `穩：每張圖 最大寶物 ≥ ×2`, a.big[0] >= 2 - 1e-9, `最小 ×${a.big[0]} 中位 ×${bigAt(a, 0.5)} 最大 ×${a.big[a.big.length - 1]}`);
-    unit('C', `穩：每張圖 每局標準差 1～1.5 倍`, a.sdMin >= 1 - 1e-9 && a.sdMax <= 1.5 + 1e-9, `${a.sdMin.toFixed(3)}～${a.sdMax.toFixed(3)}（平均 ${(a.sd / a.n).toFixed(3)}）`);
+    /* 2026-11-24 穩路線重調：不虧 30%～45%、最大寶物 ≥×1.5、標準差 0.6～1.1、新增「拿回不到半注 ≤45%」 */
+    unit('C', `穩：每張圖 拿回不到半注 ≤ 45%`, a.lt05Max <= 0.45 + 1e-9, `最高 ${pc(a.lt05Max)}（平均 ${pc(a.lt05 / a.n)}）`);
+    unit('C', `穩：每張圖 拿回 ≥1 倍 30%～45%`, a.ge1Min >= 0.30 - 1e-9 && a.ge1Max <= 0.45 + 1e-9, `${pc(a.ge1Min)}～${pc(a.ge1Max)}（平均 ${pc(a.ge1 / a.n)}）`);
+    unit('C', `穩：每張圖 最大寶物 ≥ ×1.5`, a.big[0] >= 1.5 - 1e-9, `最小 ×${a.big[0]} 中位 ×${bigAt(a, 0.5)} 最大 ×${a.big[a.big.length - 1]}`);
+    unit('C', `穩：每張圖 每局標準差 0.6～1.1 倍`, a.sdMin >= 0.6 - 1e-9 && a.sdMax <= 1.1 + 1e-9, `${a.sdMin.toFixed(3)}～${a.sdMax.toFixed(3)}（平均 ${(a.sd / a.n).toFixed(3)}）`);
     unit('C', `中：每張圖 沒拿到 15%～25%`, b.p0Min >= 0.15 - 1e-9 && b.p0Max <= 0.25 + 1e-9, `${pc(b.p0Min)}～${pc(b.p0Max)}（平均 ${pc(b.p0 / b.n)}）`);
     unit('C', `中：每張圖 拿回 ≥1 倍 25%～35%`, b.ge1Min >= 0.25 - 1e-9 && b.ge1Max <= 0.35 + 1e-9, `${pc(b.ge1Min)}～${pc(b.ge1Max)}（平均 ${pc(b.ge1 / b.n)}）`);
     unit('C', `中：每張圖 最大寶物 ×5～×15`, b.big[0] >= 5 - 1e-9 && b.big[b.big.length - 1] <= 15 + 1e-9, `×${b.big[0]}～×${b.big[b.big.length - 1]} 中位 ×${bigAt(b, 0.5)}`);
@@ -273,7 +275,8 @@ async function main() {
     unit('G', '單顆寶物 ≤ ×150', Math.max(...M.S.map(s => s.maxPrize)) <= 150 + 1e-9 && maxPrize <= 150 + 1e-9, `地圖最大 ×${Math.max(...M.S.map(s => s.maxPrize))}、實際收下最大 ×${maxPrize}`);
     unit('G', '每一局的拿回倍數 ≤ 該條路所有寶物倍率總和（理論上界）', boundBad === 0, `違規 ${boundBad}；實測單局最高 ×${maxX}；理論上界（所有地圖中最大的整條路寶物總和）×${bound.toFixed(1)}`);
     unit('G', '每局擲骰次數 ≤ 敵人數＋心數−1', rbad === 0, `違規 ${rbad}；實測最多 ${maxRolls} 擲；理論上界（所有地圖）${Math.max(...M.S.map(s => s.rollsMaxBound))} 擲`);
-    IDS.forEach((id, ri) => unit('G', `${id} 一局最高倍數的實測 ≤ 該路各地圖最大寶物總和`, Math.max(...stratMax(ri)) <= M.S[ri].sumAllMax + 1e-9, `實測最高 ×${Math.max(...stratMax(ri))}、上界 ×${M.S[ri].sumAllMax.toFixed(1)}`));
+    /* 2026-11-24 拿掉「各路實測最高 ≤ 抽樣地圖的寶物總和」：實際玩到的地圖不在那 6,000 張抽樣裡，兩邊不是同一批圖，會偶發誤報；
+     * 真正的上界（每一局 ≤ 自己那張圖這條路的寶物總和）由上面 boundBad 逐局檢查。 */
     function stratMax(ri) { return [100, 1000].map(st => CO[IDS[ri] + st].maxTotalX); }
   }
 
