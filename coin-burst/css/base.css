@@ -1,0 +1,165 @@
+/* =========================================================================
+ * 爆金連鎖——主畫面樣式（B 案：斜看幣柱＋底部收集槽＋面額分頁縮圖）＋共用元件（toast、無捲軸）
+ * 效能紅線：所有 transition／animation 只動 transform／opacity；陰影靜態；禁 filter
+ *   事件驅動的演出（炸開、飛行、落袋、分級）全在 js/ui-main.js 用同一條虛擬時間軸推 transform／opacity，
+ *   這裡的 animation 只有「常駐呼吸」（快滿的格子、發光格、寶物箭頭），都只動 opacity／transform。
+ * 多語紀律：盒子用 min-width／padding 撐，不鎖死寬度；數字與字串由 JS fit 縮到放得下（?lang=xx 驗）
+ *
+ * 版位：#world 固定 375×812（斜看盤面的座標在 js/art.js），視窗比它小時整個等比縮小；
+ *   #app 底下的彈窗（log 頁、自動下注）不在 #world 裡，不被縮。
+ * 疊層順序（z-index，定死）：
+ *   引導 50 ＞ toast 45 ＞ log 頁 36 ＞ 設定彈窗 35 ＞ 暗幕 34 ＞ 自動下注槽 33 ＞ 導演台 32 ＞ 遊戲主體（#world）
+ * ========================================================================= */
+:root{
+  --appbg:#0b1226; --panel:#0a1022; --line:#223060; --line2:#16204a;
+  --edge:#34447f; --chip:#141e3f; --fg:#eef0fa; --mute:#8c9acb; --gold:#ffd24a;
+  --win:#8FD49B; --lose:#E58F94;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden}
+body{background:#05080f;color:var(--fg);font-size:14px;line-height:1.5;
+  font-family:system-ui,"Noto Sans TC","Microsoft JhengHei","PingFang TC",sans-serif;
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer;padding:0;margin:0}
+
+/* #app：375×812 直式；窄螢幕等比讓步（寬不超 100vw、高不超 100vh）；?vw= 由 env.js 覆寫寬度 */
+#app{position:relative;width:min(375px,100vw);height:min(812px,100vh);margin:0 auto;
+  background:linear-gradient(#17274c,#0b1226 55%,#070b16);overflow:hidden}
+/* 注意：畫面外待命的彈窗／log 頁不可用 translate 推到 #app 外——scrollWidth／scrollHeight 會被撐大，
+   零捲軸檢查（tools/shot.mjs）會誤報。一律用 opacity＋小幅 scale 淡入（只動 transform／opacity） */
+
+/* 無原生捲軸（滾動由 DragScroll 處理；觸控保留原生 pan-y） */
+.dscroll{overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none;cursor:grab}
+.dscroll::-webkit-scrollbar{display:none;width:0;height:0}
+.dscroll.dragging{cursor:grabbing;-webkit-user-select:none;user-select:none}
+
+/* ---------- toast ---------- */
+#toast{position:absolute;left:16px;right:16px;bottom:96px;z-index:45;pointer-events:none;
+  text-align:center;font-size:13px;color:var(--fg);background:rgba(10,16,34,.95);
+  border:1px solid var(--edge);border-radius:10px;padding:8px 12px;
+  opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s}
+#toast.show{opacity:1;transform:none}
+
+/* ---------- 導演台（?dev=1 才顯示；C03 填內容；浮在天空帶上） ---------- */
+#director{position:absolute;left:8px;right:8px;top:142px;display:none;align-items:center;gap:6px;flex-wrap:wrap;
+  padding:3px 8px;border:1px dashed #6B4E2A;border-radius:6px;
+  background:rgba(60,40,15,.55);font-size:11.5px;color:#E7B97A;z-index:32}
+#director.on{display:flex}
+#director select,#director button{font-size:11.5px;color:var(--fg);background:var(--chip);
+  border:1px solid var(--edge);border-radius:5px;padding:2px 6px}
+
+/* ---------- 世界（固定 375×812，視窗小就等比縮） ---------- */
+#world{position:absolute;left:0;top:0;width:375px;height:812px;transform-origin:0 0;overflow:hidden}
+#stage,#scene,#over,#hit,#fx,#cols{position:absolute;left:0;top:0;width:375px;height:812px}
+#scene,#over,#fx,#cols{pointer-events:none}
+#stage{will-change:transform}
+#hit polygon{fill:rgba(0,0,0,.001);cursor:pointer;pointer-events:all}
+#hit.lock polygon{cursor:default}
+
+/* 精靈：畫一次的 SVG 背景圖（css 由 js/art.js 注入 .cn .ch .cs .gd .gk .spk .spg） */
+.ico{display:inline-block;flex:none;background-size:100% 100%;background-repeat:no-repeat}
+.ico.cn{width:24px;height:16px}.ico.gd{width:21px;height:24px}.ico.gk{width:28px;height:24px}
+
+/* 幣柱：.col 靜態定位＋縮放（近大遠小），.cb 是演出時被壓扁／彈起的那一層（原點在柱底） */
+.col{position:absolute;left:0;top:0;width:56px;height:96px;transform-origin:28px 96px}
+.cb{position:absolute;left:0;top:0;width:56px;height:96px;transform-origin:28px 96px;will-change:transform}
+.cb i{position:absolute;display:block;background-size:100% 100%;background-repeat:no-repeat}
+.cb .sh{left:2px;top:80px;width:52px;height:17px;background:radial-gradient(closest-side,rgba(0,0,0,.62),rgba(0,0,0,.28) 60%,rgba(0,0,0,0))}
+.cb .gl{left:-18px;top:26px;width:92px;height:76px;opacity:0;background:radial-gradient(closest-side,rgba(255,178,36,.85),rgba(255,150,20,.35) 55%,rgba(255,150,20,0))}
+.cb .k{left:0;width:56px;height:38px}
+.cb .k0{top:58px}.cb .k1{top:47px}.cb .k2{top:36px}.cb .k3{top:25px}
+.cb .gm{width:30px;height:35px;left:13px}
+.cb .gm.gk{width:36px;height:32px;left:10px}
+.cb.hot2 .gl{opacity:1}
+
+/* 盤面格子的狀態層（SVG 多邊形，只動 opacity） */
+.hv{opacity:0}
+.hv.on{opacity:1;animation:hotp 1.7s ease-in-out infinite alternate}
+@keyframes hotp{from{opacity:.62}to{opacity:1}}
+.bv,.dv,.gv{opacity:0}
+.gv.on{opacity:1;animation:hotp 1.2s ease-in-out infinite alternate}
+.brg{opacity:0}.brg.on{opacity:1}
+.arr .edge{animation:hotp .9s ease-in-out infinite alternate}
+
+/* 第一次進場：其他格變暗、HUD 變暗，只有發光格亮著 */
+.dv.on{opacity:.62}
+.hud{transition:opacity .3s linear}
+#world.first .hud{opacity:.3;pointer-events:none}
+#world.first .col.dimc .cb{opacity:.45}
+.col.breathe .cb{animation:breathe 1.1s ease-in-out infinite alternate}
+@keyframes breathe{from{transform:scale(1)}to{transform:scale(1.07)}}
+
+/* ---------- 頂欄：餘額＋速度＋紀錄 ---------- */
+.top{position:absolute;left:12px;right:12px;top:4px;height:40px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.bal{display:flex;align-items:center;gap:8px;min-width:0;height:36px;padding:0 16px 0 10px;border-radius:18px;
+  background:linear-gradient(rgba(255,255,255,.14),rgba(255,255,255,.06));border:1px solid rgba(255,255,255,.12);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12);transform-origin:20px 50%}
+.bal b{font-size:20px;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums;text-shadow:0 1px 0 rgba(0,0,0,.35)}
+.tr{flex:none;display:flex;align-items:center;gap:8px}
+.spd,.log{flex:none;height:40px;border-radius:20px;border:1.5px solid rgba(255,255,255,.26);
+  background:linear-gradient(rgba(255,255,255,.13),rgba(255,255,255,.05));display:flex;align-items:center;justify-content:center;gap:6px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14)}
+.spd{width:44px;color:rgba(255,255,255,.62)}
+.spd.on{border-color:#ffd24a;color:#ffd24a;background:linear-gradient(rgba(255,210,74,.3),rgba(255,210,74,.1))}
+.log{min-width:78px;padding:0 14px;font-size:15px;font-weight:600;white-space:nowrap}
+.spd:active,.log:active,.tab:active,.autob:active{transform:scale(.96)}
+
+/* ---------- 頂部分頁：面額＋該面額盤面縮圖 ---------- */
+.tabs{position:absolute;left:12px;right:12px;top:50px;height:86px;display:flex;gap:6px}
+.tab{flex:1;min-width:0;border-radius:14px;border:2px solid rgba(255,255,255,.04);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  background:linear-gradient(rgba(255,255,255,.09),rgba(255,255,255,.03));box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
+.tab.on{border-color:#ffd24a;background:linear-gradient(rgba(255,210,74,.24),rgba(255,210,74,.08));box-shadow:inset 0 1px 0 rgba(255,236,170,.35),0 0 0 1px rgba(255,210,74,.25)}
+.tab .lb{display:flex;align-items:center;gap:5px;line-height:1;white-space:nowrap;color:rgba(255,255,255,.6)}
+.tab.on .lb{color:#fff}
+.tab .lb b{font-size:17px;font-variant-numeric:tabular-nums}
+.th{display:grid;grid-template-columns:repeat(5,12px);grid-auto-rows:8px;gap:2px}
+.th i{border-radius:2px;background:#19233f}
+.th i.c1{background:#34457a}.th i.c2{background:#6679b8}.th i.c3{background:#ffb020}.th i.g{background:#7fe3ff}
+.tab:not(.on) .th{opacity:.85}
+
+/* ---------- 天空帶：大連爆字樣、天降幣與標籤 ---------- */
+.skyz{position:absolute;left:0;right:0;top:140px;height:52px;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.banner{font-size:34px;font-weight:900;line-height:1;color:#ffd24a;white-space:nowrap;opacity:0;
+  text-shadow:0 3px 0 #8a4a06,0 0 14px rgba(255,170,40,.7);transform-origin:50% 60%}
+.tag{position:absolute;top:150px;left:0;height:26px;padding:0 10px;border-radius:13px;border:1.5px solid #ff8fc0;
+  background:rgba(60,12,40,.88);color:#ffb3d6;font-size:14px;font-weight:700;line-height:23px;white-space:nowrap;opacity:0;pointer-events:none}
+
+/* ---------- 收集槽（斜看盤面下方一條橫槽：幣由左排到右，這一下的金額在右端） ---------- */
+#tray{position:absolute;left:12px;top:560px;width:351px;height:80px}
+#tray svg{position:absolute;left:0;top:0;width:351px;height:80px}
+#trayGold,#trayGold2{opacity:0}
+#amt{position:absolute;left:250px;top:560px;width:102px;height:80px;display:flex;align-items:center;justify-content:flex-end;transform-origin:100% 50%}
+#amt span{font-size:32px;font-weight:900;line-height:1;white-space:nowrap;color:#fff;font-variant-numeric:tabular-nums;text-shadow:0 2px 0 rgba(0,0,0,.4)}
+#amt.dim span{color:rgba(255,255,255,.28);text-shadow:none}
+#amt.gold span{color:#ffd24a;text-shadow:0 2px 0 #7a4a06}
+
+/* ---------- 三樣東西各值多少 ---------- */
+.legend{position:absolute;left:12px;right:12px;top:652px;height:46px;display:flex;gap:6px}
+.chip{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:23px;padding:0 8px;
+  background:linear-gradient(rgba(255,255,255,.1),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
+.chip b{font-size:17px;line-height:1;white-space:nowrap;color:rgba(255,255,255,.9);font-variant-numeric:tabular-nums}
+
+/* ---------- 底部自動鈕（⟳ 入口，接線是 C03）與進行中浮條槽 ---------- */
+#abar{position:absolute;left:12px;right:12px;top:702px;height:28px;margin:0}
+#autoBtn.autob{position:absolute;left:12px;right:12px;top:732px;width:auto;height:56px;border-radius:28px;border:2px solid #5d7bdf;
+  background:linear-gradient(#3a58bd,#243566 55%,#1b2850);color:#fff;font-size:19px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;white-space:nowrap;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.28),inset 0 -3px 0 rgba(0,0,0,.25),0 3px 0 #0e1630}
+
+/* ---------- 演出層 ---------- */
+.fc,.fg,.fk,.sp,.rg,.bm,.pp,.cf{position:absolute;left:0;top:0;pointer-events:none;will-change:transform,opacity}
+.fc{left:-28px;top:-13.5px;width:56px;height:38px;background-size:100% 100%;transform-origin:28px 13.5px}
+.fg{left:-20px;top:-23px;width:40px;height:46px;background-size:100% 100%;transform-origin:50% 50%}
+.fk{left:-24px;top:-21px;width:48px;height:42px;background-size:100% 100%;transform-origin:50% 50%}
+.sp{left:-12px;top:-12px;width:24px;height:24px;background-size:100% 100%}
+.rg{left:-50px;top:-22px;width:100px;height:44px;border-radius:50%;border:3px solid rgba(255,255,255,.9);box-sizing:border-box}
+.bm{left:-48px;top:-48px;width:96px;height:96px;border-radius:50%;
+  background:radial-gradient(closest-side,#fff,#ffd24a 32%,rgba(255,122,60,.75) 62%,rgba(255,122,60,0))}
+.pp{left:-40px;top:-10px;width:80px;text-align:center;font-size:18px;font-weight:800;line-height:1;color:#ffd24a;white-space:nowrap;text-shadow:0 2px 0 rgba(90,50,0,.7)}
+.cf{left:-28px;top:-13.5px;width:56px;height:38px;background-size:100% 100%}
+#beam{opacity:0}
+#flash{position:absolute;left:0;top:0;width:375px;height:812px;background:#fff;opacity:0;pointer-events:none}
+#halo{position:absolute;left:0;top:0;width:375px;height:812px;opacity:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 55% at 50% 44%,rgba(255,200,60,.55),rgba(255,150,20,.2) 55%,rgba(255,150,20,0))}
+#rays{position:absolute;left:-210px;top:70px;width:795px;height:795px;opacity:0;pointer-events:none;
+  background:repeating-conic-gradient(from 0deg at 50% 50%,rgba(255,222,120,.42) 0deg 7deg,rgba(255,226,140,0) 7deg 22.5deg);
+  -webkit-mask-image:radial-gradient(closest-side,#000 18%,rgba(0,0,0,0) 100%);mask-image:radial-gradient(closest-side,#000 18%,rgba(0,0,0,0) 100%)}
