@@ -56,6 +56,10 @@ body{display:grid;place-items:center;background:#344950}
 button{touch-action:manipulation}#stake{touch-action:manipulation}
 .primary:hover{filter:none}button:disabled{opacity:1}.primary:disabled{background:#e7d7b9;border-color:#ba9e79;color:#654f3e}
 #preflight,#ticket,.wallet,.clock,#awarded{background:#fff1d8}
+#raceScene,#bumpLight{position:absolute;inset:0;pointer-events:none}
+#raceScene{z-index:0}
+#bumpLight{z-index:1;--bump-tint:255,201,83;background:radial-gradient(ellipse at center,rgba(var(--bump-tint),.12) 24%,rgba(var(--bump-tint),.54) 100%)}
+#bumpLight.received{--bump-tint:255,102,89}
 #rateLayer{position:absolute;inset:0;z-index:4;overflow:hidden;pointer-events:none;contain:layout paint}
 .rateTag,.flightReceipt{position:absolute;white-space:nowrap;display:flex;align-items:center;gap:5px;padding:2px 7px;border:1px solid #9b7651;border-radius:7px;background:#fff4db;color:#3c2b20;font:700 14px/18px system-ui,sans-serif;font-variant-numeric:tabular-nums;text-shadow:none}
 .rateCaption:empty{display:none}.rateCaption{font-size:12px}
@@ -81,7 +85,10 @@ body{align-items:start}#gameHolder{height:var(--flight-height,100dvh)}
 #rateLayer.selecting .rateTag{padding:2px 8px}
 #lobby .flightRules{grid-column:1/-1;margin:5px 2px 0;color:#654f3e;font-size:13px;line-height:1.35}
 </style></head><body><main id="gameHolder">
+  <div id="raceScene">
   <div id="world" aria-hidden="true"></div><canvas id="traffic" aria-hidden="true"></canvas><div id="rateLayer" class="selecting" aria-hidden="true"><span class="flightReceipt" id="flightReceipt" hidden></span><span id="leaderCrown" hidden><svg viewBox="0 0 30 24" aria-hidden="true"><defs><linearGradient id="crownGold" x2="20%" y2="100%"><stop stop-color="#fff7a6"/><stop offset=".5" stop-color="#ffce47"/><stop offset="1" stop-color="#e9931f"/></linearGradient></defs><path d="M2 6l7 4.6L15 2l6 8.6L28 6l-3.6 14.4c-5.5 1.7-13.3 1.7-18.8 0Z" stroke="#653b24" stroke-width="1.8" stroke-linejoin="round" fill="url(#crownGold)"/><path d="M6.6 17q8.4 2.4 16.8 0" stroke="#fff4a2" stroke-width="1.4" fill="none"/><path d="m15 9.6 2.3 3-2.3 3.1-2.3-3.1Z" fill="#bd4930"/></svg></span></div>
+  </div>
+  <div id="bumpLight" aria-hidden="true" hidden></div>
   <header id="mast"><div class="brand">mario-air-racing</div><div class="wallet"><i class="creditIcon" aria-hidden="true"></i><span>遊戲點數</span><b id="balance">1,000</b></div></header>
   <div id="preflight" role="timer" aria-label="大賽開始倒數 7 秒" hidden><span>大賽開始倒數</span><strong id="seconds">7</strong><span>秒</span><i aria-hidden="true"></i></div>
   <section id="lobby" class="console" aria-label="賽前下注" hidden>
@@ -1314,7 +1321,7 @@ void main(){
 function FlightWeather(vents,radius){
   function canvasLayer(id,before){
     var c=document.createElement('canvas');c.id=id;c.setAttribute('aria-hidden','true');
-    var holder=document.getElementById('gameHolder');
+    var holder=document.getElementById('raceScene');
     if(before)holder.insertBefore(c,holder.firstChild);else holder.appendChild(c);
     return c;
   }
@@ -3582,13 +3589,33 @@ function aircraftFrame(now){
   }
 }
 
+const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
+function drawPlayerBump(r,elapsed){
+  const sceneLayer=el('raceScene'),light=el('bumpLight');
+  const plane=r&&mode==='race'&&hasTicket(record)?craftFor(r,record.pick):null;
+  const age=plane&&plane.bumpTick>=0?elapsed-secondsAtTick(r.version,plane.bumpTick):Infinity;
+  const duration=.23;
+  if(age<0||age>=duration||document.hidden){
+    if(!light.hidden){light.hidden=true;sceneLayer.style.transform=''}
+    return;
+  }
+  const received=plane.bumpDelta<0,phase=age/duration,fade=(1-phase)**2;
+  light.hidden=false;light.classList.toggle('received',received);
+  light.style.opacity=String(Math.min(1,(age+.012)/.030)*fade*(reducedMotion.matches ? .45 : 1));
+  if(reducedMotion.matches){sceneLayer.style.transform='';return}
+  const kick=(received?-3.1:2.45)*fade;
+  const x=kick*Math.cos(phase*Math.PI*3.4),y=kick*.42*Math.sin(phase*Math.PI*4.2+.5);
+  // Overscan only during the kick, keeping the background behind all four edges.
+  const scale=1+2*Math.abs(kick)/Math.min(view.w,view.h);
+  sceneLayer.style.transform='translate('+x+'px,'+y+'px) scale('+scale+')';
+}
 function drawFrame(ts){
   finishView=null;
   if(mode==='lobby'){advancePractice();updateCountdown()}
   const dt=Math.max(0,Math.min(.15,(ts-lastFrame)/1000));lastFrame=ts;lobbyTime+=dt;
   let time=0,visual=practice?practice.tick/60:lobbyTime;
+  const elapsed=run?Math.max(0,(Date.now()-record.start)/1000):0;
   if(run){
-    const elapsed=Math.max(0,(Date.now()-record.start)/1000);
     const target=Math.min(LIMIT,ticksAtTime(run.version,elapsed));
     while(!run.done&&run.tick<target)stepRace(run);time=run.tick/60;visual=time;
     const finishAge=Math.max(0,elapsed-secondsAtTick(run.version,run.tick)),duration=finishDuration(run);
@@ -3622,6 +3649,7 @@ function drawFrame(ts){
   frameScenery(dt,waiting,time);worldAt(time,visual);trafficModels(finishView?null:run,visual);
   renderer.clear();renderer.render(scene,camera);renderer.clearDepth();renderer.render(airScene,airCamera);sea.drawWeather(run&&run.events);
   if(run||practice)drawTraffic(run||practice,visual,view,!!practice);else view.ctx.clearRect(0,0,view.w,view.h);
+  drawPlayerBump(run,elapsed);
   requestAnimationFrame(drawFrame);
 }
 function startGame(){
