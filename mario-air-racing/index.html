@@ -1339,6 +1339,11 @@ function FlightWeather(vents,radius){
   this.airStreaks=list(25);
   this.brushes=[this.makeCloud(0),this.makeCloud(1),this.makeCloud(2)];
   this.cloudTile=this.brushes[0];
+  this.cloudWisps=[
+    this.makeWisp('#d4d5c0','#fff1d6','#fffbed'),
+    this.makeWisp('#8a9bb0','#c7d6e2','#e8f1f5'),
+    this.makeWisp('#b88485','#edc2ac','#ffe5c8')
+  ];
 }
 FlightWeather.prototype.makeCloud=function(variant){
   const c=document.createElement('canvas');c.width=230;c.height=125;const g=c.getContext('2d');
@@ -1349,6 +1354,25 @@ FlightWeather.prototype.makeCloud=function(variant){
   g.quadraticCurveTo(203,71,217,82);g.quadraticCurveTo(181,89,133,88);g.lineTo(54,88);g.closePath();g.fill();
   g.fillStyle='#e7ddc9';g.beginPath();g.moveTo(29,83);g.quadraticCurveTo(67,84,84,76);g.quadraticCurveTo(101,81,115,73);
   g.quadraticCurveTo(135,80,152,72);g.quadraticCurveTo(170,80,188,76);g.lineTo(216,82);g.quadraticCurveTo(170,90,100,88);g.lineTo(54,88);g.closePath();g.fill();return c;
+};
+
+// Three washes share one silhouette so transitions between climates stay registered.
+FlightWeather.prototype.makeWisp=function(shadow,body,light){
+  const tile=document.createElement('canvas');tile.width=384;tile.height=66;
+  const g=tile.getContext('2d'),wash=g.createLinearGradient(0,7,0,57);
+  wash.addColorStop(0,light);wash.addColorStop(.49,body);wash.addColorStop(1,shadow);
+  g.fillStyle=wash;g.beginPath();g.moveTo(8,40);
+  g.bezierCurveTo(42,37,55,30,79,31);g.bezierCurveTo(99,29,105,17,132,22);
+  g.bezierCurveTo(153,26,162,8,190,14);g.bezierCurveTo(212,18,215,29,245,26);
+  g.bezierCurveTo(280,23,292,32,371,25);g.bezierCurveTo(338,33,307,34,270,36);
+  g.bezierCurveTo(299,38,312,38,339,37);g.bezierCurveTo(289,49,239,40,207,45);
+  g.bezierCurveTo(162,55,135,41,102,45);g.bezierCurveTo(62,47,44,37,8,40);g.fill();
+  g.fillStyle=light;g.globalAlpha=.78;g.beginPath();g.moveTo(66,34);
+  g.bezierCurveTo(102,29,109,20,130,24);g.bezierCurveTo(157,28,170,11,192,17);
+  g.bezierCurveTo(162,15,164,36,125,29);g.bezierCurveTo(99,26,94,34,66,34);g.fill();
+  g.globalAlpha=.53;g.beginPath();g.moveTo(149,50);
+  g.bezierCurveTo(195,41,247,51,305,43);g.bezierCurveTo(269,54,205,47,149,50);g.fill();
+  return tile;
 };
 
 FlightWeather.prototype.resize=function(){
@@ -1391,7 +1415,7 @@ FlightWeather.prototype.sky=function(t,w,storm){
   g.fillStyle=halo;g.fillRect(x-5*r,y-5*r,10*r,10*r);var disc=g.createRadialGradient(x-r*.14,y-r*.19,r*.11,x,y,r);disc.addColorStop(0,'#fffff4');disc.addColorStop(.86,'#fffbd6');disc.addColorStop(1,'#ffecae');
   g.fillStyle=disc;g.beginPath();g.arc(x,y,r,0,Math.PI*2);g.fill();g.restore();
   for(var i=0;i<5;i++){
-    var travel=t+.023*Math.pow(Math.max(0,t-10),2);
+    var travel=t+.005*Math.pow(Math.max(0,t-10),2);
     var u=i*.343-(.011+.0071*(i%3))*travel;
     var plane=.45+.30*(i%3);
 
@@ -1549,7 +1573,7 @@ FlightWeather.prototype.volcanicAir=function(t,weights,mesh){
 };
 // Distant clouds stay on the skyline. These lower banks travel through the
 // flight corridor, faster on the near plane and continuously across takeoff.
-FlightWeather.prototype.passingClouds=function(travel,w){
+FlightWeather.prototype.passingClouds=function(travel,w,slip){
   const g=this.bg,W=this.width,H=this.height;
   g.save();
   for(let i=0;i<4;i++){
@@ -1558,10 +1582,32 @@ FlightWeather.prototype.passingClouds=function(travel,w){
     const height=width*(near?.45:.54),span=W+width+14;
     const offset=[.24,.82,.93,.35][i],level=[.17,.37,.51,.64][i];
     const speed=(.115+.023*(i>>1)+(.115+((record?.version||1)>=9?.055:0))*near)*W;
-    const x=cyclic(offset-(travel*speed+chase.pan*W*.072*depth)/span)*span-width-7;
+    const distance=(travel+(near?slip:0))*speed;
+    const x=cyclic(offset-(distance+chase.pan*W*.072*depth)/span)*span-width-7;
     const y=H*(level-.035*chase.tilt*depth)+4*Math.sin(travel*.22+i);
     g.globalAlpha=(near?.73:.53)*w.x+.19*w.y+.29*w.z;
     g.drawImage(this.brushes[(i+1)%3],x,y-height*.55,width,height);
+  }
+  g.restore();
+};
+// Foreground vapour crosses the upper and lower edges, leaving the pack in clear air.
+FlightWeather.prototype.foregroundWisps=function(travel,w,speed){
+  if(speed<.01)return;
+  const g=this.fx,W=this.width,H=this.height;
+  g.save();
+  for(let i=0;i<4;i++){
+    const mote=this.vapour[i],width=Math.min(W*(.42+.17*mote.z),H*.62),height=width*(.16+.045*mote.r);
+    const span=W+width+24;
+    const x=cyclic(mote.x-(travel*W*(.33+.16*mote.z)+chase.pan*W*.12)/span)*span-width-12;
+    const y=H*((i%2?.75:.19)+.09*mote.y-.035*chase.tilt)+height*.13*Math.sin(travel*.16+mote.p);
+    g.save();g.translate(x+width*.5,y);g.rotate((mote.r-.5)*.08);
+    const alpha=speed*(.31+.16*mote.z);
+    for(let layer=0;layer<3;layer++){
+      const weight=layer===0?w.x:layer===1?w.y:w.z;
+      if(weight<.01)continue;
+      g.globalAlpha=alpha*weight;g.drawImage(this.cloudWisps[layer],-width*.5,-height*.5,width,height);
+    }
+    g.restore();
   }
   g.restore();
 };
@@ -1654,11 +1700,14 @@ FlightWeather.prototype.draw=function(t,clock,w,storm,mesh,events,sceneryTime){
   const passAge=chase.pair&&chase.field?chase.field.tick/60-chase.cutIn:0;
   const pass=smooth(passAge/.50)*(1-smooth((passAge-1.55)/1.30));
   const snowWind=smooth((w.y-.5)/.35);
-  this.passingClouds(travel,w);
+  const slip=reducedMotion.matches?0:.041*Math.max(0,raceAge-4)**2;
+  this.passingClouds(travel,w,slip);
   if(snowWind<1)this.speedLines(travel,w,pass,1-snowWind);
   if(mode!=='lobby')this.gulls(t,w.x,mesh);
   this.fx.clearRect(0,0,this.width,this.height);this.volcanicAir(t,w,mesh);this.blizzard(t,storm,events);
   if(snowWind>0)this.snowWind(t,events,snowWind);
+  const fade=run?.done?1-smooth((t-clock)/.55):1;
+  this.foregroundWisps(travel+slip,w,flightSpeed(raceAge)*fade);
 };
 
 
@@ -2289,7 +2338,9 @@ function stepRace(r){
     }
   }
   r.items=r.items.filter(o=>!o.spent&&o.x> -65&&o.y<670);
-  if(r.version>=9&&r.finishTick<LIMIT&&r.craft.some(p=>p.mult>=EXTEND_RATE))r.finishTick=LIMIT;
+  if(r.version>=9&&r.finishTick<LIMIT&&r.craft.some(p=>p.mult>=EXTEND_RATE)){
+    r.finishTick=LIMIT;r.extensionTick=r.tick;
+  }
   if(r.tick>=r.finishTick||r.craft.every(p=>!p.alive)){
     if(r.version>=9)r.winnerId=raceLeader(r).id;
     if(r.version>=10)r.finishers=r.craft.filter(p=>p.alive)
@@ -2454,11 +2505,13 @@ function aircraft(id,broken=false){
   const col=Fleet[id].paint;
   function box(c,x,y,z,a,b,d){return block(parts,c,x,y,z,a,b,d)}
   function wing(x,y,reach,chord,tip,sweep,col,dy=.70){
+    if(!broken&&reach>(root.userData.wakeTip?.z||0))root.userData.wakeTip=new THREE.Vector3(x-tip*.5-sweep,y+dy,reach);
     for(const s of [-1,1])sheet(parts,[[x+chord*.5,y,0],[x+tip*.5-sweep,y+dy,reach*s*.95],[x+tip*.25-sweep,y+dy,reach*s],[x-tip*.5-sweep,y+dy,reach*s],[x-chord*.5,y,0]],col,1.8);
   }
   function fin(x,y,z,h){sheet(parts,[[x+8,y,z],[x+1.0,y+h,z],[x-4.5,y+h,z],[x-4.5,y,z]],col,2.3,true)}
   function rotor(x,y,z,len,axis,count){
     const hub=new THREE.Group();root.add(hub);hub.position.set(x,y,z);
+    if(axis==='y'&&!broken)root.userData.wakeTip=new THREE.Vector3(x-len*.68,y,len*.70);
     if(axis==='y')block(hub,walnut,0,0,0,len*2,1.25,3.1);
     else if(axis==='z')block(hub,walnut,0,0,0,1.7,len*2,1.3);
     else{block(hub,walnut,0,0,0,1.5,len*2,2.75);if(count===4)block(hub,walnut,0,0,0,1.5,2.75,len*2)}
@@ -2779,6 +2832,69 @@ function drawCoinBurst(g,e,age){
     g.fillStyle='#fff4b3';g.fillRect(-length*.7,-.75,length*.7,1.5);g.restore();
   }
   g.restore();
+}
+// Two tapered strips per aircraft share a single transparent draw call. Their
+// roots use the model's wing geometry (the rotor disc on the helicopter).
+const wakeSegments=14,wakeTip=new THREE.Vector3();
+let wingWakes;
+function makeWingWakes(){
+  const strips=Fleet.length*2,vertices=(wakeSegments+1)*2*strips;
+  const geo=new THREE.BufferGeometry(),uv=new Float32Array(vertices*2),indices=[];
+  for(let s=0;s<strips;s++)for(let j=0;j<=wakeSegments;j++){
+    const k=(s*(wakeSegments+1)+j)*2;
+    uv[k*2]=uv[k*2+2]=j/wakeSegments;uv[k*2+1]=-1;uv[k*2+3]=1;
+    if(j<wakeSegments)indices.push(k,k+1,k+2,k+2,k+1,k+3);
+  }
+  geo.addAttribute('position',new THREE.BufferAttribute(new Float32Array(vertices*3),3).setDynamic(true));
+  geo.addAttribute('uv',new THREE.BufferAttribute(uv,2));
+  geo.setIndex(new THREE.BufferAttribute(new Uint16Array(indices),1));
+  const material=new THREE.ShaderMaterial({
+    transparent:true,depthWrite:false,side:THREE.DoubleSide,
+    uniforms:{strength:{type:'f',value:0},tint:{type:'c',value:new THREE.Color()}},
+    vertexShader:'varying vec2 wake;void main(){wake=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+    fragmentShader:[
+      'varying vec2 wake;uniform float strength;uniform vec3 tint;',
+      'void main(){float edge=abs(wake.y),core=1.-smoothstep(.08,.48,edge);',
+      'float vapor=(1.-smoothstep(.28,1.,edge))*.24+core*.60;',
+      'float fade=smoothstep(0.,.035,wake.x)*(1.-smoothstep(.14,1.,wake.x));',
+      'gl_FragColor=vec4(mix(tint,vec3(1.,.99,.94),.65*core),strength*vapor*fade);}'
+    ].join('')
+  });
+  const mesh=new THREE.Mesh(geo,material);mesh.frustumCulled=false;mesh.visible=false;
+  mesh.renderOrder=-1;airScene.add(mesh);return mesh;
+}
+function updateWingWakes(r,time){
+  const strength=r&&!r.done?flightSpeed(time):0;
+  wingWakes.visible=strength>.035;
+  if(!wingWakes.visible)return;
+  const climate=sea.uniforms.weights.value,uniforms=wingWakes.material.uniforms;
+  uniforms.strength.value=.38+.52*strength;
+  uniforms.tint.value.setRGB(.80+.13*climate.z,.89-.10*climate.z,.91+.08*climate.y-.19*climate.z);
+  const positions=wingWakes.geometry.attributes.position,array=positions.array;
+  let strips=0,at=0;
+  for(let id=0;id<Fleet.length;id++){
+    const model=craftModels[id],p=craftFor(r,id);
+    if(!p.alive||!model.visible)continue;
+    const scale=model.scale.x;
+    const length=scale*(16+strength*75)*(.90+.14*clamp(p.vx/220,-1,1));
+    const slope=clamp(p.vy*chase.vertical/(430*view.w*chase.stretch/1000),-.64,.64);
+    for(const side of [-1,1]){
+      wakeTip.copy(model.userData.wakeTip);wakeTip.z*=side;
+      wakeTip.multiplyScalar(scale).applyQuaternion(model.quaternion).add(model.position);
+      for(let j=0;j<=wakeSegments;j++){
+        const u=j/wakeSegments,x=wakeTip.x-length*u;
+        const bend=(slope*length*.74+(id===1?-8:side*3)*scale)*u;
+        const swirl=Math.sin(6*u-time*3.2+p.phase+side)*u*u*4.5*scale;
+        const y=wakeTip.y+bend*(1-.30*u)+swirl;
+        const half=Math.max(.72,scale)*(.55+2.25*u)*(.68+.46*strength);
+        const z=wakeTip.z-.18*length*u;
+        array[at++]=x;array[at++]=y-half;array[at++]=z;
+        array[at++]=x;array[at++]=y+half;array[at++]=z;
+      }
+      strips++;
+    }
+  }
+  positions.needsUpdate=true;wingWakes.geometry.setDrawRange(0,strips*wakeSegments*6);
 }
 const exhaustAnchor=new THREE.Vector3();
 function drawCoinExhaust(g,model,id,strength,t){
@@ -3359,6 +3475,10 @@ function attachControls(){
   addEventListener('storage',e=>{if(e.key===storageKey)syncRound(readWallet())});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)advanceRound()});
 }
+function flightSpeed(age){
+  const pace=.78*smooth((age-4)/15)+.22*smooth((age-16)/13);
+  return pace*(reducedMotion.matches ? .28 : 1);
+}
 function sunScreenX(aspect){return .76+.13*clamp((aspect-.8)/.9,0,1)}
 function worldAt(t,motion){
   const w=sea.uniforms.weights.value,clock=mode==='lobby'?0:t;
@@ -3492,6 +3612,11 @@ function framePack(r,dt,waiting){
     }
     if(!waiting&&time<2.2)lens*=.85+.15*smooth(time/2.2);
     lens=Math.min(lens,3.55,880/span);
+    if(!waiting&&!r.done&&r.extensionTick!=null&&!reducedMotion.matches){
+      const since=secondsAtTick(r.version,r.tick)-secondsAtTick(r.version,r.extensionTick);
+      const pullback=smooth(since/.60)*(1-smooth((since-1.15)/1.0));
+      lens*=1-.17*pullback;
+    }
     const half=450/lens;
     x=clamp(x,high-half,low+half);
     if(!chase.ready){
@@ -3739,7 +3864,7 @@ function drawFrame(ts){
     setText(el('finishPlace'),finishPlaces[rank]);setText(el('finishPilot'),pilotNames[pilot]);
   }
   framePack(run||practice,dt,waiting);aircraftFrame(visual);if(waiting)frameSelection();
-  frameScenery(dt,waiting,time);worldAt(time,visual);trafficModels(run,visual);
+  frameScenery(dt,waiting,time);worldAt(time,visual);trafficModels(run,visual);updateWingWakes(run,visual);
   renderer.clear();renderer.render(scene,camera);renderer.clearDepth();renderer.render(airScene,airCamera);sea.drawWeather(run&&run.events);
   if(run||practice)drawTraffic(run||practice,visual,view,!!practice);else view.ctx.clearRect(0,0,view.w,view.h);
   drawPlayerImpact(run,elapsed);
@@ -3750,7 +3875,7 @@ function startGame(){
   scene.fog=new THREE.Fog(0xc5dddf,100,1020);hemisphereLight=new THREE.HemisphereLight(0xaacadd,0x3c4248,1);shadowLight=new THREE.DirectionalLight(0xffffff,1);scene.add(hemisphereLight,shadowLight);
   sea=new Sea();sea.mesh.position.y=-600;scene.add(sea.mesh);
   airScene=new THREE.Scene();airLighting(airScene);airCamera=new THREE.OrthographicCamera(-500,500,300,-300,.1,2400);airCamera.position.z=600;
-  craftModels=Fleet.map((_,i)=>aircraft(i));aircraftThumbnails();makeRateLabels();resize();attachControls();
+  wingWakes=makeWingWakes();craftModels=Fleet.map((_,i)=>aircraft(i));aircraftThumbnails();makeRateLabels();resize();attachControls();
   const holder=el('gameHolder');
   const syncKeyboard=()=>{
     const v=window.visualViewport,editing=document.activeElement===el('stake');
