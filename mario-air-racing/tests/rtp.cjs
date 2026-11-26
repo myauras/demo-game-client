@@ -6,9 +6,9 @@ const html = fs.readFileSync(path.join(__dirname, '../dist/index.html'), 'utf8')
 const start = html.indexOf('const Fleet=');
 const end = html.indexOf('// Painted wooden forms', start);
 assert(start !== -1 && end !== -1, 'Missing race simulation in the game page');
-const { fleet, count, latest, seedAt, play, seat, newRace, stepRace, touchItem, chooseCoin, collectCoin, displayRate, tailContact, flightScale, flightYaw, raceLeader, payoutRate, sprint, extension, raceHz, secondsAtTick, ticksAtTime, finishPassTime, finishDuration } = new Function(html.slice(start, end) +
-  '\nreturn { fleet:Fleet, count:COURSE_COUNT, latest:RACE_VERSION, seedAt:courseSeed, play(seed,version){const r=newRace(seed,version);while(!r.done)stepRace(r);return r}, seat:craftFor,newRace,stepRace,touchItem,chooseCoin,collectCoin,displayRate,tailContact,flightScale,flightYaw,raceLeader,payoutRate,sprint:SPRINT_TICKS,extension:EXTEND_RATE,raceHz,secondsAtTick,ticksAtTime,finishPassTime,finishDuration };')();
-for (const version of [3,4,5,6,7,8,9,latest]) {
+const { fleet, count, latest, seedAt, play, seat, newRace, stepRace, touchItem, chooseCoin, collectCoin, displayRate, tailContact, flightScale, flightYaw, raceLeader, payoutRate, sprint, extension, raceHz, secondsAtTick, ticksAtTime, finishPassTime, finishDuration, coinThrust } = new Function(html.slice(start, end) +
+  '\nreturn { fleet:Fleet, count:COURSE_COUNT, latest:RACE_VERSION, seedAt:courseSeed, play(seed,version){const r=newRace(seed,version);while(!r.done)stepRace(r);return r}, seat:craftFor,newRace,stepRace,touchItem,chooseCoin,collectCoin,displayRate,tailContact,flightScale,flightYaw,raceLeader,payoutRate,sprint:SPRINT_TICKS,extension:EXTEND_RATE,raceHz,secondsAtTick,ticksAtTime,finishPassTime,finishDuration,coinThrust };')();
+for (const version of [3,4,5,6,7,8,9,10,latest]) {
   const seeds = new Set();
   const totals = Array(5).fill(0);
   const zeroAfterTenSeconds = Array(5).fill(0);
@@ -62,7 +62,8 @@ for (const version of [3,4,5,6,7,8,9,latest]) {
   assert.equal(maximum, version>=9?20000:10000);
   if (version === latest) {
     assert(coursesWithBumps>0&&sprintFinishes>0&&highFinishes>0&&extended<count/5);
-    assert(finisherCounts[0]>count/2&&finisherCounts.slice(1).every(n=>n>0));
+    assert.equal(finisherCounts[0],1317);
+    assert(finisherCounts.slice(1).every(n=>n>0));
     console.log('Finisher counts, from zero to five: '+finisherCounts.join(', '));
     console.log(extended+' courses qualify for extra time; '+highFinishes+' fly past the sprint limit.');
     console.log(bumps + ' rear-end contacts across ' + coursesWithBumps + ' of ' + count + ' courses.');
@@ -194,8 +195,8 @@ for (let i = 0; i < 55; i++) stepRace(chase);
 assert.equal(chase.craft[0].mult,125);
 assert.equal(chase.events.filter(e=>e.type==='pickup').length,1);
 
-// A flyby never adds forward thrust. Even an attractive prize can only
-// introduce a small continuous trim to an otherwise identical flight path.
+// Steering toward an uncollected coin only trims altitude. The collecting aircraft
+// gains forward speed on the contact tick, then pulls ahead of the control flight.
 const baseline = newRace(33,latest);
 const flyby = newRace(33,latest);
 for (const r of [baseline,flyby]) {
@@ -205,18 +206,27 @@ for (const r of [baseline,flyby]) {
 }
 const f = flyby.craft[0], leader = baseline.craft[0];
 flyby.items.push({...prize,x:f.x+124,y:f.y+17,baseY:f.y+17,value:1000,spent:false});
-let tracked = false;
+let tracked = false, kicked = false, leadDistance = 0;
 for (let i = 0; i < 80; i++) {
   const lastTrim = f.coinTrim;
   stepRace(baseline);stepRace(flyby);
   tracked ||= f.coinAim === prize.key;
-  assert.equal(f.x,leader.x);
-  assert.equal(f.vx,leader.vx);
+  if(f.coinTick==null){
+    assert.equal(f.x,leader.x);assert.equal(f.vx,leader.vx);
+  }else{
+    leadDistance=Math.max(leadDistance,f.x-leader.x);
+    if(f.coinTick===flyby.tick)kicked=f.vx>leader.vx+100;
+  }
   assert(Math.abs(f.coinTrim-lastTrim) <= 23/60+1e-9);
   assert(Math.abs(f.y-leader.y)<15);
   if(f.coinTick===flyby.tick)assert(!flyby.items.some(o=>o.key===prize.key));
 }
-assert(tracked);
+assert(tracked&&kicked&&leadDistance>45);
+assert.equal(coinThrust(f,f.coinTick),1);
+assert.equal(coinThrust(f,f.coinTick+40),0);
+assert.equal(coinThrust({...f,hitTick:f.coinTick+1},f.coinTick+2),0);
+assert.equal(coinThrust({...f,bumpDelta:-10,bumpTick:f.coinTick+1},f.coinTick+2),0);
+assert.equal(coinThrust({...f,alive:false},f.coinTick+2),0);
 assert.equal(flyby.events.filter(e=>e.type==='pickup').length,1);
 
 // Wings can pick up a coin already alongside, even without an active target.
@@ -241,4 +251,4 @@ for (const reverse of [false,true]) {
   assert.equal(r.craft[0].mult,10);
   assert.equal(r.events.filter(e=>e.type==='pickup'&&e.chasers===2&&e.id===1).length,1);
 }
-console.log('Versions 3–10: 2,048 courses × 5 seats per aircraft. Flight accrual, legacy payouts, pickups and collisions passed.');
+console.log('Versions 3–11: 2,048 courses × 5 seats per aircraft. Flight accrual, legacy payouts, pickups and collisions passed.');

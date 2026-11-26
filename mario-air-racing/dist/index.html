@@ -41,7 +41,9 @@ body{display:grid;place-items:center;background:#344950}
 @media(pointer:coarse) and (orientation:landscape) and (max-height:540px){#gameHolder{width:100%}}
 #mast{left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));top:max(10px,env(safe-area-inset-top))}
 .brand,.night .brand,.inRace .brand{font-size:clamp(19px,5.8cqw,29px);line-height:1.1;white-space:nowrap;text-shadow:none}
-.wallet{gap:5px;padding:7px 9px}.wallet b{font-size:15px}
+.wallet{flex:0 0 auto;gap:5px;padding:7px 9px;white-space:nowrap}.wallet b{font-size:15px;font-variant-numeric:tabular-nums}
+#mast .brand{min-width:0;overflow:hidden;text-overflow:ellipsis}
+@container(max-width:440px){.wallet.compact span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}}
 #preflight,.console,#awarded{left:0;right:0;margin-inline:auto;transform:none}
 #preflight,#awarded{width:max-content}#preflight{top:max(55px,calc(env(safe-area-inset-top) + 46px));min-width:102px;font-size:12px}
 #raceHud{left:10px;right:10px;top:max(54px,calc(env(safe-area-inset-top) + 44px))}
@@ -56,9 +58,12 @@ button{touch-action:manipulation}#stake{touch-action:manipulation}
 #preflight,#ticket,.wallet,.clock,#awarded{background:#fff1d8}
 #rateLayer{position:absolute;inset:0;z-index:4;overflow:hidden;pointer-events:none;contain:layout paint}
 .rateTag,.flightReceipt{position:absolute;white-space:nowrap;display:flex;align-items:center;gap:5px;padding:2px 7px;border:1px solid #9b7651;border-radius:7px;background:#fff4db;color:#3c2b20;font:700 14px/18px system-ui,sans-serif;font-variant-numeric:tabular-nums;text-shadow:none}
-.rateCaption:empty{display:none}.rateCaption{font-size:12px}.rateTag b{font-weight:750}
+.rateCaption:empty{display:none}.rateCaption{font-size:12px}
+.rateSlot{display:inline-grid;place-items:center;padding:3px 2px;line-height:18px;font-weight:750}
+.rateSlot::before,.rateSlot b{grid-area:1/1;font:inherit}
+.rateSlot::before{content:"200.00×";visibility:hidden}
 .rateTag.mine,.flightReceipt{background:#59382d;color:#fff5d8;border-color:#ffdf94}
-.rateTag b{transform-origin:center 80%}
+.rateTag b{transform-origin:center}
 .rateTag b.rateUp{color:#ffcf56;-webkit-text-stroke:1.4px #754613;paint-order:stroke fill;text-shadow:0 1px #754613}
 .rateTag.mine b.rateUp{color:#ffcf56;text-shadow:0 1px #6b3f0b}
 .rateTag b.rateDown{color:#bb282c}.rateTag.mine b.rateDown{color:#ff978c}
@@ -72,7 +77,7 @@ button{touch-action:manipulation}#stake{touch-action:manipulation}
 @container(max-width:355px){#entry{gap:4px}#launch{min-width:80px;font-size:14px}.rateTag{font-size:13px;padding-inline:5px;gap:3px}}
 @media(pointer:coarse) and (orientation:landscape) and (max-height:540px){#lobby{display:grid;grid-template-columns:minmax(224px,1fr) minmax(246px,.9fr);gap:6px;max-width:800px}#entry{border:0;padding:0;margin:0}#entry label{display:none}#entry{grid-template-columns:1fr auto}#preflight{top:8px}}
 body{align-items:start}#gameHolder{height:var(--flight-height,100dvh)}
-#rateLayer.selecting .rateTag b,#rateLayer.selecting .rateTag:not(.mine),#rateLayer.selecting .flightReceipt{display:none}
+#rateLayer.selecting .rateSlot,#rateLayer.selecting .rateTag:not(.mine),#rateLayer.selecting .flightReceipt{display:none}
 #rateLayer.selecting .rateTag{padding:2px 8px}
 #lobby .flightRules{grid-column:1/-1;margin:5px 2px 0;color:#654f3e;font-size:13px;line-height:1.35}
 </style></head><body><main id="gameHolder">
@@ -1819,7 +1824,7 @@ const smooth=v=>{v=clamp(v,0,1);return v*v*(3-2*v)};
 const coinValues=[10,25,50,100,200,500,1000],coinRadii=[7,8.5,10,12,14,17,21];
 const classicCoinOdds=[.34,.57,.75,.88,.954,.988,1];
 const raceCoinOdds=[.72,.89,.966,.989,.997,.9995,1];
-const RACE_VERSION=10;
+const RACE_VERSION=11;
 const SPRINT_TICKS=1170, EXTEND_RATE=150;
 const raceHz=version=>version>=9?72:60;
 // Integrate a steadily increasing simulation rate; use its inverse for the HUD and replays.
@@ -1838,6 +1843,7 @@ const TAKEOFF_RATE=10, TICKS_PER_RATE_CENT=20;
 const flightCoinValues=[2,6,17,25,70,125,1000];
 const passingCoinValues=[1,2,4,8,16,25,100];
 const sprintCoinValues=[3,6,12,24,47,80,160];
+const boostCoinValues=[3,7,14,26,50,80,160];
 const passingCourses=Object.freeze({141:3012,174:3844,262:3561,365:3334,458:2444,550:3760,677:3897,926:2823,1271:2593,1359:2913,1666:3416,1958:2711});
 const championshipCourses=Object.freeze({...passingCourses,
   36:4924,51:4230,113:4172,267:4861,359:4731,559:4299,584:4584,617:4875,735:4459,815:4245,823:4678,
@@ -1845,6 +1851,9 @@ const championshipCourses=Object.freeze({...passingCourses,
 });
 const balloonCourses=Object.freeze({...championshipCourses,
   65:6638,214:6813,336:6875,1034:6713,1190:6653,1219:6896,1308:6841,1350:6375,1869:6747,1953:6574,2036:6527
+});
+const boostCourses=Object.freeze({...balloonCourses,
+  69:9414,76:9015,189:8665,1179:8828,1383:9517,1600:9133,1961:9583
 });
 const BUMP_RATE=10, BUMP_DEPTH=.055;
 const flybyCoinSpacing=0.535;
@@ -1859,7 +1868,7 @@ function newRace(seed,version=RACE_VERSION){
   r.winnerId=null;
   if(version>=10){
     const weather=(Math.imul(seed,2654435761)>>>0)/4294967296;
-    r.stormStrength=clamp((.74-weather)/.34,0,1);
+    r.stormStrength=clamp(((version>=11?.816:.74)-weather)/.34,0,1);
     r.finishers=[];
   }
   if(version>=8){r.richVein=seed%2048===37;r.pursuit=null;r.nextPassTick=180}
@@ -2010,14 +2019,25 @@ function addItem(r,type,t){
     const roll=rand();
     const cutoffs=r.version>=3?raceCoinOdds:classicCoinOdds;
     const tier=r.richVein?coinValues.length-1:cutoffs.findIndex(c=>roll<c);
-    const values=r.version>=10?sprintCoinValues:r.version>=8?passingCoinValues:r.version===7?flightCoinValues:coinValues;
+    const values=r.version>=11?boostCoinValues:r.version===10?sprintCoinValues:r.version>=8?passingCoinValues:r.version===7?flightCoinValues:coinValues;
     value=r.version>=8&&r.richVein?1000:values[tier];rad=coinRadii[tier];
   }
   r.items.push({key:++r.serial,type,x:sx,y:sy,vx,vy,baseY:sy,born:t,phase:rand()*6.28,rad,value,heavy,spent:false});
 }
+const COIN_BOOST_TICKS=38;
+function coinThrust(p,tick){
+  const age=tick-p.coinTick;
+  if(!Number.isFinite(age)||age<0||age>=COIN_BOOST_TICKS||!p.alive||
+     p.hitTick>=p.coinTick||(p.bumpDelta<0&&p.bumpTick>=p.coinTick))return 0;
+  return 1-smooth((age-11)/(COIN_BOOST_TICKS-11));
+}
 function touchItem(r,p,o,t){
   if(o.spent||!p.alive)return;o.spent=true;
-  if(o.type==='coin'){p.coinTick=r.tick;changeMult(r,p,o.value);return}
+  if(o.type==='coin'){
+    p.coinTick=r.tick;changeMult(r,p,o.value);
+    if(r.version>=11&&coinThrust(p,r.tick)>0)p.vx=Math.min(565,Math.max(0,p.vx)+210);
+    return;
+  }
   if(p.racing){
     const meteor=o.type==='rock';
     p.hitKind=o.type;p.hitTick=r.tick;p.fatalImpact=o.heavy;
@@ -2193,6 +2213,10 @@ function stepRace(r){
       p.z=.5+.44*Math.sin(t*(.50+.04*p.id)+p.phase2);
       if(p.racing)p.z=clamp(.10+.67*p.z+.30*clamp((p.vx+115)/320,0,1),.06,1);
     }
+    if(r.version>=11){
+      const boost=coinThrust(p,r.tick);
+      if(boost>0)p.vx+=(Math.max(p.vx,325)-p.vx)*boost;
+    }
     p.x=clamp(p.x+p.vx*dt,-200,812);p.y=clamp(p.y+p.vy*dt,91,437);
   }
   if(!r.practice&&t>2.4)for(let i=0;i<live.length;i++)for(let j=i+1;j<live.length;j++){
@@ -2234,7 +2258,7 @@ const adjustedCourses=Object.freeze({6:3769, 17:2109, 137:2729, 213:3655, 228:26
 const chaseCourses=Object.freeze({2:3675, 25:3450, 27:4272, 28:3014, 44:3255, 47:4849, 53:5076, 100:4416, 162:3844, 195:4933, 438:2109, 515:3096, 572:4891, 709:2379, 1430:3769, 1895:3839});
 const coinCourses=Object.freeze({2:2474, 42:2346, 52:2593, 58:3025, 79:3448, 93:2778, 198:2182, 235:3810, 266:3280, 449:2119, 465:2553, 632:3494});
 function courseSeed(index,version=RACE_VERSION){
-  const seed=index+1,table=version>=10?balloonCourses:version===9?championshipCourses:version===8?passingCourses:version>=6?flybyCourses:version===5?coinCourses:version===4?chaseCourses:adjustedCourses;
+  const seed=index+1,table=version>=11?boostCourses:version===10?balloonCourses:version===9?championshipCourses:version===8?passingCourses:version>=6?flybyCourses:version===5?coinCourses:version===4?chaseCourses:adjustedCourses;
   return table[seed]||seed;
 }
 function drawCourse(version){
@@ -2662,6 +2686,48 @@ function metallicCoin(g,x,y,r,t,phase,contested=false){
   }
   g.restore();
 }
+function drawCoinBurst(g,e,age){
+  if(age<0||age>.58)return;
+  const u=age/.58,out=1-(1-u)**3;
+  const scale=clamp(raceObjectScale()*(.95+.015*e.rad),.72,1.8);
+  g.save();g.translate(chaseX(e.x),chaseY(e.y));g.scale(scale,scale);
+  const radius=7+out*27,glow=g.createRadialGradient(0,0,0,0,0,radius);
+  glow.addColorStop(0,'#fffbd7');glow.addColorStop(.25,'#ffe26d');glow.addColorStop(1,'rgba(255,159,22,0)');
+  g.globalAlpha=(1-u)**2;g.fillStyle=glow;g.fillRect(-radius,-radius,2*radius,2*radius);
+  g.globalAlpha=(1-u)*.87;g.lineWidth=2.6*(1-u)+.75;g.strokeStyle='#ffcf4d';
+  for(let i=0;i<3;i++){
+    const a=e.seq*.8+i*2.095+u*.55;g.beginPath();g.arc(0,0,radius,a,a+1.5);g.stroke();
+  }
+  for(let i=0;i<12;i++){
+    const a=e.seq*.63+i*2.4,d=(10+out*(18+6*(i%4)));
+    const x=Math.cos(a)*d-age*12,y=Math.sin(a)*d*.8+age*age*26;
+    g.globalAlpha=1-smooth((u-.44)/.56);g.fillStyle=i%3?'#ffcb42':'#fff9d7';
+    if(i%3===0){coinSpark(g,x,y,(4.8+2*(i%2))*(1-.65*u));continue}
+    g.save();g.translate(x,y);g.rotate(a+u*1.5);
+    g.fillRect(-3,-1.4,(4+3*(i%2))*(1-.48*u),2.6);g.restore();
+  }
+  g.restore();
+}
+const exhaustAnchor=new THREE.Vector3();
+function drawCoinExhaust(g,model,id,strength,t){
+  const center=screenAircraft(model);
+  model.localToWorld(exhaustAnchor.set(id===1?-27:-23,1,0)).project(airCamera);
+  const x=(exhaustAnchor.x+1)*view.w/2,y=(1-exhaustAnchor.y)*view.h/2;
+  const size=clamp(center.scale,.62,1.9),pulse=Math.sin(t*52+id),len=21+strength*(37+4*pulse);
+  g.save();g.translate(x,y);g.rotate(Math.atan2(center.y-y,center.x-x));g.scale(size,size);
+  g.globalAlpha=strength;const flame=g.createLinearGradient(-len,0,0,0);
+  flame.addColorStop(0,'rgba(255,169,36,0)');flame.addColorStop(.44,'#ffae28');flame.addColorStop(1,'#fff2a0');
+  g.fillStyle=flame;g.beginPath();g.moveTo(1,-3);g.quadraticCurveTo(-len*.28,-6,-len,2*pulse);
+  g.quadraticCurveTo(-len*.40,7,1,3);g.closePath();g.fill();
+  g.fillStyle='#fffde2';g.beginPath();g.moveTo(1,-1.8);g.lineTo(-len*.68,pulse);g.lineTo(1,2);g.fill();
+  g.lineCap='round';g.lineWidth=1.6;
+  for(let i=0;i<6;i++){
+    const phase=(t*3.85+i*.3819)%1,dx=-len*(.2+phase*.96),dy=(i%2?1:-1)*(4+phase*(3+i));
+    g.globalAlpha=strength*(1-phase);g.strokeStyle=i%2?'#fff5ab':'#fcb638';
+    g.beginPath();g.moveTo(dx,dy);g.lineTo(dx-5-8*phase,dy);g.stroke();
+  }
+  g.restore();
+}
 function impactParticles(g,e,age){
   const bird=e.reason==='bird',ice=e.reason==='ice',life=bird?.59:.41;
   if(age<0||age>=life)return;
@@ -2899,8 +2965,9 @@ function makeRateLabels(){
   for(let i=0;i<Fleet.length;i++){
     const node=document.createElement('div');node.className='rateTag';node.hidden=true;
     const caption=document.createElement('span');caption.className='rateCaption';
-    const value=document.createElement('b');
-    node.append(caption,value);layer.append(node);
+    const slot=document.createElement('span');slot.className='rateSlot';
+    const value=document.createElement('b');slot.append(value);
+    node.append(caption,slot);layer.append(node);
     rateLabels.push({node,caption,value});
   }
 }
@@ -2930,6 +2997,10 @@ function drawTraffic(r,at,view,preview=false){
     const p=craftFor(r,id),label=rateLabels[id],screen=screenAircraft(craftModels[id]);
     label.node.hidden=(preview&&id!==pick)||!p.alive||screen.x < -12||screen.x > w+12||screen.y<0||screen.y>h;
     if(!p.alive)continue;
+    if(!preview&&!finishView&&r.version>=11){
+      const boost=coinThrust(p,at*60);
+      if(boost>0)drawCoinExhaust(g,craftModels[id],id,boost,at);
+    }
     tags.push({id,p,label,screen});
     const mine=id===pick;
     const champion=r.done&&r.winnerId===p.id&&(!finishView||finishView.rank>=0);
@@ -2944,7 +3015,7 @@ function drawTraffic(r,at,view,preview=false){
     label.value.classList.toggle('rateUp',champion||accent&&!loss);
     label.value.classList.toggle('rateDown',!champion&&accent&&loss);
     const pop=accent&&rateAge<22?Math.sin(Math.PI*rateAge/22):0;
-    label.value.style.transform=pop?`translateY(${(loss?2:-6)*pop}px) scale(${1+(loss?-.05:.18)*pop})`:'';
+    label.value.style.transform=pop?`translateY(${(loss?1.5:-2)*pop}px) scale(${1+(loss?-.035:.045)*pop})`:'';
     label.node.classList.toggle('mine',mine);
   }
   // Read the native glyph layout in one pass; moving a tag never scales its text.
@@ -2953,9 +3024,8 @@ function drawTraffic(r,at,view,preview=false){
   const placed=[],ceiling=3,floor=preview?hangarTop-5:h-4;
   visible.sort((a,b)=>(b.id===pick)-(a.id===pick)||a.screen.y-b.screen.y);
   for(const t of visible){
-    const {screen,label,width,height,p}=t;
-    const phase=clamp((r.tick-(p.coinTick??-50))/28,0,1);
-    const dy=(t.id===3?20:18)*screen.scale,base=screen.y+dy-7*Math.sin(Math.PI*phase);
+    const {screen,label,width,height}=t;
+    const dy=(t.id===3?20:18)*screen.scale,base=screen.y+dy;
     const x=clamp(screen.x-width*.5,3,w-width-3);
     const candidates=[base,base+height+3,screen.y-dy-height-3,base+2*(height+3),screen.y-dy-2*height-6];
     let bestY=base,bestCost=Infinity;
@@ -2979,6 +3049,7 @@ function drawTraffic(r,at,view,preview=false){
   if(!finishView&&bet&&bet.alive&&pick!==leader){const p=screenAircraft(craftModels[pick]);selectedPennant(g,p.x,p.y,p.scale)}
   for(let i=r.events.length-1;i>=0;i--){
     const e=r.events[i],age=at-e.time;if(age>1.42)break;
+    if(!preview&&!finishView&&e.type==='pickup')drawCoinBurst(g,e,age);
     if(e.type==='impact')impactParticles(g,e,age);
     if(e.type==='bump')drawBumpFlash(g,e,age,clamp(craftModels[(e.id+r.liveryOffset)%5].scale.x,.72,1.42));
     if(e.type==='crash'){
@@ -3058,7 +3129,9 @@ function choose(i,focus=true){
 }
 function showIssue(message){el('issue').hidden=!message;el('issue').textContent=message||''}
 function balance(s){
-  el('balance').textContent=amount(s.balance);
+  const balanceText=amount(s.balance);
+  el('balance').textContent=balanceText;
+  el('balance').parentNode.classList.toggle('compact',balanceText.length>6);
   const a=s.active,open=mode==='lobby'&&a&&a.id===record?.id&&Date.now()<a.start;
   const available=s.balance+(open&&hasTicket(a)?a.stake*100:0);
   el('stake').max=String(Math.floor(available/100));
