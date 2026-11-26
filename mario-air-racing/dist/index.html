@@ -1844,9 +1844,11 @@ function ticksAtTime(version,seconds){
 function secondsAtTick(version,tick){
   return version>=10?2*tick/(58+Math.sqrt(58*58+3.68*tick)):tick/raceHz(version);
 }
-function finishPassTime(rank){return rank===0?1.30:3.50+(rank-1)*1.56}
+function finishPassTime(rank){return rank===0?1.30:3.05+(rank-1)*.48}
 function finishDuration(r){
-  return r.finishers?.length?finishPassTime(r.finishers.length-1)+1.40:.65;
+  const count=r.finishers?.length||0;
+  if(!count)return .65;
+  return finishPassTime(count-1)+(count===1?1.40:.58);
 }
 // Multipliers are integer hundredths. The complete course table is checked in tests/rtp.cjs.
 const TAKEOFF_RATE=10, TICKS_PER_RATE_CENT=20;
@@ -2745,24 +2747,36 @@ function metallicCoin(g,x,y,r,t,phase,contested=false){
   g.restore();
 }
 function drawCoinBurst(g,e,age){
-  if(age<0||age>.58)return;
-  const u=age/.58,out=1-(1-u)**3;
+  const life=.90;
+  if(age<0||age>=life)return;
+  const u=age/life,out=1-(1-u)**3;
   const scale=clamp(raceObjectScale()*(.95+.015*e.rad),.72,1.8);
   g.save();g.translate(chaseX(e.x),chaseY(e.y));g.scale(scale,scale);
-  const radius=7+out*27,glow=g.createRadialGradient(0,0,0,0,0,radius);
-  glow.addColorStop(0,'#fffbd7');glow.addColorStop(.25,'#ffe26d');glow.addColorStop(1,'rgba(255,159,22,0)');
-  g.globalAlpha=(1-u)**2;g.fillStyle=glow;g.fillRect(-radius,-radius,2*radius,2*radius);
-  g.globalAlpha=(1-u)*.87;g.lineWidth=2.6*(1-u)+.75;g.strokeStyle='#ffcf4d';
+  const radius=9+out*36,glow=g.createRadialGradient(0,0,0,0,0,radius);
+  glow.addColorStop(0,'#ffffe8');glow.addColorStop(.28,'#ffdc56');glow.addColorStop(1,'rgba(255,158,17,0)');
+  g.globalAlpha=(1-u)**1.5;g.fillStyle=glow;g.fillRect(-radius,-radius,2*radius,2*radius);
+  const core=1-smooth(age/.28);
+  if(core>0){
+    g.globalAlpha=core;g.fillStyle='#ed931d';coinSpark(g,0,0,8+out*28);
+    g.fillStyle='#fffce2';coinSpark(g,0,0,6+out*21);
+  }
+  g.globalAlpha=1-smooth((u-.12)/.88);g.lineWidth=3.2*(1-u)+.85;g.strokeStyle='#ffcb38';
   for(let i=0;i<3;i++){
     const a=e.seq*.8+i*2.095+u*.55;g.beginPath();g.arc(0,0,radius,a,a+1.5);g.stroke();
   }
-  for(let i=0;i<12;i++){
-    const a=e.seq*.63+i*2.4,d=(10+out*(18+6*(i%4)));
-    const x=Math.cos(a)*d-age*12,y=Math.sin(a)*d*.8+age*age*26;
-    g.globalAlpha=1-smooth((u-.44)/.56);g.fillStyle=i%3?'#ffcb42':'#fff9d7';
-    if(i%3===0){coinSpark(g,x,y,(4.8+2*(i%2))*(1-.65*u));continue}
-    g.save();g.translate(x,y);g.rotate(a+u*1.5);
-    g.fillRect(-3,-1.4,(4+3*(i%2))*(1-.48*u),2.6);g.restore();
+  for(let i=0;i<15;i++){
+    const a=e.seq*.63+i*2.4,d=9+out*(24+7*(i%4));
+    const x=Math.cos(a)*d-age*16,y=Math.sin(a)*d*.82+age*age*24;
+    g.globalAlpha=1-smooth((u-.40)/.60);
+    if(i%3===0){
+      const size=(6+i%4)*(1-.62*u);
+      g.fillStyle='#db8720';coinSpark(g,x,y,size+1);
+      g.fillStyle='#fff4a3';coinSpark(g,x,y,size);continue;
+    }
+    g.save();g.translate(x,y);g.rotate(a);
+    const length=(5+4*(i%3))*(1-.55*u);
+    g.fillStyle='#f5a821';g.fillRect(-length,-1.6,length,3.2);
+    g.fillStyle='#fff4b3';g.fillRect(-length*.7,-.75,length*.7,1.5);g.restore();
   }
   g.restore();
 }
@@ -2771,18 +2785,18 @@ function drawCoinExhaust(g,model,id,strength,t){
   const center=screenAircraft(model);
   model.localToWorld(exhaustAnchor.set(id===1?-27:-23,1,0)).project(airCamera);
   const x=(exhaustAnchor.x+1)*view.w/2,y=(1-exhaustAnchor.y)*view.h/2;
-  const size=clamp(center.scale,.62,1.9),pulse=Math.sin(t*52+id),len=21+strength*(37+4*pulse);
+  const size=clamp(center.scale,.62,1.9),pulse=Math.sin(t*39+id),len=24+strength*(61+5*pulse);
   g.save();g.translate(x,y);g.rotate(Math.atan2(center.y-y,center.x-x));g.scale(size,size);
   g.globalAlpha=strength;const flame=g.createLinearGradient(-len,0,0,0);
   flame.addColorStop(0,'rgba(255,169,36,0)');flame.addColorStop(.44,'#ffae28');flame.addColorStop(1,'#fff2a0');
-  g.fillStyle=flame;g.beginPath();g.moveTo(1,-3);g.quadraticCurveTo(-len*.28,-6,-len,2*pulse);
-  g.quadraticCurveTo(-len*.40,7,1,3);g.closePath();g.fill();
+  g.fillStyle=flame;g.beginPath();g.moveTo(1,-4);g.quadraticCurveTo(-len*.28,-9,-len,3*pulse);
+  g.quadraticCurveTo(-len*.40,10,1,4);g.closePath();g.fill();
   g.fillStyle='#fffde2';g.beginPath();g.moveTo(1,-1.8);g.lineTo(-len*.68,pulse);g.lineTo(1,2);g.fill();
   g.lineCap='round';g.lineWidth=1.6;
   for(let i=0;i<6;i++){
     const phase=(t*3.85+i*.3819)%1,dx=-len*(.2+phase*.96),dy=(i%2?1:-1)*(4+phase*(3+i));
     g.globalAlpha=strength*(1-phase);g.strokeStyle=i%2?'#fff5ab':'#fcb638';
-    g.beginPath();g.moveTo(dx,dy);g.lineTo(dx-5-8*phase,dy);g.stroke();
+    g.beginPath();g.moveTo(dx,dy);g.lineTo(dx-7-14*phase,dy);g.stroke();
   }
   g.restore();
 }
@@ -2950,14 +2964,16 @@ function finishRibbon(g,w,h,age,split){
   }
 }
 const paperColors=['#f9cb57','#f56259','#63cfc1','#fff2ce','#a586de','#70b7ed'];
-function finishConfetti(g,x,y,w,h,age,id){
-  if(age<0||age>1.68)return;
+function finishConfetti(g,x,y,w,h,age,id,champion){
+  const life=champion?1.68:.56;
+  if(age<0||age>=life)return;
   g.save();g.translate(x,y);
   const scale=clamp(Math.min(w/425,h/660),.60,1.65);
-  g.scale(scale,scale);g.globalAlpha=1-smooth((age-1.01)/.67);
+  g.scale(scale,scale);g.globalAlpha=1-smooth((age/life-.60)/.40);
   let seed=7561+id*971;
   const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
-  for(let i=0;i<58;i++){
+  const count=champion?58:14;
+  for(let i=0;i<count;i++){
     const a=-Math.PI*(.06+.88*random()),speed=64+random()*174,wobble=random()*6.28;
     const wide=2.7+random()*4,gravity=140+random()*77,spin=4+random()*12;
     const dx=Math.cos(a)*speed*(1-Math.exp(-age*1.4))/1.4+age*10*Math.sin(wobble+age*4);
@@ -2983,7 +2999,7 @@ function drawFinishGate(g,r,shot){
   drawBalloonGroup(g,w*ribbonX(.66),h*.66,size,true,age);g.restore();
   for(const [rank,id] of r.finishers.entries()){
     const hit=finishLane(r.craft[id]);
-    finishConfetti(g,w*ribbonX(hit),h*hit,w,h,age-finishPassTime(rank),id);
+    finishConfetti(g,w*ribbonX(hit),h*hit,w,h,age-finishPassTime(rank),id,rank===0);
   }
   g.restore();
 }
@@ -3572,10 +3588,11 @@ function directFinish(r,age){
   while(rank+1<r.finishers.length&&age>=finishPassTime(rank+1))rank++;
   const shot={age,rank};
   if(rank>=0){
-    const pilot=flyThrough(r,rank,age),since=age-finishPassTime(rank);
-    const hold=rank===0?.99:.64,release=rank===r.finishers.length-1?1:1-smooth((since-hold)/.64);
+    const pilot=flyThrough(r,0,age),since=age-finishPassTime(0);
+    // Hold the champion's close-up, then frame the remaining passes in one wide shot.
+    const release=r.finishers.length===1?1:1-smooth((since-.99)/.64);
     const focus=smooth(since/.38)*release;
-    airCamera.zoom=1+(rank===0?1.16:.87)*focus;
+    airCamera.zoom=1+1.16*focus;
     airCamera.position.x=(pilot.x-.50)*view.w*focus;
     airCamera.position.y=(.47-pilot.y)*view.h*focus;
     airCamera.updateProjectionMatrix();
@@ -3662,27 +3679,27 @@ function drawPlayerImpact(r,elapsed){
 
   const tick=crashed?plane.finalTick:plane?.contactTick;
   const age=tick>=0?elapsed-secondsAtTick(r.version,tick):Infinity;
-  const duration=crashed ? .56 : .22;
+  const duration=crashed ? .88 : .44;
   if(age<0||age>=duration||document.hidden){
     if(!light.hidden)light.hidden=true;
     if(sceneLayer.style.transform)sceneLayer.style.transform='';
     return;
   }
   const kind=crashed?'crash':plane.contactKind;
-  const flashTime=crashed ? .16 : .13;
+  const flashTime=crashed ? .36 : .28;
   light.hidden=age>=flashTime;
   if(!light.hidden){
     light.dataset.impact=kind;
-    const pulse=Math.min(1,(age+.012)/.028)*(1-age/flashTime)**2;
+    const pulse=Math.min(1,(age+.012)/.038)*(1-smooth((age-.04)/(flashTime-.04)));
     light.style.opacity=String(pulse*(reducedMotion.matches ? .25 : .65));
   }
   if(reducedMotion.matches){sceneLayer.style.transform='';return}
 
-  const phase=age/duration,fade=(1-phase)**2;
+  const phase=age/duration,fade=(1-phase)**1.5;
   const amplitude=crashed?7.8:kind==='strike'?2.45:3.1;
   const direction=kind==='strike'?1:-1;
-  const x=direction*amplitude*fade*Math.cos(phase*Math.PI*(crashed?8:3.4));
-  const y=amplitude*fade*(crashed ? .75 : .42)*Math.sin(phase*Math.PI*(crashed?6.2:4.2)+.5);
+  const x=direction*amplitude*fade*Math.cos(phase*Math.PI*(crashed?11:5.2));
+  const y=amplitude*fade*(crashed ? .75 : .42)*Math.sin(phase*Math.PI*(crashed?9:6.3)+.5);
   const scale=1+2*Math.max(Math.abs(x)/view.w,Math.abs(y)/view.h);
   sceneLayer.style.transform='translate('+x+'px,'+y+'px) scale('+scale+')';
 }

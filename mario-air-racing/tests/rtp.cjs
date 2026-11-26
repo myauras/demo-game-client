@@ -96,6 +96,13 @@ for (const version of [3,4,5,6,7,8,9,10,11,latest]) {
     }
   }
 }
+// Keep the champion's shot and settle each runner-up on its own quick pass.
+assert.equal(finishPassTime(0),1.30);
+assert(finishPassTime(1)-finishPassTime(0)>=1.60);
+for(let rank=2;rank<5;rank++)assert(finishPassTime(rank)-finishPassTime(rank-1)<=.60);
+assert.equal(finishDuration({finishers:[0]}),2.70);
+assert(finishDuration({finishers:[0,1,2,3,4]})-finishPassTime(4)<=.65);
+
 // Extension must be earned during the flight, even on the original finish tick.
 for(const value of [extension-1,extension]){
   const r=newRace(49);r.nextCoin=r.nextHazard=r.nextGust=Infinity;
