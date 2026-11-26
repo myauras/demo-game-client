@@ -6,9 +6,9 @@ const html = fs.readFileSync(path.join(__dirname, '../dist/index.html'), 'utf8')
 const start = html.indexOf('const Fleet=');
 const end = html.indexOf('// Painted wooden forms', start);
 assert(start !== -1 && end !== -1, 'Missing race simulation in the game page');
-const { fleet, count, latest, seedAt, play, seat, newRace, stepRace, touchItem, chooseCoin, collectCoin, displayRate, tailContact, flightScale, flightYaw, raceLeader, payoutRate, sprint, extension, raceHz, secondsAtTick, ticksAtTime, finishPassTime, finishDuration, coinThrust } = new Function(html.slice(start, end) +
-  '\nreturn { fleet:Fleet, count:COURSE_COUNT, latest:RACE_VERSION, seedAt:courseSeed, play(seed,version){const r=newRace(seed,version);while(!r.done)stepRace(r);return r}, seat:craftFor,newRace,stepRace,touchItem,chooseCoin,collectCoin,displayRate,tailContact,flightScale,flightYaw,raceLeader,payoutRate,sprint:SPRINT_TICKS,extension:EXTEND_RATE,raceHz,secondsAtTick,ticksAtTime,finishPassTime,finishDuration,coinThrust };')();
-for (const version of [3,4,5,6,7,8,9,10,latest]) {
+const { fleet, count, latest, seedAt, play, seat, newRace, stepRace, touchItem, chooseCoin, collectCoin, displayRate, tailContact, gustCollision, flightScale, flightYaw, raceLeader, payoutRate, sprint, extension, raceHz, secondsAtTick, ticksAtTime, finishPassTime, finishDuration, coinThrust } = new Function(html.slice(start, end) +
+  '\nreturn { fleet:Fleet, count:COURSE_COUNT, latest:RACE_VERSION, seedAt:courseSeed, play(seed,version){const r=newRace(seed,version);while(!r.done)stepRace(r);return r}, seat:craftFor,newRace,stepRace,touchItem,chooseCoin,collectCoin,displayRate,tailContact,gustCollision,flightScale,flightYaw,raceLeader,payoutRate,sprint:SPRINT_TICKS,extension:EXTEND_RATE,raceHz,secondsAtTick,ticksAtTime,finishPassTime,finishDuration,coinThrust };')();
+for (const version of [3,4,5,6,7,8,9,10,11,latest]) {
   const seeds = new Set();
   const totals = Array(5).fill(0);
   const zeroAfterTenSeconds = Array(5).fill(0);
@@ -36,6 +36,28 @@ for (const version of [3,4,5,6,7,8,9,10,latest]) {
         for(let rank=1;rank<finishers.length;rank++)assert(finishPassTime(rank)>finishPassTime(rank-1));
         assert(finishDuration(race)>finishPassTime(finishers.length-1));
       }else assert(race.craft.every(p=>p.down&&p.finalTick<=race.tick));
+      // Every explosion has exactly one physical source on its simulation tick.
+      const hazardHits=new Set();
+      for(const hit of race.events.filter(e=>e.type==='impact'&&e.hazard)){
+        assert(!hazardHits.has(hit.hazard.key));hazardHits.add(hit.hazard.key);
+      }
+      for(const crash of race.events.filter(e=>e.type==='crash')){
+        const sources=race.events.filter(e=>e.type==='impact'&&e.value===2&&e.time===crash.time&&
+          (e.id===crash.id||e.target===crash.id));
+        assert.equal(sources.length,1);
+        const hit=sources[0],p=race.craft[crash.id];
+        if(hit.hazard){
+          assert.match(hit.hazard.type,/^(rock|bird)$/);
+          assert.equal(p.hitTick,p.finalTick);assert(p.fatalImpact);
+          assert(Math.abs(crash.x-hit.hazard.x)<20*flightScale(p)+.72*hit.hazard.rad);
+          assert(Math.abs(crash.y-hit.hazard.y)<4*flightScale(p)+(hit.hazard.type==='rock'?.63:.42)*hit.hazard.rad);
+        }else{
+          const a=race.craft[hit.id],b=race.craft[hit.target];
+          assert.equal(hit.reason,'ice');assert.equal(a.finalTick,b.finalTick);
+          assert(a.gustUntil>hit.time||b.gustUntil>hit.time);
+          assert(Math.abs(a.z-b.z)<=.055);assert(Math.abs(a.y-b.y)<=5*Math.min(flightScale(a),flightScale(b)));
+        }
+      }
       const contacts = race.events.filter(e => e.type === 'bump');
       for(const e of contacts){assert.equal(e.value,10);assert.notEqual(e.id,e.target)}
       bumps += contacts.length;
@@ -62,7 +84,7 @@ for (const version of [3,4,5,6,7,8,9,10,latest]) {
   assert.equal(maximum, version>=9?20000:10000);
   if (version === latest) {
     assert(coursesWithBumps>0&&sprintFinishes>0&&highFinishes>0&&extended<count/5);
-    assert.equal(finisherCounts[0],1317);
+    assert.equal(finisherCounts[0],1262);
     assert(finisherCounts.slice(1).every(n=>n>0));
     console.log('Finisher counts, from zero to five: '+finisherCounts.join(', '));
     console.log(extended+' courses qualify for extra time; '+highFinishes+' fly past the sprint limit.');
@@ -97,6 +119,22 @@ for(const tick of [1,400,1000,sprint,1800]){
 }
 assert(ticksAtTime(latest,5)<ticksAtTime(latest,10)-ticksAtTime(latest,5));
 assert(ticksAtTime(latest,15)-ticksAtTime(latest,10)<ticksAtTime(latest,20)-ticksAtTime(latest,15));
+// A gust alone, a near miss or two separating hulls must never cause a crash.
+for(const miss of ['no wind','different depth','vertical gap','horizontal gap','separating','slow','contact']){
+  const r=newRace(8,latest),[a,b]=r.craft;r.tick=600;
+  Object.assign(a,{x:380,y:250,z:.5,vz:0,pitch:0,vx:150,vy:0,gustUntil:10.5});
+  Object.assign(b,{x:399,y:250,z:.5,vz:0,pitch:0,vx:-30,vy:0});
+  if(miss==='no wind')a.gustUntil=10;
+  if(miss==='different depth')b.z+=.15;
+  if(miss==='vertical gap')b.y+=14;
+  if(miss==='horizontal gap')b.x+=42;
+  if(miss==='separating')a.vx=-150;
+  if(miss==='slow')a.vx=15;
+  const collides=miss==='contact';
+  assert.equal(gustCollision(r,a,b,10),collides,miss);
+  assert.equal(a.alive,!collides);assert.equal(b.alive,!collides);
+  assert.equal(r.events.filter(e=>e.type==='impact').length,collides?1:0);
+}
 // Both hulls must meet nose-to-tail in the same depth plane on a closing pass.
 function contactFixture(){
   const race=newRace(49,latest);race.tick=240;
@@ -118,10 +156,18 @@ for(const variation of ['farther','different heading','other altitude','receding
   if(variation==='at cap')rear.mult=9998;
   tailContact(race,rear,front);
   assert(!race.events.some(e=>e.type==='bump'),variation);
+  if(variation==='spent bonus'||variation==='at cap'){
+    assert.deepEqual([rear.contactKind,front.contactKind],['strike','received']);
+    race.tick++;tailContact(race,rear,front);
+    assert.equal(rear.contactTick,race.tick-1);
+  }else{
+    assert.equal(rear.contactKind,null,variation);assert.equal(front.contactKind,null,variation);
+  }
 }
 const {race:pass,rear,front}=contactFixture();
 tailContact(pass,front,rear); // Craft array order does not decide who hits.
 assert.deepEqual([rear.mult,front.mult],[70,50]);
+assert.deepEqual([rear.contactKind,front.contactKind],['strike','received']);
 const hit=pass.events.find(e=>e.type==='bump');
 assert.equal(hit.id,rear.id);assert.equal(hit.target,front.id);
 tailContact(pass,rear,front);
@@ -251,4 +297,4 @@ for (const reverse of [false,true]) {
   assert.equal(r.craft[0].mult,10);
   assert.equal(r.events.filter(e=>e.type==='pickup'&&e.chasers===2&&e.id===1).length,1);
 }
-console.log('Versions 3–11: 2,048 courses × 5 seats per aircraft. Flight accrual, legacy payouts, pickups and collisions passed.');
+console.log('Versions 3–12: 2,048 courses × 5 seats per aircraft. Flight accrual, legacy payouts, pickups and collisions passed.');
