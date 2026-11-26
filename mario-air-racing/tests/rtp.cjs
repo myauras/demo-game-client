@@ -108,7 +108,8 @@ for(const value of [extension-1,extension]){
   const r=newRace(49);r.nextCoin=r.nextHazard=r.nextGust=Infinity;
   r.tick=sprint-1;r.craft[2].mult=value;stepRace(r);
   assert.equal(r.done,value<extension);assert.equal(r.finishTick,value<extension?sprint:1800);
-  if(!r.done){r.craft[2].mult=10;stepRace(r);assert.equal(r.finishTick,1800)}
+  assert.equal(r.extensionTick,value<extension?undefined:sprint);
+  if(!r.done){r.craft[2].mult=10;stepRace(r);assert.equal(r.finishTick,1800);assert.equal(r.extensionTick,sprint)}
 }
 // A survivor beats an eliminated plane. With no survivors the last elimination
 // wins, with progress and seat breaking a simultaneous finish deterministically.
