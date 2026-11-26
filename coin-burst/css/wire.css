@@ -1,0 +1,17 @@
+/* =========================================================================
+ * 爆金連鎖——接線層樣式（C03）：自動下注浮條與入口鈕、設定面板微調
+ * 效能紅線：只動 transform／opacity，禁 filter。autobet.css 是底板（不改），這裡只蓋過這款需要的差異。
+ * ========================================================================= */
+
+/* 浮條：待命時整條不顯示（畫面只有圖示＋數字，不放「待命」字樣）；進行中換成這款的深藍金邊 */
+#world #abar:not(.on){opacity:0;pointer-events:none;border:0}
+#abar.on{background:linear-gradient(rgba(34,52,112,.96),rgba(18,28,66,.96));border:1.5px solid #ffd24a;color:#ffe9a8;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+#abar .astop{border-color:#ffd24a;background:rgba(255,210,74,.14);color:#ffd24a}
+
+/* 進行中：自動入口鈕變淡、不可按（要停請按浮條上的停止） */
+#autoBtn.running{opacity:.38;pointer-events:none}
+
+/* 設定面板：貼這款的深藍底（變數在 base.css） */
+.sheet{background:linear-gradient(#17274c,#0a1022)}
+.sgo{background:linear-gradient(#ffe27a,#e89a1a);color:#2a1a02;box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 2px 0 #7a4a06}
