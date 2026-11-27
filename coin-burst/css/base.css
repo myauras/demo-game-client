@@ -1,5 +1,5 @@
 /* =========================================================================
- * 爆金連鎖——主畫面樣式（B 案：斜看幣柱＋底部收集槽＋面額分頁縮圖）＋共用元件（toast、無捲軸）
+ * 爆金連鎖——主畫面樣式（B 案：斜看幣柱＋收集槽；v3-2：盤面放大、底部金額鈕與刷新鈕、確認視窗、Combo）＋共用元件（toast、無捲軸）
  * 效能紅線：所有 transition／animation 只動 transform／opacity；陰影靜態；禁 filter
  *   事件驅動的演出（炸開、飛行、落袋、分級）全在 js/ui-main.js 用同一條虛擬時間軸推 transform／opacity，
  *   這裡的 animation 只有「常駐呼吸」（快滿的格子、發光格、寶物箭頭、能量條快滿時的金框／放射光／追光、快滿的分頁），都只動 opacity／transform；
@@ -105,35 +105,39 @@ button{font:inherit;color:inherit;cursor:pointer;padding:0;margin:0}
 .log{min-width:72px;padding:0 12px;font-size:15px;font-weight:600;white-space:nowrap}
 /* 提示開關（燈泡）：開＝金色；關＝灰＋斜線 */
 .hnt .sl{opacity:1}.hnt.on .sl{opacity:0}
-.spd:active,.log:active,.tab:active,.autob:active{transform:scale(.96)}
+.spd:active,.log:active,.autob:active{transform:scale(.96)}
 .tr{gap:6px}
 
-/* ---------- 頂部分頁：面額＋該面額盤面縮圖 ---------- */
-.tabs{position:absolute;left:12px;right:12px;top:50px;height:86px;display:flex;gap:6px}
-.tab{flex:1;min-width:0;border-radius:14px;border:2px solid rgba(255,255,255,.04);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
-  background:linear-gradient(rgba(255,255,255,.09),rgba(255,255,255,.03));box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
-.tab.on{border-color:#ffd24a;background:linear-gradient(rgba(255,210,74,.24),rgba(255,210,74,.08));box-shadow:inset 0 1px 0 rgba(255,236,170,.35),0 0 0 1px rgba(255,210,74,.25)}
-.tab .lb{display:flex;align-items:center;gap:5px;line-height:1;white-space:nowrap;color:rgba(255,255,255,.6)}
-.tab.on .lb{color:#fff}
-.tab .lb b{font-size:17px;font-variant-numeric:tabular-nums}
-.th{display:grid;grid-template-columns:repeat(5,12px);grid-auto-rows:8px;gap:2px}
-.th i{border-radius:2px;background:#19233f}
-.th i.c1{background:#34457a}.th i.c2{background:#6679b8}.th i.c3{background:#ffb020}.th i.g{background:#7fe3ff}
-.tab:not(.on) .th{opacity:.85}
-/* 分頁底下的小條：每個面額各自的能量條進度（transform:scaleX 由 JS 寫）；快滿的那張金色發光 */
-.tab{position:relative;justify-content:flex-start;padding-top:4px;gap:5px}
-.tab .eb{position:absolute;left:12px;right:12px;bottom:5px;height:4px;border-radius:2px;background:#0a1127;
-  box-shadow:inset 0 1px 0 rgba(0,0,0,.5);overflow:hidden}
-.tab .eb i{display:block;width:100%;height:100%;border-radius:2px;background:linear-gradient(#e6c060,#b08420);transform-origin:0 50%;transform:scaleX(0)}
-.tab.on .eb i{background:linear-gradient(#ffe58a,#d9a02a)}
-.tab.nr{border-color:rgba(255,210,74,.5)}
-.tab.nr .eb i{background:linear-gradient(#fff3b0,#ffc83a)}
-.tab.nr:after{content:"";position:absolute;left:-2px;right:-2px;top:-2px;bottom:-2px;border-radius:14px;
-  border:2px solid #ffd24a;opacity:.4;animation:ap 1.1s ease-in-out infinite alternate;pointer-events:none}
+/* ---------- 底部金額選項（v3）：三顆佔滿一整列，是「按鈕」——有外框、底色、立體的下緣；選中的亮金。
+   和旁邊的圖例（純文字、沒有外框底色）一眼分得出來。換金額要先確認，演出中／自動下注中不能按（.bz 變淡）---------- */
+.dnr{position:absolute;left:12px;top:674px;width:351px;height:48px;display:flex;gap:8px;transition:opacity .2s linear}
+.dn{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:7px;border-radius:16px;border:2px solid #4a5ea8;white-space:nowrap;
+  background:linear-gradient(#34468a,#212e5e 60%,#1a2550);color:rgba(255,255,255,.78);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.2),inset 0 -2px 0 rgba(0,0,0,.22),0 3px 0 #0b1128}
+.dn b{font-size:19px;line-height:1;font-variant-numeric:tabular-nums}
+.dn.on{border-color:#fff0a8;color:#4a2a00;background:linear-gradient(#ffe27a,#ffb52e 60%,#f09a1a);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.5),inset 0 -2px 0 rgba(150,80,0,.25),0 3px 0 #8a4a06}
+.dn:active{transform:translateY(2px)}
+.dnr.bz{opacity:.5}
+.dnr.bz .dn:active{transform:none}
+
+/* ---------- 刷新鈕（v3，A 案）：自動鈕左邊的圓鈕。可刷＝藍底＋換位圖示；冷卻＝灰、外圈進度（金）、中間剩幾注 ---------- */
+.rfb{position:absolute;left:12px;top:732px;width:56px;height:56px;border-radius:50%;border:2px solid #5d7bdf;color:#fff;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(#3a58bd,#243566 55%,#1b2850);box-shadow:inset 0 2px 0 rgba(255,255,255,.26),inset 0 -2px 0 rgba(0,0,0,.25),0 3px 0 #0e1630;transition:opacity .2s linear}
+.rfb .rfi{display:flex;align-items:center;justify-content:center}
+.rfb .rfn{display:none;font-size:22px;font-weight:800;line-height:1;color:#ffd24a;font-variant-numeric:tabular-nums}
+.rfb .rfr{display:none;position:absolute;left:-2px;top:-2px;width:56px;height:56px;overflow:visible}
+.rfb.cool{border-color:#3a4568;background:linear-gradient(#232b44,#1a2036 55%,#151a2c);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 3px 0 #0b0f1c;color:rgba(255,255,255,.4)}
+.rfb.cool .rfi{display:none}
+.rfb.cool .rfn{display:flex}
+.rfb.cool .rfr{display:block}
+.rfb.bz{opacity:.5}
+.rfb:active{transform:translateY(2px)}
+.rfb.bz:active,.rfb.cool:active{transform:none}
 
 /* ---------- 能量條（A 案「橫條」）：盤面上方一條被金幣填滿的槽，每個刻度＝一枚幣的側邊；右端雨雲徽章 ----------
    填滿的部分＝「蓋住的窗」：.mf（裁切窗）與裡面的 .mi（刻度帶）一正一反平移，只動 transform；快滿時 .lit 疊上金色外框、脈動、放射光 */
-#mt{position:absolute;left:12px;top:142px;width:351px;height:44px;pointer-events:none}
+#mt{position:absolute;left:12px;top:50px;width:351px;height:44px;pointer-events:none}
 #mt>*{position:absolute;left:0;top:0}
 #mt svg{overflow:visible}
 #mt .mf{width:351px;height:44px;overflow:hidden;will-change:transform}
@@ -164,28 +168,31 @@ button{font:inherit;color:inherit;cursor:pointer;padding:0;margin:0}
 @keyframes ar{from{opacity:.5}to{opacity:1}}
 
 /* ---------- 大連爆字樣（放在能量條下面、壓在盤面第一排上，不蓋住能量條） ---------- */
-.skyz{position:absolute;left:0;right:0;top:190px;height:52px;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.skyz{position:absolute;left:0;right:0;top:116px;height:52px;display:flex;align-items:center;justify-content:center;pointer-events:none}
 .banner{font-size:34px;font-weight:900;line-height:1;color:#ffd24a;white-space:nowrap;opacity:0;
   text-shadow:0 3px 0 #8a4a06,0 0 14px rgba(255,170,40,.7);transform-origin:50% 60%}
 
 /* ---------- 收集槽（斜看盤面下方一條橫槽：幣由左排到右，這一下的金額在右端） ---------- */
-#tray{position:absolute;left:12px;top:560px;width:351px;height:80px}
+#tray{position:absolute;left:12px;top:530px;width:351px;height:80px}
 #tray svg{position:absolute;left:0;top:0;width:351px;height:80px}
 #trayGold,#trayGold2{opacity:0}
-#amt{position:absolute;left:250px;top:560px;width:102px;height:80px;display:flex;align-items:center;justify-content:flex-end;transform-origin:100% 50%}
+#amt{position:absolute;left:250px;top:530px;width:102px;height:80px;display:flex;align-items:center;justify-content:flex-end;transform-origin:100% 50%}
 #amt span{font-size:32px;font-weight:900;line-height:1;white-space:nowrap;color:#fff;font-variant-numeric:tabular-nums;text-shadow:0 2px 0 rgba(0,0,0,.4)}
 #amt.dim span{color:rgba(255,255,255,.28);text-shadow:none}
 #amt.gold span{color:#ffd24a;text-shadow:0 2px 0 #7a4a06}
 
-/* ---------- 三樣東西各值多少 ---------- */
-.legend{position:absolute;left:150px;right:12px;top:652px;height:46px;display:flex;gap:4px}
-.chip{flex:1 1 auto;min-width:0;display:flex;align-items:center;justify-content:center;gap:5px;border-radius:23px;padding:0 6px;
-  background:linear-gradient(rgba(255,255,255,.1),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
-.chip b{font-size:17px;line-height:1;white-space:nowrap;color:rgba(255,255,255,.9);font-variant-numeric:tabular-nums}
+/* ---------- 三樣東西各值多少（圖例，v3）：是「說明」不是按鈕——沒有外框、沒有底色、比按鈕小、顏色淡，圖示後面接「＝數字」。
+   （用戶：「金幣提示跟面額選擇按鈕很近且很像，需要作出區別」；金額鈕在下面一列，有外框、底色與立體下緣） ---------- */
+.legend{position:absolute;left:150px;top:618px;width:213px;height:46px;display:flex;align-items:center;justify-content:space-between;gap:0;padding:0 2px;pointer-events:none}
+.lgi{flex:1 1 auto;min-width:0;display:flex;align-items:center;justify-content:center;gap:2px;color:rgba(190,204,245,.6);white-space:nowrap}
+.lgi .ico{opacity:.82}
+.lgi i.eq{flex:none;font-style:normal;font-size:11px;line-height:1;color:rgba(190,204,245,.42)}
+.lgi b{font-size:14px;line-height:1;font-weight:600;font-variant-numeric:tabular-nums}
 
 /* ---------- 底部自動鈕（⟳ 入口，接線是 C03）與進行中浮條槽 ---------- */
-#abar{position:absolute;left:12px;right:12px;top:702px;height:28px;margin:0}
-#autoBtn.autob{position:absolute;left:12px;right:12px;top:732px;width:auto;height:56px;border-radius:28px;border:2px solid #5d7bdf;
+/* 自動下注進行中的浮條：蓋在金額鈕那一列上（進行中金額鈕本來就不能按） */
+#abar{position:absolute;left:12px;right:12px;top:674px;height:51px;margin:0;border-radius:16px}
+#autoBtn.autob{position:absolute;left:76px;right:12px;top:732px;width:auto;height:56px;border-radius:28px;border:2px solid #5d7bdf;
   background:linear-gradient(#3a58bd,#243566 55%,#1b2850);color:#fff;font-size:19px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;white-space:nowrap;
   box-shadow:inset 0 2px 0 rgba(255,255,255,.28),inset 0 -3px 0 rgba(0,0,0,.25),0 3px 0 #0e1630}
 
@@ -213,7 +220,7 @@ button{font:inherit;color:inherit;cursor:pointer;padding:0;margin:0}
   -webkit-mask-image:radial-gradient(closest-side,#000 18%,rgba(0,0,0,0) 100%);mask-image:radial-gradient(closest-side,#000 18%,rgba(0,0,0,0) 100%)}
 
 /* ---------- 連鎖獎池（v2.3）：圖例那一排的左邊；爆炸徽章（和盤面上「能炸 8 格」的提示同一個形狀）＋金額 ---------- */
-.pot{position:absolute;left:12px;top:652px;width:132px;height:46px;transform-origin:22% 50%;display:flex;align-items:center;gap:4px;padding:0 12px 0 4px;border-radius:23px;
+.pot{position:absolute;left:12px;top:618px;width:132px;height:46px;transform-origin:22% 50%;display:flex;align-items:center;gap:4px;padding:0 12px 0 4px;border-radius:23px;
   background:linear-gradient(#4a210c,#220f0e 62%,#33170a);border:2px solid #ff9a3c;
   box-shadow:inset 0 1px 0 rgba(255,214,150,.4),inset 0 -2px 0 rgba(0,0,0,.28),0 0 0 1px rgba(255,140,40,.28)}
 .pot .pi{position:relative;flex:none;width:38px;height:38px;display:flex;align-items:center;justify-content:center}
@@ -222,7 +229,7 @@ button{font:inherit;color:inherit;cursor:pointer;padding:0;margin:0}
 .pot.z #potN{color:rgba(255,214,150,.4);text-shadow:none}
 .pot:after{content:"";position:absolute;left:-4px;right:-4px;top:-4px;bottom:-4px;border-radius:27px;border:2px solid #ffd24a;opacity:0;pointer-events:none}
 .pot.rdy:after{animation:ap 1.1s ease-in-out infinite alternate}
-#amtB{position:absolute;left:254px;top:564px;width:22px;height:22px;opacity:0;pointer-events:none;transform-origin:50% 50%}
+#amtB{position:absolute;left:254px;top:534px;width:22px;height:22px;opacity:0;pointer-events:none;transform-origin:50% 50%}
 /* 拿獎池時飛的牌（從獎池飛進金額、再飛進錢包）、浮字 */
 .plm{position:absolute;left:0;top:0;pointer-events:none;will-change:transform,opacity;left:-58px;top:-18px;width:116px;height:36px;display:flex;align-items:center;gap:2px;padding:0 10px 0 3px;border-radius:18px;
   background:linear-gradient(#fff0a0,#ffb52e 55%,#ff8a1e);border:2px solid #fff6c8;box-shadow:0 2px 0 rgba(120,50,4,.55)}
@@ -246,3 +253,76 @@ button{font:inherit;color:inherit;cursor:pointer;padding:0;margin:0}
 #hints .hn{font-size:12px;font-weight:800;fill:#e4ecff;text-anchor:middle}
 #hints .ht.m .hn{fill:#ffe27a}
 #hints .ht.h .hn{font-size:14px;fill:#fff;stroke:#7a1c06;stroke-width:2.6;stroke-linejoin:round;paint-order:stroke}
+
+/* ---------- Combo（v3）：連爆時每炸一格，在那一格的右上角冒一顆爆炸徽章＋累計數字（跟著格子跳）；
+   該波最新的一顆最大、帶「Combo」字樣的條，前面的淡出。金幣雨那一段從 1 另外數，藍金色＋雨滴。
+   元件全在 #fx（演出元件池），只動 transform／opacity。 ---------- */
+.cmx,.cbr,.cbo,.cbg,.cbp{position:absolute;left:0;top:0;pointer-events:none;will-change:transform,opacity;z-index:2}
+.cbr,.cbo,.cbg,.cbp{z-index:3}
+.cmx{width:0;height:0;--r:20px}
+.cmx .cmi,.cmx .cmn{position:absolute;left:-20px;top:-20px;width:40px;height:40px}
+.cmx .cmn,.cbg .bn{display:flex;align-items:center;justify-content:center;font-weight:900;line-height:1;color:#fff;font-variant-numeric:tabular-nums;
+  text-shadow:0 1px 0 #7a1c06,0 0 3px rgba(110,24,6,.9)}
+.cmx .cmn{font-size:19px}
+.cmx .cmp{position:absolute;top:-15px;height:30px;display:flex;align-items:center;gap:4px;border-radius:15px;border:2px solid #ff9a3c;box-sizing:border-box;white-space:nowrap;opacity:0;
+  background:linear-gradient(#4a210c,#220f0e 62%,#33170a);box-shadow:0 0 0 2px rgba(255,140,40,.3)}
+.cmx.rt .cmp{left:0;padding:0 12px 0 calc(var(--r) + 4px)}
+.cmx.lf .cmp{right:0;padding:0 calc(var(--r) + 4px) 0 12px}
+.cmx .cmw{font-size:16px;font-weight:900;line-height:1;color:#ffe27a;text-shadow:0 2px 0 #8a3a04,0 0 8px rgba(255,150,30,.7)}
+.cmx .cmd{flex:none;display:block}
+.cmx.rn .cmp{border-color:#6fd0ff;background:linear-gradient(#0c2a52,#081834 62%,#0b2040);box-shadow:0 0 0 2px rgba(80,170,255,.3)}
+.cmx.rn .cmw{color:#c8eeff;text-shadow:0 2px 0 #0b3a78,0 0 8px rgba(110,200,255,.7)}
+.cmx.rn .cmn{text-shadow:0 1px 0 #0a2a6a,0 0 3px rgba(10,40,110,.9)}
+/* 數到 8：盤面中上方放大彈出（放射光、震波圈、超大徽章、字樣條） */
+.cbr{left:-130px;top:-130px;width:260px;height:260px;opacity:0;
+  background:repeating-conic-gradient(from 0deg at 50% 50%,rgba(255,222,120,.55) 0deg 8deg,rgba(255,226,140,0) 8deg 22.5deg);
+  -webkit-mask-image:radial-gradient(closest-side,#000 25%,rgba(0,0,0,0) 100%);mask-image:radial-gradient(closest-side,#000 25%,rgba(0,0,0,0) 100%)}
+.cbo{left:-63px;top:-63px;width:126px;height:126px;border-radius:50%;border:3px solid rgba(255,255,255,.6);box-sizing:border-box;opacity:0}
+.cbg{left:-70px;top:-70px;width:140px;height:140px;opacity:0}
+.cbg .ico{position:absolute;left:0;top:0;width:100%;height:100%}
+.cbg .bn{position:absolute;left:0;top:0;right:0;bottom:0;font-size:70px}
+.cbp{left:-62px;top:-19px;width:124px;height:38px;border-radius:19px;border:2px solid #fff0a8;box-sizing:border-box;display:flex;align-items:center;justify-content:center;opacity:0;
+  background:linear-gradient(#4a210c,#220f0e 62%,#33170a);box-shadow:0 0 0 3px rgba(255,140,40,.35)}
+.cbp span{font-size:24px;font-weight:900;line-height:1;white-space:nowrap;color:#ffe27a;text-shadow:0 2px 0 #8a3a04,0 0 8px rgba(255,150,30,.7)}
+
+/* ---------- 確認視窗（刷新盤面、換金額）：置中卡片，圖示先行＋逐項標籤；內容全讀核心 ---------- */
+.cfm{position:absolute;left:0;top:0;right:0;bottom:0;z-index:35;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s linear}
+.cfm.show{opacity:1;pointer-events:auto}
+.cfm .cfv{position:absolute;left:0;top:0;right:0;bottom:0;background:rgba(2,5,18,.72)}
+.cfm .cfc{position:relative;width:calc(100% - 48px);max-width:327px;border-radius:22px;padding:16px 14px 18px;background:linear-gradient(#18244d,#0e1633);border:1.5px solid #34447f;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 8px 0 rgba(0,0,0,.25);transform:scale(.94);transition:transform .2s ease-out}
+.cfm.show .cfc{transform:none}
+.cfm h3{margin:0 0 12px;text-align:center;font-size:18px;line-height:1.2;font-weight:800;color:#ffd24a;letter-spacing:.04em}
+.cfm .cft{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
+.cfm .cfi{flex:1 1 calc(50% - 5px);min-width:0;box-sizing:border-box;min-height:112px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);padding:8px;
+  display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:6px}
+.cfm .cfi:last-child:nth-child(odd){flex-basis:100%}
+.cfm .cfn{font-size:13px;line-height:1;color:#c9d3ff;font-weight:700;white-space:nowrap}
+.cfm .cfx{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0}
+.cfm .cfr{display:flex;align-items:center;justify-content:center;gap:10px}
+.cfm .cfb{display:flex;gap:10px;margin-top:16px}
+.cfm .cfb button{flex:1;min-width:0;height:48px;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;white-space:nowrap;padding:0 6px}
+.cfm .cfb .no{border:2px solid #5a6aa8;color:#c9d3ff;background:linear-gradient(rgba(255,255,255,.12),rgba(255,255,255,.04))}
+.cfm .cfb .go{border:2px solid #fff0a8;color:#4a2a00;background:linear-gradient(#ffe27a,#ffb52e 60%,#f09a1a);box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 3px 0 #8a4a06}
+.cfm .cfq{margin-top:12px;text-align:center;font-size:13px;color:#8c9acb;display:flex;align-items:center;justify-content:center;gap:5px}
+.cfm .tag{display:inline-flex;align-items:center;justify-content:center;border-radius:11px;padding:0 9px;height:22px;font-size:13px;font-weight:800;white-space:nowrap;max-width:100%}
+.cfm .tag.keep{background:#17331f;color:#8FD49B;border:1.5px solid #3f8a52}
+.cfm .tag.redo{background:#2b1b0c;color:#ffc774;border:1.5px solid #c98a2a}
+.cfm .tag.lose{background:#3a1410;color:#ffab8a;border:1.5px solid #d0553a}
+.cfm .nm{font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cfm .cfa{display:flex;align-items:center;justify-content:center;gap:6px;height:42px;padding:0 14px;border-radius:14px;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.18)}
+.cfm .cfa.to{background:linear-gradient(rgba(255,210,74,.28),rgba(255,210,74,.08));border-color:#ffd24a}
+.cfm .cfa b{font-size:20px;line-height:1;font-variant-numeric:tabular-nums;color:rgba(255,255,255,.7)}
+.cfm .cfa.to b{color:#fff}
+/* 小盤面縮圖（5×5：1 枚淺、2 枚中、3 枚金；寶物青色）與小能量條 */
+.mb{display:grid;grid-template-columns:repeat(5,var(--c));grid-auto-rows:var(--c);gap:2px;padding:4px;border-radius:7px;background:#0b1230;border:1.5px solid #34447f}
+.mb i{border-radius:3px;background:#19233f}
+.mb i.c1{background:#4a5d9e}.mb i.c2{background:#7d92d6}.mb i.c3{background:#ffb020}.mb i.g{background:#7fe3ff}.mb i.q{background:#2a3a70}
+.mb.nx{position:relative}
+.mb.nx svg{position:absolute;left:50%;top:50%;margin:-11px 0 0 -11px}
+.mm{position:relative;width:96px;height:18px;border-radius:9px;background:#080e22;border:1.5px solid #3b4c88;overflow:hidden}
+.mm i{position:absolute;left:0;top:0;bottom:0;background:repeating-linear-gradient(90deg,#e8b94c 0 2px,#080e22 2px 3px)}
+.mm.mt0 i{display:none}
+.cfm .bsm{position:relative;display:inline-block;flex:none}
+.cfm .bsm .ico{position:absolute;left:0;top:0;width:100%;height:100%}
+.cfm .bsm b{position:absolute;left:0;top:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;text-shadow:0 1px 0 #7a1c06}

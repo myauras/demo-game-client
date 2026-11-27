@@ -13,9 +13,11 @@
  *   - 每局等演出結束（ui.play 的 Promise）才下一局；速度沿用玩家當下的設定（不另外加速）。
  *     金幣雨那一局也一樣：ui.play 要等整場（玩家那枚連爆＋雨＋入帳）演完才 resolve，回傳的 payout 是整注合計（含雨），
  *     所以停利停損看到的就是整場的輸贏（沒有另外處理）。
- *   - 沿用目前的面額（＝目前那張盤面）：設定面板是丟法／局數／停利／停損四項（autobet.js 的「單注」列與「輪流」鈕在這裡拿掉，
- *     開面板時先把「單注」對到目前面額，再把它從畫面移除）。
- *   - 自動進行中：手點格子、換面額都擋掉並 toast「自動下注中，請先停止」；速度鈕照常可用；重置錢包會先停自動。
+ *   - 沿用目前的金額與盤面（v3 只有一張盤面）：設定面板是丟法／局數／停利／停損四項（autobet.js 的「單注」列與「輪流」鈕在這裡拿掉）。
+ *     adapter 的 stakes 永遠只給「目前金額」（getter，每次畫彈窗都重讀），開面板時再把 cfg.stake 對到目前金額（autobet.js 是凍結檔，
+ *     停利停損／餘額檢查看的是 cfg.stake），所以換金額後再開彈窗一定對得上。自動下注自己不刷新盤面、不換金額。
+ *   - 自動進行中：手點格子、金額鈕、刷新鈕都擋掉並 toast「自動下注中，請先停止」（ui.setTapGuard 的 'cell'／'denom'／'refresh' 一律擋）；
+ *     速度鈕照常可用；重置錢包會先停自動。
  *   - 重整＝中止並 toast（autobet.js 的行為）；核心把演出中的那一注直接結算，錢包與盤面不亂。
  * 勝負紀錄
  *   - 一筆＝一注（ui 的 roundEnd 事件，沒爆沒雨的那一注也會發）。總覽只看輸贏金額；詳細頁列：面額、拿回、
@@ -24,7 +26,8 @@
  *     口徑（v2）：連爆、噴出＝整注合計（玩家那一枚＋金幣雨）；「其中金幣雨帶出」＝合計裡雨那一段（result.rain.exits），
  *     是「含在噴出裡」的子集，不是另外加上去的。
  *   - 重整接回補記：演出中重整時核心直接結算，這一注由 core.getRestored() 補記（同注單號不會重複）。
- *   - 重置錢包（紀錄頁底列、二段確認）：錢包 10,000、三張盤面回起始、紀錄清空。
+ *   - 刷新盤面與換金額都不產生紀錄（紀錄只認 roundEnd＝一注）。
+ *   - 重置錢包（紀錄頁底列、二段確認）：錢包補回 10,000、紀錄清空；盤面、能量條、獎池、冷卻、金額都不動（核心 resetWallet）。
  *
  * 對外：DEMO.wire = { pickFrom(h, rnd?) → 格號（純函式：只吃每格枚數）, pickCell() → 格號（讀目前盤面）, rowsOf(result) }
  * 依賴：values.js、env.js、strings.js、toast.js、core.js、log-ui.js、autobet.js、ui-main.js（DEMO.ui）。須在 ui-main.js 之後、dev.js 之前載入。
@@ -123,7 +126,7 @@ Autobet.mount({
   root: $('app'), entryBtn: $('autoBtn'), slot: $('abar'),
   choices: [{ id: 'build', label: T('auto.c.build', { n: EV.POT_CHAIN }) }, { id: 'quick', label: T('auto.c.quick') }],   // 丟法兩種（「輪流」鈕在 trimSheet 拿掉）
   rounds: [10, 50, 100, 0],                                 // 局數：10／50／100／不限（0）。用戶「50局太快了，幫我加上限或者有個無限制。」
-  stakes: EV.CFG.DENOMS.slice(),                            // 只用來對齊目前面額，面板不顯示
+  get stakes(){ return [g.getDenom()]; },                   // 只用來對齊目前金額（autobet.js 每次畫彈窗都讀它），面板不顯示
   placeOne: function(o){
     return ui.play(pickCell(o && o.choice), {}).then(function(r){ return { stake: r.stake, pay: r.payout }; });
   },
@@ -143,7 +146,7 @@ function trimSheet(){
   }
 }
 new MutationObserver(trimSheet).observe(sheetBody, { childList: true });
-/* 開面板時把「單注」對到目前面額（面板一開就同步完成，觀察器隨後才把這列拿掉） */
+/* 開面板時把「單注」對到目前金額（面板一開就同步完成，觀察器隨後才把這列拿掉）；金額是 getter 現讀的，換過金額再開也對得上 */
 var entry = $('autoBtn'), openOrig = entry.onclick;
 entry.onclick = function(){
   var r = openOrig.apply(this, arguments);
@@ -152,7 +155,7 @@ entry.onclick = function(){
   return r;
 };
 
-/* 進行中：自動鈕變淡、擋手點（格子、換面額） */
+/* 進行中：自動鈕變淡、擋手點（格子、金額鈕、刷新鈕；ui-main 另外讓金額鈕與刷新鈕在 #abar.on 時變淡） */
 var abar = $('abar');
 function syncRunning(){ entry.classList.toggle('running', abar.classList.contains('on')); }
 new MutationObserver(syncRunning).observe(abar, { attributes: true, attributeFilter: ['class'] });

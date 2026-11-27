@@ -8,6 +8,8 @@ parentPort.on('message', (t) => {
   if(t.type === 'long') out = lib.longRun(EV, t.name, t.n, t.kindSeed, t.stratSeed);
   else if(t.type === 'replay') out = lib.replayCheck(EV, t.name, t.n, t.kindSeed, t.stratSeed);
   else if(t.type === 'sessions') out = lib.sessions(EV, t.name, t.count, t.seed);
+  else if(t.type === 'refresh') out = lib.refreshRun(EV, t.o);
+  else if(t.type === 'switch') out = lib.switchRun(EV, t.o);
   else throw new Error('未知任務 ' + t.type);
   parentPort.postMessage({ id: t.id, out });
 });

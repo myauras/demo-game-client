@@ -24,7 +24,7 @@
     js/autobet.js    自動下注（不認識玩法，吃 adapter）
     js/art.js        美術：金幣／鑽石／皇冠／盤面（SVG 程式畫，畫一次重複用）與幾何
     js/fx.js         演出用的虛擬時間軸（可變速、可凍結）
-    js/ui-main.js    主畫面與演出（B 案盤面＋A 案能量條與金幣雨＋v2.3 連鎖獎池與「會炸幾格」提示）＋DEMO.ui
+    js/ui-main.js    主畫面與演出（v3：單一盤面放大＋底部金額鈕＋刷新鈕＋確認視窗＋Combo；能量條與金幣雨、連鎖獎池、「會炸幾格」提示）＋DEMO.ui
     js/wire.js       接線：自動下注 adapter、勝負紀錄（LogUI）的詳細頁與補記
     js/dev.js        ?dev=1 導演台＋?shot= 自動駕駛（最後載入，設 __shotReady）
   js/onboard.js、css/onboard.css 這款不用（不做教學），檔案保留、不引用。
@@ -56,9 +56,6 @@
       </div>
     </div>
 
-    <!-- 面額分頁（每個面額各一張盤面）：JS 填 -->
-    <div class="tabs hud" id="tabs"></div>
-
     <!-- 大連爆字樣（在能量條下面） -->
     <div class="skyz"><div class="banner" id="banner"></div></div>
 
@@ -70,8 +67,14 @@
     <!-- 連鎖獎池（目前面額那張盤面的獎池）：JS 填圖示與數字 -->
     <div id="pot" class="pot hud"></div>
 
-    <!-- 三樣東西各值多少 -->
+    <!-- 三樣東西各值多少（說明文字，不是按鈕：沒有外框與底色） -->
     <div class="legend hud" id="legend"></div>
+
+    <!-- 金額選項（底部三顆；換金額要先確認、會重來）：JS 填 -->
+    <div class="dnr hud" id="dnr"></div>
+
+    <!-- 刷新盤面（自動鈕左邊的圓鈕：冷卻時灰、外圈進度、中間剩幾注）：JS 填 -->
+    <button id="rfBtn" class="rfb hud" type="button" data-t="rf.btn" data-t-attr="title"></button>
 
     <!-- 自動下注：浮條槽與入口（js/wire.js 接線） -->
     <div id="abar" class="hud"></div>
