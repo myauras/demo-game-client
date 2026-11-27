@@ -22,7 +22,7 @@
 .abar.stopping .astop{opacity:.5}
 
 /* 底部設定彈窗（bottom sheet） */
-.veil{position:absolute;inset:0;z-index:34;background:rgba(10,13,10,.55);opacity:0;pointer-events:none;transition:opacity .25s}
+.veil{position:absolute;left:0;right:0;top:0;bottom:0;z-index:34;background:rgba(10,13,10,.55);opacity:0;pointer-events:none;transition:opacity .25s}
 .veil.show{opacity:1;pointer-events:auto}
 .sheet{position:absolute;left:0;right:0;bottom:0;z-index:35;background:var(--panel);border-top:1px solid var(--edge);
   border-radius:14px 14px 0 0;padding:10px 14px 14px;box-sizing:border-box;max-height:92%;display:flex;flex-direction:column;

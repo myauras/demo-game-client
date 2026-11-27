@@ -7,6 +7,7 @@
  *   Autobet.mount({
  *     root, entryBtn, slot,                  掛點：#app、⟳ 鈕、in-flow 浮條槽
  *     choices:[{ id, label }],               可選項（本檔另加「輪流」）
+ *     rounds:[10, 50, 100, 0],               （選填，這款加的）局數選項；0＝不限（只靠停利／停損／餘額不足／手動停）。不給＝10／20／50
  *     stakes:[number],                       單注可選值
  *     placeOne(cfg) → Promise<{ stake, pay }>  代按一局，演完才 resolve；reject＝失敗
  *                                            cfg＝{ choice（已解開輪流）, stake, n（第幾局，1 起算） }
@@ -39,6 +40,8 @@ function mount(adapter){
   cfg = merge({ choice:ad.choices[0].id, stake:(ad.stakes[1] != null ? ad.stakes[1] : ad.stakes[0]),
                 rounds:10, tp:0, sl:0 }, D.ls('autocfg') || {});
   if(ad.choices.every(function(c){ return c.id !== cfg.choice; }) && cfg.choice !== 'alt') cfg.choice = ad.choices[0].id;
+  if(ad.rounds && ad.rounds.length) ROUNDS = ad.rounds.slice();
+  if(ROUNDS.indexOf(+cfg.rounds) < 0) cfg.rounds = ROUNDS[0];     // 存檔裡的局數已不在選項內：回第一個
 
   /* 浮條槽 */
   els.bar = ad.slot;
@@ -69,7 +72,7 @@ function mount(adapter){
   var ab = D.ls('auto');
   if(ab){
     D.ls('auto', null);
-    setTimeout(function(){ toast(T('auto.aborted', { n:ab.n, total:ab.N, pnl:D.signed(ab.pnl) }), 4200); }, 400);
+    setTimeout(function(){ toast(T('auto.aborted', { n:ab.n, total:ab.N || T('auto.inf'), pnl:D.signed(ab.pnl) }), 4200); }, 400);
   }
   refresh();
 }
@@ -87,7 +90,7 @@ function renderSheet(){
   els.body.innerHTML =
     row(T('auto.pick'), seg('choice', ids, lab)) +
     row(T('auto.stake'), seg('stake', ad.stakes, ad.stakes.map(D.fmt))) +
-    row(T('auto.rounds'), seg('rounds', ROUNDS, ROUNDS.map(String))) +
+    row(T('auto.rounds'), seg('rounds', ROUNDS, ROUNDS.map(function(v){ return v ? String(v) : T('auto.inf'); }))) +
     row(T('auto.tp'), seg('tp', TP, TP.map(function(v){ return v ? '+' + D.fmt(v) : T('auto.off'); }), 'onG')) +
     row(T('auto.sl'), seg('sl', SL, SL.map(function(v){ return v ? '−' + D.fmt(v) : T('auto.off'); }), 'onS')) +
     '<div class="snote">' + T('auto.note') + '</div>' +
@@ -112,7 +115,7 @@ function barShow(on){
   if(!on) els.txt.textContent = T('auto.idle');
 }
 function barRender(){
-  els.txt.textContent = T('auto.running', { n:A.n, total:A.cfg.rounds, pnl:D.signed(A.pnl),
+  els.txt.textContent = T('auto.running', { n:A.n, total:A.cfg.rounds || T('auto.inf'), pnl:D.signed(A.pnl),
     tail:A.stopping ? T('auto.stopping') : '' });
   els.bar.classList.toggle('stopping', A.stopping);
 }
@@ -149,7 +152,7 @@ function step(){
   if(!A.on) return;
   if(A.stopping){ end(T('auto.endStop')); return; }
   if(!ad.isIdle()){ schedule(300); return; }            // 面板還沒歸位再等
-  if(A.n >= A.cfg.rounds){ end(T('auto.endDone', { n:A.cfg.rounds })); return; }
+  if(A.cfg.rounds > 0 && A.n >= A.cfg.rounds){ end(T('auto.endDone', { n:A.cfg.rounds })); return; }
   if(ad.balance() < A.cfg.stake){ end(T('auto.endMoney')); return; }
   A.n++; inFlight = true; barRender(); persist();
   var p;

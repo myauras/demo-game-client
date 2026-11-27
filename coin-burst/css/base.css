@@ -2,7 +2,8 @@
  * 爆金連鎖——主畫面樣式（B 案：斜看幣柱＋底部收集槽＋面額分頁縮圖）＋共用元件（toast、無捲軸）
  * 效能紅線：所有 transition／animation 只動 transform／opacity；陰影靜態；禁 filter
  *   事件驅動的演出（炸開、飛行、落袋、分級）全在 js/ui-main.js 用同一條虛擬時間軸推 transform／opacity，
- *   這裡的 animation 只有「常駐呼吸」（快滿的格子、發光格、寶物箭頭），都只動 opacity／transform。
+ *   這裡的 animation 只有「常駐呼吸」（快滿的格子、發光格、寶物箭頭、能量條快滿時的金框／放射光／追光、快滿的分頁），都只動 opacity／transform；
+ *   能量條的填滿／退條、金幣雨的落下與閃爍也是 JS 逐格寫 transform／opacity（用虛擬時間軸），不是 CSS 動畫。
  * 多語紀律：盒子用 min-width／padding 撐，不鎖死寬度；數字與字串由 JS fit 縮到放得下（?lang=xx 驗）
  *
  * 版位：#world 固定 375×812（斜看盤面的座標在 js/art.js），視窗比它小時整個等比縮小；
@@ -101,8 +102,11 @@ button{font:inherit;color:inherit;cursor:pointer;padding:0;margin:0}
   box-shadow:inset 0 1px 0 rgba(255,255,255,.14)}
 .spd{width:44px;color:rgba(255,255,255,.62)}
 .spd.on{border-color:#ffd24a;color:#ffd24a;background:linear-gradient(rgba(255,210,74,.3),rgba(255,210,74,.1))}
-.log{min-width:78px;padding:0 14px;font-size:15px;font-weight:600;white-space:nowrap}
+.log{min-width:72px;padding:0 12px;font-size:15px;font-weight:600;white-space:nowrap}
+/* 提示開關（燈泡）：開＝金色；關＝灰＋斜線 */
+.hnt .sl{opacity:1}.hnt.on .sl{opacity:0}
 .spd:active,.log:active,.tab:active,.autob:active{transform:scale(.96)}
+.tr{gap:6px}
 
 /* ---------- 頂部分頁：面額＋該面額盤面縮圖 ---------- */
 .tabs{position:absolute;left:12px;right:12px;top:50px;height:86px;display:flex;gap:6px}
@@ -116,13 +120,53 @@ button{font:inherit;color:inherit;cursor:pointer;padding:0;margin:0}
 .th i{border-radius:2px;background:#19233f}
 .th i.c1{background:#34457a}.th i.c2{background:#6679b8}.th i.c3{background:#ffb020}.th i.g{background:#7fe3ff}
 .tab:not(.on) .th{opacity:.85}
+/* 分頁底下的小條：每個面額各自的能量條進度（transform:scaleX 由 JS 寫）；快滿的那張金色發光 */
+.tab{position:relative;justify-content:flex-start;padding-top:4px;gap:5px}
+.tab .eb{position:absolute;left:12px;right:12px;bottom:5px;height:4px;border-radius:2px;background:#0a1127;
+  box-shadow:inset 0 1px 0 rgba(0,0,0,.5);overflow:hidden}
+.tab .eb i{display:block;width:100%;height:100%;border-radius:2px;background:linear-gradient(#e6c060,#b08420);transform-origin:0 50%;transform:scaleX(0)}
+.tab.on .eb i{background:linear-gradient(#ffe58a,#d9a02a)}
+.tab.nr{border-color:rgba(255,210,74,.5)}
+.tab.nr .eb i{background:linear-gradient(#fff3b0,#ffc83a)}
+.tab.nr:after{content:"";position:absolute;left:-2px;right:-2px;top:-2px;bottom:-2px;border-radius:14px;
+  border:2px solid #ffd24a;opacity:.4;animation:ap 1.1s ease-in-out infinite alternate;pointer-events:none}
 
-/* ---------- 天空帶：大連爆字樣、天降幣與標籤 ---------- */
-.skyz{position:absolute;left:0;right:0;top:140px;height:52px;display:flex;align-items:center;justify-content:center;pointer-events:none}
+/* ---------- 能量條（A 案「橫條」）：盤面上方一條被金幣填滿的槽，每個刻度＝一枚幣的側邊；右端雨雲徽章 ----------
+   填滿的部分＝「蓋住的窗」：.mf（裁切窗）與裡面的 .mi（刻度帶）一正一反平移，只動 transform；快滿時 .lit 疊上金色外框、脈動、放射光 */
+#mt{position:absolute;left:12px;top:142px;width:351px;height:44px;pointer-events:none}
+#mt>*{position:absolute;left:0;top:0}
+#mt svg{overflow:visible}
+#mt .mf{width:351px;height:44px;overflow:hidden;will-change:transform}
+#mt .mi{width:351px;height:44px;will-change:transform}
+#mt .mi svg{position:absolute;left:0;top:0}
+#mt .mg{opacity:0}
+#mt .mhot{opacity:0;transition:opacity .3s linear}
+#mt.lit .mhot{opacity:1}
+#mt.fl .mhot,#mt.fl .ml{transition:none}
+#mt .ml{opacity:0;transition:opacity .3s linear}
+#mt.lit .ml{opacity:1}
+#mt .mrays{left:287px;top:-20px;width:84px;height:84px;opacity:0;
+  background:repeating-conic-gradient(from 0deg at 50% 50%,rgba(255,222,120,.55) 0deg 8deg,rgba(255,226,140,0) 8deg 22.5deg);
+  -webkit-mask-image:radial-gradient(closest-side,#000 30%,rgba(0,0,0,0) 100%);mask-image:radial-gradient(closest-side,#000 30%,rgba(0,0,0,0) 100%)}
+#mt.lit .mrays{opacity:.8;animation:ar 1.2s ease-in-out infinite alternate}
+#mt .mic{left:311px;top:7px;transition:opacity .3s linear}
+#mt .mic.l{opacity:0}
+#mt.lit .mic.l{opacity:1}
+#mt.lit .mic.d{opacity:0}
+#mt .mh{width:30px;height:20px;opacity:0;will-change:transform}
+#mt .mh i{position:absolute;left:0;top:0;width:30px;height:20px;background-size:100% 100%}
+#mt .mh i.l{opacity:0;transition:opacity .3s linear}
+#mt.lit .mh i.l{opacity:1}
+#mt .chs{top:14px;width:3.7px;height:16px;border-radius:2px;background:#ffe27a;opacity:0;display:none}
+#mt .chs.on{display:block;animation:ap 1.1s ease-in-out infinite alternate}
+.a-glow,.a-pulse{animation:ap 1.1s ease-in-out infinite alternate}
+@keyframes ap{from{opacity:.3}to{opacity:.95}}
+@keyframes ar{from{opacity:.5}to{opacity:1}}
+
+/* ---------- 大連爆字樣（放在能量條下面、壓在盤面第一排上，不蓋住能量條） ---------- */
+.skyz{position:absolute;left:0;right:0;top:190px;height:52px;display:flex;align-items:center;justify-content:center;pointer-events:none}
 .banner{font-size:34px;font-weight:900;line-height:1;color:#ffd24a;white-space:nowrap;opacity:0;
   text-shadow:0 3px 0 #8a4a06,0 0 14px rgba(255,170,40,.7);transform-origin:50% 60%}
-.tag{position:absolute;top:150px;left:0;height:26px;padding:0 10px;border-radius:13px;border:1.5px solid #ff8fc0;
-  background:rgba(60,12,40,.88);color:#ffb3d6;font-size:14px;font-weight:700;line-height:23px;white-space:nowrap;opacity:0;pointer-events:none}
 
 /* ---------- 收集槽（斜看盤面下方一條橫槽：幣由左排到右，這一下的金額在右端） ---------- */
 #tray{position:absolute;left:12px;top:560px;width:351px;height:80px}
@@ -134,8 +178,8 @@ button{font:inherit;color:inherit;cursor:pointer;padding:0;margin:0}
 #amt.gold span{color:#ffd24a;text-shadow:0 2px 0 #7a4a06}
 
 /* ---------- 三樣東西各值多少 ---------- */
-.legend{position:absolute;left:12px;right:12px;top:652px;height:46px;display:flex;gap:6px}
-.chip{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:23px;padding:0 8px;
+.legend{position:absolute;left:150px;right:12px;top:652px;height:46px;display:flex;gap:4px}
+.chip{flex:1 1 auto;min-width:0;display:flex;align-items:center;justify-content:center;gap:5px;border-radius:23px;padding:0 6px;
   background:linear-gradient(rgba(255,255,255,.1),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
 .chip b{font-size:17px;line-height:1;white-space:nowrap;color:rgba(255,255,255,.9);font-variant-numeric:tabular-nums}
 
@@ -146,7 +190,12 @@ button{font:inherit;color:inherit;cursor:pointer;padding:0;margin:0}
   box-shadow:inset 0 2px 0 rgba(255,255,255,.28),inset 0 -3px 0 rgba(0,0,0,.25),0 3px 0 #0e1630}
 
 /* ---------- 演出層 ---------- */
-.fc,.fg,.fk,.sp,.rg,.bm,.pp,.cf{position:absolute;left:0;top:0;pointer-events:none;will-change:transform,opacity}
+.fc,.fg,.fk,.sp,.rg,.bm,.pp,.cf,.rs,.trl{position:absolute;left:0;top:0;pointer-events:none;will-change:transform,opacity}
+/* 金幣雨：雨絲、掉落中的幣身後的拖尾（底邊在幣心）、預告時壓暗盤面的幕 */
+.rs{width:2px;height:70px;border-radius:1px;background:linear-gradient(rgba(255,226,120,0),rgba(255,226,120,.6))}
+.trl{left:-8px;top:-80px;width:16px;height:80px;border-radius:8px 8px 0 0;transform-origin:8px 80px;background:linear-gradient(rgba(255,214,90,0),rgba(255,230,130,.5))}
+#dim{position:absolute;left:0;top:0;width:375px;height:812px;background:#020512;opacity:0;pointer-events:none}
+#beams{opacity:0}
 .fc{left:-28px;top:-13.5px;width:56px;height:38px;background-size:100% 100%;transform-origin:28px 13.5px}
 .fg{left:-20px;top:-23px;width:40px;height:46px;background-size:100% 100%;transform-origin:50% 50%}
 .fk{left:-24px;top:-21px;width:48px;height:42px;background-size:100% 100%;transform-origin:50% 50%}
@@ -156,10 +205,44 @@ button{font:inherit;color:inherit;cursor:pointer;padding:0;margin:0}
   background:radial-gradient(closest-side,#fff,#ffd24a 32%,rgba(255,122,60,.75) 62%,rgba(255,122,60,0))}
 .pp{left:-40px;top:-10px;width:80px;text-align:center;font-size:18px;font-weight:800;line-height:1;color:#ffd24a;white-space:nowrap;text-shadow:0 2px 0 rgba(90,50,0,.7)}
 .cf{left:-28px;top:-13.5px;width:56px;height:38px;background-size:100% 100%}
-#beam{opacity:0}
 #flash{position:absolute;left:0;top:0;width:375px;height:812px;background:#fff;opacity:0;pointer-events:none}
 #halo{position:absolute;left:0;top:0;width:375px;height:812px;opacity:0;pointer-events:none;
   background:radial-gradient(ellipse 80% 55% at 50% 44%,rgba(255,200,60,.55),rgba(255,150,20,.2) 55%,rgba(255,150,20,0))}
 #rays{position:absolute;left:-210px;top:70px;width:795px;height:795px;opacity:0;pointer-events:none;
   background:repeating-conic-gradient(from 0deg at 50% 50%,rgba(255,222,120,.42) 0deg 7deg,rgba(255,226,140,0) 7deg 22.5deg);
   -webkit-mask-image:radial-gradient(closest-side,#000 18%,rgba(0,0,0,0) 100%);mask-image:radial-gradient(closest-side,#000 18%,rgba(0,0,0,0) 100%)}
+
+/* ---------- 連鎖獎池（v2.3）：圖例那一排的左邊；爆炸徽章（和盤面上「能炸 8 格」的提示同一個形狀）＋金額 ---------- */
+.pot{position:absolute;left:12px;top:652px;width:132px;height:46px;transform-origin:22% 50%;display:flex;align-items:center;gap:4px;padding:0 12px 0 4px;border-radius:23px;
+  background:linear-gradient(#4a210c,#220f0e 62%,#33170a);border:2px solid #ff9a3c;
+  box-shadow:inset 0 1px 0 rgba(255,214,150,.4),inset 0 -2px 0 rgba(0,0,0,.28),0 0 0 1px rgba(255,140,40,.28)}
+.pot .pi{position:relative;flex:none;width:38px;height:38px;display:flex;align-items:center;justify-content:center}
+.pot .pi b{font-size:15px;font-weight:900;line-height:1;color:#fff;text-shadow:0 1px 0 #7a1c06,0 0 3px rgba(110,24,6,.9)}
+.pot #potN{flex:none;margin-left:auto;font-size:22px;font-weight:900;line-height:1;white-space:nowrap;color:#ffd24a;font-variant-numeric:tabular-nums;text-shadow:0 2px 0 #7a3a06}
+.pot.z #potN{color:rgba(255,214,150,.4);text-shadow:none}
+.pot:after{content:"";position:absolute;left:-4px;right:-4px;top:-4px;bottom:-4px;border-radius:27px;border:2px solid #ffd24a;opacity:0;pointer-events:none}
+.pot.rdy:after{animation:ap 1.1s ease-in-out infinite alternate}
+#amtB{position:absolute;left:254px;top:564px;width:22px;height:22px;opacity:0;pointer-events:none;transform-origin:50% 50%}
+/* 拿獎池時飛的牌（從獎池飛進金額、再飛進錢包）、浮字 */
+.plm{position:absolute;left:0;top:0;pointer-events:none;will-change:transform,opacity;left:-58px;top:-18px;width:116px;height:36px;display:flex;align-items:center;gap:2px;padding:0 10px 0 3px;border-radius:18px;
+  background:linear-gradient(#fff0a0,#ffb52e 55%,#ff8a1e);border:2px solid #fff6c8;box-shadow:0 2px 0 rgba(120,50,4,.55)}
+.plm .ico{width:28px;height:28px}
+.plm span{flex:1;text-align:right;font-size:17px;font-weight:900;line-height:1;white-space:nowrap;color:#4a1600;font-variant-numeric:tabular-nums}
+.pp.pq{font-size:15px;color:#ffb066;text-shadow:0 2px 0 rgba(90,30,0,.85)}
+.pp.pb{font-size:24px;left:-60px;width:120px;color:#ffe27a;text-shadow:0 2px 0 #8a3a04,0 0 10px rgba(255,150,30,.8)}
+
+/* ---------- 「會炸幾格」提示（v2.3；盤面上疊 3 枚的格子，角上一顆小徽章；演出中隱藏、演出完才出現）----------
+   一般＝深藍底淺色字；接近門檻（≥ 門檻一半）＝金邊；到門檻（能拿獎池）＝爆炸徽章＋格子描邊，最多兩格呼吸。全是靜態樣式，只有進場的淡入／彈出（transition：opacity、transform）。 */
+#hints{pointer-events:none}
+#hints .hz{opacity:0;transform:scale(.4);transition:opacity .16s linear,transform .22s cubic-bezier(.3,1.6,.5,1)}
+#hints.on .ht.v .hz{opacity:1;transform:scale(1)}
+#hints .hp{opacity:0;transition:opacity .25s linear;fill:rgba(255,120,40,.14);stroke:#fff3b0;stroke-width:3;stroke-linejoin:round}
+#hints.on .hp.v{opacity:1}
+#hints.on .hp.v.pz{animation:hotp 1s ease-in-out infinite alternate}
+#hints.on .ht.v.pz .hz{animation:hbr 1s ease-in-out infinite alternate}
+@keyframes hbr{from{transform:scale(1)}to{transform:scale(1.16)}}
+#hints .hb{fill:#0b1230;fill-opacity:.94;stroke:#9db0f2;stroke-width:1.4}
+#hints .ht.m .hb{fill:#2b1a05;stroke:#ffd24a;stroke-width:1.8}
+#hints .hn{font-size:12px;font-weight:800;fill:#e4ecff;text-anchor:middle}
+#hints .ht.m .hn{fill:#ffe27a}
+#hints .ht.h .hn{font-size:14px;fill:#fff;stroke:#7a1c06;stroke-width:2.6;stroke-linejoin:round;paint-order:stroke}
