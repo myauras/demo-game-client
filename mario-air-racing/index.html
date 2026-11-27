@@ -1346,13 +1346,26 @@ function FlightWeather(vents,radius){
   this.flakes=list(540);this.ash=list(29);this.birds=list(8);this.vapour=list(12);
   this.airStreaks=list(25);
   this.brushes=[this.makeCloud(0),this.makeCloud(1),this.makeCloud(2)];
-  this.cloudTile=this.brushes[0];
+  this.cloudTile=this.brushes[0];this.rainbow=this.makeRainbow();
   this.cloudWisps=[
     this.makeWisp('#d4d5c0','#fff1d6','#fffbed'),
     this.makeWisp('#8a9bb0','#c7d6e2','#e8f1f5'),
     this.makeWisp('#b88485','#edc2ac','#ffe5c8')
   ];
 }
+FlightWeather.prototype.makeRainbow=function(){
+  const c=document.createElement('canvas');c.width=840;c.height=420;
+  const g=c.getContext('2d'),r=420;
+  const bow=g.createRadialGradient(r,r,0,r,r,r);
+  for(const [at,ink] of [[0,'rgba(227,241,255,.04)'],[.865,'rgba(227,241,255,.10)'],
+    [.884,'rgba(174,145,222,.50)'],[.899,'rgba(134,172,234,.76)'],[.918,'rgba(100,207,213,.78)'],
+    [.936,'rgba(168,219,147,.82)'],[.953,'rgba(255,231,150,.88)'],[.971,'rgba(255,179,131,.82)'],
+    [.984,'rgba(244,144,140,.65)'],[1,'rgba(255,184,169,0)']])bow.addColorStop(at,ink);
+  g.fillStyle=bow;g.fillRect(0,0,c.width,c.height);
+  const mist=g.createLinearGradient(0,0,0,r);mist.addColorStop(0,'#fff');mist.addColorStop(.51,'#fff');
+  mist.addColorStop(.84,'rgba(255,255,255,.53)');mist.addColorStop(1,'rgba(255,255,255,0)');
+  g.globalCompositeOperation='destination-in';g.fillStyle=mist;g.fillRect(0,0,c.width,c.height);return c;
+};
 FlightWeather.prototype.makeCloud=function(variant){
   const c=document.createElement('canvas');c.width=230;c.height=125;const g=c.getContext('2d');
   const lift=[0,7,-5][variant];
@@ -1405,10 +1418,15 @@ function cyclic(x){return x-Math.floor(x);}
 FlightWeather.prototype.sky=function(t,w,storm){
   var g=this.bg,W=this.width,H=this.height;
   var grad=g.createLinearGradient(0,0,0,H);
-  grad.addColorStop(0,this.rgb([223,222,185],[37,45,72],[137,97,109],w));
-  grad.addColorStop(.46,this.rgb([242,222,177],[65,84,109],[211,147,125],w));
+  grad.addColorStop(0,this.rgb([167,210,219],[37,45,72],[137,97,109],w));
+  grad.addColorStop(.46,this.rgb([225,231,201],[65,84,109],[211,147,125],w));
   grad.addColorStop(1,this.rgb([248,210,163],[133,157,170],[248,192,139],w));
   g.fillStyle=grad;g.fillRect(0,0,W,H);
+  if(w.x>.45){
+    const r=Math.min(W*.80,H*.46),cx=W*(.27-.024*chase.pan),cy=H*(.67-.018*chase.tilt);
+    g.save();g.globalAlpha=.81*smooth((w.x-.45)/.55);
+    g.drawImage(this.rainbow,cx-r,cy-r*.94,2*r,r*.94);g.restore();
+  }
   if(w.y>.005){
     g.save();g.fillStyle='#e6f1ff';
     for(var j=0;j<44;j++){var star=this.flakes[j];g.globalAlpha=w.y*(.28+.58*star.r);g.beginPath();g.arc(star.x*W,star.y*.64*H,.42+1.0*star.z,0,6.29);g.fill();}
@@ -1875,6 +1893,178 @@ function makeGlobeMeshes(radius,atlas){
   return {water:tessellate(90,46,true),land:tessellate(165,80,false)};
 }
 
+// The island silhouettes and streams share the same cliff edges. Bake them in
+// globe coordinates so the ocean depth test, camera and scenery blur apply to all of them.
+function makeOceanIslands(radius,atlas,uniforms){
+  const stone=[],colours=[],water=[],flow=[],tau=2*Math.PI;
+  const pose=new THREE.Matrix4(),orientation=new THREE.Quaternion(),origin=new THREE.Vector3();
+  const vertex=new THREE.Vector3(),unit=new THREE.Vector3(1,1,1),ink=new THREE.Color();
+  let seed=48571;
+  function random(){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296}
+  function bake(buffer,p){vertex.set(...p).applyMatrix4(pose);buffer.push(vertex.x,vertex.y,vertex.z)}
+  function face(a,b,c,color,shade=1){
+    if(a===b||b===c||c===a)return;
+    ink.setHex(color);
+    for(const p of [a,b,c]){bake(stone,p);colours.push(ink.r*shade,ink.g*shade,ink.b*shade)}
+  }
+  function ring(x,y,z,rx,rz,n,phase=0){
+    return Array.from({length:n},(_,i)=>[x+rx*Math.cos(phase+tau*i/n),y,z+rz*Math.sin(phase+tau*i/n)]);
+  }
+  function connect(lo,hi,color,variation=.08){
+    for(let i=0;i<lo.length;i++){
+      const j=(i+1)%lo.length,light=1-variation*random();
+      face(lo[i],hi[i],hi[j],color,light);face(lo[i],hi[j],lo[j],color,light);
+    }
+  }
+  function palm(x,y,z,h,lean){
+    const crown=[x+lean,y+h,z+1.4];
+    let trunk=ring(x,y-.5,z,h*.076,h*.076,6);
+    for(let j=1;j<=4;j++){
+      const u=j/4,r=h*(.076-.034*u),next=ring(x+lean*u*u,y+h*u,z+1.4*u,r,r,6);
+      connect(trunk,next,j===1?0x946a4a:0xba9060);trunk=next;
+    }
+    const phase=random()*tau;
+    for(let f=0;f<8;f++){
+      const a=phase+f*tau/8+.17*random(),length=h*(.54+.30*random()),curl=h*(.30+.14*random());
+      let mid=crown,left=crown,right=crown;
+      for(let j=1;j<=5;j++){
+        const u=j/5,spread=length*.16*Math.sin(Math.PI*u)**.65;
+        const px=crown[0]+Math.cos(a)*length*u,pz=crown[2]+Math.sin(a)*length*u;
+        const py=crown[1]+curl*Math.sin(u*2.65)-h*.19*u*u;
+        const ridge=[px,py,pz],l=j===5?ridge:[px-Math.sin(a)*spread,py-spread*.45,pz+Math.cos(a)*spread];
+        const r=j===5?ridge:[px+Math.sin(a)*spread,py-spread*.45,pz-Math.cos(a)*spread];
+        const top=f%3===0?0x90b950:0x59a75c;
+        face(mid,left,l,top);face(mid,l,ridge,top);face(mid,ridge,r,0x388562);face(mid,r,right,0x388562);
+        mid=ridge;left=l;right=r;
+      }
+    }
+  }
+  function grove(x,y,z,h){
+    connect(ring(x,y-.5,z,1.45,1.35,5),ring(x+1,y+h*.64,z,.86,.83,5),0x986d50);
+    for(const [dx,dy,dz,s] of [[-.24,.69,0,.67],[.24,.76,.1,.63],[0,.98,-.08,.69]]){
+      const cx=x+dx*h,cy=y+dy*h,cz=z+dz*h,r=h*s*.53;
+      const low=ring(cx,cy-r*.45,cz,r*.66,r*.60,7,.24),wide=ring(cx,cy,cz,r,r*.91,7,.24);
+      const top=ring(cx+.11*r,cy+.68*r,cz-.08*r,.34*r,.32*r,7,.24);
+      connect(low,wide,0x38836a);connect(wide,top,0x70ad65);
+      for(let i=0;i<7;i++)face(top[i],[cx,cy+.80*r,cz],top[(i+1)%7],0x88b66a);
+    }
+  }
+  function streamQuad(a,b,c,d,v0,v1,kind,lock0=0,lock1=0){
+    for(const [p,u,v,lock] of [[a,0,v0,lock0],[b,1,v0,lock0],[c,1,v1,lock1],[a,0,v0,lock0],[c,1,v1,lock1],[d,0,v1,lock1]]){
+      bake(water,p);flow.push(u,v,kind,lock);
+    }
+  }
+  function build(lon,lat,size,variant,small){
+    orientation.setFromEuler(new THREE.Euler(lat,0,-lon,'ZXY'));
+    origin.set(0,radius,0).applyQuaternion(orientation);pose.compose(origin,orientation,unit);
+    const n=16,rx=size,rz=size*(.60+.11*random()),height=size*(small?.29:.54+.13*random());
+    const profile=Array.from({length:n},()=>.89+.22*random()),angles=profile.map((_,i)=>tau*(i+.16*random())/n);
+    const tiltAt=(x,z)=>(variant%2?1:-1)*x*.074-z*.059;
+    const ground=(x,z)=>height+tiltAt(x,z);
+    const tiers=[[-7,1.10,0],[small?.25:1.3,1.14,0],[small?height*.27:3.5,.99,0],
+      [height*.44,.87,-.024],[height*.61,.89,-.038],[height*.69,.84,-.051],
+      [small?height*.88:height-1.7,.80,-.068],[height,.82,-.070]];
+    const rings=tiers.map(([y,scale,lean],j)=>angles.map((a,i)=>{
+      const x=rx*(Math.cos(a)*scale*profile[i]+lean),z=rz*Math.sin(a)*scale*profile[i];
+      const seam=j>2&&j<6?Math.min(1.25,height*.035)*Math.sin(2*a+variant):0;
+      return [x,y+tiltAt(x,z)+seam,z];
+    }));
+    const rock=[0xb89b74,0xf0cf92,0xbd9271,0xc69b78,0xe2ba8c,0xba9070,0x709850];
+    for(let i=0;i<rings.length-1;i++)connect(rings[i],rings[i+1],rock[i],i===5?.16:.08);
+    const top=rings[rings.length-1],grass=[0x9fc966,0xa9cd70,0xa4c86a];
+    for(let i=0;i<n;i++)face([0,height,0],top[(i+1)%n],top[i],grass[(i+variant)%3]);
+    if(small){palm(-rx*.15,ground(-rx*.15,0),0,rx*.64,rx*.15);return}
+    const palmSide=variant%2?-1:1;
+    const px=rx*.38*palmSide,pz=-rz*.09;
+    palm(px,ground(px,pz),pz,rx*.53,palmSide*rx*.09);
+    palm(px-rx*.19*palmSide,ground(px-rx*.19*palmSide,-rz*.33),-rz*.33,rx*.34,-palmSide*rx*.06);
+    // A raised green headland gives the grove its own silhouette above the palms' beach.
+    const hx=-px,hz=-rz*.19,ridgeY=ground(hx,hz)+rx*.15;
+    const flank=ring(hx,0,hz,rx*.39,rz*.45,9,.28);
+    for(const v of flank)v[1]=ground(v[0],v[2])-.55;
+    const crest=ring(hx-.055*rx,ridgeY,hz,rx*.19,rz*.20,9,.28);
+    connect(flank,crest,0x81ae58,.10);
+    for(let i=0;i<crest.length;i++)face(crest[i],[hx,ridgeY+.55,hz],crest[(i+1)%crest.length],0xa0c86b);
+    grove(hx,ridgeY+.22,hz,rx*.40);
+    // Weathered sandstone blocks interrupt the cliff bands at the waterline.
+    for(let j=0;j<3;j++){
+      const side=variant%2?1:-1,x=side*rx*(.78+j*.17),z=rz*(.38+.19*Math.sin(j*2.8+variant));
+      const size=rx*(.28-j*.045),h=size*(.75+.40*random()),angle=random();
+      const base=ring(x,-3.5,z,size,size*.73,7,angle),ledge=ring(x,2.4,z,size*1.06,size*.76,7,angle);
+      const cap=ring(x+side*size*.16,h,z-1,size*.62,size*.51,7,angle);
+      connect(base,ledge,0xa78972);connect(ledge,cap,0xbe977a,.19);
+      for(let k=0;k<7;k++)face(cap[k],[x+size*.1,h+size*.12,z],cap[(k+1)%7],j===0?0x91ac63:0xdeb88d);
+    }
+    // Sample across real cliff facets; the curtain follows the brow then springs clear of the ledges.
+    const middle=3.9+.48*Math.sin(variant*2),half=.40+.12*random();
+    function edge(level,f,forward){
+      const i=Math.floor(f),a=rings[level][i],b=rings[level][i+1],u=f-i;
+      return [a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u+.50,a[2]+(b[2]-a[2])*u+forward];
+    }
+    const pair=(level,width,forward)=>[edge(level,middle+width,forward),edge(level,middle-width,forward)];
+    const lip=pair(7,half,.45);
+    const source=lip.map(([x,y,z])=>[x+.055*rx,y+.62,z-.32*rz]);
+    streamQuad(...source,lip[1],lip[0],0,.15,0);
+    // The curtain widens at the foot where the current hits the tide.
+    const shoulder=lip.map(([x,y,z])=>[x,y-1.7,z+2.0]);
+    streamQuad(...lip,shoulder[1],shoulder[0],.15,.24,0);
+    const foot=pair(1,half*1.20,2.2),mid=shoulder.map(([x,y,z],i)=>[(x+foot[i][0])*.5,(y+foot[i][1])*.5,Math.max(z+1.2,(z+foot[i][2])*.5+1.5)]);
+    streamQuad(...shoulder,mid[1],mid[0],.24,.59,0);
+    streamQuad(...mid,foot[1],foot[0],.59,1,0,0,1);
+    const fx=(foot[0][0]+foot[1][0])*.5,fz=(foot[0][2]+foot[1][2])*.5,fw=Math.abs(foot[0][0]-foot[1][0])*.83+4;
+    streamQuad([fx-fw,1,fz-3],[fx+fw,1,fz-3],[fx+fw,1,fz+11],[fx-fw,1,fz+11],0,1,1,1,1);
+    const sprayLeft=[fx-fw*.92,1,fz+1.4],sprayRight=[fx+fw*.92,1,fz+1.4];
+    streamQuad(sprayLeft,sprayRight,sprayRight,sprayLeft,0,1,2,1,1);
+  }
+  const sample=[0,0,0];
+  for(let i=0;i<12;i++){
+    let lon=i*tau/12-.105+.034*Math.sin(i*2.2),lat=.24+.081*Math.sin(i*2.72);
+    atlas.sample(cyclic(lon/tau+.5),(lat+.064)/Math.PI+.5,sample);
+    if(sample[0]>-6)lat-=.11;
+    build(lon,lat,39+7*Math.cos(i*2.16),i,false);
+    if(i%3!==1)build(lon+.16,lat-.12,13+5*random(),i,true);
+  }
+  function geometry(points){
+    const g=new THREE.BufferGeometry();g.addAttribute('position',new THREE.BufferAttribute(new Float32Array(points),3));g.computeBoundingSphere();return g;
+  }
+  const terrain=geometry(stone);terrain.addAttribute('color',new THREE.BufferAttribute(new Float32Array(colours),3));terrain.computeVertexNormals();
+  const rockMat=new THREE.ShaderMaterial({uniforms,side:THREE.DoubleSide,vertexColors:THREE.VertexColors,transparent:true,
+    vertexShader:`varying vec3 hue;void main(){float sun=max(0.,dot(normalize(mat3(modelMatrix)*normal),vec3(-.44,.76,.47)));
+      hue=color*(.83+.22*sun);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+    fragmentShader:`uniform float islandAlpha;varying vec3 hue;void main(){gl_FragColor=vec4(hue,islandAlpha);}`});
+  const streams=geometry(water);streams.addAttribute('flow',new THREE.BufferAttribute(new Float32Array(flow),4));
+  const waterMat=new THREE.ShaderMaterial({uniforms,side:THREE.DoubleSide,transparent:true,depthWrite:false,
+    vertexShader:`attribute vec4 flow;uniform float surfaceTime,islandRadius;varying vec3 f;void main(){
+      f=flow.xyz;vec3 n=normalize(position);float lon=atan(n.x,n.y),north=islandRadius*asin(n.z);
+      float tide=3.1*sin(lon*17.+north*.023-surfaceTime*1.04)+2.15*sin(north*.047-lon*11.-surfaceTime*.83);
+      vec3 p=mix(position,n*(islandRadius+tide+.70),flow.w);if(flow.z>1.5)p+=n*(flow.y*7.4+.5);gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);}`,
+    fragmentShader:`uniform float surfaceTime,islandAlpha;varying vec3 f;
+      void main(){float u=f.x,v=f.y,t=surfaceTime;vec3 col;float alpha;
+        if(f.z<.5){float strand=sin(22.*u+.61*sin(v*8.-t*3.8));
+          float run=.5+.5*cos(28.*v-7.4*t+sin(13.*u)+u*5.);
+          float lace=smoothstep(.22,.91,strand)*(.24+.76*smoothstep(.36,.89,run));
+          col=mix(vec3(.14,.62,.69),vec3(.55,.89,.87),.4+.4*cos(u*9.+v));
+          col=mix(col,vec3(.94,1.,.93),lace+.21*(1.-smoothstep(.015,.12,min(u,1.-u))));
+          alpha=.97;
+        }else if(f.z<1.5){vec2 q=(f.xy-vec2(.5,.31))*vec2(1.9,1.55);
+          float d=length(q)+.05*sin(q.x*13.+t*.9)*sin(q.y*7.-t*.55);
+          float ripple=.5+.5*cos(18.*d-t*4.1),breaks=.5+.5*sin(q.x*7.-q.y*9.+t*.75);
+          float foam=max(1.-smoothstep(.05,.41,d),smoothstep(.52,.93,ripple)*(.30+.70*breaks));
+          col=mix(vec3(.42,.83,.79),vec3(.97,1.,.92),foam);
+          alpha=(1.-smoothstep(.45,1.,d))*(.31+.69*foam);
+        }else{float rim=max(0.,1.-4.*(u-.5)*(u-.5));
+          float froth=.19*rim+.14*rim*(.5+.5*sin(u*29.+t*5.));
+          alpha=(1.-smoothstep(froth,froth+.20,v))*rim;
+          for(int i=0;i<6;i++){float k=float(i),a=fract(t*(.82+k*.047)+k*.382);
+            vec2 at=vec2(.16+.136*k+(k-2.5)*a*.037,.12+sin(a*3.14159)*(.34+.24*sin(13.*k)));
+            float drop=length((f.xy-at)*vec2(2.3,1.));
+            alpha=max(alpha,(1.-smoothstep(.018,.090,drop))*sin(a*3.14159));}
+          col=vec3(.93,1.,.95);}
+        gl_FragColor=vec4(col,alpha*islandAlpha);}`});
+  const group=new THREE.Group(),cliffs=new THREE.Mesh(terrain,rockMat),falls=new THREE.Mesh(streams,waterMat);
+  cliffs.renderOrder=1;falls.renderOrder=2;group.add(cliffs,falls);return group;
+}
+
 function Sea(){
   var radius=game.seaRadius,atlas=makeFlightAtlas(),meshes=makeGlobeMeshes(radius,atlas);
   var chart=new THREE.DataTexture(atlas.pixels,atlas.width,atlas.height,THREE.RGBAFormat);
@@ -1885,6 +2075,8 @@ function Sea(){
     var mat=new THREE.ShaderMaterial({uniforms:this.uniforms,defines:i?{}:{OCEAN:1},vertexShader:planetVertex,fragmentShader:planetFragment,side:THREE.FrontSide});
     mat.extensions.derivatives=true;this.mesh.add(new THREE.Mesh(i?meshes.land:meshes.water,mat));
   }
+  this.uniforms.islandAlpha={type:'f',value:1};this.uniforms.islandRadius={type:'f',value:radius};
+  this.islands=makeOceanIslands(radius,atlas,this.uniforms);this.mesh.add(this.islands);
   this.embers=makeGlobeEmbers(radius,atlas,this.uniforms);this.mesh.add(this.embers);
   this.atmosphere=new FlightWeather(atlas.vents,radius);this.resetClimate();
 }
@@ -3738,6 +3930,9 @@ function worldAt(t,motion){
   const preflightAge=record?clamp(lead+(Date.now()-record.start)/1000,0,lead):0;
   sea.clock=clock;sea.motion=motion;sea.sceneryTime=waiting?preflightAge:motion+lead;
   sea.storm=sampleClimate(clock,w);
+  const coastVisibility=smooth((w.x-.45)/.55);
+  sea.uniforms.islandAlpha.value=coastVisibility;sea.islands.visible=coastVisibility>.004;
+  sea.islands.scale.setScalar(1-.045*(1-coastVisibility));
   const coast=.62*(1-Math.exp(-Math.max(0,motion-clock)/.62));
   const terrainTime=finishView?motion:clock;
   sea.mesh.rotation.z=waiting?.123*(preflightAge-lead):.123*terrainTime+.00315*terrainTime*terrainTime+(finishView?0:(.123+.0063*clock)*coast);
