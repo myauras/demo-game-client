@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 1280" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#0877c6"/><stop offset=".5" stop-color="#5ac1ec"/><stop offset="1" stop-color="#d8edf2"/></linearGradient>
+    <linearGradient id="ground" x2="0" y2="1"><stop stop-color="#7f939a"/><stop offset=".55" stop-color="#344d5a"/><stop offset="1" stop-color="#071523"/></linearGradient>
+    <linearGradient id="wall" x2="0" y2="1"><stop stop-color="#a8b3b4"/><stop offset="1" stop-color="#53656c"/></linearGradient>
+    <filter id="grain"><feTurbulence baseFrequency=".7" numOctaves="3" stitchTiles="stitch" type="fractalNoise"/><feColorMatrix values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 .12 0"/></filter>
+    <pattern id="fence" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M-6 6 6-6M0 24 24 0M18 30 30 18M-6 18 6 30M0 0 24 24M18-6 30 6" stroke="#203d4c" stroke-width="2" opacity=".75"/></pattern>
+  </defs>
+  <rect width="720" height="1280" fill="url(#sky)"/>
+  <path d="M0 300 85 220l70 52 92-118 90 99 89-115 116 137 82-92 96 110v250H0z" fill="#4f7b8f" opacity=".72"/>
+  <path d="M0 390 96 294l86 51 72-82 77 79 90-95 83 87 80-60 136 118v135H0z" fill="#7899a3" opacity=".78"/>
+  <path d="M0 270h190v330H0zM530 265h190v335H530z" fill="url(#wall)"/>
+  <path d="M0 70h198v210H0zM522 70h198v205H522z" fill="url(#fence)"/>
+  <g stroke="#173442" stroke-width="8"><path d="M0 275V60M65 275V60M130 275V60M195 275V60M525 275V60M590 275V60M655 275V60M720 275V60"/></g>
+  <g fill="#e15133" opacity=".85"><path d="m0 392 147-74-22 57-125 70z"/><path d="m720 390-147-74 22 57 125 70z"/></g>
+  <path d="M0 555h720v725H0z" fill="url(#ground)"/>
+  <path d="m190 555 340 0 190 725H0z" fill="#9ba7a5" opacity=".22"/>
+  <g fill="#263b43" stroke="#0d1e27" stroke-width="6"><path d="M0 735h150v245H0z"/><path d="M570 720h150v260H570z"/><path d="M15 650h118v100H15z"/><path d="M592 638h128v102H592z"/></g>
+  <g stroke="#819397" stroke-width="5" opacity=".7"><path d="M0 790h150M0 860h150M570 780h150M570 850h150"/><path d="M45 735v245M105 735v245M615 720v260M675 720v260"/></g>
+  <g fill="#d7e0dc" opacity=".55"><ellipse cx="350" cy="565" rx="105" ry="11"/><ellipse cx="357" cy="745" rx="155" ry="20"/></g>
+  <rect width="720" height="1280" filter="url(#grain)" opacity=".5"/>
+  <rect y="900" width="720" height="380" fill="#03101c" opacity=".46"/>
+</svg>
