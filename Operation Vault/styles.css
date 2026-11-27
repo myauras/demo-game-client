@@ -57,7 +57,7 @@ button { color: inherit; }
 .balance strong { grid-column: 1; grid-row: 1; display: grid; place-items: center; font-size: 18px; line-height: 1; letter-spacing: .02em; }
 .balance__plus { grid-column: 2; grid-row: 1; display: grid; place-items: center; background: linear-gradient(#ffbe42, #df7210); color: #101b20; border-radius: 3px; font-size: 23px; font-weight: 900; box-shadow: inset 0 1px rgba(255,255,255,.55); }
 
-.mission { display: grid; justify-items: center; gap: 6px; filter: drop-shadow(0 2px 2px #00101b); }
+.mission { display: none; }
 .shot-track { display: flex; gap: clamp(5px, 1.7vw, 8px); align-items: center; }
 .shot-dot { width: 12px; height: 12px; border: 2px solid #ecfbff; background: rgba(7, 18, 26, .75); border-radius: 50%; box-shadow: inset 0 0 0 2px rgba(0,0,0,.5); transition: .28s ease; }
 .shot-dot.is-hit { border-color: #ffd05e; background: #ff9b1e; box-shadow: 0 0 10px #ff9b1e; }
