@@ -2,7 +2,7 @@
  * 爆金連鎖——勝負 log 頁樣式（z-index 36；疊層順序表見 base.css）
  * 動畫只動 transform；內容區零原生捲軸（滾動由 DragScroll 處理）
  * ========================================================================= */
-.lgm{position:absolute;inset:0;z-index:36;background:var(--appbg);display:flex;flex-direction:column;
+.lgm{position:absolute;left:0;right:0;top:0;bottom:0;z-index:36;background:var(--appbg);display:flex;flex-direction:column;
   opacity:0;visibility:hidden;transform:scale(.97);
   transition:opacity .22s linear,transform .22s ease-out,visibility 0s linear .22s}
 .lgm.show{opacity:1;visibility:visible;transform:none;transition:opacity .22s linear,transform .22s ease-out}

@@ -1,14 +1,14 @@
 /* =========================================================================
  * 爆金連鎖——美術（全部程式畫、畫一次重複用；佔位美術，沒有外部圖）
  *
- * 做法：金幣、鑽石、皇冠、天降幣、火花都是「SVG 字串 → data URI → CSS 背景圖」，載入時畫一次、
+ * 做法：金幣、鑽石、皇冠、火花都是「SVG 字串 → data URI → CSS 背景圖」，載入時畫一次、
  * 之後只是被搬動（transform／opacity）。不用 filter、不用即時漸層。
  *
  * 金幣（斜看）：有厚度的側邊（圓柱高光＋逐條刻紋）、幣緣浮起的環、珠粒圈、凹下去的幣面、
- *   浮雕星徽（亮面朝左上、暗面朝右下）、左上弧形高光。三種配色：n 古金、h 亮金（快滿的格子）、s 天降（玫紅，和金、鑽石的青都分得開）。
+ *   浮雕星徽（亮面朝左上、暗面朝右下）、左上弧形高光。兩種配色：n 古金、h 亮金（快滿的格子、飛行中的幣、能量條快滿時的幣頭）。
  * 盤面（斜看）：後窄前寬的梯形，金屬邊框＋四角鉚釘＋格子凹槽＋幣座。幾何常數與靜態稿 B 案相同。
  *
- * 對外：ART.G（幾何）、ART.css()（所有精靈的 CSS 類）、ART.boardSVG()（盤面底圖）、
+ * 對外：ART.G（幾何）、ART.css()（所有精靈的 CSS 類：.cn .ch .gd .gk .spk .spg）、ART.boardSVG()（盤面底圖）、
  *       ART.coinSVG/gemSVG/crownSVG/sparkSVG（字串）、ART.CW/CH…（精靈尺寸）
  * ========================================================================= */
 var ART = (function(){
@@ -29,11 +29,7 @@ var PAL = {
   h: { sd: ['#8a4e04', '#e6a41c', '#fff3ac', '#f6c23a', '#b06c0c', '#6e3a02'],
        face0: '#fffbd6', face1: '#ffd54a', face2: '#e09a22', lip: '#8a4a06',
        ring0: '#fffbd4', ring1: '#b8690a', fld0: '#ffeba0', fld1: '#f4b52e',
-       star0: '#ffd770', star1: '#d58916', sHi: '#ffffea', sLo: '#955205', bead: '#fffbd4', beadLo: '#a65e08' },
-  s: { sd: ['#5e1544', '#c23c82', '#ffc9e3', '#d9569a', '#85205a', '#4a0f33'],
-       face0: '#ffe0ef', face1: '#f070b0', face2: '#a82a70', lip: '#661446',
-       ring0: '#ffe9f4', ring1: '#7e1c55', fld0: '#ffc2de', fld1: '#d9468f',
-       star0: '#ffb3d6', star1: '#b02e78', sHi: '#fff2f9', sLo: '#6e1048', bead: '#ffe9f4', beadLo: '#7a1a52' }
+       star0: '#ffd770', star1: '#d58916', sHi: '#ffffea', sLo: '#955205', bead: '#fffbd4', beadLo: '#a65e08' }
 };
 
 function ptE(cx, cy, rx, ry, deg){ var a = deg * Math.PI / 180; return [cx + rx * Math.cos(a), cy + ry * Math.sin(a)]; }
@@ -137,6 +133,18 @@ function crownSVG(){
   return s;
 }
 
+/* ---------- 爆炸徽章（獎池的圖示：黃色尖角＋紅橙圓心，數字由呼叫端疊上去）----------
+   viewBox -20～20；pts＝尖角（12 個）。主畫面的獎池、拿獎池的飛行牌、盤面上「能炸 8 格」的提示都用同一個形狀，玩家一眼連得起來 */
+function burstPts(ro, ri){ return P(starPts(0, 0, ro, ri, 12, -Math.PI / 2)); }
+function burstSVG(){
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-20 -20 40 40" width="40" height="40"><defs>'
+    + '<radialGradient id="a" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#fff6b8"/><stop offset=".5" stop-color="#ffbc2e"/><stop offset="1" stop-color="#ff7a1e"/></radialGradient>'
+    + '<radialGradient id="b" cx=".38" cy=".3" r=".85"><stop offset="0" stop-color="#ff8a44"/><stop offset=".55" stop-color="#e5391a"/><stop offset="1" stop-color="#a3180a"/></radialGradient></defs>'
+    + '<polygon points="' + burstPts(19.2, 15.2) + '" fill="url(#a)" stroke="#8a2a04" stroke-width="1.5" stroke-linejoin="round"/>'
+    + '<circle r="11.4" fill="url(#b)" stroke="#ffe9a0" stroke-width="1.3"/>'
+    + '<path d="M-7.6 -5.2A9.4 9.4 0 0 1 0 -9.6" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1.5" stroke-linecap="round"/></svg>';
+}
+
 /* 四角閃光（裝飾） */
 function sparkSVG(col){
   return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-12 -12 24 24" width="24" height="24"><polygon points="' + P(starPts(0, 0, 11, 2.4, 4, -Math.PI / 2)) + '" fill="' + (col || '#fff7c2') + '"/><circle r="2.2" fill="#fff"/></svg>';
@@ -198,15 +206,15 @@ function css(){
   var out = '';
   out += '.cn{background-image:' + uri(coinSVG('n')) + '}';
   out += '.ch{background-image:' + uri(coinSVG('h')) + '}';
-  out += '.cs{background-image:' + uri(coinSVG('s')) + '}';
   out += '.gd{background-image:' + uri(gemSVG()) + '}';
   out += '.gk{background-image:' + uri(crownSVG()) + '}';
   out += '.spk{background-image:' + uri(sparkSVG('#fff7c2')) + '}';
   out += '.spg{background-image:' + uri(sparkSVG('#ffd24a')) + '}';
+  out += '.bst{background-image:' + uri(burstSVG()) + '}';
   return out;
 }
 
-return { CW: CW, CH: CH, CXc: CXc, CYc: CYc, RX: RX, RY: RY, TH: TH, GW: GW, GH: GH, KW: KW, KH: KH,
+return { burstPts: burstPts, burstSVG: burstSVG, CW: CW, CH: CH, CXc: CXc, CYc: CYc, RX: RX, RY: RY, TH: TH, GW: GW, GH: GH, KW: KW, KH: KH,
   G: { CX: CX, CWd: CWd, TOP: TOP, BOT: BOT, RH: RH, rt: rt, fy: fy, cellPts: cellPts, dims: dims, xL: xL, xR: xR },
   css: css, boardSVG: boardSVG, coinSVG: coinSVG, gemSVG: gemSVG, crownSVG: crownSVG, sparkSVG: sparkSVG };
 })();

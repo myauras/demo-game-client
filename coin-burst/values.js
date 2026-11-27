@@ -4,19 +4,33 @@
  * 紀律（改東西前先讀）：
  *  1. 鐵表（TASKS.md「已定案數值」）是唯一數字來源。CFG 只放鐵表常數；RTP、各面額實付、
  *     寶物方向表、起始盤面、盤面最低總數全部由程式導出，禁手改。
- *  2. 嚴禁暗改機率 p（鑽石 1/40、皇冠 1/800、天降 1/7）。要調 RTP 只准動各物的「值」。
+ *  2. 嚴禁暗改機率 p（鑽石 1/40、皇冠 1/800）。要調 RTP 只准動各物的「值」與能量條長度 RAIN_EVERY。
  *  3. 本檔零 DOM、零依賴；瀏覽器以 <script> 載入、Node 以 eval 載入（test/mc-test.js）。
  *     不要加頂層 'use strict'：eval 時要讓 var EV／DEMO_KEY 落在呼叫端作用域。
  *  4. ES5 寫法（舊手機）。
  *
- * 玩法：5×5 盤面，每格 0～3 枚；丟一枚到某格，疊到 4 枚就炸開、往上下左右各噴 1 枚，
+ * 玩法（v2）：5×5 盤面，每格 0～3 枚；丟一枚到某格，疊到 4 枚就炸開、往上下左右各噴 1 枚，
  * 隔壁達 4 枚跟著炸；噴出盤面的都是玩家的。普通幣被擠出盤面值 COIN_PAY 個面額，
- * 鑽石／皇冠（玩家丟的那一枚有機率是寶物）被擠出盤面才兌現。每注 1/7 機率天上再掉一枚
- * 免費普通幣到隨機一格。
+ * 鑽石／皇冠（玩家丟的那一枚有機率是寶物）被擠出盤面才兌現。
+ * 能量條：每張盤面（每個面額）一條，每丟一枚＋1，集滿 RAIN_EVERY（86）那一注，玩家那一枚（含連鎖）
+ * 結算完後「金幣雨」：25 格每格同時掉一枚免費普通幣（不是寶物），再分波連爆到穩定，能量條歸零。
+ * 能量條的值由呼叫端（核心）保存；本檔只給純函式（meterAfter／play 的 opts.rain／rainAll）。
  *
- * 抽獎入口：play(board, i, rng)。rng 是「回傳 [0,1) 的函式」，一注固定依序取：
- *   1) 這枚是什麼（rollKind）  2) 有沒有天降（rollSky）  3) 只有天降才取：落哪格（rollSkyCell）
- * 測試與導演台用 EV.scripted(plan, baseRng) 指定其中幾項，其餘照 baseRng。
+ * 連鎖獎池（v2.3）：每張盤面（每個面額）一個獎池，每注存 POT_ADD 個面額（實付 15／75／150，整數）。
+ * 一注的順序：玩家那一枚（main）結算 → 金幣雨（若有）→ 這一注的 POT_ADD 入池 → 若 main.topples ≥ POT_CHAIN
+ * （玩家自己那一枚炸到 POT_CHAIN 格以上；金幣雨帶出的連鎖不算）或這一注有下雨，獎池整個給玩家、歸零。
+ * 獎池金額用「實付整數」累加、由呼叫端（核心）保存；本檔只給純函式 potAfter(pot, res, di)。
+ * 獎池是玩家自己存的錢，遲早被拿走（最慢在下雨那一注），所以長期拿回與丟法無關。
+ *
+ * RTP（長期、與丟哪一格無關）＝ (1 − pDiamond − pCrown ＋ 25／RAIN_EVERY) × COIN_PAY
+ *                               ＋ pDiamond × DIAMOND.PAY ＋ pCrown × CROWN.PAY ＋ POT_ADD
+ *   ＝ (1 − 1/40 − 1/800 ＋ 25/86) × 0.5 ＋ 1/40 × 5 ＋ 1/800 × 50 ＋ 0.15 ＝ 96.97%
+ * 金幣雨的 25 枚免費幣沒收錢，成本攤在每一枚普通幣的落袋值裡。
+ *
+ * 抽獎入口：play(board, i, rng, { rec, rain })。rng 是「回傳 [0,1) 的函式」，一注只取一次：
+ *   這枚是什麼（rollKind）。有沒有金幣雨不抽，由呼叫端依能量條決定（opts.rain：布林）。
+ *   呼叫端慣例：var m = EV.meterAfter(meter); res = EV.play(board, i, rng, { rain: m.rain }); meter = m.meter;
+ * 測試與導演台用 EV.scripted(plan, baseRng) 指定「這枚是什麼」，其餘照 baseRng。
  * ========================================================================= */
 
 /* 記號：新建腳本會把 burst 換成 [a-z][a-z0-9]{1,11} 短名；沒替換也能跑 */
@@ -27,10 +41,12 @@ var EV = (function(){
 var CFG = {
   COLS: 5, ROWS: 5,                              // 盤面 5×5
   CAP: 4,                                        // 疊到 4 枚就炸開（四向，各噴 1 枚；固定 4）
-  COIN_PAY: 0.7,                                 // 普通幣被擠出盤面＝0.7 個面額（RTP 由它導出）
+  COIN_PAY: 0.5,                                 // 普通幣被擠出盤面＝0.5 個面額（RTP 由它導出）
   DIAMOND: { P: 1 / 40,  PAY: 5 },               // 玩家丟的那枚是鑽石的機率、值 5 個面額
   CROWN:   { P: 1 / 800, PAY: 50 },              // 皇冠
-  SKY_P: 1 / 7,                                  // 天降幣：每注機率（免費普通幣，不會是寶物）
+  RAIN_EVERY: 86,                                // 能量條長度：每張盤面每丟 86 枚集滿一次→下一場全盤金幣雨（25 格各落 1 枚免費普通幣）
+  POT_ADD: 0.15,                                 // 連鎖獎池：每注存進獎池 0.15 個面額（實付 15／75／150；RTP 由它導出）
+  POT_CHAIN: 8,                                  // 玩家自己那一枚連鎖炸到幾格以上拿走獎池（同一格炸兩次算兩格；金幣雨的連鎖不算）
   DENOMS: [100, 500, 1000],                      // 面額（暫用，待 Q5 裁決）；每個面額各一張盤面
   DENOM_DEFAULT: 0,                              // 預設面額＝DENOMS 的索引（0＝100）
   WALLET: 10000,                                 // 起始錢包
@@ -64,10 +80,11 @@ function rng(seed){
 
 function gcd(a, b){ return b ? gcd(b, a % b) : a; }
 
-/* 理論 RTP：(1−Σp＋天降)×普通幣值 ＋ Σ(p×寶物值)。天降幣沒收錢，成本攤在每一枚普通幣的落袋值 */
+/* 理論 RTP：(1−Σp＋全盤格數／RAIN_EVERY)×普通幣值 ＋ Σ(p×寶物值) ＋ POT_ADD（獎池每注存的，遲早全數發還）。
+   金幣雨的免費幣（每 RAIN_EVERY 注一次、每次＝盤面格數枚）沒收錢，成本攤在每一枚普通幣的落袋值 */
 function rtpOf(cfg){
   var sp = cfg.DIAMOND.P + cfg.CROWN.P;
-  return (1 - sp + cfg.SKY_P) * cfg.COIN_PAY + cfg.DIAMOND.P * cfg.DIAMOND.PAY + cfg.CROWN.P * cfg.CROWN.PAY;
+  return (1 - sp + cfg.COLS * cfg.ROWS / cfg.RAIN_EVERY) * cfg.COIN_PAY + cfg.DIAMOND.P * cfg.DIAMOND.PAY + cfg.CROWN.P * cfg.CROWN.PAY + cfg.POT_ADD;
 }
 
 function mergeCfg(over){
@@ -99,14 +116,20 @@ function build(over){
   var GEMS = [ { id: 'diamond', p: cfg.DIAMOND.P, pay: cfg.DIAMOND.PAY },
                { id: 'crown',   p: cfg.CROWN.P,   pay: cfg.CROWN.PAY } ];
   var gemP = cfg.DIAMOND.P + cfg.CROWN.P;
-  if(!(gemP >= 0 && gemP < 1 && cfg.SKY_P >= 0 && cfg.SKY_P < 1)) throw new Error('values.js：機率不合法');
+  if(!(gemP >= 0 && gemP < 1)) throw new Error('values.js：機率不合法');
+  if(!(cfg.RAIN_EVERY >= 1 && Math.floor(cfg.RAIN_EVERY) === cfg.RAIN_EVERY)) throw new Error('values.js：RAIN_EVERY 必須是 ≥1 的整數，現為 ' + cfg.RAIN_EVERY);
+  var RAIN_EVERY = cfg.RAIN_EVERY;
+  if(!(typeof cfg.POT_ADD === 'number' && cfg.POT_ADD >= 0 && isFinite(cfg.POT_ADD))) throw new Error('values.js：POT_ADD 必須是 ≥0 的數字，現為 ' + cfg.POT_ADD);
+  if(!(cfg.POT_CHAIN >= 1 && Math.floor(cfg.POT_CHAIN) === cfg.POT_CHAIN)) throw new Error('values.js：POT_CHAIN 必須是 ≥1 的整數，現為 ' + cfg.POT_CHAIN);
+  var POT_ADD = cfg.POT_ADD, POT_CHAIN = cfg.POT_CHAIN;
   var VALUE = { coin: cfg.COIN_PAY, diamond: cfg.DIAMOND.PAY, crown: cfg.CROWN.PAY };   // 各物被擠出盤面值幾個面額
   var RTP = rtpOf(cfg);
   var RTP_PARTS = {                                // 理論 RTP 拆解（各佔幾個面額；加總＝RTP）
     coin:    (1 - gemP) * cfg.COIN_PAY,
-    sky:     cfg.SKY_P * cfg.COIN_PAY,
+    rain:    (C * R / RAIN_EVERY) * cfg.COIN_PAY,
     diamond: cfg.DIAMOND.P * cfg.DIAMOND.PAY,
-    crown:   cfg.CROWN.P * cfg.CROWN.PAY
+    crown:   cfg.CROWN.P * cfg.CROWN.PAY,
+    pot:     POT_ADD                                // 連鎖獎池：每注存的，遲早全數發還給玩家
   };
   if(!(RTP >= cfg.RTP_MIN - 1e-12 && RTP <= cfg.RTP_MAX + 1e-12))
     throw new Error('values.js：RTP ' + (RTP * 100).toFixed(3) + '% 不在 ' + cfg.RTP_MIN * 100 + '%～' + cfg.RTP_MAX * 100 + '%');
@@ -118,6 +141,9 @@ function build(over){
       if(Math.abs(x - Math.round(x)) > 1e-9) throw new Error('values.js：面額 ' + cfg.DENOMS[d] + ' 的 ' + k + ' 實付 ' + x + ' 不是整數');
       row[k] = Math.round(x);
     }
+    var xp = cfg.DENOMS[d] * POT_ADD;                // 獎池每注存的實付（整數）：獎池金額一律用這個整數累加
+    if(Math.abs(xp - Math.round(xp)) > 1e-9) throw new Error('values.js：面額 ' + cfg.DENOMS[d] + ' 的獎池每注存入 ' + xp + ' 不是整數');
+    row.pot = Math.round(xp);
     PAY.push(row);
   }
   var MIN_TOTAL = (C - 1) * R + C * (R - 1);       // 穩定循環盤面總枚數下限＝相鄰格的邊數（5×5＝40）
@@ -159,11 +185,17 @@ function build(over){
   /* ---- 核心：丟一枚到第 i 格並連鎖到全部 <CAP。g 為 null＝只算枚數、不分種類（probe 用）。
      rec＝是否記錄分波明細（演出要；大量模擬可關）。每一波＝當下所有 ≥CAP 的格子同時炸開一次 ---- */
   function run(h, g, i, kind, rec){
-    var exits = { coin: 0, diamond: 0, crown: 0 }, topples = 0, waves = rec ? [] : null;
-    var cells, a, c, j, s, to, kk, order, out, olen, outs, moves, wexit;
+    var cells, s;
     h[i]++;
     if(g && kind !== 'coin') g[i].push(kind);
     cells = h[i] >= CAP ? [i] : [];
+    s = settle(h, g, cells, rec);
+    return finish(i, kind, s.waves, s.exits, s.topples);
+  }
+  /* 從「這批格子 ≥CAP」開始分波連爆到全部 <CAP（run 與 rainAll 共用） */
+  function settle(h, g, cells, rec){
+    var exits = { coin: 0, diamond: 0, crown: 0 }, topples = 0, waves = rec ? [] : null;
+    var a, c, j, s, to, kk, order, out, olen, outs, moves, wexit;
     while(cells.length){
       outs = [];
       for(a = 0; a < cells.length; a++){            // 先全部扣掉、寶物先離格，再發放（同一波同時發生）
@@ -185,7 +217,7 @@ function build(over){
       cells = [];
       for(j = 0; j < N; j++) if(h[j] >= CAP) cells.push(j);
     }
-    return finish(i, kind, waves, exits, topples);
+    return { waves: waves, exits: exits, topples: topples };
   }
   function finish(i, kind, waves, exits, topples){
     return { cell: i, kind: kind, waves: waves, exits: exits, topples: topples,
@@ -195,6 +227,28 @@ function build(over){
 
   /* 丟一枚 kind（'coin'｜'diamond'｜'crown'）到第 i 格，直接改 board，回傳完整分波結果（演出只讀這個） */
   function drop(board, i, kind){ return run(board.h, board.g, i, kind || 'coin', true); }
+
+  /* 金幣雨：25 格每格「同時」落下 1 枚免費普通幣（不是寶物），再照一般規則分波連爆到穩定；直接改 board。
+     回傳格式同 drop 的結果（cell＝−1、kind＝'coin'、waves／exits／topples／exitCount／pay），另有
+       fall：[0..N−1]（第一波之前這 N 格各落 1 枚，演出「一整片一起落、一起炸」讀它）、coins：N。
+     不是 25 次 drop 依序模擬：分波是同時的。沙堆模型可交換，最後盤面與噴出枚數與依序 drop 相同
+     （純普通幣盤面逐格相同；有寶物時 h／噴出總數相同、寶物落點可能因同格多顆的出場順序而不同，見 mc-test）。
+     rec 省略＝true（與 drop 一致）；大量模擬傳 false。 */
+  function rainAll(board, rec){
+    var h = board.h, cells = [], fall = [], j, s, r;
+    for(j = 0; j < N; j++){ h[j]++; fall.push(j); if(h[j] >= CAP) cells.push(j); }
+    s = settle(h, board.g, cells, rec !== false);
+    r = finish(-1, 'coin', s.waves, s.exits, s.topples);
+    r.fall = fall; r.coins = N;
+    return r;
+  }
+
+  /* 能量條（值由呼叫端保存）：這一注丟之前的能量條值 meter（0～RAIN_EVERY−1）→ 這一注之後的值，
+     以及這一注是否觸發金幣雨。第 RAIN_EVERY 注觸發（meter＝RAIN_EVERY−1 時）、之後歸零 */
+  function meterAfter(meter){
+    var m = Math.floor(meter) || 0, n = (m < 0 ? 0 : m) + 1;
+    return n >= RAIN_EVERY ? { meter: 0, rain: true } : { meter: n, rain: false };
+  }
 
   /* 不改盤面，原樣試算（含寶物） */
   function preview(board, i, kind){ return run(board.h.slice(), board.g.map(function(x){ return x.slice(); }), i, kind || 'coin', true); }
@@ -212,14 +266,12 @@ function build(over){
     return best;
   }
 
-  /* ---- 抽獎：一注依序取 3 項（見檔頭） ---- */
+  /* ---- 抽獎：一注只取一次 rng（見檔頭） ---- */
   function rollKind(u){
     var acc = 0, j;
     for(j = 0; j < GEMS.length; j++){ acc += GEMS[j].p; if(u < acc) return GEMS[j].id; }
     return 'coin';
   }
-  function rollSky(u){ return u < cfg.SKY_P; }
-  function rollSkyCell(u){ return Math.min(N - 1, Math.floor(u * N)); }
 
   /* 反查：必落在對應區間中點的 u（測試、導演台指定結果用） */
   function uForKind(kind){
@@ -228,51 +280,56 @@ function build(over){
     if(kind === 'coin') return (gemP + 1) / 2;
     throw new Error('uForKind：未知種類 ' + kind);
   }
-  function uForSky(on){ return on ? cfg.SKY_P / 2 : (cfg.SKY_P + 1) / 2; }
-  function uForCell(cell){ return (cell + 0.5) / N; }
 
-  /* 包一層 rng：只替前幾次取值指定結果，用完照 base。
-     plan.kind：'coin'｜'diamond'｜'crown'（不給＝照 base）
-     plan.sky：false＝沒天降；true＝有天降、落點照 base；整數＝有天降、落在該格（不給＝照 base） */
+  /* 包一層 rng：只替第一次取值（這枚是什麼）指定結果，用完照 base。
+     plan.kind：'coin'｜'diamond'｜'crown'（不給＝照 base） */
   function scripted(plan, base){
-    var q = [];
-    plan = plan || {};
-    q.push(plan.kind === undefined ? null : uForKind(plan.kind));
-    if(plan.sky === false) q.push(uForSky(false));
-    else if(plan.sky === true) q.push(uForSky(true));
-    else if(typeof plan.sky === 'number'){ q.push(uForSky(true)); q.push(uForCell(plan.sky)); }
-    else q.push(null);
+    var first = (plan && plan.kind !== undefined) ? uForKind(plan.kind) : null;
     return function(){
-      if(q.length){ var v = q.shift(); if(v !== null) return v; }
+      if(first !== null){ var v = first; first = null; return v; }
       return base();
     };
   }
 
-  /* 一注（抽獎唯一入口）：抽這枚是什麼 → drop → 抽天降與落點 → drop，整注結果一次定完。
-     opts.rec===false 時不記分波明細（大量模擬用）。 */
+  /* 一注（抽獎唯一入口）：抽這枚是什麼 → drop → （opts.rain 為真）金幣雨 rainAll，整注結果一次定完。
+     opts.rec===false 時不記分波明細（大量模擬用）。opts.rain＝這一注是否觸發金幣雨（呼叫端依能量條決定）。
+     enter／inValue 已把金幣雨的 N 枚免費幣算進去。res.rain 為 null 或 rainAll 的結果。 */
   function play(board, i, rng, opts){
-    var rec = !(opts && opts.rec === false);
+    var rec = !(opts && opts.rec === false), doRain = !!(opts && opts.rain);
     var kind = rollKind(rng());
-    var main = run(board.h, board.g, i, kind, rec), sky = null;
-    if(rollSky(rng())) sky = run(board.h, board.g, rollSkyCell(rng()), 'coin', rec);
+    var main = run(board.h, board.g, i, kind, rec), rain = doRain ? rainAll(board, rec) : null;
     var exits = { coin: main.exits.coin, diamond: main.exits.diamond, crown: main.exits.crown };
     var enter = { coin: kind === 'coin' ? 1 : 0, diamond: kind === 'diamond' ? 1 : 0, crown: kind === 'crown' ? 1 : 0 };
-    if(sky){ exits.coin += sky.exits.coin; exits.diamond += sky.exits.diamond; exits.crown += sky.exits.crown; enter.coin++; }
-    return { cell: i, kind: kind, main: main, sky: sky, exits: exits, enter: enter,
-             inValue: enter.coin * VALUE.coin + enter.diamond * VALUE.diamond + enter.crown * VALUE.crown,   // 這一注進場東西的面值
+    if(rain){ exits.coin += rain.exits.coin; exits.diamond += rain.exits.diamond; exits.crown += rain.exits.crown; enter.coin += rain.coins; }
+    return { cell: i, kind: kind, main: main, rain: rain, exits: exits, enter: enter,
+             inValue: enter.coin * VALUE.coin + enter.diamond * VALUE.diamond + enter.crown * VALUE.crown,   // 這一注進場東西的面值（含金幣雨的免費幣）
              exitCount: exits.coin + exits.diamond + exits.crown,
-             topples: main.topples + (sky ? sky.topples : 0),
-             pay: main.pay + (sky ? sky.pay : 0) };                                                          // 這一注拿回（個面額）
+             topples: main.topples + (rain ? rain.topples : 0),
+             pay: main.pay + (rain ? rain.pay : 0) };                                                        // 這一注拿回（個面額）
   }
 
-  /* 這一注拿回的實付金額（整數；di＝面額索引） */
+  /* 這一注「噴出的東西」的實付金額（整數；di＝面額索引；不含獎池，獎池看 potAfter 的 win） */
   function cash(res, di){
     var p = PAY[di];
     return res.exits.coin * p.coin + res.exits.diamond * p.diamond + res.exits.crown * p.crown;
   }
-  /* 回饋分級：'none'｜'back'（回本）｜'big'（大連爆）｜'huge'（全畫面；≥10 倍或皇冠落袋） */
-  function tier(res){
-    var p = res.pay + 1e-9;
+  /* 連鎖獎池（純函式，獎池的值由呼叫端保存；金額一律是「實付整數」，di＝面額索引）：
+     pot＝這一注之前獎池金額（整數）、res＝play 的回傳（用 res.main.topples 與 res.rain）。
+     回傳 { pot:這一注之後的獎池, win:這一注拿走多少（沒拿＝0）, add:這一注存了多少（＝PAY[di].pot）,
+            by:'chain'（玩家那一枚炸到 POT_CHAIN 格以上；與下雨同注時算這個）｜'rain'（下金幣雨）｜null }
+     順序：先入池再判斷，所以拿走的包含這一注存的。 */
+  function potAfter(pot, res, di){
+    var add = PAY[di].pot, total = (pot > 0 ? Math.floor(pot) : 0) + add;
+    var by = res.main.topples >= POT_CHAIN ? 'chain' : (res.rain ? 'rain' : null);
+    return by ? { pot: 0, win: total, add: add, by: by } : { pot: total, win: 0, add: add, by: null };
+  }
+  /* 獎池金額上界（實付整數）：最慢在第 RAIN_EVERY 注下雨時拿走，所以入池後、拿走前最多 RAIN_EVERY×每注存的 */
+  function potMax(di){ return RAIN_EVERY * PAY[di].pot; }
+
+  /* 回饋分級：'none'｜'back'（回本）｜'big'（大連爆）｜'huge'（全畫面；≥10 倍或皇冠落袋）
+     只給 res 算「噴出的東西」；有拿獎池時多給 di、potWin（實付整數），含獎池的拿回才是分級依據 */
+  function tier(res, di, potWin){
+    var p = res.pay + (potWin > 0 ? potWin / cfg.DENOMS[di] : 0) + 1e-9;
     if(p >= cfg.TIERS.HUGE || res.exits.crown > 0) return 'huge';
     if(p >= cfg.TIERS.BIG) return 'big';
     if(p >= cfg.TIERS.BACK) return 'back';
@@ -320,12 +377,12 @@ function build(over){
   }
 
   var M = {
-    CFG: cfg, N: N, GEMS: GEMS, VALUE: VALUE, RTP: RTP, RTP_PARTS: RTP_PARTS, PAY: PAY,
+    CFG: cfg, N: N, GEMS: GEMS, VALUE: VALUE, RTP: RTP, RTP_PARTS: RTP_PARTS, PAY: PAY, RAIN_EVERY: RAIN_EVERY,
+    POT_ADD: POT_ADD, POT_CHAIN: POT_CHAIN, potAfter: potAfter, potMax: potMax,
     MIN_TOTAL: MIN_TOTAL, START_TOTAL: START_TOTAL, START_RULE: START_RULE, DIRS: DIRS,
     rng: rng, neighbor: neighbor, emptyBoard: emptyBoard, cloneBoard: cloneBoard, total: total, boardValue: boardValue,
-    drop: drop, preview: preview, probe: probe, bestCell: bestCell,
-    rollKind: rollKind, rollSky: rollSky, rollSkyCell: rollSkyCell,
-    uForKind: uForKind, uForSky: uForSky, uForCell: uForCell, scripted: scripted, play: play,
+    drop: drop, rainAll: rainAll, meterAfter: meterAfter, preview: preview, probe: probe, bestCell: bestCell,
+    rollKind: rollKind, uForKind: uForKind, scripted: scripted, play: play,
     cash: cash, tier: tier, isRecurrent: isRecurrent, checkStart: checkStart, startBoard: startBoard
   };
 

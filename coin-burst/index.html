@@ -24,7 +24,7 @@
     js/autobet.js    自動下注（不認識玩法，吃 adapter）
     js/art.js        美術：金幣／鑽石／皇冠／盤面（SVG 程式畫，畫一次重複用）與幾何
     js/fx.js         演出用的虛擬時間軸（可變速、可凍結）
-    js/ui-main.js    主畫面與演出（B 案）＋DEMO.ui
+    js/ui-main.js    主畫面與演出（B 案盤面＋A 案能量條與金幣雨＋v2.3 連鎖獎池與「會炸幾格」提示）＋DEMO.ui
     js/wire.js       接線：自動下注 adapter、勝負紀錄（LogUI）的詳細頁與補記
     js/dev.js        ?dev=1 導演台＋?shot= 自動駕駛（最後載入，設 __shotReady）
   js/onboard.js、css/onboard.css 這款不用（不做教學），檔案保留、不引用。
@@ -43,6 +43,9 @@
     <div class="top hud">
       <div class="bal" id="bal"><i class="ico cn"></i><b id="wal">10,000</b></div>
       <div class="tr">
+        <button id="hintBtn" class="spd hnt on" type="button" aria-pressed="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/><path class="sl" d="M4 4l16 16" stroke-width="2.6"/></svg>
+        </button>
         <button id="spdBtn" class="spd" type="button" aria-pressed="false">
           <svg width="22" height="18" viewBox="0 0 22 18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l6 6-6 6"/><path d="M11 3l6 6-6 6" opacity=".55"/></svg>
         </button>
@@ -56,13 +59,16 @@
     <!-- 面額分頁（每個面額各一張盤面）：JS 填 -->
     <div class="tabs hud" id="tabs"></div>
 
-    <!-- 天空帶：大連爆字樣、天降標籤 -->
+    <!-- 大連爆字樣（在能量條下面） -->
     <div class="skyz"><div class="banner" id="banner"></div></div>
-    <div class="tag" id="skyTag" data-t="sky.tag"></div>
 
     <!-- 收集槽（演出用，拿掉也不影響規則；JS 填內容）與這一下的金額 -->
     <div id="tray" class="hud"></div>
     <div id="amt" class="dim hud"><span id="amtN">0</span></div>
+    <i id="amtB" class="ico bst"></i>
+
+    <!-- 連鎖獎池（目前面額那張盤面的獎池）：JS 填圖示與數字 -->
+    <div id="pot" class="pot hud"></div>
 
     <!-- 三樣東西各值多少 -->
     <div class="legend hud" id="legend"></div>
@@ -73,6 +79,10 @@
       <svg width="26" height="24" viewBox="0 0 24 22" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 10a7 7 0 0 1 12-4M19 2.5V7h-4.5M19.5 12a7 7 0 0 1-12 4M5 19.5V15h4.5"/></svg>
       <span data-t="auto.short"></span>
     </button>
+
+    <!-- 金幣雨預告時壓暗畫面的幕（在能量條下面，條仍然亮）；能量條（js 畫） -->
+    <div id="dim"></div>
+    <div id="mt" class="hud"></div>
 
     <div id="halo"></div>
     <div id="rays"></div>

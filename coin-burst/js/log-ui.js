@@ -1,8 +1,8 @@
 /* =========================================================================
- * 爆金連鎖——勝負 log 頁（拋棄式畫面；規格是公司定死的，勿改設計）
+ * 爆金連鎖——勝負 log 頁（拋棄式畫面；規格是公司定死的，勿改設計。輸贏口徑：顯示淨額，>0 金、≤0 灰）
  *
  * 規格：
- *  - 總覽列＝金色「+淨額」（獲勝）或灰色「−下注額」（失敗）＋日期時間
+ *  - 總覽列＝金色「+淨額」（淨額>0）或灰色「淨額」（≤0，含剛好回本的 +0）＋日期時間
  *  - 點列進詳細頁：本局細節（由玩法提供 detail rows）＋注單 order id＋「回報」鈕
  *  - 詳細頁釘住打開的那一筆：之後有新紀錄進來（自動下注中）不重畫、不跳到別筆，即使那筆已被封頂擠掉
  *  - 封頂 50 筆（EV.CFG.LOG_CAP）；頁內有錢包重置（二段確認）
@@ -30,9 +30,10 @@ var opts = {}, els = {};
 var view = 'ov', cur = null, resetArmed = false, openFlag = false;   // cur＝詳細頁釘住的那筆（物件參照，不用陣列位置）
 
 function net(r){ return r.pay - r.stake; }
-function win(r){ return r.pay > 0; }
-/* 總覽顯示口徑：獲勝＝+（派彩−下注）；失敗＝−下注額 */
-function shown(r){ return win(r) ? net(r) : -r.stake; }
+/* 顯示口徑：一律顯示淨額（派彩−下注）；淨額 >0 金，≤0 灰（剛好回本的 +0 也是灰，2026-11-26 用戶裁決）。
+ * 「有拿回但沒回本」是負的，必須是灰色——三款 demo 都被用戶要求改過（2026-11）。 */
+function win(r){ return net(r) > 0; }
+function shown(r){ return net(r); }
 
 function save(){ D.ls('log', log); }
 function trim(){ if(log.length > cap) log.splice(0, log.length - cap); }
@@ -104,7 +105,7 @@ function htmlOverview(){
   if(!log.length) return '<div class="lempty">' + T('log.empty') + '</div>';
   var h = '';
   for(var i = log.length - 1; i >= 0; i--){
-    var r = log[i], w = shown(r) >= 0;      // 輸贏是負的一律灰色（2026-11-26 用戶「負的就要押灰」）
+    var r = log[i], w = win(r);
     h += '<div class="lrowi" data-i="' + i + '">' +
       '<div class="lt">' + D.fmtTime(r.ts) + '</div>' +
       '<div class="lv ' + (w ? 'gold' : 'grey') + '">' + D.signed(shown(r)) + '</div></div>';
@@ -116,7 +117,7 @@ function kv(k, v, rawHtml){
   return '<div class="kv"><span>' + k + '</span><span>' + (rawHtml ? v : D.esc(v)) + '</span></div>';
 }
 function htmlDetail(r){
-  var w = shown(r) >= 0;
+  var w = win(r);
   var h = '<div class="ldh"><div class="big ' + (w ? 'gold' : 'grey') + '">' + D.signed(shown(r)) + '</div>' +
     kv(T('log.time'), D.fmtTime(r.ts));
   (r.rows || []).forEach(function(row){ h += kv(T(row.k), row.v); });
