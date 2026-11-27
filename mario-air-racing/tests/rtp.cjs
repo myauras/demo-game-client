@@ -6,8 +6,8 @@ const html = fs.readFileSync(path.join(__dirname, '../dist/index.html'), 'utf8')
 const start = html.indexOf('const Fleet=');
 const end = html.indexOf('// Painted wooden forms', start);
 assert(start !== -1 && end !== -1, 'Missing race simulation in the game page');
-const { fleet, count, latest, seedAt, play, seat, newRace, stepRace, addItem, touchItem, chooseCoin, collectCoin, displayRate, tailContact, gustCollision, flightScale, flightYaw, raceLeader, payoutRate, sprint, extension, raceHz, secondsAtTick, ticksAtTime, finishPassTime, finishDuration, coinThrust } = new Function(html.slice(start, end) +
-  '\nreturn { fleet:Fleet, count:COURSE_COUNT, latest:RACE_VERSION, seedAt:courseSeed, play(seed,version){const r=newRace(seed,version);while(!r.done)stepRace(r);return r}, seat:craftFor,newRace,stepRace,addItem,touchItem,chooseCoin,collectCoin,displayRate,tailContact,gustCollision,flightScale,flightYaw,raceLeader,payoutRate,sprint:SPRINT_TICKS,extension:EXTEND_RATE,raceHz,secondsAtTick,ticksAtTime,finishPassTime,finishDuration,coinThrust };')();
+const { fleet, count, latest, clamp, smooth, seedAt, play, seat, newRace, stepRace, addItem, touchItem, chooseCoin, collectCoin, displayRate, tailContact, gustCollision, flightScale, flightYaw, raceLeader, payoutRate, sprint, extension, raceHz, secondsAtTick, ticksAtTime, finishPassTime, finishDuration, coinThrust } = new Function(html.slice(start, end) +
+  '\nreturn { fleet:Fleet, count:COURSE_COUNT, latest:RACE_VERSION, clamp, smooth, seedAt:courseSeed, play(seed,version){const r=newRace(seed,version);while(!r.done)stepRace(r);return r}, seat:craftFor,newRace,stepRace,addItem,touchItem,chooseCoin,collectCoin,displayRate,tailContact,gustCollision,flightScale,flightYaw,raceLeader,payoutRate,sprint:SPRINT_TICKS,extension:EXTEND_RATE,raceHz,secondsAtTick,ticksAtTime,finishPassTime,finishDuration,coinThrust };')();
 for (const version of [3,4,5,6,7,8,9,10,11,12,13,latest]) {
   const seeds = new Set();
   const totals = Array(5).fill(0);
@@ -105,6 +105,31 @@ assert(finishPassTime(1)-finishPassTime(0)<1.1);
 for(let rank=2;rank<5;rank++)assert(finishPassTime(rank)-finishPassTime(rank-1)<=.60);
 assert(Math.abs(finishDuration({finishers:[0]})-1.76)<.000001);
 assert(finishDuration({finishers:[0,1,2,3,4]})-finishPassTime(4)<=.65);
+
+// The fast-moving winner stays framed for exactly half a second. All later
+// crossings share one stationary gate camera, including the reduced-motion shot.
+const finishScript=html.slice(html.indexOf('const CHAMPION_SHOT_SECONDS='),html.indexOf('const flightClimate='));
+for(const reduced of [false,true]){
+  const view={w:390,h:844},camera={position:{},updateProjectionMatrix(){}};
+  const {directFinish,flyThrough}=new Function('view','airCamera','reducedMotion','finishPassTime','clamp','smooth',
+    finishScript+';return {directFinish,flyThrough}')(view,camera,{matches:reduced},finishPassTime,clamp,smooth);
+  const r={finishers:[1,2,0],craft:[{y:150,z:.7},{y:260,z:.2},{y:335,z:.5}]};
+  const pass=finishPassTime(0);
+  assert.equal(directFinish(r,pass-.001).championCloseup,false);
+  for(const after of [0,.25,.499]){
+    const age=pass+after,shot=directFinish(r,age),p=flyThrough(r,0,age);
+    const x=.5+(p.x-.5-camera.position.x/view.w)*camera.zoom;
+    const y=.5+(p.y-.5+camera.position.y/view.h)*camera.zoom;
+    assert(shot.championCloseup&&shot.rank===0&&camera.zoom>1);
+    assert(x>.45&&x<.60&&y>.45&&y<.51);
+  }
+  const wide=directFinish(r,pass+.5),gateX=camera.position.x,gateY=camera.position.y;
+  assert(!wide.championCloseup&&camera.zoom===1);
+  for(const rank of [1,2]){
+    assert.equal(directFinish(r,finishPassTime(rank)).rank,rank);
+    assert.deepEqual([camera.zoom,camera.position.x,camera.position.y],[1,gateX,gateY]);
+  }
+}
 
 // Extension must be earned during the flight, even on the original finish tick.
 for(const value of [extension-1,extension]){

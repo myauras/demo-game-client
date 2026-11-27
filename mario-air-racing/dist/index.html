@@ -3141,10 +3141,13 @@ function impactParticles(g,e,age){
   g.restore();
 }
 function drawBumpFlash(g,e,age,scale){
-  if(age<0||age>=.44)return;
-  const fade=1-smooth((age-.12)/.32),spread=1-Math.exp(-age*13);
-  g.save();g.translate(chaseX(e.x),chaseY(e.y));g.scale(scale,scale);
-  g.rotate(((e.seq%5)-2)*.055);g.globalAlpha=fade;g.lineJoin='round';
+  const meteor=e.hazard?.type==='rock',life=meteor?.50:.44;
+  if(age<0||age>=life)return;
+  const fade=1-smooth((age-.12)/(life-.12)),spread=1-Math.exp(-age*13);
+  const point=airCameraPoint(chaseX(e.x),chaseY(e.y)),size=scale*airCamera.zoom;
+  const angle=meteor?Math.atan2(-e.hazard.vy*chase.vertical,-e.hazard.vx*view.w*chase.stretch/1000):0;
+  g.save();g.translate(point.x,point.y);g.scale(size,size);
+  g.rotate(angle+((e.seq%5)-2)*.055);g.globalAlpha=fade;g.lineJoin='round';
   // Two forked lightning shapes open away from the point of contact.
   for(const side of [-1,1]){
     g.save();g.scale(side,side);g.translate(0,-7*spread);
@@ -3155,7 +3158,7 @@ function drawBumpFlash(g,e,age,scale){
     g.lineTo(6,-18);g.lineTo(20,-23);g.lineTo(10,-6);
     g.lineTo(10,-13);g.lineTo(2,-10);g.lineTo(1,-20);g.lineTo(-4,-12);
     g.lineTo(-13,-17);g.closePath();
-    g.strokeStyle='#944525';g.lineWidth=2.6;g.stroke();g.fillStyle='#ffbf3b';g.fill();
+    g.strokeStyle=meteor?'#823c39':'#944525';g.lineWidth=2.6;g.stroke();g.fillStyle=meteor?'#ff9d42':'#ffbf3b';g.fill();
     g.beginPath();g.moveTo(-9,-31);g.lineTo(1,-22);g.lineTo(7,-29);
     g.lineTo(2,-16);g.closePath();g.fillStyle='#fff4ba';g.fill();
     g.restore();
@@ -3309,7 +3312,7 @@ function updateCrown(r,preview,at){
   const badge=el('leaderCrown'),award=el('championAward'),heart=el('passHeart');
   heart.hidden=true;
   const awardAge=finishView?finishView.age-finishPassTime(0):-1;
-  award.hidden=preview||mode!=='race'||!finishView||awardAge<0||awardAge>.72;
+  award.hidden=preview||mode!=='race'||!finishView?.championCloseup;
   if(preview||r.version<9){badge.hidden=true;return null}
   let leader=r.winnerId===null?raceLeader(r):r.craft[r.winnerId];
   if(rollingStart&&!r.done){
@@ -3342,7 +3345,7 @@ function updateCrown(r,preview,at){
       const rise=smooth(awardAge/.16),pop=reducedMotion.matches?0:Math.sin(rise*Math.PI)*.18;
       award.style.left=clamp(x,62,view.w-62)+'px';award.style.top=Math.max(42,y-24-9*rise)+'px';
       award.style.transform='translate(-50%,-100%) scale('+(1+pop)+')';
-      award.style.opacity=String(1-smooth((awardAge-.52)/.20));
+      award.style.opacity=String(1-smooth((awardAge-(CHAMPION_SHOT_SECONDS-.085))/.085));
     }
   }else award.hidden=true;
   return id;
@@ -3463,7 +3466,10 @@ function drawTraffic(r,at,view,preview=false){
         burst(g,point.x,point.y,clamp(model.scale.x,.93,1.85)*airCamera.zoom,age,e.seq);
       }
     }
-    if(e.type==='bump')drawBumpFlash(g,e,age,clamp(craftModels[(e.id+r.liveryOffset)%5].scale.x,.72,1.42));
+    if(e.type==='bump'||(e.type==='impact'&&e.hazard?.type==='rock')){
+      const scale=clamp(craftModels[(e.id+r.liveryOffset)%5].scale.x,.72,1.42);
+      drawBumpFlash(g,e,age,scale);
+    }
     if(r.version<12&&e.type==='crash'){
       const model=craftModels[(e.id+r.liveryOffset)%5],size=clamp(model.scale.x,.93,1.85);
       const point=airCameraPoint(chaseX(e.x),chaseY(e.y));
@@ -3916,7 +3922,7 @@ function captureFormation(){
 }
 function airCameraPoint(x,y){
   return {x:view.w*.5+(x-view.w*.5-airCamera.position.x)*airCamera.zoom,
-    y:view.h*.5+(y-view.h*.5-airCamera.position.y)*airCamera.zoom};
+    y:view.h*.5+(y-view.h*.5+airCamera.position.y)*airCamera.zoom};
 }
 function screenAircraft(model){
   const zoom=airCamera.zoom;
@@ -3943,6 +3949,7 @@ function frameSelection(){
 // The finish is a diagonal plane across the flight corridor. Balloons, ribbon,
 // aircraft and confetti use the same normalized coordinates before camera projection.
 const finishPlaces=['冠軍','亞軍','季軍','第四名','第五名'];
+const CHAMPION_SHOT_SECONDS=.5;
 let finishView=null;
 function finishLane(p){return .39+.185*clamp((p.y-91)/346,0,1)}
 function ribbonX(y){
@@ -3958,17 +3965,20 @@ function flyThrough(r,rank,age){
 function directFinish(r,age){
   let rank=-1;
   while(rank+1<r.finishers.length&&age>=finishPassTime(rank+1))rank++;
-  const shot={age,rank};
-  const pass=finishPassTime(0),since=age-pass,gate=flyThrough(r,0,pass);
-  // Frame the line before contact. Pan with only part of the passing speed
-  // so the winning aircraft always advances on screen, even during the close-up.
-  const focus=smooth((since+.42)/.29)*(1-smooth((since-.45)/.36));
-  const follow=(since+.18)*.30;
-  airCamera.zoom=1+.32*focus;
-  airCamera.position.x=((gate.x-.48)*.72+follow)*view.w*focus;
-  airCamera.position.y=(.47-gate.y)*view.h*focus;
+  const since=age-finishPassTime(0),championCloseup=since>=0&&since<CHAMPION_SHOT_SECONDS;
+  // Pick up the winner on approach. After the hold, cut to a fixed gate camera
+  // so every subsequent finisher enters the same wide shot at racing speed.
+  const follow=since<CHAMPION_SHOT_SECONDS?smooth((since+.27)/.27):0;
+  const wideX=.135*smooth(age/.46),winner=flyThrough(r,0,age);
+  const zoom=1+(reducedMotion.matches?.40:1.10)*follow;
+  const frameX=.49+.065*clamp(since/CHAMPION_SHOT_SECONDS,0,1);
+  const targetX=winner.x-.5-(frameX-.5)/zoom;
+  const targetY=.5-winner.y+(.48-.5)/zoom;
+  airCamera.zoom=zoom;
+  airCamera.position.x=(wideX+(targetX-wideX)*follow)*view.w;
+  airCamera.position.y=targetY*follow*view.h;
   airCamera.updateProjectionMatrix();
-  return shot;
+  return {age,rank,championCloseup};
 }
 const flightClimate=new THREE.Vector3();
 function aircraftFrame(now){
@@ -4132,7 +4142,7 @@ function drawFrame(ts){
     const hold=run.version>=10?duration+(run.finishTick===LIMIT?2.6:2.1):resultHold(run)/1000;
     if(mode==='result'&&finishAge>=hold)advanceRound(record.id);
   }
-  const waiting=mode==='lobby',placed=finishView&&finishView.rank>=0&&mode==='race';
+  const waiting=mode==='lobby',placed=finishView&&(finishView.championCloseup||finishView.rank>0)&&mode==='race';
   el('finishCall').hidden=!placed;
   document.querySelector('.clock').hidden=!!finishView;
   if(placed){
