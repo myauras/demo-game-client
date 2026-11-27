@@ -83,6 +83,10 @@ button{touch-action:manipulation}#stake{touch-action:manipulation}
 #championAward b{font:900 13px/1.05 system-ui;letter-spacing:.15em}
 #championAward strong{font:900 16px/1.15 system-ui;color:#ffe27c}
 #championAward[hidden]{display:none}
+#passHeart{position:absolute;z-index:2;display:grid;place-items:center;width:25px;height:20px;border:1.5px solid #6d4550;border-radius:11px 12px 10px 8px;background:#fff8ee;box-shadow:0 2px 0 #68435348;color:#de4660;font:bold 17px/1 system-ui;transform-origin:25% 85%}
+#passHeart::before{content:"";position:absolute;bottom:1px;left:-3.5px;width:5px;height:5px;background:#fff8ee;border-left:1.5px solid #6d4550;border-bottom:1.5px solid #6d4550;transform:skew(-15deg,-29deg)}
+#passHeart.left::before{left:auto;right:-3.5px;transform:scaleX(-1) skew(-15deg,-29deg)}
+#passHeart[hidden]{display:none}
 #leaderCrown svg{display:block;width:100%;height:100%}
 .clock.extended #clockLabel{color:#9a4b19;font-weight:700}
 @container(max-width:355px){#entry{gap:4px}#launch{min-width:80px;font-size:14px}.rateTag{font-size:13px;padding-inline:5px;gap:3px}}
@@ -93,7 +97,7 @@ body{align-items:start}#gameHolder{height:var(--flight-height,100dvh)}
 #lobby .flightRules{grid-column:1/-1;margin:5px 2px 0;color:#654f3e;font-size:13px;line-height:1.35}
 </style></head><body><main id="gameHolder">
   <div id="raceScene">
-  <div id="world" aria-hidden="true"></div><canvas id="traffic" aria-hidden="true"></canvas><div id="rateLayer" class="selecting" aria-hidden="true"><span class="flightReceipt" id="flightReceipt" hidden></span><span id="championAward" hidden><b>冠軍</b><strong>加倍獎勵 ×2</strong></span><span id="leaderCrown" hidden><svg viewBox="0 0 30 24" aria-hidden="true"><defs><linearGradient id="crownGold" x2="20%" y2="100%"><stop stop-color="#fff7a6"/><stop offset=".5" stop-color="#ffce47"/><stop offset="1" stop-color="#e9931f"/></linearGradient></defs><path d="M2 6l7 4.6L15 2l6 8.6L28 6l-3.6 14.4c-5.5 1.7-13.3 1.7-18.8 0Z" stroke="#653b24" stroke-width="1.8" stroke-linejoin="round" fill="url(#crownGold)"/><path d="M6.6 17q8.4 2.4 16.8 0" stroke="#fff4a2" stroke-width="1.4" fill="none"/><path d="m15 9.6 2.3 3-2.3 3.1-2.3-3.1Z" fill="#bd4930"/></svg></span></div>
+  <div id="world" aria-hidden="true"></div><canvas id="traffic" aria-hidden="true"></canvas><div id="rateLayer" class="selecting" aria-hidden="true"><span class="flightReceipt" id="flightReceipt" hidden></span><span id="championAward" hidden><b>冠軍</b><strong>加倍獎勵 ×2</strong></span><span id="passHeart" aria-hidden="true" hidden>♥</span><span id="leaderCrown" hidden><svg viewBox="0 0 30 24" aria-hidden="true"><defs><linearGradient id="crownGold" x2="20%" y2="100%"><stop stop-color="#fff7a6"/><stop offset=".5" stop-color="#ffce47"/><stop offset="1" stop-color="#e9931f"/></linearGradient></defs><path d="M2 6l7 4.6L15 2l6 8.6L28 6l-3.6 14.4c-5.5 1.7-13.3 1.7-18.8 0Z" stroke="#653b24" stroke-width="1.8" stroke-linejoin="round" fill="url(#crownGold)"/><path d="M6.6 17q8.4 2.4 16.8 0" stroke="#fff4a2" stroke-width="1.4" fill="none"/><path d="m15 9.6 2.3 3-2.3 3.1-2.3-3.1Z" fill="#bd4930"/></svg></span></div>
   </div>
   <div id="bumpLight" aria-hidden="true" hidden></div>
   <header id="mast"><div class="brand">mario-air-racing</div><div class="wallet"><i class="creditIcon" aria-hidden="true"></i><span>遊戲點數</span><b id="balance">1,000</b></div></header>
@@ -1564,16 +1568,24 @@ FlightWeather.prototype.volcanicAir=function(t,weights,mesh){
       var p=this.vapour[k],a=cyclic(p.y+t*(.104+.019*p.r)+i*.27),spread=a*a*40;
       var xx=cx+scaleAt*(a*a*53+(p.x-.5)*(10+spread)+Math.sin(a*5+p.p)*a*9);
       var yy=cy-scaleAt*(6+a*(116+71*p.z)),r=scaleAt*(7+a*(18+15*p.r));
-      var density=alpha*(1-a)*(.23+.18*p.z);var smoke=g.createRadialGradient(xx,yy,1,xx,yy,r);
+      var density=alpha*Math.sin(Math.PI*a)*(.12+.12*p.z);var smoke=g.createRadialGradient(xx,yy,1,xx,yy,r);
       smoke.addColorStop(0,'rgba(66,58,64,'+density+')');smoke.addColorStop(.60,'rgba(96,81,82,'+density*.73+')');smoke.addColorStop(1,'rgba(100,85,85,0)');
       g.fillStyle=smoke;g.fillRect(xx-r,yy-r,2*r,2*r);
     }
   }
-  for(var k=0;k<this.ash.length;k++){
-    var p=this.ash[k],x=cyclic(p.x+t*(.018+.021*p.z)+.011*Math.sin(t*.63+p.p))*W;
-    var y=(1-cyclic(p.y+t*(.058+.09*p.z)))*H,r=.65+p.z*1.75;
-    g.fillStyle='rgba(73,60,63,'+alpha*(.19+.31*p.r)+')';g.beginPath();g.ellipse(x,y,r,r*.63,t+p.p,0,Math.PI*2);g.fill();
+  g.save();g.lineCap='round';
+  for(const p of this.ash){
+    const cycle=p.y+t*(.19+.12*p.z),turn=Math.floor(cycle),a=cyclic(cycle);
+    const base=cyclic(p.x+turn*.382);
+    const x=(base-.11*a-.13*a*a+.012*a*Math.sin(5*a+p.p))*(W+24)-12;
+    const y=H*(.96-.19*p.r-(.33+.39*p.z)*(1-(1-a)**1.55));
+    const fire=alpha*Math.sin(Math.PI*a)**.7,near=p.z*p.z;
+    const dx=(1.0+3.6*near)*(.5+a),dy=(.8+2.8*near)*(1.3-a);
+    g.strokeStyle=a<.45?'#ffcb75':'#dd7850';g.lineWidth=.75+1.1*near;g.globalAlpha=fire*(.46+.33*near);
+    g.beginPath();g.moveTo(x+dx,y+dy);g.quadraticCurveTo(x+dx*.45,y+dy*.62,x,y);g.stroke();
+    if(near>.58){g.fillStyle='#fff2bb';g.globalAlpha=fire*.83;g.beginPath();g.arc(x,y,.77,0,2*Math.PI);g.fill()}
   }
+  g.restore();
 };
 // Distant clouds stay on the skyline. These lower banks travel through the
 // flight corridor, faster on the near plane and continuously across takeoff.
@@ -1710,19 +1722,22 @@ FlightWeather.prototype.draw=function(t,clock,w,storm,mesh,events,sceneryTime){
   if(mode!=='lobby'&&zoneAt(t)==='sea')this.gulls(t,smooth((w.x-.52)/.48),mesh);
   this.fx.clearRect(0,0,this.width,this.height);this.volcanicAir(t,w,mesh);this.blizzard(t,storm,events);
   if(snowWind>0)this.snowWind(t,events,snowWind);
-  const fade=run?.done?1-smooth((t-clock)/.55):1;
+  const fade=run?.done&&!finishView?1-smooth((t-clock)/.55):1;
   this.foregroundWisps(travel+slip,w,flightSpeed(raceAge)*fade);
 };
 
 
 // Each mote is anchored to the rotating sphere and tested against terrain depth.
 function makeGlobeEmbers(radius,atlas,uniforms){
-  var count=3200,roots=new Float32Array(count*3),heights=new Float32Array(count*3),traits=new Float32Array(count*4);
+  var count=510,roots=new Float32Array(count*3),heights=new Float32Array(count*3),traits=new Float32Array(count*4);
   var seed=8424,sample=[0,0,0];
   function random(){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;}
   for(var i=0;i<count;i++){
-    var u=random(),sinLat=i%4===0?random()*2-1:random()*1.42-.30;
-    sinLat=Math.max(-.999,Math.min(.999,sinLat));var lat=Math.asin(sinLat),lon=(u-.5)*Math.PI*2;
+    // Sparks rise in little columns along the crater rim and its molten runoff.
+    var vent=atlas.vents[i%atlas.vents.length],angle=2*Math.PI*random(),spread=.012+.074*random();
+    var channel=i%3===0,down=channel?.38*random():0;
+    var lat=vent.lat+down+Math.sin(angle)*spread,lon=vent.lon+Math.cos(angle)*spread+down*.15+.045*Math.sin(down*15);
+    var u=cyclic(lon/(Math.PI*2)+.5),sinLat=Math.sin(lat);
     roots[i*3]=radius*Math.sin(lon)*Math.cos(lat);roots[i*3+1]=radius*Math.cos(lon)*Math.cos(lat);roots[i*3+2]=radius*sinLat;
     atlas.sample(u,lat/Math.PI+.5,sample);heights.set(sample,i*3);
     traits.set([random(),random(),random(),random()],i*4);
@@ -1730,20 +1745,28 @@ function makeGlobeEmbers(radius,atlas,uniforms){
   var g=new THREE.BufferGeometry();g.addAttribute('position',new THREE.BufferAttribute(roots,3));
   g.addAttribute('relief',new THREE.BufferAttribute(heights,3));g.addAttribute('seed',new THREE.BufferAttribute(traits,4));
   g.boundingSphere=new THREE.Sphere(new THREE.Vector3(),radius+235);
-  var vert=[
-    'attribute vec3 relief;attribute vec4 seed;uniform vec3 weights;uniform float time,spritePixels;varying float brightness,stretch;',
-    'void main(){float life=fract(seed.x+time*(.097+.51*seed.y));float lift=(13.+152.*pow(seed.z,2.30))*(life*.94+.06*life*life);',
-    'vec3 baseNormal=normalize(position);float floorH=max(0.,dot(relief,weights));vec3 start=(modelMatrix*vec4(position+baseNormal*(floorH+.95),1.)).xyz;',
-    'vec3 normal=normalize(mat3(modelMatrix)*baseNormal);float phase=seed.w*6.283185;vec3 drift=vec3(sin(phase+life*4.)*(2.+5.*life)+(.10+.10*seed.y)*lift,0.,cos(phase+life*3.)*4.)*life;',
-    'vec3 world=start+mix(normal,vec3(0.,1.,0.),.67)*lift+drift;vec4 mv=viewMatrix*vec4(world,1.);gl_Position=projectionMatrix*mv;',
-    'brightness=weights.z*smoothstep(.01,.12,life)*(1.-smoothstep(.69,1.,life))*(.84+.16*sin(time*(2.+4.*seed.w)+phase))*(.78+.21*seed.w);',
-    'stretch=.79-.24*seed.y;gl_PointSize=clamp((3.2+6.8*seed.w+1.25*seed.z)*spritePixels/(-mv.z),2.2,21.);}'
-  ].join('\n');
-  var frag=[
-    'varying float brightness,stretch;void main(){vec2 p=gl_PointCoord*2.-1.;p.x+=.16*p.y;p.x/=stretch;',
-    'float r=abs(p.x)+abs(p.y);if(r>=1.||brightness<.01)discard;float halo=1.-smoothstep(.32,1.,r),core=1.-smoothstep(.23,.56,r);',
-    'gl_FragColor=vec4(mix(vec3(1.,.27,.023),vec3(1.,.95,.64),smoothstep(.32,.78,core)),brightness*min(1.,halo*.86+core*.83));}'
-  ].join('\n');
+  var vert=`
+    attribute vec3 relief;attribute vec4 seed;uniform vec3 weights;uniform float time,spritePixels;
+    varying float glow,heat,spin;
+    void main(){
+      float age=fract(seed.x+time*(.27+.26*seed.y)),phase=6.283*seed.w;
+      float lift=(14.+63.*seed.z*seed.z)*(1.-pow(1.-age,1.65));
+      vec3 n=normalize(position),root=(modelMatrix*vec4(position+n*(max(0.,dot(relief,weights))+1.),1.)).xyz;
+      vec3 wind=vec3(age*age*(14.+seed.y*24.)+sin(phase+age*4.)*(1.+4.*age),0.,cos(phase+5.*age)*age*4.);
+      vec4 eye=viewMatrix*vec4(root+mix(normalize(mat3(modelMatrix)*n),vec3(0.,1.,0.),.70)*lift+wind,1.);
+      gl_Position=projectionMatrix*eye;
+      heat=1.-age;spin=.15+.62*age+.16*sin(phase+age*4.);
+      glow=weights.z*smoothstep(0.,.10,age)*(1.-smoothstep(.55,1.,age))*(.63+.35*seed.y);
+      gl_PointSize=clamp((2.+3.7*seed.z)*spritePixels/max(1.,-eye.z),1.8,8.);
+    }`;
+  var frag=`
+    varying float glow,heat,spin;
+    void main(){vec2 p=gl_PointCoord*2.-1.;p=mat2(cos(spin),-sin(spin),sin(spin),cos(spin))*p;
+      float d=length(p*vec2(1.85,.94));if(d>=1.||glow<.01)discard;
+      float core=1.-smoothstep(.04,.56,d),rim=1.-smoothstep(.28,1.,d);
+      vec3 ember=mix(vec3(.76,.20,.095),vec3(1.,.67,.23),heat);
+      gl_FragColor=vec4(mix(ember,vec3(1.,.91,.62),core*heat),glow*rim);
+    }`;
   var mat=new THREE.ShaderMaterial({uniforms:uniforms,vertexShader:vert,fragmentShader:frag,transparent:true,depthWrite:false,depthTest:true,blending:THREE.NormalBlending});
   var points=new THREE.Points(g,mat);points.name='Surface embers';points.frustumCulled=false;return points;
 }
@@ -1760,7 +1783,7 @@ function sampleClimate(seconds,weights){
   return current===1?(.34+.66*easeClimate(phase/2.7))*(1-blend):next===1?.34*blend*blend:0;
 }
 function makeFlightAtlas(){
-  var width=512,height=192,pixels=new Uint8Array(width*height*4),tau=2*Math.PI,span=tau/5;
+  var width=512,height=256,pixels=new Uint8Array(width*height*4),tau=2*Math.PI,span=tau/5;
   var table=new Float32Array(4096),seed=3703;
   for(var i=0;i<table.length;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;table[i]=seed/4294967296;}
   function smooth(a,b,x){var t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t);}
@@ -1876,7 +1899,7 @@ Sea.prototype.drawWeather=function(events){this.atmosphere.draw(this.motion,this
 // Fixed-step race simulation. All random draws belong to the heat's seed.
 const Fleet=[
   {name:'超級紅帽雙翼機',short:'紅帽',color:'#ff7761',paint:0xd73a30},
-  {name:'庫巴小丑飛行船',short:'小丑船',color:'#eca849',paint:0xeaae51},
+  {name:'庫巴黑鐵爪艦',short:'黑鐵爪',color:'#a293ad',paint:0x313040},
   {name:'桃花皇冠噴射機',short:'皇冠',color:'#f59bc1',paint:0xe582ae},
   {name:'蘑菇傘翼水上機',short:'蘑菇',color:'#ffbd76',paint:0xe4ac68},
   {name:'耀西蛋殼雙引擎機',short:'蛋殼',color:'#93d778',paint:0x74b35c}
@@ -1887,7 +1910,7 @@ const smooth=v=>{v=clamp(v,0,1);return v*v*(3-2*v)};
 const coinValues=[10,25,50,100,200,500,1000],coinRadii=[7,8.5,10,12,14,17,21];
 const classicCoinOdds=[.34,.57,.75,.88,.954,.988,1];
 const raceCoinOdds=[.72,.89,.966,.989,.997,.9995,1];
-const RACE_VERSION=13;
+const RACE_VERSION=14;
 const SPRINT_TICKS=1170, EXTEND_RATE=150;
 const raceHz=version=>version>=9?72:60;
 // Integrate a steadily increasing simulation rate; use its inverse for the HUD and replays.
@@ -1910,6 +1933,7 @@ const passingCoinValues=[1,2,4,8,16,25,100];
 const sprintCoinValues=[3,6,12,24,47,80,160];
 const boostCoinValues=[3,7,14,26,50,80,160];
 const finishCoinValues=[4,8,16,28,52,82,160];
+const jetCoinValues=[4,9,17,29,53,83,160];
 const passingCourses=Object.freeze({141:3012,174:3844,262:3561,365:3334,458:2444,550:3760,677:3897,926:2823,1271:2593,1359:2913,1666:3416,1958:2711});
 const championshipCourses=Object.freeze({...passingCourses,
   36:4924,51:4230,113:4172,267:4861,359:4731,559:4299,584:4584,617:4875,735:4459,815:4245,823:4678,
@@ -1927,11 +1951,13 @@ const BUMP_RATE=10, BUMP_DEPTH=.055;
 const flybyCoinSpacing=0.535;
 const flybyCourses=Object.freeze({1:3138, 27:3769, 47:2329, 63:3602, 82:3074});
 const coinSpacing=0.74;
+const jetCourses=Object.freeze({...finishCourses,20:25461,37:30757,289:25186,340:25356,396:25335,
+  568:25228,1020:25081,1022:25416,1339:25309,1389:25377,1417:25429,1972:25288});
 function newRace(seed,version=RACE_VERSION){
   let state=seed>>>0;
   const rand=()=>{state=(Math.imul(1664525,state)+1013904223)>>>0;return state/4294967296};
   const initialRate=version>=7?TAKEOFF_RATE:INITIAL_RATE;
-  const r={rand,version,liveryOffset:0,richVein:version>=3&&seed%1024===37,scrollScale:version>=2?1.36:1,tick:0,done:false,craft:[],items:[],events:[],serial:0,nextCoin:1.0,nextHazard:1.15,nextGust:7.9};
+  const r={rand,version,liveryOffset:0,stuntTick:162+((seed>>>0)%67),richVein:version>=3&&seed%1024===37,scrollScale:version>=2?1.36:1,tick:0,done:false,craft:[],items:[],events:[],serial:0,nextCoin:1.0,nextHazard:1.15,nextGust:7.9};
   r.finishTick=version>=9?SPRINT_TICKS:LIMIT;
   r.winnerId=null;
   if(version>=10){
@@ -1951,8 +1977,10 @@ function newRace(seed,version=RACE_VERSION){
   }
   return r;
 }
-function raceLane(p,t){
+function raceLane(p,t,version){
   const a=t*p.pace+p.phase,b=t*.42+p.phase2;
+  if(version>=14)return [480+145*Math.sin(a*.79)+77*Math.cos(b*1.31),
+    251+(p.id-2)*29+62*Math.sin(a*.91)+36*Math.cos(b)];
   if(p.racing){
     // Each pilot winds up, charges past the pack, then settles into a new lane.
     const cycle=t*(.16+.055*p.pace)+.0013*t*t+p.phase2/(Math.PI*2);
@@ -2113,7 +2141,7 @@ function addItem(r,type,t){
     const roll=rand();
     const cutoffs=r.version>=3?raceCoinOdds:classicCoinOdds;
     const tier=r.richVein?coinValues.length-1:cutoffs.findIndex(c=>roll<c);
-    const values=r.version>=13?finishCoinValues:r.version>=11?boostCoinValues:r.version===10?sprintCoinValues:r.version>=8?passingCoinValues:r.version===7?flightCoinValues:coinValues;
+    const values=r.version>=14?jetCoinValues:r.version>=13?finishCoinValues:r.version>=11?boostCoinValues:r.version===10?sprintCoinValues:r.version>=8?passingCoinValues:r.version===7?flightCoinValues:coinValues;
     value=r.version>=8&&r.richVein?1000:values[tier];rad=coinRadii[tier];
   }
   r.items.push({key:++r.serial,type,x:sx,y:sy,vx,vy,baseY:sy,born:t,phase:rand()*6.28,rad,value,heavy,spent:false});
@@ -2224,6 +2252,19 @@ function raceLeader(r){
     return gap>0||(gap===0&&p.id<lead.id)?p:lead;
   });
 }
+// Schedule a display-only roll without drawing from the course's random stream.
+function chooseStunt(r,t){
+  const start=(r.tick+Math.floor(r.craft[0].phase2*13))%r.craft.length;
+  for(let i=0;i<r.craft.length;i++){
+    const p=r.craft[(start+i)%r.craft.length];
+    if(!p.alive||p.gustUntil>t||zoneAt(t)==='snow'||r.tick-Math.max(p.hitTick,p.contactTick)<60||coinThrust(p,r.tick)>0)continue;
+    if(r.finishTick-r.tick<80||r.items.some(o=>o.type!=='coin'&&Math.abs(o.y-p.y)<30&&o.x>p.x-25&&o.x<p.x+180))continue;
+    if(r.craft.some(q=>q!==p&&q.alive&&Math.abs(q.z-p.z)<.12&&Math.abs(q.x-p.x)<90&&Math.abs(q.y-p.y)<26))continue;
+    p.rollTick=r.tick;p.rollSign=Math.sin(p.phase+r.tick)>0?1:-1;
+    r.stuntTick+=244+Math.floor(22*p.phase2);return;
+  }
+  r.stuntTick+=43;
+}
 function payoutRate(r,p){return p.mult*(r.version>=9&&r.winnerId===p.id?2:1)}
 function stepRace(r){
   if(r.done)return;r.tick++;const t=r.tick/60,dt=STEP,zone=zoneAt(t);
@@ -2239,7 +2280,7 @@ function stepRace(r){
       p.mult++;
       p.rateFrom++; // Keep a coin animation in progress when the flight earns its next cent.
     }
-    const lane=raceLane(p,t);const entry=smooth((t-p.id*.115)/2.0);
+    const lane=raceLane(p,t,r.version);const entry=smooth((t-p.id*.115)/2.0);
     let gx=-84-p.id*23+(lane[0]+84+p.id*23)*entry,gy=lane[1];
     let ax=0,ay=0,coinPull=0;const losing=p.gustUntil>t;
     const leader=r.pursuit?.rear===p?r.pursuit.front:null;
@@ -2283,7 +2324,9 @@ function stepRace(r){
     p.oldX=p.x;p.oldY=p.y;
     if(losing){gx=p.x;gy=p.y;ax=p.windX;ay=p.windY}
     const factor=losing?6.5:5.7;
-    p.vx+=(clamp((gx-p.x)*3.7+ax,-270,500)-p.vx)*factor*dt;
+    // After launch, cruising and jockeying for position stay below pickup thrust.
+    const cruiseLimit=r.version>=14&&entry>=.99&&!losing ? 158 : 500;
+    p.vx+=(clamp((gx-p.x)*3.7+ax,-270,cruiseLimit)-p.vx)*factor*dt;
     p.vy+=(clamp((gy-p.y)*3.5+ay,-230,230)-p.vy)*factor*dt;
     const sinceHit=(r.tick-p.hitTick)*dt;
     if(p.racing&&sinceHit<.64){
@@ -2349,6 +2392,14 @@ function stepRace(r){
   if(r.version>=9&&r.finishTick<LIMIT&&r.craft.some(p=>p.mult>=EXTEND_RATE)){
     r.finishTick=LIMIT;r.extensionTick=r.tick;
   }
+  if(r.version>=14&&!r.practice){
+    const leader=raceLeader(r),prior=r.craft[r.frontRunner];
+    if(prior&&leader!==prior){
+      r.passHeartTick=prior.alive&&leader.alive&&trackPosition(r,leader)>trackPosition(r,prior)?r.tick:null;
+    }
+    r.frontRunner=leader.id;
+    if(r.tick===r.stuntTick)chooseStunt(r,t);
+  }
   if(r.tick>=r.finishTick||r.craft.every(p=>!p.alive)){
     if(r.version>=9)r.winnerId=raceLeader(r).id;
     if(r.version>=10)r.finishers=r.craft.filter(p=>p.alive)
@@ -2367,7 +2418,7 @@ const adjustedCourses=Object.freeze({6:3769, 17:2109, 137:2729, 213:3655, 228:26
 const chaseCourses=Object.freeze({2:3675, 25:3450, 27:4272, 28:3014, 44:3255, 47:4849, 53:5076, 100:4416, 162:3844, 195:4933, 438:2109, 515:3096, 572:4891, 709:2379, 1430:3769, 1895:3839});
 const coinCourses=Object.freeze({2:2474, 42:2346, 52:2593, 58:3025, 79:3448, 93:2778, 198:2182, 235:3810, 266:3280, 449:2119, 465:2553, 632:3494});
 function courseSeed(index,version=RACE_VERSION){
-  const seed=index+1,table=version>=13?finishCourses:version===12?contactCourses:version===11?boostCourses:version===10?balloonCourses:version===9?championshipCourses:version===8?passingCourses:version>=6?flybyCourses:version===5?coinCourses:version===4?chaseCourses:adjustedCourses;
+  const seed=index+1,table=version>=14?jetCourses:version>=13?finishCourses:version===12?contactCourses:version===11?boostCourses:version===10?balloonCourses:version===9?championshipCourses:version===8?passingCourses:version>=6?flybyCourses:version===5?coinCourses:version===4?chaseCourses:adjustedCourses;
   return table[seed]||seed;
 }
 function drawCourse(version){
@@ -2407,7 +2458,10 @@ function batchPieces(group){
     part.updateMatrix();if(!sets.has(part.material))sets.set(part.material,new THREE.Geometry());
     sets.get(part.material).merge(part.geometry,part.matrix);group.remove(part);part.geometry.dispose();
   }
-  for(const [mat,geometry] of sets)group.add(new THREE.Mesh(geometry,mat));
+  for(const [mat,geometry] of sets){
+    // These painted meshes use solid colours. Drop partial UVs from mixed primitives.
+    geometry.faceVertexUvs[0].length=0;group.add(new THREE.Mesh(geometry,mat));
+  }
 }
 // The five airframes share the tapered, open cockpit of the original Aviator.
 function pilotCabin(parent,color,a,b,height,width){
@@ -2530,6 +2584,40 @@ function pilotFigure(id){
   head.add(hat);head.position.set(0,4.25,0);seat.add(head);
   seat.name=pilotNames[id];seat.userData.head=head;seat.userData.hair=hat;return seat;
 }
+// The nozzle planes are anchored in model space. Only their width faces the camera.
+const nozzleOffsets=[
+  [[-21,-2.8,0]], [[-17,.1,-7.8],[-17,.1,7.8]],
+  [[-22,-.8,-5.2],[-22,-.8,5.2]], [[-20,-.3,0]],
+  [[-16,.4,-13.1],[-16,.4,13.1]]
+];
+const jetQuad=new THREE.PlaneBufferGeometry(1,2);
+function coinJets(id){
+  const jets=new THREE.Group(),uniforms={thrust:{type:'f',value:0},beat:{type:'f',value:0}};
+  const material=new THREE.ShaderMaterial({
+    uniforms,transparent:true,depthWrite:false,side:THREE.DoubleSide,
+    vertexShader:`varying vec2 plume;uniform float thrust,beat;
+      void main(){plume=vec2(uv.x,position.y);
+        float reach=(24.+41.*thrust)*(1.+.045*sin(beat));
+        vec4 mv=modelViewMatrix*vec4(-reach*uv.x,0.,0.,1.);
+        vec2 axis=normalize(modelViewMatrix[0].xy);
+        mv.xy+=vec2(-axis.y,axis.x)*position.y*5.3*length(modelViewMatrix[1].xyz);
+        gl_Position=projectionMatrix*mv;}`,
+    fragmentShader:`varying vec2 plume;uniform float thrust,beat;
+      void main(){float u=plume.x;
+        float w=(.43+.40*sin(min(u*5.,1.57)))*(1.-pow(u,.75));
+        float y=abs(plume.y-.055*u*sin(u*20.-beat)) / max(w,.005);
+        float edge=1.-smoothstep(.45,1.15,y);
+        float core=(1.-smoothstep(.12,.64,y))*(1.-smoothstep(.45,1.,u));
+        float cell=pow(.5+.5*cos(31.*u-.23*beat),5.)*(1.-smoothstep(.0,.62,y));
+        vec3 col=mix(vec3(.33,.56,1.),vec3(1.,.63,.14),smoothstep(.04,.43,core));
+        col=mix(col,vec3(1.,.99,.85),clamp(core*.82+cell*.69,0.,1.));
+        gl_FragColor=vec4(col,thrust*edge*(.93-.52*u));}`
+  });
+  for(const offset of nozzleOffsets[id]){
+    const plume=new THREE.Mesh(jetQuad,material);plume.position.set(...offset);plume.frustumCulled=false;jets.add(plume);
+  }
+  jets.visible=false;jets.userData.uniforms=uniforms;return jets;
+}
 function aircraft(id,broken=false){
   const root=new THREE.Group(),parts=new THREE.Group(),rotors=[];root.add(parts);
   const col=Fleet[id].paint;
@@ -2573,21 +2661,41 @@ function aircraft(id,broken=false){
     }
     box(walnut,-21,.2,0,3.3,3.8,2);cockpit(-7.0,7.7);
   }else if(id===1){
-    // A lacquered clown bowl with its lifting propeller below the gondola.
-    lens(0xf9e6bd,-1,-1,0,21,11.9,13.0);lens(0x4d9760,-1,5.4,0,21.3,5.5,13.5);
-    lens(0x386f4e,-1,7.65,0,19.1,2.7,11.8);lens(0x73513d,-1,8.7,0,15.4,1.75,9.1);
+    const iron=0x292934,edge=0x585765,lightSteel=0x9a99a2,brass=0xc58d56;
+    lens(iron,-1,-1,0,21,12,13);lens(0x403747,-1,5.2,0,21.4,5.0,13.7);
+    lens(0x756473,-1,7.3,0,20.7,2.5,13.1);lens(0x292732,-1,8.4,0,17,2.1,10.2);
+    root.userData.claws=[];
     for(const s of [-1,1]){
-      lens(0xfff8d6,7.5,1.70,s*10.85,2.65,3.4,.84);
-      lens(0x493833,8.4,1.75,s*11.39,1.25,2.12,.69);
-      lens(0xd97857,1.7,-3.6,s*12.40,3.00,1.80,.55);
-      for(const [x,y,angle] of [[9,-4.8,-.25],[12,-4.8,.21],[14.2,-3.8,.55]]){
-        const z=12.2*Math.sqrt(Math.max(.10,1-((x+1)/21)**2));
-        lens(0xb95246,x,y,s*z,2.1,.60,.58).rotation.z=angle;
+      const plate=[[1,4,12.8],[14,4.8,10.3],[19,3.2,6.7],[12,-1.0,11.3],[3,-.5,13.0]];
+      sheet(parts,plate.map(([x,y,z])=>[x,y,s*z]),edge,.9,true);
+      sheet(parts,[[5,2.8,s*13.3],[16,4.3,s*9.7],[12,.8,s*11.9],[7,.7,s*13.25]],0xff4937,.85,true);
+      for(const x of [8,13,16]){
+        const fang=piece(parts,new THREE.CylinderGeometry(1.45,0,3.1,6),lightSteel,x,-3.3,s*(13.2-x*.24));fang.rotation.z=-.23;
       }
-      const spike=piece(parts,new THREE.CylinderGeometry(.1,1.75,4.5,7),0xffedbc,-14,7.0,s*7.2);
-      spike.rotation.x=s*.52;
+      for(const x of [-15,-10,-5])lens(brass,x,5.4,s*(13.0-(x*x)*.017),.84,.84,.74);
+      piece(parts,new THREE.CylinderGeometry(.16,2.05,5.9,7),lightSteel,-13.6,8,s*8.9).rotation.z=.40;
+      // Each shoulder drives an articulated pincer, with a visible piston and knuckle.
+      const arm=new THREE.Group(),dir=s>0?1:-1;
+      arm.position.set(dir>0?-4:-9,.3,s*11.2);
+      function link(ax,ay,bx,by,width,color,z=0){
+        const bar=block(arm,color,(ax+bx)*.5,(ay+by)*.5,z,Math.hypot(bx-ax,by-ay),width,width*.82);
+        bar.rotation.z=Math.atan2(by-ay,bx-ax);
+      }
+      function joint(x,y,r){
+        const hub=piece(arm,new THREE.CylinderGeometry(r,r,3.2,8),edge,x,y,0);hub.rotation.x=Math.PI*.5;
+        const pin=piece(arm,new THREE.CylinderGeometry(r*.48,r*.48,3.9,8),brass,x,y,0);pin.rotation.x=Math.PI*.5;
+      }
+      link(0,0,dir*5,-9,3.8,edge);link(dir*5,-9,dir*15,-7,3.35,iron);
+      link(dir*4,-5,dir*13,-5,1.3,lightSteel,s*1.55);
+      joint(0,0,3.8);joint(dir*5,-9,2.9);joint(dir*15,-7,2.6);
+      for(const side of [-1,1]){
+        const jaw=[[14,-7],[18,-7+side*5],[24,-7+side*5.7],[21,-7+side*2.8],[18.8,-7+side*2.0],[16,-7]];
+        sheet(arm,jaw.map(([x,y])=>[dir*x,y,0]),lightSteel,2.1,true);
+      }
+      if(broken){for(const part of Array.from(arm.children)){part.position.add(arm.position);parts.add(part)}}
+      else{batchPieces(arm);root.add(arm);root.userData.claws.push(arm)}
     }
-    box(0xa7834d,-1,-13.2,0,5,3.8,4);rotor(-1,-15.1,0,19,'y',2);cockpit(-1,8.3);
+    box(edge,-1,-12.5,0,6,3.8,5);rotor(-1,-15.1,0,16,'y',2);cockpit(-1,8.3);
   }else if(id===2){
     // A swept-wing sports jet with a midnight-blue belly and twin lateral intakes.
     const navy=0x993e69,blue=0xf5adc9,trim=0xedbc5d;
@@ -2653,7 +2761,12 @@ function aircraft(id,broken=false){
     cockpit(-2.3,5.8);
   }
 
+  for(const [x,y,z] of nozzleOffsets[id]){
+    facetBody(parts,[[x,y,2.8,2.8,0x77717e],[x+1.9,y,2.85,2.85,0x33323e],[x+5.2,y,2.12,2.1,0x54515b]],z);
+    lens(0x212432,x-.21,y,z,.38,1.95,1.95);
+  }
   if(broken)return separateAirframe(parts,rotors);
+  const jets=coinJets(id);root.add(jets);root.userData.jets=jets;
   batchPieces(parts);root.userData.rotors=rotors;return root;
 }
 
@@ -2956,7 +3069,7 @@ function makeWingWakes(){
   mesh.renderOrder=-1;airScene.add(mesh);return mesh;
 }
 function updateWingWakes(r,time){
-  const strength=r&&!r.done?flightSpeed(time):0;
+  const strength=r&&(!r.done||finishView)?flightSpeed(time):0;
   wingWakes.visible=strength>.035;
   if(!wingWakes.visible)return;
   const climate=sea.uniforms.weights.value,uniforms=wingWakes.material.uniforms;
@@ -2987,26 +3100,6 @@ function updateWingWakes(r,time){
     }
   }
   positions.needsUpdate=true;wingWakes.geometry.setDrawRange(0,strips*wakeSegments*6);
-}
-const exhaustAnchor=new THREE.Vector3();
-function drawCoinExhaust(g,model,id,strength,t){
-  const center=screenAircraft(model);
-  model.localToWorld(exhaustAnchor.set(id===1?-27:-23,1,0)).project(airCamera);
-  const x=(exhaustAnchor.x+1)*view.w/2,y=(1-exhaustAnchor.y)*view.h/2;
-  const size=clamp(center.scale,.62,1.9),pulse=Math.sin(t*39+id),len=24+strength*(61+5*pulse);
-  g.save();g.translate(x,y);g.rotate(Math.atan2(center.y-y,center.x-x));g.scale(size,size);
-  g.globalAlpha=strength;const flame=g.createLinearGradient(-len,0,0,0);
-  flame.addColorStop(0,'rgba(255,169,36,0)');flame.addColorStop(.44,'#ffae28');flame.addColorStop(1,'#fff2a0');
-  g.fillStyle=flame;g.beginPath();g.moveTo(1,-4);g.quadraticCurveTo(-len*.28,-9,-len,3*pulse);
-  g.quadraticCurveTo(-len*.40,10,1,4);g.closePath();g.fill();
-  g.fillStyle='#fffde2';g.beginPath();g.moveTo(1,-1.8);g.lineTo(-len*.68,pulse);g.lineTo(1,2);g.fill();
-  g.lineCap='round';g.lineWidth=1.6;
-  for(let i=0;i<6;i++){
-    const phase=(t*3.85+i*.3819)%1,dx=-len*(.2+phase*.96),dy=(i%2?1:-1)*(4+phase*(3+i));
-    g.globalAlpha=strength*(1-phase);g.strokeStyle=i%2?'#fff5ab':'#fcb638';
-    g.beginPath();g.moveTo(dx,dy);g.lineTo(dx-7-14*phase,dy);g.stroke();
-  }
-  g.restore();
 }
 function impactParticles(g,e,age){
   const bird=e.reason==='bird',ice=e.reason==='ice'||e.reason==='hail',life=bird?.59:.41;
@@ -3213,7 +3306,8 @@ function drawFinishGate(g,r,shot){
 }
 const crownAnchor=new THREE.Vector3();
 function updateCrown(r,preview,at){
-  const badge=el('leaderCrown'),award=el('championAward');
+  const badge=el('leaderCrown'),award=el('championAward'),heart=el('passHeart');
+  heart.hidden=true;
   const awardAge=finishView?finishView.age-finishPassTime(0):-1;
   award.hidden=preview||mode!=='race'||!finishView||awardAge<0||awardAge>.72;
   if(preview||r.version<9){badge.hidden=true;return null}
@@ -3230,6 +3324,16 @@ function updateCrown(r,preview,at){
   const scale=clamp(.76+.18*model.scale.x,.74,1.25);
   badge.hidden=x<0||x>view.w||y<0||y>view.h;
   if(!badge.hidden){
+    const heartAge=r.passHeartTick==null?Infinity:at-r.passHeartTick/60;
+    if(!r.done&&!rollingStart&&r.frontRunner===leader.id&&heartAge>=0&&heartAge<.88){
+      const left=x>view.w-50,life=heartAge/.88;
+      heart.hidden=false;heart.classList.toggle('left',left);
+      heart.style.left=clamp(x+(left?-43:16),2,view.w-29)+'px';
+      heart.style.top=Math.max(2,y-25-4*smooth(heartAge/.35))+'px';
+      heart.style.opacity=String(1-smooth((life-.73)/.27));
+      const pop=reducedMotion.matches?1:.78+.22*smooth(heartAge/.10)+.16*Math.sin(Math.PI*clamp(heartAge/.21,0,1));
+      heart.style.transform='scale('+pop+')';
+    }
     badge.dataset.pilot=String(id);
     badge.title=pilotNames[id]+(r.done?' 冠軍':' 領先');
     badge.style.left=x+'px';badge.style.top=(y-3-1.4*Math.sin(at*5))+'px';
@@ -3288,10 +3392,6 @@ function drawTraffic(r,at,view,preview=false){
     const p=craftFor(r,id),label=rateLabels[id],screen=screenAircraft(craftModels[id]);
     label.node.hidden=(preview&&id!==pick)||!p.alive||screen.x < -12||screen.x > w+12||screen.y<0||screen.y>h;
     if(!p.alive)continue;
-    if(!preview&&!finishView&&r.version>=11){
-      const boost=coinThrust(p,at*60);
-      if(boost>0)drawCoinExhaust(g,craftModels[id],id,boost,at);
-    }
     tags.push({id,p,label,screen});
     const mine=id===pick;
     const champion=r.done&&r.winnerId===p.id&&(!finishView||finishView.rank>=0);
@@ -3415,8 +3515,10 @@ function aircraftThumbnails(){
   const stage=new THREE.Scene();airLighting(stage);const cardCam=new THREE.OrthographicCamera(-38,38,22,-18,.1,600);
   cardCam.position.set(27,30,140);cardCam.lookAt(new THREE.Vector3(0,0,0));renderer.setSize(240,126,false);
   for(let i=0;i<Fleet.length;i++){
+    // Leave clearance for the claw tips, belly propeller and Bowser's horns.
+    cardCam.zoom=i===1?.87:1;cardCam.updateProjectionMatrix();
     const model=craftModels[i];if(i>=2)model.rotation.set(.16,-.22,0);stage.add(model);renderer.clear();renderer.render(stage,cardCam);thumbs.push(renderer.domElement.toDataURL());stage.remove(model);airScene.add(model);
-    const b=document.createElement('button');b.type='button';b.className='hangar';b.setAttribute('aria-pressed',String(i===chosen));b.setAttribute('aria-label','選擇'+pilotNames[i]+'的'+Fleet[i].name);const image=document.createElement('img');image.alt='';image.src=thumbs[i];b.appendChild(image);b.addEventListener('click',()=>choose(i));el('fleet').appendChild(b);
+    const b=document.createElement('button');b.type='button';b.className='hangar';b.setAttribute('aria-pressed',String(i===chosen));b.setAttribute('aria-label','選擇'+pilotNames[i]+'的'+Fleet[i].name.replace(pilotNames[i],''));const image=document.createElement('img');image.alt='';image.src=thumbs[i];b.appendChild(image);b.addEventListener('click',()=>choose(i));el('fleet').appendChild(b);
   }
 }
 const betWindow=version=>version>=9?7000:10000;
@@ -3482,7 +3584,7 @@ function enter(a){
   rollingStart=mode==='lobby'&&record?.id===a.id?captureFormation():null;practice=null;chase.ready=false;
   record=a;view.pick=hasTicket(a)?a.pick:null;run=newRace(a.seed,a.version||1);run.liveryOffset=a.offset||0;mode='race';clearFocus();
   el('rateLayer').classList.remove('selecting');el('lobby').hidden=true;el('preflight').hidden=true;el('result').hidden=true;el('roundEnded').hidden=true;el('awarded').hidden=true;el('raceHud').hidden=false;el('gameHolder').classList.add('inRace');
-  el('betName').textContent=hasTicket(a)?pilotNames[a.pick]:'觀賽中';el('betSize').textContent=hasTicket(a)?a.stake+' 點':'';
+  el('betName').textContent=hasTicket(a)?pilotNames[a.pick]:'比賽中';el('betSize').textContent=hasTicket(a)?a.stake+' 點':'';
   el('ticket').firstChild.hidden=!hasTicket(a);
   if(hasTicket(a))el('ticket').firstChild.style.background=Fleet[a.pick].color;
   if(a.paid)showPayment(a);
@@ -3591,6 +3693,34 @@ function attachControls(){
   addEventListener('storage',e=>{if(e.key===storageKey)syncRound(readWallet())});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)advanceRound()});
 }
+// Sample only terrain and its embers. Pilots, obstacles, type and UI stay sharp.
+function makeSceneryBlur(){
+  const target=new THREE.WebGLRenderTarget(1,1,{minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,stencilBuffer:false});
+  target.texture.generateMipmaps=false;
+  const uniforms={terrain:{type:'t',value:target.texture},trail:{type:'f',value:0}};
+  const mat=new THREE.ShaderMaterial({uniforms,depthTest:false,depthWrite:false,blending:THREE.NoBlending,
+    vertexShader:'varying vec2 screenUV;void main(){screenUV=uv;gl_Position=vec4(position.xy,0.,1.);}',
+    fragmentShader:`uniform sampler2D terrain;uniform float trail;varying vec2 screenUV;
+      void main(){vec2 uv=screenUV;
+        float edges=smoothstep(.12,.54,max(abs(uv.x-.5),abs(uv.y-.52)));
+        vec2 stepUV=vec2(trail*(.20+.80*edges),0.);
+        gl_FragColor=.38*texture2D(terrain,uv)+.26*texture2D(terrain,uv-stepUV*.24)
+         +.19*texture2D(terrain,uv-stepUV*.5)+.12*texture2D(terrain,uv-stepUV*.75)
+         +.05*texture2D(terrain,uv-stepUV);}`});
+  const screen=new THREE.Scene(),quad=new THREE.Mesh(new THREE.PlaneBufferGeometry(2,2),mat);
+  quad.frustumCulled=false;screen.add(quad);
+  return {target,uniforms,screen,camera:new THREE.Camera()};
+}
+let sceneryBlur;
+function drawScenery(time){
+  const amount=run&&(!run.done||finishView)&&!reducedMotion.matches?smooth((flightSpeed(time)-.33)/.60):0;
+  renderer.clear();
+  if(amount<=.01){renderer.render(scene,camera);return}
+  const pass=sceneryBlur,w=renderer.domElement.width,h=renderer.domElement.height;
+  if(pass.target.width!==w||pass.target.height!==h)pass.target.setSize(w,h);
+  pass.uniforms.trail.value=amount*clamp(view.w*.010,2.7,5.5)/view.w;
+  renderer.render(scene,camera,pass.target,true);renderer.render(pass.screen,pass.camera);
+}
 function flightSpeed(age){
   const pace=.78*smooth((age-4)/15)+.22*smooth((age-16)/13);
   return pace*(reducedMotion.matches ? .28 : 1);
@@ -3603,7 +3733,8 @@ function worldAt(t,motion){
   sea.clock=clock;sea.motion=motion;sea.sceneryTime=waiting?preflightAge:motion+lead;
   sea.storm=sampleClimate(clock,w);
   const coast=.62*(1-Math.exp(-Math.max(0,motion-clock)/.62));
-  sea.mesh.rotation.z=waiting?.123*(preflightAge-lead):.123*clock+.00315*clock*clock+(.123+.0063*clock)*coast;
+  const terrainTime=finishView?motion:clock;
+  sea.mesh.rotation.z=waiting?.123*(preflightAge-lead):.123*terrainTime+.00315*terrainTime*terrainTime+(finishView?0:(.123+.0063*clock)*coast);
   sea.uniforms.time.value=sea.sceneryTime;sea.uniforms.turnAngle.value=sea.mesh.rotation.z;sea.uniforms.planePosition.value.set(4000,4000,4000);
   sea.uniforms.surfaceTime.value=lobbyTime;
   const lens=Math.tan(camera.fov*Math.PI/360);sea.uniforms.sunDirection.value.set((2*sunScreenX(camera.aspect)-1)*camera.aspect*lens,.54*lens,-1).normalize();
@@ -3820,7 +3951,7 @@ function ribbonX(y){
 }
 function flyThrough(r,rank,age){
   const p=r.craft[r.finishers[rank]],y=finishLane(p),delta=age-finishPassTime(rank);
-  const distance=delta<0?-.94*(1-Math.exp(delta*1.16)):1.09*delta;
+  const distance=delta<0?.94*Math.expm1(delta*1.40):1.316*delta+.15*delta*delta;
   const nose=23/59*(.165+.035*p.z);
   return {x:ribbonX(y)-nose+distance,y:y-.015*Math.max(0,delta)};
 }
@@ -3831,10 +3962,10 @@ function directFinish(r,age){
   const pass=finishPassTime(0),since=age-pass,gate=flyThrough(r,0,pass);
   // Frame the line before contact. Pan with only part of the passing speed
   // so the winning aircraft always advances on screen, even during the close-up.
-  const focus=smooth((since+.30)/.27)*(1-smooth((since-.43)/.40));
-  const follow=Math.max(0,since)*.62;
+  const focus=smooth((since+.42)/.29)*(1-smooth((since-.45)/.36));
+  const follow=(since+.18)*.30;
   airCamera.zoom=1+.32*focus;
-  airCamera.position.x=((gate.x-.50)*.58+follow)*view.w*focus;
+  airCamera.position.x=((gate.x-.48)*.72+follow)*view.w*focus;
   airCamera.position.y=(.47-gate.y)*view.h*focus;
   airCamera.updateProjectionMatrix();
   return shot;
@@ -3849,6 +3980,9 @@ function aircraftFrame(now){
   if(!bridge&&!picking)rollingStart=null;
   for(let i=0;i<5;i++){
     const model=craftModels[i],p=craftFor(field,i);
+    const jets=model.userData.jets,thrust=!picking&&field.version>=11?coinThrust(p,now*60):0;
+    jets.visible=thrust>.008;
+    if(jets.visible){jets.userData.uniforms.thrust.value=thrust;jets.userData.uniforms.beat.value=now*53+p.phase}
     const delay=p.fatalImpact ? FALL_TIME : (p.contactKind==='airframe' ? .14 : 0);
     const deadAge=p.down?now-p.finalTick/60:-1;
     const loose=p.down?deadAge-delay:-1;
@@ -3890,8 +4024,21 @@ function aircraftFrame(now){
       const strength=storm*(reducedMotion.matches ? .35 : 1)*(p.gustUntil>pose?1.30:1);
       const roll=Math.sin(pose*6.1+p.phase)+.44*Math.sin(pose*11.7+p.phase2);
       const bob=Math.sin(pose*7.3+p.phase2)+.35*Math.sin(pose*13.2+p.phase);
-      bank+=.25*strength*roll;pitch+=.102*strength*bob;yaw+=.085*strength*Math.sin(pose*5.8+p.phase);
+      const gust=.45+.55*(.5+.5*Math.sin(pose*3.2+p.phase2))**2;
+      const chop=pose*(22+1.4*i)+2.3*Math.sin(pose*4.1+p.phase2)+p.phase;
+      const nose=gust*(Math.sin(chop)+.46*Math.sin(chop*1.73+p.phase2));
+      bank+=strength*(.20*roll+.055*nose);pitch+=strength*(.065*bob+.19*nose);
+      yaw+=strength*(.065*Math.sin(pose*5.8+p.phase)+.15*gust*Math.cos(chop*.86+p.phase2));
       y+=clamp(k,.65,1.4)*2.3*strength*bob/h;
+    }
+    const rollAge=pose-p.rollTick/60;
+    if(!picking&&!reducedMotion.matches&&rollAge>=0&&rollAge<.88){
+      const u=rollAge/.88,arc=Math.sin(Math.PI*u)**2;
+      bank+=p.rollSign*Math.PI*2*smooth(u);pitch+=.095*arc;y-=2.8*k*arc/h;
+    }
+    if(thrust>0){pitch+=.086*thrust;bank-=.07*thrust}
+    if(i===1)for(const [side,arm] of model.userData.claws.entries()){
+      arm.rotation.z=(side?1:-1)*(.09*Math.sin(pose*2.7+side*2.2)+.16*thrust);
     }
     if(bridge){
       const a=rollingStart[i],coast=.48*(1-Math.exp(-now/.48));
@@ -3928,7 +4075,8 @@ function drawPlayerImpact(r,elapsed){
 
   const tick=crashed?plane.finalTick:plane?.contactTick;
   const age=tick>=0?elapsed-secondsAtTick(r.version,tick):Infinity;
-  const duration=crashed ? .88 : .44;
+  const received=plane?.contactKind==='received'||plane?.contactKind==='obstacle';
+  const duration=crashed ? 1.07 : received ? .73 : .47;
   if(age<0||age>=duration||document.hidden){
     if(!light.hidden)light.hidden=true;
     if(sceneLayer.style.transform)sceneLayer.style.transform='';
@@ -3945,12 +4093,16 @@ function drawPlayerImpact(r,elapsed){
   if(reducedMotion.matches){sceneLayer.style.transform='';return}
 
   const phase=age/duration,fade=(1-phase)**1.5;
-  const amplitude=crashed?7.8:kind==='strike'?2.45:3.1;
+  const unit=clamp(view.w/390,.84,1.45);
+  const amplitude=(crashed?12.2:received?8.4:3.2)*unit;
   const direction=kind==='strike'?1:-1;
-  const x=direction*amplitude*fade*Math.cos(phase*Math.PI*(crashed?11:5.2));
-  const y=amplitude*fade*(crashed ? .75 : .42)*Math.sin(phase*Math.PI*(crashed?9:6.3)+.5);
-  const scale=1+2*Math.max(Math.abs(x)/view.w,Math.abs(y)/view.h);
-  sceneLayer.style.transform='translate('+x+'px,'+y+'px) scale('+scale+')';
+  const x=direction*amplitude*fade*Math.cos(phase*Math.PI*(crashed?12:7.4));
+  const y=amplitude*fade*(crashed?.77:received?.61:.4)*Math.sin(phase*Math.PI*(crashed?10.4:6.3)+.5);
+  const roll=direction*(crashed?1.05:received?.78:.24)*fade*Math.cos(phase*17);
+  const tiltMargin=Math.abs(roll)*Math.PI/180*Math.max(view.h/view.w,view.w/view.h);
+  const recoil=(crashed?.047:received?.034:.012)*fade;
+  const scale=1+recoil+tiltMargin+2*Math.max(Math.abs(x)/view.w,Math.abs(y)/view.h);
+  sceneLayer.style.transform='translate('+x+'px,'+y+'px) rotate('+roll+'deg) scale('+scale+')';
 }
 function drawFrame(ts){
   finishView=null;
@@ -3989,7 +4141,7 @@ function drawFrame(ts){
   }
   framePack(run||practice,dt,waiting);aircraftFrame(visual);if(waiting)frameSelection();
   frameScenery(dt,waiting,time);worldAt(time,visual);trafficModels(run,visual);updateWingWakes(run,visual);
-  renderer.clear();renderer.render(scene,camera);renderer.clearDepth();renderer.render(airScene,airCamera);sea.drawWeather(run&&run.events);
+  drawScenery(visual);renderer.clearDepth();renderer.render(airScene,airCamera);sea.drawWeather(run&&run.events);
   if(run||practice)drawTraffic(run||practice,visual,view,!!practice);else view.ctx.clearRect(0,0,view.w,view.h);
   drawPlayerImpact(run,elapsed);
   requestAnimationFrame(drawFrame);
@@ -3997,7 +4149,7 @@ function drawFrame(ts){
 function startGame(){
   renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:'high-performance'});renderer.autoClear=false;renderer.setClearColor(0,0);el('world').appendChild(renderer.domElement);
   scene.fog=new THREE.Fog(0xc5dddf,100,1020);hemisphereLight=new THREE.HemisphereLight(0xaacadd,0x3c4248,1);shadowLight=new THREE.DirectionalLight(0xffffff,1);scene.add(hemisphereLight,shadowLight);
-  sea=new Sea();sea.mesh.position.y=-600;scene.add(sea.mesh);
+  sea=new Sea();sea.mesh.position.y=-600;scene.add(sea.mesh);sceneryBlur=makeSceneryBlur();
   airScene=new THREE.Scene();airLighting(airScene);airCamera=new THREE.OrthographicCamera(-500,500,300,-300,.1,2400);airCamera.position.z=600;
   wingWakes=makeWingWakes();craftModels=Fleet.map((_,i)=>aircraft(i));aircraftThumbnails();makeRateLabels();resize();attachControls();
   const holder=el('gameHolder');

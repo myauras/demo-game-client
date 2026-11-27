@@ -8,7 +8,7 @@ const end = html.indexOf('// Painted wooden forms', start);
 assert(start !== -1 && end !== -1, 'Missing race simulation in the game page');
 const { fleet, count, latest, seedAt, play, seat, newRace, stepRace, addItem, touchItem, chooseCoin, collectCoin, displayRate, tailContact, gustCollision, flightScale, flightYaw, raceLeader, payoutRate, sprint, extension, raceHz, secondsAtTick, ticksAtTime, finishPassTime, finishDuration, coinThrust } = new Function(html.slice(start, end) +
   '\nreturn { fleet:Fleet, count:COURSE_COUNT, latest:RACE_VERSION, seedAt:courseSeed, play(seed,version){const r=newRace(seed,version);while(!r.done)stepRace(r);return r}, seat:craftFor,newRace,stepRace,addItem,touchItem,chooseCoin,collectCoin,displayRate,tailContact,gustCollision,flightScale,flightYaw,raceLeader,payoutRate,sprint:SPRINT_TICKS,extension:EXTEND_RATE,raceHz,secondsAtTick,ticksAtTime,finishPassTime,finishDuration,coinThrust };')();
-for (const version of [3,4,5,6,7,8,9,10,11,12,latest]) {
+for (const version of [3,4,5,6,7,8,9,10,11,12,13,latest]) {
   const seeds = new Set();
   const totals = Array(5).fill(0);
   const zeroAfterTenSeconds = Array(5).fill(0);
@@ -87,7 +87,7 @@ for (const version of [3,4,5,6,7,8,9,10,11,12,latest]) {
   assert.equal(maximum, version>=9?20000:10000);
   if (version === latest) {
     assert(coursesWithBumps>0&&sprintFinishes>0&&highFinishes>0&&extended<count/5);
-    assert.equal(finisherCounts[0],1120);
+    assert.equal(finisherCounts[0],1216);
     assert(finisherCounts.slice(1).every(n=>n>0));
     console.log('Finisher counts, from zero to five: '+finisherCounts.join(', '));
     console.log(extended+' courses qualify for extra time; '+highFinishes+' fly past the sprint limit.');
@@ -322,4 +322,18 @@ for (const reverse of [false,true]) {
   assert.equal(r.craft[0].mult,10);
   assert.equal(r.events.filter(e=>e.type==='pickup'&&e.chasers===2&&e.id===1).length,1);
 }
-console.log('Versions 3–13: 2,048 courses × 5 seats per aircraft. Flight accrual, legacy payouts, pickups and collisions passed.');
+// A genuine pass earns a heart. Inheriting the lead on elimination does not.
+const showRace=newRace(2,latest);
+let sawPass=false,sawInherited=false,sawRoll=false;
+while(!showRace.done){
+  const previous=showRace.frontRunner;
+  stepRace(showRace);
+  const moved=previous!=null&&showRace.frontRunner!==previous;
+  if(moved){
+    if(showRace.craft[previous].alive){sawPass=true;assert.equal(showRace.passHeartTick,showRace.tick)}
+    else{sawInherited=true;assert.equal(showRace.passHeartTick,null)}
+  }
+  if(showRace.craft.some(p=>p.rollTick===showRace.tick))sawRoll=true;
+}
+assert(sawPass&&sawInherited&&sawRoll);
+console.log('Versions 3–'+latest+': 2,048 courses × 5 seats per aircraft. Flight accrual, legacy payouts, pickups and collisions passed.');
