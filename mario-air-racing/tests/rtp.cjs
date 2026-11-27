@@ -123,13 +123,43 @@ for(const reduced of [false,true]){
     assert(shot.championCloseup&&shot.rank===0&&camera.zoom>1);
     assert(x>.45&&x<.60&&y>.45&&y<.51);
   }
-  const wide=directFinish(r,pass+.5),gateX=camera.position.x,gateY=camera.position.y;
+  directFinish(r,pass+.5);
+  const peak=camera.zoom;
+  let prevX=camera.position.x,prevZoom=peak;
+  for(let ms=10;ms<=320;ms+=10){
+    directFinish(r,pass+.5+ms/1000);
+    assert(camera.zoom<=prevZoom&&Math.abs(camera.position.x-prevX)<view.w*.06);
+    if(ms===160)assert(camera.zoom>1&&camera.zoom<peak);
+    prevX=camera.position.x;prevZoom=camera.zoom;
+  }
+  const wide=directFinish(r,pass+.83),gateX=camera.position.x,gateY=camera.position.y;
   assert(!wide.championCloseup&&camera.zoom===1);
   for(const rank of [1,2]){
     assert.equal(directFinish(r,finishPassTime(rank)).rank,rank);
     assert.deepEqual([camera.zoom,camera.position.x,camera.position.y],[1,gateX,gateY]);
   }
+  const solo={...r,finishers:[1]};
+  for(const after of [.50,.67,.82,.93]){
+    const age=pass+after;directFinish(solo,age);
+    const x=.5+(flyThrough(solo,0,age).x-.5-camera.position.x/view.w)*camera.zoom;
+    assert.equal(camera.zoom,peak);assert(x>.54&&x<.66);
+  }
 }
+
+// Credits overlap on the visual counter, and a loss immediately settles pending gains.
+const gainSource=html.slice(html.indexOf('function recentRateGain('),html.indexOf('function drawTraffic('));
+const rateGain=new Function('secondsAtTick','smooth',gainSource+';return recentRateGain;')(secondsAtTick,smooth);
+const feedbackRace={version:latest,events:[{type:'change',id:0,time:4,value:10}]};
+const feedbackPilot={id:0,mult:50},contactTime=secondsAtTick(latest,240);
+assert.equal(rateGain(feedbackRace,feedbackPilot,contactTime).shown,40);
+const midway=rateGain(feedbackRace,feedbackPilot,contactTime+.08).shown;
+assert(midway>40&&midway<50);
+const secondTime=secondsAtTick(latest,243),atSecond=rateGain(feedbackRace,feedbackPilot,secondTime).shown;
+feedbackPilot.mult+=4;feedbackRace.events.push({type:'change',id:0,time:243/60,value:4});
+assert.equal(rateGain(feedbackRace,feedbackPilot,secondTime).shown,atSecond);
+assert.equal(rateGain(feedbackRace,feedbackPilot,secondTime+.18).shown,54);
+feedbackPilot.mult-=10;feedbackRace.events.push({type:'change',id:0,time:244/60,value:-10});
+assert.deepEqual(rateGain(feedbackRace,feedbackPilot,secondsAtTick(latest,244)),{shown:44,age:Infinity});
 
 // Extension must be earned during the flight, even on the original finish tick.
 for(const value of [extension-1,extension]){
