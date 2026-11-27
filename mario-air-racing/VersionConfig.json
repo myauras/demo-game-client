@@ -1,0 +1,16 @@
+{
+  "env": "Release",
+  "mainVersions": {
+    "0.1": {
+      "bundleRevision": 1,
+      "bundleRootUrl": "./remote",
+      "bundles": {
+        "GameBundle": {
+          "cocosVersion": "ff19c",
+          "bundleSizeBytes": 6329493,
+          "contractVersion": 2
+        }
+      }
+    }
+  }
+}
