@@ -1,5 +1,5 @@
 /* =========================================================================
- * 爆金連鎖——Node 無頭蒙地卡羅自測（對 values.js 的規則模型端到端複驗）　v2.3：能量條＋全盤金幣雨＋連鎖獎池
+ * 爆金連鎖——Node 無頭蒙地卡羅自測（對 values.js 的規則模型端到端複驗）　v3：單一盤面＋刷新盤面＋換金額；能量條＋全盤金幣雨＋連鎖獎池
  * 執行：node game/test/mc-test.js [N]（預設 1,000,000 注／丟法；多執行緒，約 1～2 分鐘）
  *   --seed S        抽獎亂數種子（預設 20261125）
  *   --sessions K    每種丟法的「短時間體感」場數（預設 20000）
@@ -9,6 +9,9 @@
  *       C 五種丟法彼此　D 防套利（上界含獎池）　E 演出自洽（含金幣雨重播、獎池重判）　F 寶物方向　G 各面額實付整數與自我檢查
  *       H 抽獎入口可注入　R 能量條與金幣雨（每 RAIN_EVERY 注恰一次、rainAll＝25 次依序 drop）
  *       P 連鎖獎池（potAfter 純函式、守恆、上界、拿獎池時機只有兩種、逐注對影子）
+ *       L 合法盤面（isLegal；起始盤面合法、從合法盤面丟幣永遠合法且 ≥40 枚）　S 刷新與換金額盤面（reshuffle／floorBoard）
+ *       X 刷新套利（7 種狂刷丟法各 N 注：長期拿回與不刷相同、枚數與寶物不變、全程合法）　W 單一盤面換金額套利（9 種丟法、用錢算，只會虧）
+ *       K 刷新冷卻比較表（K＝0／3／5／10／15／20／30 注 × 三種刷法（刷、只在沒有 8 格時刷、刷＋養盤）＋ 不刷對照，寫進 stats.json）
  * 常數一律讀 EV（RAIN_EVERY、POT_ADD、POT_CHAIN），不在這裡寫死。
  * 判定：|偏差| ≤ max(0.1pp, 3σ)；FAIL 時 exit code 1。另輸出 game/test/stats.json。
  * 註：本檔不得含頂層 'use strict'（直接 eval 需讓 var EV 落本模組作用域）。記號 burst 沒替換也能跑。
@@ -67,6 +70,39 @@ if(WRITE_STATS){
   for(const name of SESS_NAMES) for(let s = 0; s < SESSIONS; s += CHUNK)
     tasks.push({ w: 0.7, type: 'sessions', name, count: Math.min(CHUNK, SESSIONS - s), seed: SEED + 100 + (k++) });
 }
+/* ---- v3：刷新套利（狂刷丟法×8 段）、刷新冷卻比較表、單一盤面換金額套利 ----
+   每一組「同設定」切成幾段獨立長跑（各段種子不同、各從起始盤面／floorBoard 開始），總注數＝N；同一段的各組吃同一串抽獎亂數 */
+const STRESS_CH = 8, KCH = 3, SWCH = 4, KN = Math.ceil(Math.min(N, 300000) / KCH);
+const STRESS = [
+  { tag: 'every', base: 'greedy', w: 2, label: '每注都刷（刷完挑最會爆的格丟）', o: { mode: 'every', pick: 'greedy' } },
+  { tag: 'every10', base: 'greedy', w: 1, label: '每 10 注刷一次', o: { mode: 'every', cd: 10, pick: 'greedy' } },
+  { tag: 'no8', base: 'greedy', w: 8, label: '沒有能炸 8 格的就刷（同一注最多連刷 6 次）', o: { mode: 'no8', cd: 0, retry: 6, pick: 'greedy' } },
+  { tag: 'low', base: 'greedy', w: 2, label: '盤面枚數低於 48 就刷', o: { mode: 'low', lowBelow: 48, pick: 'greedy' } },
+  { tag: 'gemHunt', base: 'greedy', w: 6, label: '刷到「點下去會噴出寶物」為止（同一注最多 4 次）', o: { mode: 'gemHunt', cd: 0, retry: 4, pick: 'greedy' } },
+  { tag: 'maxExit', base: 'greedy', w: 5, label: '同一注連刷 3 次、取「噴最多枚」的盤面', o: { mode: 'maxExit', cd: 0, retry: 3, pick: 'greedy' } },
+  { tag: 'every8', base: 'p8gold', w: 8, label: '每注刷到有能炸 8 格的格子為止（最多 6 次）、有就炸', o: { mode: 'every', cd: 0, untilHit8: true, retry: 6, pick: 'p8gold' } }
+];
+const KS = [0, 3, 5, 10, 15, 20, 30];
+for(let c = 0; c < STRESS_CH; c++){
+  const common = { n: Math.ceil(N / STRESS_CH), kindSeed: SEED + 31000 + c, stratSeed: 900 + c, refSeed: 700 + c };
+  for(const s of STRESS) tasks.push({ w: s.w, type: 'refresh', tag: 'S:' + s.tag, o: Object.assign({}, common, s.o) });
+  for(const bp of ['greedy', 'p8gold']) tasks.push({ w: 0.6, type: 'refresh', tag: 'S:base-' + bp, o: Object.assign({}, common, { mode: 'none', pick: bp }) });
+}
+if(WRITE_STATS){
+  for(let c = 0; c < KCH; c++){
+    const common = { n: KN, kindSeed: SEED + 41000 + c, stratSeed: 950 + c, refSeed: 750 + c };
+    for(const K of KS){
+      tasks.push({ w: K === 0 ? 6 : 2, type: 'refresh', tag: 'K:A:' + K, o: Object.assign({}, common, { mode: 'every', cd: K, untilHit8: K === 0, retry: 6, pick: 'p8gold' }) });
+      tasks.push({ w: K === 0 ? 8 : 3, type: 'refresh', tag: 'K:C:' + K, o: Object.assign({}, common, { mode: 'no8', cd: K, retry: 6, pick: 'builder' }) });
+      tasks.push({ w: K === 0 ? 6 : 2, type: 'refresh', tag: 'K:B:' + K, o: Object.assign({}, common, { mode: 'no8', cd: K, retry: 6, pick: 'p8gold' }) });
+    }
+    for(const bp of ['builder', 'gold', 'p8gold']) tasks.push({ w: 1, type: 'refresh', tag: 'K:base-' + bp, o: Object.assign({}, common, { mode: 'none', pick: bp }) });
+  }
+}
+const SWITCHES = ['fixed0', 'fixed1', 'fixed2', 'cycle1', 'cycle5', 'cycle30', 'hoardBlast', 'nearFullUp', 'nearFullDown'];
+for(let c = 0; c < SWCH; c++)
+  for(const p of SWITCHES) tasks.push({ w: p === 'cycle1' ? 3 : 1.5, type: 'switch', tag: 'W:' + p, o: { policy: p, n: Math.ceil(N / SWCH), kindSeed: SEED + 51000 + c, stratSeed: 970 + c, floorSeed: 5 + c } });
+
 tasks.sort((a, b) => b.w - a.w);
 function runAll(list, size){
   return new Promise((resolve, reject) => {
@@ -82,11 +118,11 @@ function runAll(list, size){
 }
 const heavy = runAll(tasks, WORKERS);
 
-console.log(`爆金連鎖 mc-test（v2.3 能量條＋金幣雨＋連鎖獎池）｜N=${N.toLocaleString()} 注／丟法｜種子 ${SEED}｜${WORKERS} 條執行緒｜面額 ${EV.CFG.DENOMS.join('／')}｜能量條 ${RE}｜獎池每注存 ${EV.CFG.POT_ADD} 個面額、炸 ${PC} 格拿走`);
+console.log(`爆金連鎖 mc-test（v3 單一盤面＋刷新＋換金額；能量條＋金幣雨＋連鎖獎池）｜N=${N.toLocaleString()} 注／丟法｜種子 ${SEED}｜${WORKERS} 條執行緒｜面額 ${EV.CFG.DENOMS.join('／')}｜能量條 ${RE}｜獎池每注存 ${EV.CFG.POT_ADD} 個面額、炸 ${PC} 格拿走`);
 
 /* ============ A 理論 RTP 與抽獎機率 ============ */
 console.log('\n=== A 理論值 ===');
-unit('A', 'A1 理論 RTP 在 96%～97%', EV.RTP >= 0.96 && EV.RTP <= 0.97, `RTP=${pct(EV.RTP, 4)}（普通幣 ${EV.VALUE.coin}、能量條 ${RE}、每場金幣雨 ${N25} 枚、獎池每注存 ${EV.CFG.POT_ADD}）`);
+unit('A', `A1 理論 RTP 在 ${pct(EV.CFG.RTP_MIN, 0)}～${pct(EV.CFG.RTP_MAX, 0)} 且＝鐵表 94.9375%`, EV.RTP >= EV.CFG.RTP_MIN && EV.RTP <= EV.CFG.RTP_MAX && Math.abs(EV.RTP - 0.949375) < 1e-9, `RTP=${pct(EV.RTP, 4)}（普通幣 ${EV.VALUE.coin}、能量條 ${RE}、每場金幣雨 ${N25} 枚、獎池每注存 ${EV.CFG.POT_ADD}）`);
 unit('A', 'A2 RTP 與另一種算法（週期內進場總面值÷週期長＋獎池每注存的）相符、拆解加總＝RTP',
   Math.abs(EV.RTP - TH.rtp) < 1e-12 &&
   Math.abs(EV.RTP_PARTS.coin + EV.RTP_PARTS.rain + EV.RTP_PARTS.diamond + EV.RTP_PARTS.crown + EV.RTP_PARTS.pot - EV.RTP) < 1e-12 && EV.RTP_PARTS.pot === EV.CFG.POT_ADD,
@@ -209,11 +245,11 @@ console.log('\n=== G 實付整數與自我檢查 ===');
   const sol = EV.solveCoinPay({}, (EV.CFG.RTP_MIN + EV.CFG.RTP_MAX) / 2);
   unit('G', `G2 solveCoinPay：以目前能量條與寶物值，掃「各面額實付皆整數」的格點，最接近 ${pct((EV.CFG.RTP_MIN + EV.CFG.RTP_MAX) / 2, 1)}（範圍中點）的普通幣值就是目前的 ${EV.VALUE.coin}`, sol.coinPay === EV.VALUE.coin && Math.abs(sol.rtp - EV.RTP) < 1e-12, `coinPay=${sol.coinPay} rtp=${pct(sol.rtp, 3)}`);
   const thr = (over) => { try { EV.build(over); return false; } catch(e) { return true; } };
-  unit('G', 'G3 自我檢查會擋：普通幣 0.705（實付非整數）／0.9（RTP 超過 97%）／0.49（RTP 低於 96%）', thr({ COIN_PAY: 0.705 }) && thr({ COIN_PAY: 0.9 }) && thr({ COIN_PAY: 0.49 }));
-  unit('G', 'G6 自我檢查會擋：能量條 40（RTP 超過 97%）／1000（RTP 低於 96%）／0／1.5／NaN（不是 ≥1 的整數）',
+  unit('G', 'G3 自我檢查會擋：普通幣 0.705（實付非整數）／0.9（RTP 超過 96%）／0.49（RTP 低於 94%）', thr({ COIN_PAY: 0.705 }) && thr({ COIN_PAY: 0.9 }) && thr({ COIN_PAY: 0.49 }));
+  unit('G', 'G6 自我檢查會擋：能量條 40（RTP 超過 96%）／1000（RTP 低於 94%）／0／1.5／NaN（不是 ≥1 的整數）',
     thr({ RAIN_EVERY: 40 }) && thr({ RAIN_EVERY: 1000 }) && thr({ RAIN_EVERY: 0 }) && thr({ RAIN_EVERY: 1.5 }) && thr({ RAIN_EVERY: NaN }));
   unit('G', 'G4 start 種子被改壞時自我檢查會擋', thr({ START: [{ seed: 1, drops: 400, thin: 0 }, EV.CFG.START[1], EV.CFG.START[2]] }));
-  unit('G', 'G8 自我檢查會擋：獎池每注存入 0.155（面額 100 實付 15.5 非整數）／0.2（RTP 超過 97%）／0.1（RTP 低於 96%）／負數／NaN；獎池門檻 0／2.5／NaN（不是 ≥1 的整數）',
+  unit('G', 'G8 自我檢查會擋：獎池每注存入 0.155（面額 100 實付 15.5 非整數）／0.2（RTP 超過 96%）／0.1（RTP 低於 94%）／負數／NaN；獎池門檻 0／2.5／NaN（不是 ≥1 的整數）',
     thr({ POT_ADD: 0.155 }) && thr({ POT_ADD: 0.2 }) && thr({ POT_ADD: 0.1 }) && thr({ POT_ADD: -0.15 }) && thr({ POT_ADD: NaN }) && thr({ POT_CHAIN: 0 }) && thr({ POT_CHAIN: 2.5 }) && thr({ POT_CHAIN: NaN }));
   unit('G', 'G9 EV.POT_ADD／EV.POT_CHAIN 可讀且＝CFG；EV.potMax(di)＝RAIN_EVERY×每注存的', EV.POT_ADD === EV.CFG.POT_ADD && EV.POT_CHAIN === EV.CFG.POT_CHAIN && EV.PAY.every((p, d) => EV.potMax(d) === RE * p.pot));
   let cashOk = true; const kr2 = EV.rng(7), pr2 = EV.rng(8), b = EV.startBoard(1);
@@ -361,12 +397,137 @@ console.log('\n=== P 連鎖獎池 ===');
     EV.tier(base, 1, DEN * (EV.CFG.TIERS.HUGE - 0.5)) === 'huge' && EV.tier(base, 1, DEN * (EV.CFG.TIERS.HUGE - 0.51)) === 'big' && EV.tier({ pay: 5, exits: { coin: 0, diamond: 0, crown: 1 } }, 1, 0) === 'huge');
 }
 
+/* ============ L 合法盤面（isLegal）：起始盤面合法、從合法盤面照規則丟幣永遠還是合法、永遠 ≥40 枚 ============ */
+console.log('\n=== L 合法盤面 ===');
+const V3 = { legal: {}, reshuffle: {}, floor: {} };
+/* 不借用 values.js 的導出：測試自己用另一種寫法（直接逐步「燒」）判斷穩定循環 */
+function burnLegal(h){
+  if(h.length !== 25 || h.some(x => x < 0 || x > 3 || x !== Math.floor(x))) return false;
+  const burnt = new Array(25).fill(false); let n = 0, prog = true;
+  while(prog){
+    prog = false;
+    for(let v = 0; v < 25; v++){
+      if(burnt[v]) continue;
+      const r = Math.floor(v / 5), c = v % 5; let un = 0;
+      for(const [dr, dc] of [[0, -1], [0, 1], [-1, 0], [1, 0]]){ const rr = r + dr, cc = c + dc; if(rr >= 0 && rr < 5 && cc >= 0 && cc < 5 && !burnt[rr * 5 + cc]) un++; }
+      if(h[v] >= un){ burnt[v] = true; n++; prog = true; }                         // 枚數 ≥ 還沒燒到的鄰格數：燒得起來（出界的邊視為已燒）
+    }
+  }
+  return n === 25;
+}
+const gemCount = (b) => { const o = { diamond: 0, crown: 0 }; for(const x of b.g) for(const k of x) o[k]++; return o; };
+const rl = EV.rng(8675309);
+function randLegal(T, ngem){                                                   // 隨機合法盤面：floorBoard 逐枚補到 T（合法盤面加幣仍合法），再隨手放寶物
+  const b = EV.floorBoard(rl);
+  while(EV.total(b) < T){ const i = Math.floor(rl() * N25); if(b.h[i] < 3) b.h[i]++; }
+  for(let q = 0; q < ngem; q++){ const fr = []; for(let i = 0; i < N25; i++) if(b.h[i] > b.g[i].length) fr.push(i); b.g[fr[Math.floor(rl() * fr.length)]].push(rl() < 0.5 ? 'diamond' : 'crown'); }
+  return b;
+}
+{
+  const starts = EV.CFG.DENOMS.map((_, d) => EV.startBoard(d));
+  unit('L', 'L1 三張起始盤面都是合法盤面（isLegal；且測試自己的另一種燒法也同意）、總枚數 43', starts.every(b => EV.isLegal(b) && burnLegal(b.h) && EV.total(b) === EV.START_TOTAL));
+  /* 判定正確性：與測試自己的獨立實作在大量隨機盤面上逐一相同；總枚數 <40 的盤面一定不合法 */
+  let agree = 0, legalN = 0, bad = 0, lowN = 0, lowLegal = 0, mx = 0;
+  for(let t = 0; t < 40000; t++){
+    const b = EV.emptyBoard(), bias = 0.6 + rl() * 1.2;
+    for(let j = 0; j < N25; j++) b.h[j] = Math.min(3, Math.floor(rl() * 4 * bias / 1.5 + rl() * 0.99));
+    const a = EV.isLegal(b), c = burnLegal(b.h);
+    if(a === c) agree++; else bad++;
+    if(a) legalN++;
+    if(EV.total(b) < 40){ lowN++; if(a) lowLegal++; }
+    mx = Math.max(mx, EV.total(b));
+  }
+  unit('L', 'L2 isLegal 與測試自己的獨立燒法在 40000 張隨機盤面上逐張相同；總枚數 <40 的一律不合法（合法與不合法兩類都有）', bad === 0 && lowLegal === 0 && legalN > 500 && legalN < 39500, `合法 ${legalN}／不合法 ${40000 - legalN}｜總枚數 <40 共 ${lowN} 張、其中判合法 ${lowLegal} 張｜不一致 ${bad}`);
+  const e = EV.emptyBoard(), f = EV.floorBoard(rl), f2 = EV.cloneBoard(f); const k0 = f2.h.findIndex(x => x > 0); f2.h[k0]--;
+  const f3 = EV.cloneBoard(f); f3.g[f3.h.findIndex(x => x > 0)] = ['diamond', 'diamond', 'diamond', 'diamond'];
+  const f4 = EV.cloneBoard(f); f4.h[0] = 4;
+  unit('L', 'L3 不合法的樣子：空盤、40 枚盤面拿掉一枚（39 枚）、格子寶物數多過枚數、某格 4 枚、缺格／null 都判不合法；合法的 floorBoard 判合法',
+    !EV.isLegal(e) && !EV.isLegal(f2) && !EV.isLegal(f3) && !EV.isLegal(f4) && !EV.isLegal({ h: [], g: [] }) && !EV.isLegal(null) && EV.isLegal(f));
+  /* 合法盤面丟幣永遠合法：五種丟法×長跑（含金幣雨、寶物）、逐注檢查；另從 3000 張隨機合法盤面（各種總枚數、含寶物）各丟 40 枚（含雨） */
+  const strats = lib.makeStrategies(EV), kr = EV.rng(123), per = [];
+  let stepsBad = 0, stepsMin = 1e9, steps = 0;
+  const LEG_N = Math.min(N, 100000);
+  for(const name of NAMES){
+    const b = EV.startBoard(DI0), pr = EV.rng(55 + name.length); let meter = 0, bad2 = 0, minT = 1e9;
+    for(let d = 1; d <= LEG_N; d++){
+      const mt = EV.meterAfter(meter);
+      EV.play(b, strats[name](b, pr, RE - 1 - meter), kr, { rec: false, rain: mt.rain }); meter = mt.meter;
+      steps++; if(!EV.isLegal(b) || !burnLegal(b.h)) bad2++;
+      const t = EV.total(b); if(t < minT) minT = t;
+    }
+    stepsBad += bad2; stepsMin = Math.min(stepsMin, minT); per.push(`${name} ${minT}`);
+  }
+  unit('L', `L4 從起始盤面照規則丟幣（五種丟法 × ${LEG_N.toLocaleString()} 注，含金幣雨、寶物）：每一注結算後都還是合法盤面、枚數 ≥40`, stepsBad === 0 && stepsMin >= EV.MIN_TOTAL, `檢查 ${steps.toLocaleString()} 次｜不合法 ${stepsBad}｜各丟法盤面最低：${per.join('、')}`);
+  let rb = 0, rmin = 1e9, rsteps = 0;
+  for(let t = 0; t < 3000; t++){
+    const T = 40 + Math.floor(rl() * 36), b = randLegal(T, Math.floor(rl() * 4)), pr = EV.rng(t + 1);
+    if(!EV.isLegal(b)){ rb++; continue; }
+    for(let d = 0; d < 40; d++){
+      EV.play(b, Math.floor(pr() * N25), kr, { rec: false, rain: d % 13 === 12 });
+      rsteps++; if(!EV.isLegal(b)) rb++; rmin = Math.min(rmin, EV.total(b));
+    }
+  }
+  unit('L', 'L5 從 3000 張隨機合法盤面（總枚數 40～75、含寶物）各隨機丟 40 枚（含金幣雨）：每一步都還是合法、枚數 ≥40', rb === 0 && rmin >= 40, `步數 ${rsteps}｜不合法 ${rb}｜最低 ${rmin} 枚`);
+  V3.legal = { starts: starts.map(b => ({ total: EV.total(b), legal: EV.isLegal(b) })), randomBoards: 40000, randomLegal: legalN, followedSteps: steps + rsteps, minTotalSeen: Math.min(stepsMin, rmin) };
+}
+
+/* ============ S 刷新盤面（reshuffle）與換金額盤面（floorBoard） ============ */
+console.log('\n=== S 刷新與換金額盤面 ===');
+{
+  const J = JSON.stringify, snap = (b) => J({ h: b.h, g: b.g });
+  let n = 0, badTot = 0, badLegal = 0, badGem = 0, badCap = 0, badMut = 0, same = 0, noGemCell = 0;
+  const byT = {}, rr = EV.rng(4242), t0r = Date.now();
+  for(let t = 0; t < 20000; t++){
+    const T = t < 400 ? (t % 2 ? 75 : 40) : 40 + Math.floor(rl() * 36), ng = Math.floor(rl() * 6);
+    const b = randLegal(T, Math.min(ng, T)), before = snap(b), g0 = gemCount(b), c = EV.reshuffle(b, rr);
+    n++;
+    if(EV.total(c) !== EV.total(b)) badTot++;
+    if(!EV.isLegal(c) || !burnLegal(c.h)) badLegal++;
+    const g1 = gemCount(c); if(g0.diamond !== g1.diamond || g0.crown !== g1.crown) badGem++;
+    if(c.h.some(x => x < 0 || x > 3) || c.g.some((x, i) => x.length > c.h[i])) badCap++;
+    if(snap(b) !== before || c === b || c.h === b.h) badMut++;
+    if(J(c.h) === J(b.h)) same++;
+    (byT[T] = byT[T] || { n: 0, same: 0 }).n++; if(J(c.h) === J(b.h)) byT[T].same++;
+  }
+  const refreshMs = (Date.now() - t0r) / n;
+  unit('S', `S1 reshuffle ${n} 次（總枚數 40～75 各種、含寶物 0～5 顆、含最極端的 40 枚與 75 枚全 3）：總枚數完全相同、結果合法、寶物種類與數量不變、每格 ≤3 且寶物只放在有幣的格子、傳入的盤面沒被改`,
+    badTot === 0 && badLegal === 0 && badGem === 0 && badCap === 0 && badMut === 0, `枚數不符 ${badTot}｜不合法 ${badLegal}｜寶物不符 ${badGem}｜越界 ${badCap}｜改到原盤面 ${badMut}｜與原盤面完全相同 ${same} 次（僅 75 枚全 3 盤面的唯一解）`);
+  const mid = Object.keys(byT).filter(T => T > 41 && T < 74).reduce((a, T) => a + byT[T].same, 0);
+  unit('S', 'S2 總枚數 42～73 時，刷新結果幾乎不會與原盤面相同（確實換了位置）', mid <= 5, `相同 ${mid} 次`);
+  const ill = EV.emptyBoard(); ill.h[3] = 2; ill.h[4] = 1; const out = EV.reshuffle(ill, rr);
+  unit('S', 'S3 傳入不合法盤面：原樣（複製）回傳，不增不減、不是同一個物件', J(out) === J(ill) && out !== ill && out.h !== ill.h);
+  const a1 = EV.reshuffle(starts0(), EV.rng(9)), a2 = EV.reshuffle(starts0(), EV.rng(9)), a3 = EV.reshuffle(starts0(), EV.rng(10));
+  unit('S', 'S4 相同亂數種子 → 相同結果（可重現）；不同種子 → 不同結果', J(a1) === J(a2) && J(a1) !== J(a3));
+  /* floorBoard */
+  let fOk = 0, fGem = 0; const seen = new Set(), f3 = [];
+  for(let t = 0; t < 20000; t++){
+    const f = EV.floorBoard(rr);
+    if(EV.total(f) === 40 && EV.isLegal(f) && burnLegal(f.h) && f.h.every(x => x >= 0 && x <= 3)) fOk++;
+    if(f.g.some(x => x.length)) fGem++;
+    seen.add(f.h.join('')); f3.push(f.h.filter(x => x === 3).length);
+  }
+  unit('S', `S5 floorBoard 20000 次：恰好 40 枚、合法、每格 0～3、沒有寶物；每次不同（${seen.size} 種不同盤面）`, fOk === 20000 && fGem === 0 && seen.size > 15000, `合格 ${fOk}｜帶寶物 ${fGem}｜不同盤面 ${seen.size}`);
+  /* 抽 tries 張取「現在點下去炸最多格」的那張：資訊（不影響長期拿回，見 X） */
+  const info = {};
+  for(const T of [43, 50, 60]) for(const tries of [1, EV.CFG.RESHUFFLE_TRIES, 24]){
+    const b = randLegal(T, 0); let hit = 0, tp = 0; const M = 3000;
+    for(let t = 0; t < M; t++){ const c = EV.chainBest(EV.reshuffle(b, rr, { tries })); if(c.topples >= PC) hit++; tp += c.topples; }
+    info[`T${T}_tries${tries}`] = { hit8: hit / M, avgChain: tp / M };
+  }
+  console.log('     （資訊）刷新後「現在點下去能炸 ≥' + PC + ' 格」的機率（總枚數 43／50／60；抽 1／' + EV.CFG.RESHUFFLE_TRIES + '／24 張）：' +
+    [43, 50, 60].map(T => `${T} 枚：` + [1, EV.CFG.RESHUFFLE_TRIES, 24].map(k => pct(info[`T${T}_tries${k}`].hit8, 0)).join('／')).join('｜') + `｜每次刷新約 ${(refreshMs * 1000).toFixed(0)} µs（含抽 ${EV.CFG.RESHUFFLE_TRIES} 張）`);
+  V3.reshuffle = { checked: n, tries: EV.CFG.RESHUFFLE_TRIES, microsecondsEach: Math.round(refreshMs * 1000), hit8ByTotalAndTries: info, method: '隨機燃燒順序→最小穩定循環盤面（40 枚）＋隨機補滿到原總枚數，抽 tries 張取最會炸的；構造上必合法' };
+  V3.floor = { checked: 20000, distinct: seen.size, avg3Cells: f3.reduce((a, x) => a + x, 0) / f3.length };
+}
+function starts0(){ const b = EV.startBoard(0); b.g[b.h.findIndex(x => x > 0)] = ['diamond']; return b; }
+
 /* ============ 等執行緒的結果 ============ */
 heavy.then((results) => {
   const L = {}, RP = {}, SS = {};
   tasks.forEach((t, i) => {
     if(t.type === 'long') L[t.name] = results[i];
     else if(t.type === 'replay') RP[t.name] = results[i];
+    else if(t.type === 'refresh' || t.type === 'switch') { /* v3：另外分組（見 X／W／K） */ }
     else (SS[t.name] = SS[t.name] || []).push(results[i]);
   });
   const lim = Math.max(0.001, 3 * sigmaMean(N));
@@ -437,6 +598,73 @@ heavy.then((results) => {
       `盤面不符 ${r.boardBad}｜噴出不符 ${r.exitBad}｜金額不符 ${r.cashBad}｜倍數不符 ${r.payBad}｜波內不符 ${r.waveBad}｜金幣雨形狀不符 ${r.rainShapeBad}｜獎池不符 ${r.potBad}｜單注（單段）最多 ${r.maxWaves} 波`);
   }
 
+  /* ============ X 刷新套利：狂刷丟法 ============ */
+  const G = {};
+  tasks.forEach((t, i) => { if(t.type === 'refresh' || t.type === 'switch') (G[t.tag] = G[t.tag] || []).push(results[i]); });
+  const RS = {};
+  for(const k of Object.keys(G)) if(k[0] === 'S' || k[0] === 'K') RS[k] = lib.summarizeRefresh(G[k]);
+  const rowOf = (r) => ({ n: r.n, rtp: r.rtp, rtpExit: r.rtpExit, refreshActionsPer100: r.refreshPer100, reshuffleCallsPer100: r.callsPer100, afterRefreshHas8: r.afterRefreshHas8,
+    own8Share: r.own8Share, potTakeEvery: { p10: r.potTakeEvery.p10, p50: r.potTakeEvery.p50, p90: r.potTakeEvery.p90, avg: r.potTakeEvery.avg }, potAtTake: { p10: r.potAtTake.p10, p50: r.potAtTake.p50, p90: r.potAtTake.p90, avg: r.potAtTake.avg },
+    return100: { p10: r.block100.p10, p50: r.block100.p50, p90: r.block100.p90, min: r.block100.min, max: r.block100.max }, minBoardCoins: r.minTot, maxBoardCoins: r.maxTot });
+  console.log(`\n=== X 刷新套利：狂刷丟法各 ${N.toLocaleString()} 注（切 ${STRESS_CH} 段）；判準 |拿回−理論| ≤ max(0.1pp, 3σ)＝${pp(lim, 3)}，且與「同一串抽獎亂數、不刷」的差距 ≤ 兩邊盤面／獎池殘留上界 ===`);
+  const stressOut = {};
+  for(const bp of ['greedy', 'p8gold']){
+    const b0 = RS['S:base-' + bp];
+    unit('X', `X0 對照組 [不刷・${bp === 'greedy' ? '每次挑最會爆的格' : '有能炸 8 格就點、否則快滿就點'}] ${b0.n.toLocaleString()} 注：拿回與理論 ${pct(EV.RTP, 3)} 的偏差 ≤ 容許；盤面枚數 ≥40、全程合法`,
+      Math.abs(b0.rtp - EV.RTP) <= lim && b0.minTot >= 40 && b0.legalBad === 0, `實測 ${pct(b0.rtp, 3)}｜偏差 ${pp(b0.rtp - EV.RTP, 3)}｜獎池中位 ${b0.potTakeEvery.p50} 注拿一次｜100 注拿回 10／50／90 分位 ${pct(b0.block100.p10, 1)}／${pct(b0.block100.p50, 1)}／${pct(b0.block100.p90, 1)}`);
+    stressOut['none-' + bp] = rowOf(b0);
+  }
+  for(const s of STRESS){
+    const r = RS['S:' + s.tag], b0 = RS['S:base-' + s.base], tolB = (r.residualBound + b0.residualBound) / r.n;
+    unit('X', `X1 [狂刷：${s.label}] ${r.n.toLocaleString()} 注、刷新 ${r.reshuffleCalls.toLocaleString()} 次：每次刷新前後總枚數相同、寶物種類數量相同、刷新後合法；盤面全程合法、枚數 ≥40；守恆恆等式與獎池守恆成立`,
+      r.bad === 0 && r.legalBad === 0 && r.minTot >= EV.MIN_TOTAL && r.totMismatch === 0 && r.potMismatch === 0 && r.valueIdentityErr < 1e-3 && r.n >= N && r.reshuffleCalls > 0,
+      `刷新不符 ${r.bad}｜不合法 ${r.legalBad}｜盤面最低 ${r.minTot} 枚、最高 ${r.maxTot}｜恆等式誤差 ${r.valueIdentityErr.toExponential(1)}｜獎池不守恆 ${r.potMismatch} 段`);
+    unit('X', `X2 [狂刷：${s.label}] 長期拿回 ${pct(r.rtp, 3)}：與理論 ${pct(EV.RTP, 3)} 偏差 ≤ ${pp(lim, 3)}；與不刷（${s.base}、同一串抽獎亂數）相差 ≤ 殘留上界 ${pp(tolB, 4)}`,
+      Math.abs(r.rtp - EV.RTP) <= lim && Math.abs(r.rtp - b0.rtp) <= tolB + 1e-9,
+      `偏差 ${pp(r.rtp - EV.RTP, 3)}｜相差 ${pp(r.rtp - b0.rtp, 4)}｜每 100 注刷 ${r.refreshPer100.toFixed(1)} 次（呼叫 ${r.callsPer100.toFixed(1)} 次）｜刷完立刻有 ≥${PC} 格可炸 ${r.afterRefreshHas8 === null ? '—' : pct(r.afterRefreshHas8, 1)}｜自己炸到 ≥${PC} 格的注 ${pct(r.own8Share, 2)}（不刷 ${pct(b0.own8Share, 2)}）｜獎池每 ${r.potTakeEvery.p50} 注拿一次（不刷 ${b0.potTakeEvery.p50}）、拿到中位 ${r.potAtTake.p50.toFixed(2)} 倍｜100 注拿回 10／50／90 分位 ${pct(r.block100.p10, 1)}／${pct(r.block100.p50, 1)}／${pct(r.block100.p90, 1)}（最高 ${pct(r.block100.max, 0)}）`);
+    stressOut[s.tag] = Object.assign({ label: s.label, base: s.base, rtpMinusBase: r.rtp - b0.rtp, rtpMinusTheory: r.rtp - EV.RTP }, rowOf(r));
+  }
+
+  /* ============ W 單一盤面換金額套利（用「錢」算） ============ */
+  console.log('\n=== W 單一盤面換金額：換金額＝盤面換 floorBoard（40 枚）、能量條 0、獎池 0、寶物消失；用錢（不是倍數）算總投入與總拿回 ===');
+  const swOut = {};
+  for(const p of SWITCHES){
+    const s = lib.summarizeSwitch(G['W:' + p]), ratio = s.moneyOut / s.moneyIn, sigR = Math.sqrt(TH.variance * s.sumDen2) / s.moneyIn, tol = Math.max(0.001, 3 * sigR), fixed = p.startsWith('fixed');
+    const ps = s.perSwitch;
+    unit('W', `W1 [${p}] ${s.n.toLocaleString()} 注、換金額 ${s.switches.toLocaleString()} 次：每段「拿回＋段末盤面面值＝進場面值＋起始 40 枚」恆等、段末盤面 ≥40 枚且合法、換完的盤面恰 40 枚合法無寶物、獎池不超領`,
+      s.pathBad === 0 && s.minTot >= 40 && s.legalBad === 0 && s.floorBad === 0, `恆等式不符 ${s.pathBad} 段｜盤面最低 ${s.minTot}｜不合法 ${s.legalBad}｜換盤不符 ${s.floorBad}`);
+    unit('W', `W2 [${p}] 總投入 ${s.moneyIn.toLocaleString()} → 總拿回 ${s.moneyOut.toLocaleString()}：長期拿回 ${pct(ratio, 3)} ${fixed ? '與理論 ' + pct(EV.RTP, 3) + ' 偏差 ≤ ' + pp(tol, 3) : '≤ 理論 ' + pct(EV.RTP, 3) + '（換金額只會讓玩家損失）'}`,
+      fixed ? Math.abs(ratio - EV.RTP) <= tol : ratio <= EV.RTP + tol,
+      `${fixed ? '偏差' : '比理論少'} ${pp(fixed ? ratio - EV.RTP : EV.RTP - ratio, 3)}（容許 ${pp(tol, 3)}）` + (ps ? `｜每次換金額平均損失 ${ps.measuredDenoms.toFixed(2)} 個面額（約 ${Math.round(ps.money)} 元）＝獎池 ${ps.potDenoms.toFixed(2)}＋盤面多出的幣 ${ps.boardExcessDenoms.toFixed(2)}＋能量條進度 ${ps.meterDenoms.toFixed(2)}（拆項合計 ${ps.estTotalDenoms.toFixed(2)}）` : ''));
+    if(ps){
+      const dif = Math.abs(ps.measuredDenoms - ps.estTotalDenoms) * s.switches, noise = 4 * Math.sqrt(TH.variance * s.n);
+      unit('W', `W3 [${p}] 損失可以逐項解釋：實測損失（理論拿回−實際拿回，個面額）≈ 獎池＋盤面多出的幣＋能量條進度，差 ≤ 4σ`, dif <= noise, `差 ${dif.toFixed(1)} 個面額（4σ＝${noise.toFixed(1)}）`);
+    }
+    swOut[p] = { n: s.n, switches: s.switches, moneyIn: s.moneyIn, moneyOut: s.moneyOut, ratio, theory: EV.RTP, shortfallPP: (EV.RTP - ratio) * 100, sigmaPP: sigR * 100, perSwitch: ps };
+  }
+
+  /* ============ K 刷新冷卻比較表（寫進 stats.json，供主對話決定冷卻幾注） ============ */
+  const ktOut = {};
+  if(WRITE_STATS){
+    console.log(`\n=== K 刷新冷卻比較（每格 ${(KN * KCH).toLocaleString()} 注；(1)＝能刷就刷、有能炸 ${PC} 格就點否則快滿就點；(2)＝只有沒有任何能炸 ${PC} 格的格子才刷、其餘同(1)；K＝兩次刷新之間至少隔幾注，0＝不限（可同一注連刷到滿意，最多 6 次）） ===`);
+    const bP = RS['K:base-p8gold'];
+    const fmt = (r) => `拿回 ${pct(r.rtp, 2)}｜獎池每 ${r.potTakeEvery.p50} 注拿一次（均 ${r.potTakeEvery.avg.toFixed(1)}）｜拿到中位 ${r.potAtTake.p50.toFixed(2)} 倍｜自己炸≥${PC}格 ${pct(r.own8Share, 1)}｜每100注刷 ${r.refreshPer100.toFixed(1)} 次｜100注拿回 ${pct(r.block100.p10, 0)}／${pct(r.block100.p50, 0)}／${pct(r.block100.p90, 0)}｜刷後立刻有≥${PC}格 ${r.afterRefreshHas8 === null ? '—' : pct(r.afterRefreshHas8, 0)}`;
+    for(const P of ['A', 'B', 'C']){
+      for(const K of KS){
+        const r = RS[`K:${P}:${K}`], tolB = (r.residualBound + bP.residualBound) / r.n, limK = Math.max(0.001, 3 * sigmaMean(r.n));
+        unit('K', `K${P}${K} [(${P === 'A' ? '1' : P === 'B' ? '2' : '4 刷＋養'}) 冷卻 K=${K === 0 ? '不限' : K}] 長期拿回與理論、與不刷（同一串抽獎亂數）一致；盤面全程合法、枚數 ≥40、刷新逐次守恆`,
+          Math.abs(r.rtp - EV.RTP) <= limK && Math.abs(r.rtp - bP.rtp) <= tolB + 1e-9 && r.bad === 0 && r.legalBad === 0 && r.minTot >= 40, fmt(r));
+        ktOut[`${P}_K${K}`] = rowOf(r);
+      }
+    }
+    for(const [k, lab] of [['builder', '(3) 不刷・養到 8 格才引爆'], ['gold', '(3) 不刷・有快滿就點'], ['p8gold', '(3) 不刷・有能炸 8 格就點、否則快滿就點']]){
+      const r = RS['K:base-' + k];
+      unit('K', `K-對照 [${lab}] 長期拿回與理論一致、盤面全程合法`, Math.abs(r.rtp - EV.RTP) <= Math.max(0.001, 3 * sigmaMean(r.n)) && r.legalBad === 0 && r.minTot >= 40, fmt(r));
+      ktOut['none_' + k] = rowOf(r);
+    }
+  }
+  const v3Stats = { legal: V3.legal, reshuffle: V3.reshuffle, floorBoard: V3.floor, refreshStress: stressOut, switchArbitrage: swOut, cooldownTable: { note: `K＝兩次刷新之間至少隔幾注（0＝不限）。A＝(1) 能刷就刷、有能炸 ${PC} 格就點否則快滿就點；B＝(2) 只有沒有任何能炸 ${PC} 格的格子才刷、其餘同 A；C＝(4) 養盤＋刷：沒有能炸 ${PC} 格的格子才刷、丟法是「養到 ${PC} 格才引爆、否則丟 2 枚格」；none_＝(3) 不刷的對照。afterRefreshHas8＝刷新後立刻有能炸 ${PC} 格以上的格子的機率；return100＝連續 100 注拿回（含獎池）的分位。每格 ${KN * KCH} 注`, ks: KS, cells: ktOut } };
+
   /* ============ 金幣雨拿回的分布 ============ */
   const rainDist = {};
   for(const name of NAMES) rainDist[name] = L[name].rainStats;
@@ -447,7 +675,7 @@ heavy.then((results) => {
   console.log(`\n${nFail === 0 ? 'ALL PASS' : 'HAS FAIL'}：PASS ${nPass}／FAIL ${nFail}（${((Date.now() - t0) / 1000).toFixed(1)}s）`);
 
   if(WRITE_STATS){
-    const st = buildStats(L, SS, rainDist);
+    const st = buildStats(L, SS, rainDist, v3Stats);
     fs.writeFileSync(path.join(__dirname, 'stats.json'), JSON.stringify(st, null, 2));
     console.log(`stats.json 已輸出（${((Date.now() - t0) / 1000).toFixed(1)}s）`);
     printStats(st);
@@ -457,11 +685,11 @@ heavy.then((results) => {
 
 /* ============ stats.json ============ */
 function quant(a, p){ return a[Math.min(a.length - 1, Math.floor(a.length * p))]; }
-function buildStats(L, SS, rainDist){
+function buildStats(L, SS, rainDist, v3){
   const M = EV, gem = (M.RTP_PARTS.diamond + M.RTP_PARTS.crown) / M.RTP;
   const st = {
     generatedAt: new Date().toISOString(),
-    note: `v2.3：能量條集滿 ${RE} 注→全盤金幣雨、普通幣 ${M.VALUE.coin}、連鎖獎池（每注存 ${M.POT_ADD} 個面額，自己連鎖炸到 ${PC} 格以上或下雨就整個拿走）。longRun` + '＝從預設面額起始盤面連丟 drops 注（能量條與獎池從 0）；sessions＝每場新玩家從預設面額起始盤面、能量條與獎池 0 連丟 500 注、回報第 50／100／200／500 注時的拿回比例（拿回÷投入，含獎池）；gotPot＝到那時拿過獎池（任何金額；新盤面第一注就會炸到門檻、只拿到那一注存的 0.15）的場次比例，gotPot1x＝拿過 ≥1 倍面額獎池的比例。' +
+    note: `v3（單一盤面＋刷新＋換金額）：能量條集滿 ${RE} 注→全盤金幣雨、普通幣 ${M.VALUE.coin}、連鎖獎池（每注存 ${M.POT_ADD} 個面額，自己連鎖炸到 ${PC} 格以上或下雨就整個拿走）。longRun` + '＝從預設面額起始盤面連丟 drops 注（能量條與獎池從 0）；sessions＝每場新玩家從預設面額起始盤面、能量條與獎池 0 連丟 500 注、回報第 50／100／200／500 注時的拿回比例（拿回÷投入，含獎池）；gotPot＝到那時拿過獎池（任何金額；新盤面第一注就會炸到門檻、只拿到那一注存的 0.15）的場次比例，gotPot1x＝拿過 ≥1 倍面額獎池的比例。' +
           '所有「拿回」「≥N 倍」都含獎池。NoRain 欄位＝不含金幣雨那一注（那一注一次拿十幾倍，會墊高大獎比例）；rain＝只算金幣雨那一段的拿回（倍面額，不含獎池）。' +
           'smart＝能量條快滿的最後 ' + (lib.SMART_LEFT + 1) + ' 注（left≤' + lib.SMART_LEFT + '）改丟 2 枚格、養盤等雨；builder＝能炸到 ' + PC + ' 格才引爆、否則丟 2 枚的格子。' +
           'pot＝拿獎池的統計（takeEvery＝每隔幾注拿一次，中位／九成；potAtTake＝拿走的獎池金額（倍面額）；takeTotal＝拿獎池那一注的總拿回（倍面額，含噴出的）；shareByChain＝靠自己連鎖拿（含同注下雨）的比例）。' +
@@ -470,7 +698,7 @@ function buildStats(L, SS, rainDist){
     config: { coinPay: M.VALUE.coin, diamondPay: M.VALUE.diamond, crownPay: M.VALUE.crown, diamondP: M.CFG.DIAMOND.P, crownP: M.CFG.CROWN.P, rainEvery: RE, rainCells: N25,
               potAdd: M.POT_ADD, potChain: M.POT_CHAIN, potMax: M.PAY.map((p, d) => M.potMax(d)), pay: M.PAY },
     theory: { rtp: M.RTP, parts: M.RTP_PARTS, shareOfRtp: { coin: M.RTP_PARTS.coin / M.RTP, rain: M.RTP_PARTS.rain / M.RTP, diamond: M.RTP_PARTS.diamond / M.RTP, crown: M.RTP_PARTS.crown / M.RTP, gems: gem, pot: M.RTP_PARTS.pot / M.RTP } },
-    longRun: {}, sessions: {}
+    longRun: {}, sessions: {}, v3: v3
   };
   for(const name of NAMES){
     const s = L[name], P = s.pot, own = P.by.chain + P.by.both;
@@ -507,7 +735,7 @@ function buildStats(L, SS, rainDist){
 }
 function printStats(st){
   const row = (label, x) => `${label}｜10% ${pct(x.p10, 1)}｜中位 ${pct(x.p50, 1)}｜90% ${pct(x.p90, 1)}｜賺錢場次 ${pct(x.profitRate, 1)}｜已下過雨 ${pct(x.sawRain, 0)}｜已拿過獎池 ${pct(x.gotPot, 0)}（≥1 倍面額的 ${pct(x.gotPot1x, 0)}）`;
-  console.log(`\n== v2.3：普通幣 ${st.config.coinPay}、鑽石 ${st.config.diamondPay}、皇冠 ${st.config.crownPay}、能量條 ${st.config.rainEvery}、獎池每注 ${st.config.potAdd}（炸 ${st.config.potChain} 格拿）、理論 RTP ${pct(st.theory.rtp, 2)}（金幣雨佔 ${pct(st.theory.shareOfRtp.rain, 1)}、寶物佔 ${pct(st.theory.shareOfRtp.gems, 1)}、獎池佔 ${pct(st.theory.shareOfRtp.pot, 1)}）==`);
+  console.log(`\n== v3：普通幣 ${st.config.coinPay}、鑽石 ${st.config.diamondPay}、皇冠 ${st.config.crownPay}、能量條 ${st.config.rainEvery}、獎池每注 ${st.config.potAdd}（炸 ${st.config.potChain} 格拿）、理論 RTP ${pct(st.theory.rtp, 2)}（金幣雨佔 ${pct(st.theory.shareOfRtp.rain, 1)}、寶物佔 ${pct(st.theory.shareOfRtp.gems, 1)}、獎池佔 ${pct(st.theory.shareOfRtp.pot, 1)}）==`);
   for(const name of NAMES){
     const l = st.longRun[name], h = l.cellHeights, p = l.pot;
     console.log(`${LABEL[name]}：實測 ${pct(l.rtp, 3)}（噴出 ${pct(l.rtpExit, 3)}＋獎池 ${pct(l.rtpPot, 3)}）｜有噴出 ${pct(l.anyExit, 1)}（不含雨 ${pct(l.anyExitNoRain, 1)}）｜≥1倍 ${pct(l.backOrMore, 1)}｜≥4倍 ${pct(l.ge4x, 2)}｜≥10倍 ${pct(l.ge10x, 2)}（不含雨 ${pct(l.ge10xNoRain, 2)}）｜單注最高 ${l.maxPay.toFixed(1)} 倍（不含雨 ${l.maxPayNoRain.toFixed(1)}）｜盤面平均 ${l.avgBoardCoins.toFixed(1)} 枚（最低 ${l.minBoardCoins}）｜格高 0/1/2/3：${[h.h0, h.h1, h.h2, h.h3].map(x => pct(x, 1)).join(' ')}`);

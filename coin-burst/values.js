@@ -12,7 +12,7 @@
  * 玩法（v2）：5×5 盤面，每格 0～3 枚；丟一枚到某格，疊到 4 枚就炸開、往上下左右各噴 1 枚，
  * 隔壁達 4 枚跟著炸；噴出盤面的都是玩家的。普通幣被擠出盤面值 COIN_PAY 個面額，
  * 鑽石／皇冠（玩家丟的那一枚有機率是寶物）被擠出盤面才兌現。
- * 能量條：每張盤面（每個面額）一條，每丟一枚＋1，集滿 RAIN_EVERY（86）那一注，玩家那一枚（含連鎖）
+ * 能量條：每張盤面（每個面額）一條，每丟一枚＋1，集滿 RAIN_EVERY（100）那一注，玩家那一枚（含連鎖）
  * 結算完後「金幣雨」：25 格每格同時掉一枚免費普通幣（不是寶物），再分波連爆到穩定，能量條歸零。
  * 能量條的值由呼叫端（核心）保存；本檔只給純函式（meterAfter／play 的 opts.rain／rainAll）。
  *
@@ -24,13 +24,28 @@
  *
  * RTP（長期、與丟哪一格無關）＝ (1 − pDiamond − pCrown ＋ 25／RAIN_EVERY) × COIN_PAY
  *                               ＋ pDiamond × DIAMOND.PAY ＋ pCrown × CROWN.PAY ＋ POT_ADD
- *   ＝ (1 − 1/40 − 1/800 ＋ 25/86) × 0.5 ＋ 1/40 × 5 ＋ 1/800 × 50 ＋ 0.15 ＝ 96.97%
+ *   ＝ (1 − 1/40 − 1/800 ＋ 25/100) × 0.5 ＋ 1/40 × 5 ＋ 1/800 × 50 ＋ 0.15 ＝ 94.94%
  * 金幣雨的 25 枚免費幣沒收錢，成本攤在每一枚普通幣的落袋值裡。
  *
  * 抽獎入口：play(board, i, rng, { rec, rain })。rng 是「回傳 [0,1) 的函式」，一注只取一次：
  *   這枚是什麼（rollKind）。有沒有金幣雨不抽，由呼叫端依能量條決定（opts.rain：布林）。
  *   呼叫端慣例：var m = EV.meterAfter(meter); res = EV.play(board, i, rng, { rain: m.rain }); meter = m.meter;
  * 測試與導演台用 EV.scripted(plan, baseRng) 指定「這枚是什麼」，其餘照 baseRng。
+ *
+ * ===== v3（單一盤面＋刷新＋換金額；鐵表 TASKS.md「v3 單一盤面＋刷新＋Combo」）新增的對外介面（只新增、舊的一個都沒拿掉） =====
+ *  EV.isLegal(board) → boolean
+ *      合法盤面＝形狀正確（25 格、每格 0～3 枚、每格寶物數 ≤ 該格枚數）且是穩定循環盤面（isRecurrent；燃燒測試）。
+ *      合法盤面總枚數永遠 ≥ MIN_TOTAL（40）；從合法盤面照規則丟幣（含金幣雨）結果仍合法（沙堆模型的性質，mc-test 以程式複驗）。
+ *  EV.reshuffle(board, rng, opts) → 新盤面（不改傳入的盤面；rng 省略＝Math.random；opts.tries 省略＝CFG.RESHUFFLE_TRIES）
+ *      總枚數完全相同、合法、寶物種類與數量不變（換位置，且只放在有幣的格子；board.g 的格式同 emptyBoard）。
+ *      做法：隨機「燃燒順序」建出最小穩定循環盤面（40 枚），再把剩下的枚數隨機補在還有空位的格子＝構造上必合法；
+ *      這樣抽 tries 張，取「現在點下去能炸最多格」的那張（chainBest 的 topples，同分比噴出枚數）。
+ *      傳入的盤面不合法（理論上不會發生）→ 原盤面原樣（複製）回傳。
+ *  EV.floorBoard(rng) → 新盤面：恰好 40 枚的合法盤面、沒有寶物（換金額用；隨機建、每次不同）。
+ *  EV.chainBest(board) → { cell, topples, exitCount }：所有疊 3 枚的格子裡「現在丟普通幣下去炸最多格」的那格（沒有 3 枚格＝cell −1、topples 0）。
+ *  EV.DEMO_METER_START（＝RAIN_EVERY − CFG.DEMO_FIRST_RAIN_BET＝70）：Demo 帳號第一張盤面的能量條預充值，讓第一場雨在第 30 注。
+ *      （核心現在的 METER_START 之後由別的卡改；換金額／重置後能量條歸 0、不預充。）
+ *  CFG 新增：DEMO_FIRST_RAIN_BET: 30、RESHUFFLE_TRIES: 24。
  * ========================================================================= */
 
 /* 記號：新建腳本會把 burst 換成 [a-z][a-z0-9]{1,11} 短名；沒替換也能跑 */
@@ -44,15 +59,17 @@ var CFG = {
   COIN_PAY: 0.5,                                 // 普通幣被擠出盤面＝0.5 個面額（RTP 由它導出）
   DIAMOND: { P: 1 / 40,  PAY: 5 },               // 玩家丟的那枚是鑽石的機率、值 5 個面額
   CROWN:   { P: 1 / 800, PAY: 50 },              // 皇冠
-  RAIN_EVERY: 86,                                // 能量條長度：每張盤面每丟 86 枚集滿一次→下一場全盤金幣雨（25 格各落 1 枚免費普通幣）
+  RAIN_EVERY: 100,                               // 能量條長度：每丟 100 枚集滿一次（v3 單一盤面；v2.3 是 86）→下一場全盤金幣雨（25 格各落 1 枚免費普通幣）
   POT_ADD: 0.15,                                 // 連鎖獎池：每注存進獎池 0.15 個面額（實付 15／75／150；RTP 由它導出）
   POT_CHAIN: 8,                                  // 玩家自己那一枚連鎖炸到幾格以上拿走獎池（同一格炸兩次算兩格；金幣雨的連鎖不算）
   DENOMS: [100, 500, 1000],                      // 面額（暫用，待 Q5 裁決）；每個面額各一張盤面
   DENOM_DEFAULT: 0,                              // 預設面額＝DENOMS 的索引（0＝100）
   WALLET: 10000,                                 // 起始錢包
   LOG_CAP: 50,                                   // 勝負 log 封頂筆數（公司規格）
-  RTP_MIN: 0.96, RTP_MAX: 0.97,                  // RTP 必須落在這個範圍（不在就 throw）
+  RTP_MIN: 0.94, RTP_MAX: 0.96,                  // RTP 必須落在這個範圍（不在就 throw）
   TIERS: { BACK: 1, BIG: 4, HUGE: 10 },          // 回饋分級：這一下拿回幾倍面額以上＝回本／大連爆／全畫面
+  DEMO_FIRST_RAIN_BET: 30,                       // Demo 專用：帳號第一張盤面的第 30 注下第一場雨→預充 RAIN_EVERY−30＝70（EV.DEMO_METER_START）
+  RESHUFFLE_TRIES: 24,                           // 刷新盤面：抽幾張合法盤面、取「現在點下去能炸最多格」的那張（不影響長期拿回）
   START_EXTRA: 3,                                // 起始盤面總枚數＝最低可能總數＋3
   /* 起始盤面（每個面額一張）：固定種子從空盤隨機丟 drops 枚，再用「挑最會爆」丟 thin 枚把它丟瘦。
      種子由 node game/test/find-start.js --write 搜尋後寫入（不手排）。START-BEGIN／END 是它的改寫範圍。 */
@@ -376,6 +393,82 @@ function build(over){
     return b;
   }
 
+  /* ---- v3：合法盤面、刷新、換金額用的底盤 ---- */
+  /* 合法盤面：形狀正確＋穩定循環（燃燒測試）。總枚數因此永遠 ≥ MIN_TOTAL */
+  function isLegal(b){
+    var j, x;
+    if(!b || !b.h || !b.g || b.h.length !== N || b.g.length !== N) return false;
+    for(j = 0; j < N; j++){
+      x = b.h[j];
+      if(typeof x !== 'number' || x !== Math.floor(x) || x < 0 || x >= CAP) return false;
+      if(!b.g[j] || b.g[j].length > x) return false;
+    }
+    return isRecurrent(b);
+  }
+  /* 隨機建一張「總枚數 tot（MIN_TOTAL～N×(CAP−1)）」的合法盤面的每格枚數 h。
+     原理：穩定循環盤面 c 一定 ≥ 某張「最小」穩定循環盤面 m（m[v]＝燃燒順序裡排在 v 後面的相鄰格數，總和＝邊數＝40）；
+     反過來，任何 ≥ m 的穩定盤面也都穩定循環。所以：隨機燃燒順序（從邊上的格子往內長）→ m → 隨機補 tot−40 枚到還有空位的格子。
+     每格最多 3 枚的限制由「空位清單」保證。涵蓋所有合法盤面（每張合法盤面都有正機率被抽到）。 */
+  function sampleLegalH(tot, rr){
+    var order = [], inEl = [], el = [], h = [], slots = [], j, d, k, v, nn, pos, cnt, extra, t, q;
+    for(j = 0; j < N; j++){ order.push(-1); inEl.push(false); }
+    for(j = 0; j < N; j++) for(d = 0; d < 4; d++) if(NB[j][d] < 0){ el.push(j); inEl[j] = true; break; }
+    for(pos = 0; pos < N; pos++){
+      k = Math.floor(rr() * el.length); v = el[k]; el[k] = el[el.length - 1]; el.pop();
+      order[v] = pos;
+      for(d = 0; d < 4; d++){ nn = NB[v][d]; if(nn >= 0 && order[nn] < 0 && !inEl[nn]){ inEl[nn] = true; el.push(nn); } }
+    }
+    for(j = 0; j < N; j++){
+      cnt = 0;
+      for(d = 0; d < 4; d++){ nn = NB[j][d]; if(nn >= 0 && order[nn] > order[j]) cnt++; }
+      h.push(cnt);
+      for(q = cnt; q < CAP - 1; q++) slots.push(j);
+    }
+    extra = tot - MIN_TOTAL;
+    for(t = 0; t < extra; t++){
+      k = t + Math.floor(rr() * (slots.length - t));
+      v = slots[k]; slots[k] = slots[t]; slots[t] = v;
+      h[v]++;
+    }
+    return h;
+  }
+  /* 疊 3 枚的格子裡，現在丟普通幣下去炸最多格的那格（同分比噴出枚數、再同分取編號小的）；沒有＝cell −1 */
+  function chainBest(b){
+    var best = -1, bt = 0, be = -1, j, p;
+    for(j = 0; j < N; j++){
+      if(b.h[j] !== CAP - 1) continue;
+      p = probe(b, j);
+      if(p.topples > bt || (p.topples === bt && p.exitCount > be)){ best = j; bt = p.topples; be = p.exitCount; }
+    }
+    return { cell: best, topples: bt, exitCount: be < 0 ? 0 : be };
+  }
+  /* 刷新盤面（見檔頭）。rr 是回傳 [0,1) 的函式 */
+  function reshuffle(board, rr, opts){
+    var rnd = rr || Math.random, tries = (opts && opts.tries) || cfg.RESHUFFLE_TRIES;
+    var tot, gl = [], j, q, t, best = null, bs = -1, be = -1, cand, ch, free, k;
+    if(!isLegal(board)) return cloneBoard(board);
+    tot = total(board);
+    for(j = 0; j < N; j++) for(q = 0; q < board.g[j].length; q++) gl.push(board.g[j][q]);
+    for(t = 0; t < tries; t++){
+      cand = emptyBoard(); cand.h = sampleLegalH(tot, rnd);
+      for(q = 0; q < gl.length; q++){                 // 寶物只放在還有幣可疊的格子
+        free = [];
+        for(j = 0; j < N; j++) if(cand.h[j] > cand.g[j].length) free.push(j);
+        k = free[Math.floor(rnd() * free.length)];
+        cand.g[k].push(gl[q]);
+      }
+      ch = chainBest(cand);
+      if(ch.topples > bs || (ch.topples === bs && ch.exitCount > be)){ best = cand; bs = ch.topples; be = ch.exitCount; }
+    }
+    return best;
+  }
+  /* 換金額用的盤面：恰好 MIN_TOTAL（40）枚的合法盤面，沒有寶物 */
+  function floorBoard(rr){
+    var b = emptyBoard();
+    b.h = sampleLegalH(MIN_TOTAL, rr || Math.random);
+    return b;
+  }
+
   var M = {
     CFG: cfg, N: N, GEMS: GEMS, VALUE: VALUE, RTP: RTP, RTP_PARTS: RTP_PARTS, PAY: PAY, RAIN_EVERY: RAIN_EVERY,
     POT_ADD: POT_ADD, POT_CHAIN: POT_CHAIN, potAfter: potAfter, potMax: potMax,
@@ -383,7 +476,9 @@ function build(over){
     rng: rng, neighbor: neighbor, emptyBoard: emptyBoard, cloneBoard: cloneBoard, total: total, boardValue: boardValue,
     drop: drop, rainAll: rainAll, meterAfter: meterAfter, preview: preview, probe: probe, bestCell: bestCell,
     rollKind: rollKind, uForKind: uForKind, scripted: scripted, play: play,
-    cash: cash, tier: tier, isRecurrent: isRecurrent, checkStart: checkStart, startBoard: startBoard
+    cash: cash, tier: tier, isRecurrent: isRecurrent, checkStart: checkStart, startBoard: startBoard,
+    isLegal: isLegal, reshuffle: reshuffle, floorBoard: floorBoard, chainBest: chainBest,
+    DEMO_METER_START: Math.max(0, RAIN_EVERY - cfg.DEMO_FIRST_RAIN_BET)
   };
 
   /* 起始盤面自我檢查（find-start.js 搜尋時以 EV_SKIP_START_CHECK 略過） */

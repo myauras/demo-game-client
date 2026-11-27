@@ -136,12 +136,13 @@ function crownSVG(){
 /* ---------- 爆炸徽章（獎池的圖示：黃色尖角＋紅橙圓心，數字由呼叫端疊上去）----------
    viewBox -20～20；pts＝尖角（12 個）。主畫面的獎池、拿獎池的飛行牌、盤面上「能炸 8 格」的提示都用同一個形狀，玩家一眼連得起來 */
 function burstPts(ro, ri){ return P(starPts(0, 0, ro, ri, 12, -Math.PI / 2)); }
-function burstSVG(){
+function burstSVG(blue){                                   // blue＝金幣雨那一段的 Combo 用（金色尖角＋藍色圓心），其餘同形狀
+  var c = blue ? ['#fff6b8', '#ffd24a', '#e0a21a', '#7fd8ff', '#2a7ad8', '#0e3a8a', '#8a5a04', '#d6f2ff'] : ['#fff6b8', '#ffbc2e', '#ff7a1e', '#ff8a44', '#e5391a', '#a3180a', '#8a2a04', '#ffe9a0'];
   return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-20 -20 40 40" width="40" height="40"><defs>'
-    + '<radialGradient id="a" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#fff6b8"/><stop offset=".5" stop-color="#ffbc2e"/><stop offset="1" stop-color="#ff7a1e"/></radialGradient>'
-    + '<radialGradient id="b" cx=".38" cy=".3" r=".85"><stop offset="0" stop-color="#ff8a44"/><stop offset=".55" stop-color="#e5391a"/><stop offset="1" stop-color="#a3180a"/></radialGradient></defs>'
-    + '<polygon points="' + burstPts(19.2, 15.2) + '" fill="url(#a)" stroke="#8a2a04" stroke-width="1.5" stroke-linejoin="round"/>'
-    + '<circle r="11.4" fill="url(#b)" stroke="#ffe9a0" stroke-width="1.3"/>'
+    + '<radialGradient id="a" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="' + c[0] + '"/><stop offset=".5" stop-color="' + c[1] + '"/><stop offset="1" stop-color="' + c[2] + '"/></radialGradient>'
+    + '<radialGradient id="b" cx=".38" cy=".3" r=".85"><stop offset="0" stop-color="' + c[3] + '"/><stop offset=".55" stop-color="' + c[4] + '"/><stop offset="1" stop-color="' + c[5] + '"/></radialGradient></defs>'
+    + '<polygon points="' + burstPts(19.2, 15.2) + '" fill="url(#a)" stroke="' + c[6] + '" stroke-width="1.5" stroke-linejoin="round"/>'
+    + '<circle r="11.4" fill="url(#b)" stroke="' + c[7] + '" stroke-width="1.3"/>'
     + '<path d="M-7.6 -5.2A9.4 9.4 0 0 1 0 -9.6" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1.5" stroke-linecap="round"/></svg>';
 }
 
@@ -151,9 +152,9 @@ function sparkSVG(col){
 }
 
 /* ---------- 幾何（與靜態稿 B 案相同；斜看：後窄前寬） ---------- */
-var CX = 187.5, CWd = 67, TOP = 192, RH = [64, 66, 68, 70, 72], rt = [], BOT = TOP;
-RH.forEach(function(h){ rt.push(BOT); BOT += h; });                       // BOT = 532
-function fy(y){ return 0.92 + 0.08 * (y - TOP) / (BOT - TOP); }           // 近大遠小
+var CX = 187.5, CWd = 67, TOP = 108, RH = [74, 76, 78, 80, 82], F0 = 0.95, F1 = 1.0, KS = 1.1, rt = [], BOT = TOP;   // v3：盤面放大（靜態稿 B 案：各列加高、透視變小、幣放大 1.1 倍）
+RH.forEach(function(h){ rt.push(BOT); BOT += h; });                       // BOT = 498
+function fy(y){ return F0 + (F1 - F0) * (y - TOP) / (BOT - TOP); }        // 近大遠小
 function cellPts(r, c){
   var yt = rt[r], yb = yt + RH[r], ft = fy(yt), fb = fy(yb);
   return { yt: yt, yb: yb, xtl: CX + (c - 2.5) * CWd * ft, xtr: CX + (c - 1.5) * CWd * ft, xbl: CX + (c - 2.5) * CWd * fb, xbr: CX + (c - 1.5) * CWd * fb };
@@ -161,7 +162,7 @@ function cellPts(r, c){
 function dims(r, c){
   var yt = rt[r], yb = yt + RH[r], yc = (yt + yb) / 2, fc = fy(yc), w = CWd * fc;
   var rx = w * 0.37, ry = rx * 0.42, th = RH[r] * 0.17;
-  return { x: CX + (c - 2) * w, yt: yt, yb: yb, yc: yc, f: fc, w: w, h: RH[r], s: rx / RX, cy0: yb - 8 - th - ry };
+  return { x: CX + (c - 2) * w, yt: yt, yb: yb, yc: yc, f: fc, w: w, h: RH[r], s: rx / RX * KS, cy0: yb - 8 - th - ry };
 }
 function xL(y, p){ return CX - 2.5 * CWd * fy(y) - p; }
 function xR(y, p){ return CX + 2.5 * CWd * fy(y) + p; }
@@ -178,7 +179,7 @@ function boardSVG(){
     + '<radialGradient id="stud" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff0b0"/><stop offset=".45" stop-color="#d9a932"/><stop offset="1" stop-color="#6a4308"/></radialGradient>'
     + '<radialGradient id="aura" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#3a5bb8" stop-opacity=".42"/><stop offset=".6" stop-color="#27428c" stop-opacity=".16"/><stop offset="1" stop-color="#27428c" stop-opacity="0"/></radialGradient>'
     + '</defs>';
-  s += '<ellipse cx="187.5" cy="362" rx="250" ry="262" fill="url(#aura)"/>';
+  s += '<ellipse cx="187.5" cy="' + n2((TOP + BOT) / 2 + 20) + '" rx="250" ry="' + n2((BOT - TOP) * 0.77) + '" fill="url(#aura)"/>';
   /* 前緣厚度＋金屬邊 */
   s += '<polygon points="' + P([[xL(yB, 12), yB], [xR(yB, 12), yB], [xR(yB, 7), yB + 17], [xL(yB, 7), yB + 17]]) + '" fill="url(#bl)" stroke="#2a3a72" stroke-width="1.2" stroke-linejoin="round"/>';
   s += '<polygon points="' + P([[xL(yB, 12), yB], [xR(yB, 12), yB], [xR(yB, 12), yB + 2.2], [xL(yB, 12), yB + 2.2]]) + '" fill="url(#bt)"/>';
@@ -211,6 +212,7 @@ function css(){
   out += '.spk{background-image:' + uri(sparkSVG('#fff7c2')) + '}';
   out += '.spg{background-image:' + uri(sparkSVG('#ffd24a')) + '}';
   out += '.bst{background-image:' + uri(burstSVG()) + '}';
+  out += '.bsb{background-image:' + uri(burstSVG(true)) + '}';
   return out;
 }
 

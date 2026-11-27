@@ -1,5 +1,6 @@
 /* =========================================================================
- * 爆金連鎖——主畫面與演出（C02；B 案：斜看幣柱＋底部收集槽＋面額分頁縮圖；v2：A 案能量條＋金幣雨；v2.3：連鎖獎池＋「會炸幾格」提示）
+ * 爆金連鎖——主畫面與演出（C02；B 案：斜看幣柱＋收集槽；v2：A 案能量條＋金幣雨；v2.3：連鎖獎池＋「會炸幾格」提示；
+ *   v3-2：單一盤面放大、底部金額鈕、刷新圓鈕、兩個確認視窗、連爆中跳 Combo）
  *
  * 職責：把核心（DemoCore）一注算好的結果「演」出來，演完 ack() 入帳。演出只讀結果、不自己算規則與金額：
  *   result.boardBefore → 丟入 → main.waves 逐波炸開（壓→彈→飛→落）→ 噴出的幣在離開盤面當下讓金額加一次、
@@ -8,8 +9,8 @@
  *   amount 一律取 result.items[].amount；分級用 result.tier（金幣雨固定 huge）；盤面終點與 result.boardAfter 對帳。
  * 能量條（buildMeter／meterSet／meterAnim）：刻度數＝EV.RAIN_EVERY，值一律讀核心（result.meterBefore／meterAfter、game.getMeter）；
  *   每丟一枚漲一格（和丟入同時）；剩 NEAR_N 格以內＝快滿（金框脈動＋放射光＋最後幾格追光）；金幣雨中邊下邊退、途中閃爍，雨停歸零。
- *   別張盤面的進度畫在各自分頁底下的小條。
- * 連鎖獎池（v2.3；potTick／schedPot／schedPotPay／deliverPot）：圖例那一排左邊常駐一個獎池（爆炸徽章＋金額），值一律讀核心（result.potBefore／potAdd／potWin／potAfter、game.getPot）；
+ *   （v3：只有一張盤面，能量條在頂欄下面，沒有分頁小條。）
+ * 連鎖獎池（v2.3；potTick／schedPot／schedPotPay／deliverPot）：收集槽下面那一排左邊常駐一個獎池（v3 位置）（爆炸徽章＋金額），值一律讀核心（result.potBefore／potAdd／potWin／potAfter、game.getPot）；
  *   每丟一枚在丟入落地那刻 +這一注存的；拿到時（potWin>0）連鎖／雨演完後：蓄力 → 整筆飛進收集槽的金額（金額一次大跳）→ 隨落袋整筆飛進錢包。節拍見檔頭 POT_*。
  * 「會炸幾格」提示（updHints／hideHints）：疊 3 枚的格子角上的小徽章＝EV.probe 的 topples，到 potChain 的格子特別標示；可開關（hintBtn、存 burst.hint，預設開）；演出中隱藏、演出完才算一次。
  * 收集槽只是演出（拿掉規則不變）：要拿掉就刪掉標著「收集槽」的區塊（buildTray、schedExit 的 glide 與 pay 兩段），
@@ -20,24 +21,32 @@
  * 節拍（普通速度，毫秒；高速＝普通 × 0.6）：丟入 150／每波 400（壓 130＋飛 245＋空檔 25）／噴出停在邊上 110＋滑進槽 300～500／
  *   金幣雨 預告 600＋落下 約 480（25 枚各差 ≤110 錯開）＋rain.waves 每波同上／分級 回本 400、大連爆 1000、全畫面 1600／落袋 逐枚、每枚間隔 ≤90、總長 ≤0.9 秒。
  *
+ * Combo（v3；schedCombo／comboPop／comboBig）：玩家那一枚的連爆每炸一格，在那一格右上角冒爆炸徽章＋累計數字（＝result.main.waves 逐波累計，最後一個＝main.topples），
+ *   該波最新的一顆最大帶 Combo 字樣，數到 EV.POT_CHAIN 在盤面中上方放大彈出；金幣雨那一段另外從 1 數（藍金色）；只炸 1 格不顯示。
+ * 底部操作列（v3；updCtl／askDenom／askRefresh／openConfirm）：金額鈕（點了先開確認窗，內容讀 peekDenomChange）、刷新鈕（冷卻外圈與剩幾注＝核心 refreshLeft；點了開確認窗）；
+ *   演出中、自動下注中、第一次進場時按了不開窗。確認才呼叫核心 setDenom／refresh；核心發 denom／refresh 事件後由 onDenom／onRefresh 演換盤（≤0.6 秒）。
+ *
  * 對外（DEMO.ui；dev.js 的自動駕駛、C03 的 wire.js 用）：
  *   on(evt, fn)／off(evt, fn)   事件：roundStart{result}｜wave{src:'main'|'rain',wave,cells,dom}｜exit{amount,total,index}｜
  *                               rainPre{result,dom}｜rainFall{result,dom,falling}｜rainLanded{result,dom}｜rainEnd{result,meter}｜
  *                               potCharge／potFly／potLand／potPaid（拿獎池的四個節點）｜hint{on}｜
- *                               chainEnd{result,tray,amt}｜roundEnd{result,record,payout,…}｜denom{denomIndex}｜speed{fast}
+ *                               combo{n,cell,rain,last,wave,text}｜comboBig{n,text}｜confirm{kind,open}｜refresh{pieces,refreshLeft,ms}｜
+ *                               chainEnd{result,tray,amt}｜roundEnd{result,record,payout,…}｜denom{denomIndex,lost,ms}｜speed{fast}
  *   play(cell, opts?)           → Promise<{ orderId, stake, pay(＝payout), payout, net, mult, tier, quiet, result, wallet }>
  *                               opts：{ plan（導演台：下一注結果，同 DemoCore.armNext）, speed（倍率，疊在普通／高速上）,
  *                                      fast（true＝這注用高速節拍）, freeze（截圖：停在某個時間點，見 shots）}
  *   isBusy()/busy()             演出中（沒爆沒金幣雨的那一注不算）
- *   setDenom(di)／getDenom()    換面額（＝換一張盤面）
+ *   setDenom(di)／getDenom()    setDenom＝直接換金額（不確認，演出中 false）：dev／shot 專用的相容掛點（C02 探針與截圖駕駛用），預設網址由 dev.js 拿掉；玩家手點走 askDenom(di)
+ *   askDenom(di)／askRefresh()  開確認窗（回傳有沒有開）；closeConfirm()／confirmKind()＝'denom'｜'refresh'｜''；isSwapping()＝換盤演出中
+ *   comboDom()                  讀畫面：{ items:[{n,rain,word,op,cell,x,y}], big:{n,op}|null }（探針用）
  *   setFast(bool, quiet?)／isFast()  速度切換（存 burst.speed）
- *   resetWallet()               錢包與盤面回初始（log 頁的重置鈕走這裡）
+ *   resetWallet()               只把錢包補回初始、清注單（盤面、能量條、獎池、冷卻、金額不動；log 頁的重置鈕走這裡）
  *   cellInfo(i)                 該格目前畫面上的枚數與寶物（讀 DOM，探針用）
  *   snapshot()                  { cells:[{h,g}], wallet, amt, tray, banner }（讀 DOM，探針用）
  *   stats()                     { desync, balFix, rounds }（演出終點與核心對不上的次數；應恆為 0）
  *   setHint(bool)／isHint()／hintDom()  提示開關（存 burst.hint）；hintDom() 讀畫面上的提示（每個徽章的格號／數字／等級／描邊格子，探針用）；potDom() 讀畫面上的獎池數字
- *   meterDom()                  讀畫面：{ main:能量條填到第幾格, lit:是否快滿發光, tabs:[各分頁小條格數], near:[各分頁是否快滿] }（探針用）
- *   isFirstRun()／setTapGuard(fn)  （C03）第一次進場中；自動下注中擋手點（fn('cell'|'denom')→true＝擋掉）。play 的 plan 只在 ?dev／?shot 才認
+ *   meterDom()                  讀畫面：{ main:能量條填到第幾格, lit:是否快滿發光 }（探針用）
+ *   isFirstRun()／setTapGuard(fn)  （C03）第一次進場中；自動下注中擋手點（fn('cell'|'denom'|'refresh')→true＝擋掉）。play 的 plan 只在 ?dev／?shot 才認
  *   掛點（留給 C03）：#logBtn（LogUI.mount 的 openBtn）、#autoBtn／#abar（Autobet.mount 的 entryBtn／slot）、#director、
  *     DEMO.ui.on('roundEnd')（組紀錄用 result／record）、DEMO.ui.play（自動下注 adapter）、DEMO.ui.isBusy
  *
@@ -49,7 +58,7 @@ var D = window.DEMO, T = window.t, G = ART.G, E = FX.E;
 var DEV_OK = !!(D.q.dev || D.q.shot);                     // 載入時就定好：事後在 console 改 DEMO.q.dev 不會打開指定結果
 /* 換版清理：同一個網址玩過 v1 的人，舊的紀錄（普通幣 0.7、有天降）和「看過第一次進場」的記號都清掉，
    核心存檔由 core.js 依版本號自己忽略。?shot 模式不讀不寫，所以這段不會動到任何東西。 */
-var SAVE_GEN = 5;                                         // 換版記號：v2.3 連鎖獎池、能量條 86 格（核心存檔版本同步 v:5）
+var SAVE_GEN = 6;                                         // 換版記號：v3 單一盤面＋刷新＋Combo、能量條 100 格（核心存檔版本同步 v:6）
 if(!D.q.shot && +D.ls('gen') !== SAVE_GEN){ D.ls('log', null); D.ls('first', null); D.ls('auto', null); D.ls('gen', SAVE_GEN); }
 var $ = function(id){ return document.getElementById(id); };
 var shot = D.q.shot;
@@ -69,28 +78,28 @@ var TIER_DUR = { none: 0, back: 400, big: 1000, huge: 1600 };
 var HI = 1 / 0.6;                                         // 高速＝普通的 0.6 倍時間
 
 /* ---------- 版位（世界座標 375×812；盤面幾何在 art.js） ---------- */
-var TR = { x: 12, y: 560, w: 351, h: 80 }, TRY = 600;     // 收集槽、槽裡幣的中心高度
+var TR = { x: 12, y: 530, w: 351, h: 80 }, TRY = 570;     // 收集槽、槽裡幣的中心高度（v3：盤面放大，槽往上移）
 var SLOT0 = 32, SLOTW = 22, TRAYS = 0.44;                 // 槽裡第一枚的 x、間距、縮放
 var WAL = { x: 34, y: 22 };                               // 錢包圖示
-var MT = { x: 12, y: 142, w: 351, h: 44 }, MX0 = 16, MDX = 275 / MAX, MHX = 329, MHY = 22;   // 能量條（槽、第一個刻度的 x、刻度間距、徽章圓心；#mt 內座標）
+var MT = { x: 12, y: 50, w: 351, h: 44 }, MX0 = 16, MDX = 275 / MAX, MHX = 329, MHY = 22;   // 能量條（槽、第一個刻度的 x、刻度間距、徽章圓心；#mt 內座標）
 
 /* ---------- 連鎖獎池（v2.3）：節拍與版位 ---------- */
 var PC = game.getState().potChain;                        // 炸幾格拿獎池（核心給，不寫死）
 var POT_PRE = 120, POT_CHARGE = 380, POT_FLY = 560, POT_PAYDUR = 520;   // 拿獎池：連鎖演完停 0.12 → 獎池蓄力 0.38 → 整筆飛進金額 0.56（落下時金額大跳）→ 之後隨落袋整筆飛進錢包 0.52
-var PX = 78, PY = 675, AX = 302, AY = 600;                // 獎池徽章中心、收集槽金額中心（飛行牌的起訖點）
+var PX = 78, PY = 641, AX = 302, AY = 570;                // 獎池徽章中心（收集槽下方那一排）、收集槽金額中心（飛行牌的起訖點）
 
 /* ---------- 狀態 ---------- */
 var disp = game.getBoard();                               // 畫面上的盤面（演出逐步更新；結束時和核心對帳）
 var shownBal = game.getWallet();
 var shownPot = game.getPot();                             // 畫面上的獎池數字（演出中逐步更新）
 var hintOn = D.ls('hint') !== 'off';                      // 「會炸幾格」提示開關（預設開，存 burst.hint）
-var busy = false, payoutPhase = false, cur = null, pend = null, pendingDrops = 0;
+var busy = false, payoutPhase = false, cur = null, pend = null, pendingDrops = 0, swapping = false, swapTok = 0;
 var hiSpeed = shot ? false : D.ls('speed') === 'fast';
 var firstSeen = !!D.ls('first');
 var subs = {};
 var STATS = { desync: 0, balFix: 0, rounds: 0 };
-var cols = [], hv = [], bv = [], dv = [], gv = [], fv = [], thumbs = [], tabEls = [], ebs = [];
-var gemSig = '', elWorld, elFx, elStage;
+var cols = [], hv = [], bv = [], dv = [], gv = [], fv = [];
+var gemSig = '', elWorld, elFx, elStage, dnEls = [], rfC = 0;
 var mtr = { v: 0, tok: 0, force: false, drain: false, base: -1, lit: false, el: {} };   // 能量條：目前畫出來的格數（可帶小數）、補間通道、金幣雨中強制發亮／退條、追光位置
 
 function noop(){}
@@ -158,7 +167,7 @@ function buildScene(){
 
 /* 金幣雨的五道光柱：從能量條下緣順著盤面的五欄灌下去（只在雨的預告到落完時淡入淡出，整組只動 opacity） */
 function beamsSVG(){
-  var y0 = 178, y1 = G.BOT, f0 = G.fy(y0), f1 = G.fy(y1), c, g = '<g id="beams">', xl0, xr0, xl1, xr1;
+  var y0 = 98, y1 = G.BOT, f0 = G.fy(y0), f1 = G.fy(y1), c, g = '<g id="beams">', xl0, xr0, xl1, xr1;
   for(c = 0; c < COLS; c++){
     xl0 = G.CX + (c - 2.5) * G.CWd * f0; xr0 = G.CX + (c - 1.5) * G.CWd * f0;
     xl1 = G.CX + (c - 2.5) * G.CWd * f1; xr1 = G.CX + (c - 1.5) * G.CWd * f1;
@@ -202,23 +211,24 @@ function buildTray(){                                     // 收集槽：溝、�
 }
 
 function buildHud(){
-  var h = '', di;
-  for(di = 0; di < EV.CFG.DENOMS.length; di++){
-    h += '<button class="tab" type="button" data-di="' + di + '"><div class="th">';
-    for(var i = 0; i < NN; i++) h += '<i></i>';
-    h += '</div><div class="lb"><i class="ico cn" style="width:16px;height:11px"></i><b>' + D.fmt(EV.CFG.DENOMS[di]) + '</b></div><div class="eb"><i></i></div></button>';
+  var h = '', di, i;
+  for(di = 0; di < EV.CFG.DENOMS.length; di++){            // 底部金額鈕：三顆佔滿一列；點了先確認（見「確認視窗」），選中的亮金
+    h += '<button class="dn" type="button" data-di="' + di + '"><i class="ico cn" style="width:24px;height:16px"></i><b>' + D.fmt(EV.CFG.DENOMS[di]) + '</b></button>';
   }
-  $('tabs').innerHTML = h;
-  var tabs = $('tabs').children;
-  for(di = 0; di < tabs.length; di++){
-    tabEls[di] = tabs[di];
-    thumbs[di] = tabs[di].firstChild.children;
-    ebs[di] = tabs[di].querySelector('.eb i');
-    fitText(tabs[di].querySelector('b'), 70, 17, 11);
-  }
-  $('legend').innerHTML = '<div class="chip"><i class="ico cn"></i><b></b></div><div class="chip"><i class="ico gd"></i><b></b></div><div class="chip"><i class="ico gk"></i><b></b></div>';
+  $('dnr').innerHTML = h;
+  dnEls = $('dnr').children;
+  for(i = 0; i < dnEls.length; i++) fitText(dnEls[i].querySelector('b'), 70, 19, 11);
+  /* 刷新鈕：外圈（底環＋進度環）、換位圖示、冷卻時的剩餘注數 */
+  var R = 26, C = 2 * Math.PI * R;
+  $('rfBtn').innerHTML = '<svg class="rfr" viewBox="0 0 56 56"><circle cx="28" cy="28" r="' + R + '" fill="none" stroke="#2a3558" stroke-width="3"/>'
+    + '<circle id="rfArc" cx="28" cy="28" r="' + R + '" fill="none" stroke="#ffd24a" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 ' + n2(C) + '" transform="rotate(-90 28 28)"/></svg>'
+    + '<span class="rfi">' + SHUF_SVG(26) + '</span><b class="rfn" id="rfN">0</b>';
+  rfC = C;
+  $('legend').innerHTML = '<div class="lgi"><i class="ico cn" style="width:21px;height:14px"></i><i class="eq">=</i><b></b></div><div class="lgi"><i class="ico gd" style="width:17px;height:19px"></i><i class="eq">=</i><b></b></div><div class="lgi"><i class="ico gk" style="width:23px;height:20px"></i><i class="eq">=</i><b></b></div>';
   $('pot').innerHTML = '<i class="pi ico bst"><b id="potC">' + PC + '</b></i><b id="potN">0</b>';   // 獎池：爆炸徽章（裡面是門檻格數）＋金額
 }
+var SHUF = '<path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/>';
+function SHUF_SVG(sz, col){ return '<svg width="' + sz + '" height="' + sz + '" viewBox="0 0 24 24" fill="none" stroke="' + (col || 'currentColor') + '" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">' + SHUF + '</svg>'; }
 
 /* 字太長就縮：多語／大數字不破版 */
 function fitText(el, maxW, start, min){
@@ -302,7 +312,7 @@ function buildMeter(){
 
 /* 畫出 v 格（可帶小數）：填滿窗的右緣、頭上的幣、快滿的發亮、追光、當前分頁底下的小條。只寫 transform／opacity／class */
 function meterSet(v){
-  var E1 = mtr.el, e, i, lit, base, di, ge;
+  var E1 = mtr.el, e, i, lit, base, ge;
   v = clamp(v, 0, MAX); mtr.v = v;
   e = MX0 + v * MDX - 0.5;                                  // 填滿的右緣（#mt 內 x）
   E1.fo.style.transform = 'translate3d(' + n2(e - MT.w) + 'px,0,0)';
@@ -324,8 +334,6 @@ function meterSet(v){
       else E1.chs[i].className = 'chs';
     }
   }
-  di = game.getDenomIndex();
-  if(ebs[di]) ebs[di].style.transform = 'scaleX(' + n2(v / MAX) + ')';
 }
 function mvMode(force, drain){                              // 金幣雨預告／雨中：強制發亮、關掉淡入淡出（閃爍由補間逐格寫）、雨中再開殘影
   var E1 = mtr.el;
@@ -345,15 +353,11 @@ function meterAnim(t0, dur, from, to, ease, onFrame, dn){
   FX.tw(t0, dur, function(p){ if(mtr.tok === tok){ meterSet(lerp(from, to, p)); if(onFrame) onFrame(p); } },
     function(){ if(mtr.tok === tok) meterSet(to); }, ease);
 }
-/* 讀畫面（探針用）：條填到第幾格（量填滿窗的右緣）、是否發亮、各分頁小條的格數與是否快滿 */
+/* 讀畫面（探針用）：條填到第幾格（量填滿窗的右緣）、是否發亮 */
 function meterDom(){
   var mr = mtr.el.mt.getBoundingClientRect(), r = mtr.el.fo.getBoundingClientRect();   // 量填滿窗的右緣，相對整條（整條被彈一下放大時也準）
-  var edge = (r.right - mr.left) / mr.width * MT.w, tabs = [], near = [], di, a, b;
-  for(di = 0; di < ebs.length; di++){
-    a = ebs[di].getBoundingClientRect(); b = ebs[di].parentNode.getBoundingClientRect();
-    tabs.push(n2(MAX * a.width / b.width)); near.push(tabEls[di].classList.contains('nr'));
-  }
-  return { main: n2((edge - MX0 + 0.5) / MDX), lit: mtr.el.mt.classList.contains('lit'), tabs: tabs, near: near };
+  var edge = (r.right - mr.left) / mr.width * MT.w;
+  return { main: n2((edge - MX0 + 0.5) / MDX), lit: mtr.el.mt.classList.contains('lit') };
 }
 
 /* =========================================================================
@@ -383,7 +387,6 @@ function renderCol(i){
     }else el.style.visibility = 'hidden';
   }
   L.el.setAttribute('data-h', h); L.el.setAttribute('data-g', g.join(','));
-  if(thumbs[game.getDenomIndex()]) thumbs[game.getDenomIndex()][i].className = thumbCls(h, g);
 }
 function thumbCls(h, g){ return g.length ? 'g' : 'c' + Math.min(3, h); }
 function renderAll(){ for(var i = 0; i < NN; i++){ cols[i].key = ''; renderCol(i); } flushOv(); }
@@ -447,7 +450,7 @@ function hideHints(){
 }
 function updHints(){
   var h = $('hints'), i, n, list = [], pz = {}, s = '', t, d, r, c, k, w2, txt, mid = Math.ceil(PC / 2), anyHot = false;
-  if(!hintOn || firstOn() || busy || pendingDrops > 0){ hideHints(); return; }
+  if(!hintOn || firstOn() || busy || swapping || pendingDrops > 0){ hideHints(); return; }
   for(i = 0; i < NN; i++){
     if(disp.h[i] < CAP - 1) continue;
     n = EV.probe(disp, i).topples;
@@ -544,7 +547,7 @@ function glowBurst(x, y, s, t0){
 }
 var live = { sp: 0, pp: 0 };                               // 同時在畫面上的火花、+金額字：設上限（元件數要節制，舊手機）
 function sparkAt(x, y, t0, ang, dist, sz, gold){
-  if(live.sp >= 36) return;
+  if(live.sp >= 30) return;
   live.sp++;
   var el = getEl('sp ' + (gold ? 'spg' : 'spk')); el.style.opacity = '0';
   var dx = Math.cos(ang) * dist, dy = Math.sin(ang) * dist * 0.8;
@@ -566,7 +569,145 @@ function bump(el, t0, A, dur){
 }
 
 /* =========================================================================
- * HUD：餘額、金額、分頁縮圖、面額表
+ * Combo（v3，B 案）：玩家那一枚引發的連爆，每炸一格，在那一格的右上角冒一顆爆炸徽章＋累計數字（跟著格子跳）；
+ *   同一波裡最新（數字最大）的一顆最大、帶「Combo」字樣的條；前面的徽章縮小淡出（下一波降級、再下一波淡掉）。
+ *   數字＝核心 result.main.waves 的逐波炸格累計（同一格炸兩次算兩格），最後一個數字＝main.topples＝提示徽章上的數字。
+ *   數到 POT_CHAIN（8）那一下，在盤面中上方放大彈出（放射光、震波圈、超大徽章、字樣條），獎池（在收集槽下方）同時跳一下，
+ *   接著照舊走拿獎池演出（連鎖演完 → 蓄力 → 飛進收集槽）。
+ *   金幣雨那一段（result.rain.waves）另外從 1 數，樣式是藍金色＋雨滴，不觸發 8 的大彈出。只炸 1 格時不顯示 Combo。
+ *   同一波最多畫 CM_MAX 顆（雨 CM_MAX_RAIN；取最後幾個數字）、同時在場的 Combo 元件 ≤ CM_LIVE；全部在 #fx 的元件池、只動 transform／opacity、掛在 FX 時間軸。
+ *   時間軸上的事件都能容忍前一步沒完成：每個元件有 token，被取代的補間自己停；finishRound 統一清掉。
+ * ========================================================================= */
+var CM_MAX = 5, CM_MAX_RAIN = 2, CM_LIVE = 12, CM_POP = 230, CM_STAG = 34, CM_DEMOTE = 180, CM_HOLD = 500, CM_FADE = 300;
+var BIG_POP = 300, BIG_HOLD = 1000, BIG_FADE = 380, BIGX = 187.5, BIGY = 196;
+var DROP_SVG = '<svg class="cmd" width="10" height="13" viewBox="0 0 10 13"><path d="M5 0C5 0 0 6 0 8.4A5 5 0 0 0 10 8.4C10 6 5 0 5 0z" fill="#8fd8ff" stroke="#0b3a78" stroke-width="1"/></svg>';
+function cmEl(rain){
+  var el = getEl(rain ? 'cmx rn' : 'cmx');
+  if(!el._init){
+    el._init = true;
+    el.innerHTML = '<div class="cmp">' + (rain ? DROP_SVG : '') + '<b class="cmw"></b></div><i class="cmi ico ' + (rain ? 'bsb' : 'bst') + '"></i><b class="cmn"></b>';
+    el._p = el.firstChild; el._w = el._p.lastChild; el._n = el.lastChild;
+    el._w.textContent = T('combo.word');
+  }
+  return el;
+}
+function cmTo(o, t0, dur, op, sc, pl, done){                // 從目前的樣子補間到（透明度、縮放、字樣條透明度）；新補間蓋掉舊的
+  var el = o.el, tok = ++o.tok, op0 = o.op, sc0 = o.sc, pl0 = o.pl;
+  FX.tw(t0, dur, function(p){
+    if(o.tok !== tok || o.dead) return;
+    o.op = lerp(op0, op, p); o.sc = lerp(sc0, sc, p); o.pl = lerp(pl0, pl, p);
+    place(el, o.cx, o.cy, o.sc, 0, o.op); el._p.style.opacity = n2(o.pl);
+  }, function(){ if(o.tok === tok && !o.dead && done) done(); });
+}
+function cmFree(o){ if(o.dead) return; o.dead = true; o.tok++; putEl(o.el); if(!o.fading) o.cm.live--; }   // live＝還沒開始淡出的數量（淡出中的不算，但還在畫面上：最壞同時 3 組×CM_MAX）
+function comboPop(cm, grp, cell, num, last, rain){
+  if(grp.dead || (cm.live >= CM_LIVE && !last)) return;   // 超過上限就跳過一般的徽章，最新（數字最大）的一顆一定畫
+  var d = cols[cell].d, inward = (cell % COLS) <= 2, el = cmEl(rain), sc = last ? 1.15 : 0.85, cx = d.x + 22 * d.f, cy = d.cy0 - d.h * 0.52, t0 = FX.now();
+  var o = { el: el, cx: cx, cy: cy, sc: sc, op: 1, pl: last ? 1 : 0, tok: 0, dead: false, cm: cm, last: last };
+  el.className = (rain ? 'cmx rn' : 'cmx') + (inward ? ' rt' : ' lf');
+  el._n.textContent = num; el._n.style.fontSize = num > 99 ? '14px' : ''; el._cell = cell;
+  el._p.style.opacity = '0';
+  cm.live++; grp.els.push(o);
+  var tok = ++o.tok;
+  FX.tw(t0, CM_POP, function(p){                               // 彈出：由小放大、帶一點過衝、從低處跳上來
+    if(o.tok !== tok || o.dead) return;
+    var e = E.back(p);
+    place(el, cx, cy + (1 - e) * 12, sc * lerp(0.35, 1, e), 0, Math.min(1, p * 4));
+    if(last) el._p.style.opacity = n2(Math.min(1, p * 2.5));
+  }, function(){ if(o.tok === tok && !o.dead){ place(el, cx, cy, sc, 0, 1); if(last) el._p.style.opacity = '1'; } });
+  emit('combo', { n: num, cell: cell, rain: rain, last: last, wave: grp.wave, text: el._n.textContent });
+}
+function comboDemote(grp, t0){                                // 下一波來了：前一波的徽章縮小、變淡、字樣條收掉
+  var i, o;
+  for(i = 0; i < grp.els.length; i++){ o = grp.els[i]; if(!o.dead) cmTo(o, t0, CM_DEMOTE, 0.5, 0.62, 0); }
+}
+function comboFadeGrp(grp, t0, dur){
+  if(grp.faded) return;
+  grp.faded = true;
+  grp.els.forEach(function(o){ if(o.dead) return; if(!o.fading){ o.fading = true; o.cm.live--; } cmTo(o, t0, dur, 0, o.sc * 0.8, 0, function(){ cmFree(o); }); });
+}
+function comboClear(){                                        // 整個清掉（一注結束／下一注開始）；還沒到時間的彈出也一起作廢
+  var cm = cur && cur.cm, s, i, j, grp;
+  if(!cm) return;
+  for(s in cm.groups) for(i = 0; i < cm.groups[s].length; i++){
+    grp = cm.groups[s][i]; grp.dead = true;
+    for(j = 0; j < grp.els.length; j++) cmFree(grp.els[j]);
+  }
+  if(cm.big){ cm.big.forEach(putEl); cm.big = null; }
+  cm.dead = true;
+}
+/* 一波炸開時：src 'main'／'rain'，k＝第幾波，w＝這一波，bt＝炸開的時間，total＝這一段（main 或 rain）總共炸幾格 */
+function schedCombo(src, k, w, bt, total){
+  var cm = cur.cm, base = cm.cum[src], n = w.cells.length, rain = src === 'rain', first = Math.max(0, n - (rain ? CM_MAX_RAIN : CM_MAX)), grp, i;   // 雨一波炸很多格、畫面本來就滿：只畫最後 2 顆
+  cm.cum[src] = base + n;
+  if(total < 2) return;                                       // 只炸 1 格：不顯示 Combo
+  grp = { src: src, wave: k, els: [], dead: false, faded: false };
+  var gs = cm.groups[src], gi = gs.length;
+  gs.push(grp);
+  FX.at(bt, function(){                                       // 上一組降級、再上一組淡出
+    if(grp.dead) return;
+    var t = FX.now();
+    if(gs[gi - 2]) comboFadeGrp(gs[gi - 2], t, CM_FADE);
+    if(gs[gi - 1]) comboDemote(gs[gi - 1], t);
+  });
+  for(i = first; i < n; i++){
+    (function(i){
+      var num = base + i + 1, last = i === n - 1, t = bt + 20 + (i - first) * CM_STAG, cell = w.cells[i];
+      FX.at(t, function(){ comboPop(cm, grp, cell, num, last, rain); });
+      if(last) (cm.t.done[src] = cm.t.done[src] || [])[k] = t + CM_POP + 10;
+    })(i);
+  }
+  if(!rain && base < PC && base + n >= PC){                   // 這一波數到了 8
+    var tb = bt + 40 + Math.max(0, PC - base - 1 - first) * CM_STAG;
+    cm.t.big = tb;
+    FX.at(tb, function(){ comboBig(cm, tb); });
+  }
+}
+function comboEnd(src, lastLand){                             // 這一段演完：留一下再淡掉（前面降級過的也一起）
+  var cm = cur.cm, gs = cm.groups[src];
+  if(!gs.length) return;
+  FX.at(lastLand + CM_HOLD, function(){ var t = FX.now(); gs.forEach(function(g){ if(!g.dead) comboFadeGrp(g, t, CM_FADE); }); });
+}
+function comboBig(cm, t0){                                    // 數到 8：盤面中上方放大彈出
+  if(cm.dead || cm.bigShown) return;
+  cm.bigShown = true;
+  var ray = getEl('cbr'), rgo = getEl('cbo'), bg = getEl('cbg'), pl = getEl('cbp'), tot = BIG_POP + BIG_HOLD + BIG_FADE;
+  if(!bg._init){ bg._init = true; bg.innerHTML = '<i class="ico bst"></i><b class="bn"></b>'; bg._n = bg.lastChild; }
+  if(!pl._init){ pl._init = true; pl.innerHTML = '<span></span>'; pl._w = pl.firstChild; }
+  bg._n.textContent = PC; pl._w.textContent = T('combo.word');
+  ray.style.opacity = rgo.style.opacity = bg.style.opacity = pl.style.opacity = '0';
+  cm.big = [ray, rgo, bg, pl];
+  bump($('pot'), t0, 0.14, 240); ring(PX, PY, 1.1, t0);        // 獎池（在收集槽下方）同時跳一下、震波圈：Combo 引爆了獎池
+  emit('comboBig', { n: PC, text: bg._n.textContent });
+  FX.tw(t0, tot, function(p){
+    if(cm.dead || !cm.big) return;
+    var tt = p * tot, pe = Math.min(1, tt / BIG_POP), fade = tt > BIG_POP + BIG_HOLD ? Math.max(0, 1 - (tt - BIG_POP - BIG_HOLD) / BIG_FADE) : 1, sc, q;
+    if(tt < BIG_POP) sc = lerp(0.3, 1.25, E.out(pe)); else if(tt < BIG_POP + 160) sc = lerp(1.25, 1, E.io((tt - BIG_POP) / 160)); else sc = 1 + 0.03 * Math.sin(tt * 0.012);
+    if(fade < 1) sc *= lerp(1.2, 1, fade);
+    place(bg, BIGX, BIGY, sc, 0, Math.min(1, pe * 3) * fade);
+    place(ray, BIGX, BIGY, lerp(0.6, 1.05, E.out(pe)), tt * 0.02, 0.85 * Math.min(1, pe * 2) * fade);
+    q = Math.min(1, tt / 520);
+    place(rgo, BIGX, BIGY, lerp(0.6, 1.9, E.out(q)), 0, 0.7 * (1 - q) * fade);
+    q = clamp((tt - 120) / 220, 0, 1);
+    place(pl, BIGX, BIGY + 94, lerp(0.5, 1, E.back(q)), 0, Math.min(1, q * 2) * fade);
+  }, function(){ if(cm.big){ cm.big.forEach(putEl); cm.big = null; } });
+}
+function comboDom(){                                          // 讀畫面（探針用）：現在看得見的 Combo 徽章（數字、是不是雨、有沒有字樣條）與 8 的大彈出
+  var out = [], big = null, kids = elFx.children, i, el, r, rw = elWorld.getBoundingClientRect(), k = rw.width / 375;
+  for(i = 0; i < kids.length; i++){
+    el = kids[i];
+    if(el.style.display === 'none' || el._free) continue;
+    if(el._cls === 'cmx' || el._cls === 'cmx rn'){
+      r = el._n.getBoundingClientRect();
+      out.push({ n: +el._n.textContent, rain: el._cls === 'cmx rn', word: +el._p.style.opacity > 0.5, op: +el.style.opacity, cell: el._cell, x: n2((r.left + r.width / 2 - rw.left) / k), y: n2((r.top + r.height / 2 - rw.top) / k) });
+    }
+    else if(el._cls === 'cbg') big = { n: +el._n.textContent, op: +el.style.opacity };
+  }
+  return { items: out, big: big };
+}
+
+/* =========================================================================
+ * HUD：餘額、金額、圖例
  * ========================================================================= */
 function setBal(v){
   shownBal = v;
@@ -593,20 +734,23 @@ function amtRoll(a, b, t0, dur, tier){                      // 金額滾動：�
   var el = $('amtN');
   FX.tw(t0, dur, function(p){ el.textContent = D.fmt(a + (b - a) * p); }, function(){ setAmt(b, tier); });
 }
-function updTabs(){                                        // 分頁：縮圖＋底下的能量條小條（目前那張讀畫面上的條，別張讀核心）；別張快滿＝金色發光
-  var di, cur = game.getDenomIndex(), b, i, m;
-  for(di = 0; di < tabEls.length; di++){
-    m = di === cur ? mtr.v : game.getMeter(di);
-    tabEls[di].className = 'tab' + (di === cur ? ' on' : (m >= MAX - NEAR_N ? ' nr' : ''));
-    ebs[di].style.transform = 'scaleX(' + n2(clamp(m, 0, MAX) / MAX) + ')';
-    b = di === cur ? disp : game.getBoard(di);
-    for(i = 0; i < NN; i++) thumbs[di][i].className = thumbCls(b.h[i], b.g[i]);
-  }
+/* 底部操作列的狀態（金額鈕亮哪顆、能不能按；刷新鈕的冷卻外圈與剩幾注）：全部讀核心，演出中／自動下注中變淡 */
+function ctlLocked(){ return busy || swapping || (window.Autobet && Autobet.isRunning && Autobet.isRunning()); }
+function updCtl(){
+  var st = game.getState(), cur = st.denomIndex, i, lock = ctlLocked() || firstOn(), left = st.refreshLeft, ev = st.refreshEvery, arc = $('rfArc'), btn = $('rfBtn');
+  for(i = 0; i < dnEls.length; i++) dnEls[i].className = 'dn' + (i === cur ? ' on' : '');
+  $('dnr').classList.toggle('bz', lock);
+  btn.classList.toggle('cool', left > 0);
+  btn.classList.toggle('bz', lock && left === 0);
+  btn.setAttribute('data-left', left);
+  $('rfN').textContent = left;
+  arc.setAttribute('stroke-dasharray', n2(rfC * clamp(1 - left / ev, 0, 1)) + ' ' + n2(rfC));
+  arc.style.display = left >= ev ? 'none' : '';              // 剛刷新完（外圈 0）：圓頭線帽會留一個小點，整條不畫
 }
 function updLegend(){
   var p = EV.PAY[game.getDenomIndex()], bs = $('legend').querySelectorAll('b');
   bs[0].textContent = D.fmt(p.coin); bs[1].textContent = D.fmt(p.diamond); bs[2].textContent = D.fmt(p.crown);
-  for(var i = 0; i < 3; i++) fitText(bs[i], 44, 15, 10);
+  for(var i = 0; i < 3; i++) fitText(bs[i], 44, 14, 9);
 }
 function hideBanner(){ var b = $('banner'); b.style.opacity = '0'; }
 function showBanner(txt, t0, big){
@@ -662,23 +806,26 @@ function exitPoint(cell, dir){
   var d = cols[cell].d;
   if(dir === 0) return { x: G.xL(d.yc, 10) + 11, y: d.cy0 - 4 };
   if(dir === 1) return { x: G.xR(d.yc, 10) - 11, y: d.cy0 - 4 };
-  if(dir === 2) return { x: d.x, y: G.TOP - 14 };
+  if(dir === 2) return { x: d.x, y: G.TOP - 8 };
   return { x: d.x, y: G.BOT + 15 };
 }
 
 function schedPart(part, src, T0){
-  var k, ws = T0 + WGAP, lastLand = T0;
+  var k, ws = T0 + WGAP, lastLand = T0, total = 0;
+  for(k = 0; k < part.waves.length; k++) total += part.waves[k].cells.length;   // 這一段總共炸幾格（Combo 最後的數字；只炸 1 格不顯示）
   for(k = 0; k < part.waves.length; k++){
-    schedWave(part.waves[k], k, ws, src);
+    schedWave(part.waves[k], k, ws, src, total);
     lastLand = ws + PRESS + FLY;
     ws = lastLand + WGAP;
   }
+  comboEnd(src, lastLand);
   return lastLand;
 }
 
-function schedWave(w, k, ws, src){
+function schedWave(w, k, ws, src, total){
   var S = cur.S, cells = w.cells, bt = ws + PRESS, lt = bt + FLY, kk = Math.min(k + (src === 'rain' ? 2 : 0), 6), a, m, j;
   (src === 'rain' ? cur.rwavesT : cur.wavesT).push(ws);
+  schedCombo(src, k, w, bt, total);
   var starts = [];                                        // 這一波每格噴之前的疊高（飛行起點用）
   for(a = 0; a < cells.length; a++) starts[a] = Math.min(S.h[cells[a]], CAP + 1);
   var moves = w.moves, mvs = [], nEx = 0;
@@ -814,7 +961,7 @@ function schedRain(res, T0){
       FX.at(ts, function(){ f = flightEl('coin', true); f.style.opacity = '0'; if(c % 2 === 0){ tr = getEl('trl'); tr.style.opacity = '0'; } });   // 拖尾隔格畫（元件數）
       FX.tw(ts, dur, function(p){
         if(!f) return;
-        var e = 0.3 * p + 0.7 * E.in(p), x = lerp(x0, d.x, e), y = lerp(176, y1, e);
+        var e = 0.3 * p + 0.7 * E.in(p), x = lerp(x0, d.x, e), y = lerp(98, y1, e);
         place(f, x, y, lerp(0.62, d.s * 1.16, E.out(p)), rot0 * (1 - e), Math.min(1, 0.3 + p * 2));
         if(tr){ tr.style.transform = 'translate3d(' + n2(x) + 'px,' + n2(y - 2) + 'px,0) scale(1,' + n2((26 + 44 * e) / 80) + ')'; tr.style.opacity = n2(0.25 + 0.6 * e); }
       }, function(){ if(f){ putEl(f); if(tr) putEl(tr); f = null; tr = null; } });
@@ -830,7 +977,7 @@ function schedRain(res, T0){
   FX.at(tF + RAIN_JIT + 30, function(){ emit('rainFall', { result: res, dom: domCounts(), falling: fallingCoins() }); });
   for(j = 0; j < 14; j++){                                   // 雨絲：裝飾，只在落下的這一小段
     (function(j){
-      var x = 20 + ((j * 83 + 17) % 335), y0 = 188 + ((j * 47) % 90), st = tF + (j % 7) * 18, dur = 300 + (j % 4) * 40, el = null;
+      var x = 20 + ((j * 83 + 17) % 335), y0 = 108 + ((j * 47) % 90), st = tF + (j % 7) * 18, dur = 300 + (j % 4) * 40, el = null;
       FX.at(st, function(){ el = getEl('rs'); el.style.opacity = '0'; });
       FX.tw(st, dur, function(p){ if(el) place(el, x, y0 + p * 250, 1, 0, 0.7 * Math.sin(p * Math.PI)); }, function(){ if(el){ putEl(el); el = null; } });
     })(j);
@@ -858,7 +1005,7 @@ function fallingCoins(){                                     // 讀畫面：現�
     if(el.style.display === 'none' || !/(^| )fc( |$)/.test(el.className) || el.style.opacity === '0') continue;
     r = el.getBoundingClientRect();
     var cx = (r.left + r.width / 2 - rw.left) / k, cy = (r.top + r.height / 2 - rw.top) / k;
-    if(cy > 170 && cy < 545) out.push({ x: n2(cx), y: n2(cy) });                  // 只算盤面範圍內（收集槽裡的幣不算）
+    if(cy > 90 && cy < 520) out.push({ x: n2(cx), y: n2(cy) });                  // 只算盤面範圍內（收集槽裡的幣不算）
   }
   return out;
 }
@@ -1038,7 +1185,9 @@ function startRound(res, p){
   var N = res.items.length;
   cur = { res: res, o: o, p: p, S: { h: res.boardBefore.h.slice(), g: res.boardBefore.g.map(function(x){ return x.slice(); }) },
           itemIdx: 0, lastArr: t0, amt: 0, exited: 0, balBase: 0, paidAmt: 0, wavesT: [], rwavesT: [], tray: [], rainT: null,
-          lumps: [], potT: null, potLanded: false, potPaid: false, lastTrail: 0, lastTrail2: 0 };
+          lumps: [], potT: null, potLanded: false, potPaid: false, lastTrail: 0, lastTrail2: 0,
+          cm: { cum: { main: 0, rain: 0 }, groups: { main: [], rain: [] }, live: 0, dead: false, bigShown: false, big: null, t: { big: null, done: {} } } };
+  closeConfirm(); swapTok++; swapping = false;               // 換盤演出中就下注：換盤演出放掉（畫面已經是新盤面）
   /* 收集槽：枚數多時排得更密；超過 15 枚排兩列（一列最擠 15 枚、間距 14.1，和兩列的間距上限 14 銜接；原本 24 枚才分列，21～24 枚會擠成間距 9 的一列） */
   cur.rows2 = N > 15;
   var per = cur.rows2 ? Math.ceil(N / 2) : N;
@@ -1055,12 +1204,12 @@ function startRound(res, p){
   T0 = schedDrop(res.cell, res.kind, T0);
   if(res.quiet){                                           // 沒爆也沒金幣雨：立刻 ack，不鎖操作，可以連點
     var cq = cur;
-    game.ack();
+    game.ack(); updCtl();
     cq.rec = game.getRecords(1)[0] || null;
     FX.at(T0 + 2, function(){ resolveRound(res, true, cq); });
     return;
   }
-  busy = true;
+  busy = true; updCtl();
   T0 = schedPart(res.main, 'main', T0);
   if(res.hasRain) T0 = schedRain(res, T0);
   var tier = res.hasRain ? 'huge' : res.tier;              // 金幣雨固定用最高一級的全畫面回饋
@@ -1095,6 +1244,9 @@ function applyFreeze(fz, p){                               // 截圖用：停在
   else if(fz.at === 'rainPre' && R) t = R.pre + (fz.add || 0);
   else if(fz.at === 'rainFall' && R) t = R.fall + (fz.add || 0);
   else if(fz.at === 'rainEnd' && R) t = R.end + (fz.add || 0);
+  else if(fz.combo != null && cur.cm.t.done.main) t = cur.cm.t.done.main[fz.combo] + (fz.add || 0);                       // 主連鎖第幾波的 Combo 徽章剛彈完
+  else if(fz.rcombo != null && cur.cm.t.done.rain) t = cur.cm.t.done.rain[Math.min(fz.rcombo, cur.cm.t.done.rain.length - 1)] + (fz.add || 0);   // 金幣雨第幾波的 Combo
+  else if(fz.at === 'comboBig' && cur.cm.t.big != null) t = cur.cm.t.big + (fz.add || 0);                           // 數到 8 的大彈出
   else if(fz.at === 'chainEnd') t = cur.F0 + (fz.add || 0);
   else if(fz.at === 'tier') t = cur.TL + (fz.add || 0);       // 分級回饋開始的時間（拿了獎池＝獎池落進金額的那一刻；沒拿＝連鎖結束）
   else if(fz.at && /^pot/.test(fz.at) && cur.potT){ var PT = cur.potT; t = ({ potCharge: PT.charge, potFly: PT.fly, potLand: PT.land, potPay: PT.pay, potPaid: PT.paid })[fz.at] + (fz.add || 0); }
@@ -1116,8 +1268,9 @@ function finishRound(){
   $('dim').style.opacity = '0'; $('beams').style.opacity = '0';                 // 金幣雨的收尾也統一補齊：幕、光柱、能量條回到核心給的值
   mtr.tok++; mvMode(false, false); meterSet(res.meterAfter);
   var before = shownBal;
+  comboClear();
   game.ack();                                              // 'wallet' 事件會把餘額對齊核心
-  busy = false;
+  busy = false; updCtl();
   if(before !== game.getWallet()) STATS.balFix++;
   verifyBoard();
   updHints();
@@ -1138,7 +1291,7 @@ function verifyBoard(){
   for(i = 0; i < NN; i++){
     if(b.h[i] !== disp.h[i] || b.g[i].join(',') !== disp.g[i].join(',')){ bad = true; break; }
   }
-  if(bad){ STATS.desync++; disp = b; renderAll(); updTabs(); }
+  if(bad){ STATS.desync++; disp = b; renderAll(); updCtl(); }
 }
 
 function domCounts(){
@@ -1178,29 +1331,135 @@ $('hit').addEventListener('click', function(e){
   if(i != null) onTap(+i);
 });
 
-function onDenom(){                                        // 換面額＝換一張盤面（連同它自己的能量條）：整盤落下再升起
-  disp = game.getBoard();
-  mtr.tok++; mvMode(false, false); meterSet(game.getMeter());
-  setPot(game.getPot()); $('amtB').style.opacity = '0';     // 換面額：顯示那張盤面自己的獎池
-  renderAll(); updTabs(); updLegend(); updateFirst(); updHints();
-  var t0 = FX.now(), i;
+/* —— 換盤演出：換金額／刷新後整盤落下再升起（只動 transform／opacity，≤0.6 秒；能量條與獎池數字同時歸零或不動）—— */
+function boardSwapFx(kind){
+  var t0 = FX.now(), tok = ++swapTok, i, endT = t0;
+  swapping = true;
   for(i = 0; i < NN; i++){
     (function(i){
-      var L = cols[i], st = t0 + L.r * 45;
+      var L = cols[i], st = t0 + (kind === 'refresh' ? (L.r + L.c) * 34 : L.r * 45), dur = 240;
+      endT = Math.max(endT, st + dur);
       L.el.style.opacity = '0';
-      FX.tw(st, 260, function(p){ var e = E.out(p); L.el.style.opacity = n2(e); L.cb.style.transform = 'translateY(' + n2((1 - e) * 16) + 'px)'; }, function(){ L.el.style.opacity = ''; L.cb.style.transform = ''; });
+      FX.tw(st, dur, function(p){ var e = E.out(p); L.el.style.opacity = n2(e); L.cb.style.transform = 'translateY(' + n2((1 - e) * 16) + 'px)'; }, function(){ L.el.style.opacity = ''; L.cb.style.transform = ''; });
+      if(kind === 'refresh') boomFlash(i, st);
     })(i);
   }
-  emit('denom', { denomIndex: game.getDenomIndex() });
+  FX.at(endT, function(){ if(swapTok === tok){ swapping = false; updCtl(); updHints(); } });
+  return endT - t0;
 }
+function onDenom(d){                                       // 換金額＝重來：盤面換新、能量條歸零、獎池歸零（核心已換好，這裡演）
+  var m0 = mtr.v, p0 = shownPot, t0 = FX.now();
+  disp = game.getBoard();
+  hideHints(); $('amtB').style.opacity = '0';
+  if(m0 > 0) meterAnim(t0, 380, m0, 0, E.out, null); else{ mtr.tok++; mvMode(false, false); meterSet(0); }
+  shownPot = 0;
+  if(p0 > 0) potRoll(p0, 0, t0, 380, E.out); else setPot(0);
+  renderAll(); updLegend(); updateFirst();
+  var ms = boardSwapFx('denom'); updCtl();
+  emit('denom', { denomIndex: game.getDenomIndex(), lost: d && d.lost, ms: ms });   // ms＝換盤演出的長度（虛擬毫秒，普通速度；≤600）
+}
+function onRefresh(d){                                     // 刷新：同樣枚數、換位置（能量條、獎池不動）
+  disp = game.getBoard();
+  hideHints();
+  renderAll(); updateFirst();
+  var ms = boardSwapFx('refresh'); updCtl();
+  emit('refresh', { pieces: d && d.pieces, refreshLeft: d && d.refreshLeft, ms: ms });
+}
+/* dev／shot 專用的相容掛點（C03 v3-3：wire.js／dev.js 已不用它；dev.js 在預設網址 delete 掉）：不跳確認、直接換（演出中不換）；
+   玩家的手點走 askDenom（先確認）。 */
 function setDenom(di){
   if(busy || di === game.getDenomIndex()) return false;
   return game.setDenom(di);
 }
-$('tabs').addEventListener('click', function(e){
-  var b = e.target.closest ? e.target.closest('.tab') : null;
-  if(b){ if(tapGuard && tapGuard('denom')) return; setDenom(+b.getAttribute('data-di')); }
+
+/* =========================================================================
+ * 確認視窗（刷新盤面、換金額）：置中卡片，圖示先行＋逐項標籤。內容一律讀核心（getState／getBoard／peekDenomChange），畫面不自己算。
+ *   取消什麼都不變；確認才呼叫核心（核心回 false 就 toast 並關窗）。演出中、自動下注中、第一次進場時不開。
+ * ========================================================================= */
+var cfmKind = '', cfmGo = null, cfmEl = null, cfmCard = null;
+var ARW = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffd24a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+var ARD = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffd24a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v15M6 13l6 6 6-6"/></svg>';
+var CLK = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8c9acb" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+function cfmTile(name, vis, tag, tcls){
+  return '<div class="cfi"><div class="cfn">' + name + '</div><div class="cfx">' + vis + '</div><span class="tag ' + tcls + '">' + tag + '</span></div>';
+}
+function miniBoard(b, c, unknown){                        // 5×5 縮圖；unknown＝新盤面還不知道長怎樣（核心還沒抽），畫成同樣大小的暗格＋換位圖示
+  var s = '<div class="mb' + (unknown ? ' nx' : '') + '" style="--c:' + c + 'px">', i;
+  for(i = 0; i < NN; i++) s += '<i class="' + (unknown ? 'q' : (b.g[i].length ? 'g' : (b.h[i] > 0 ? 'c' + Math.min(3, b.h[i]) : ''))) + '"></i>';
+  if(unknown) s += SHUF_SVG(22, '#ffd24a');
+  return s + '</div>';
+}
+function miniMeter(frac){ return '<div class="mm' + (frac <= 0 ? ' mt0' : '') + '"><i style="width:' + n2(clamp(frac, 0, 1) * 100) + '%"></i></div>'; }
+function burstN(amount, dim, strike){
+  return '<span class="bsm" style="width:26px;height:26px;opacity:' + (dim ? 0.5 : 1) + '"><i class="ico bst"></i><b>' + PC + '</b></span><b class="nm" style="font-size:17px;color:#ffd24a' + (strike ? ';text-decoration:line-through' : '') + (dim ? ';opacity:.6' : '') + '">' + D.fmt(amount) + '</b>';
+}
+function cfmButtons(goText){ return '<div class="cfb"><button type="button" class="no" data-act="no">' + T('btn.cancel') + '</button><button type="button" class="go" data-act="go">' + goText + '</button></div>'; }
+function refreshHTML(st){
+  var b = st.board, pieces = 0, gems = 0, i;
+  for(i = 0; i < NN; i++){ pieces += b.h[i]; gems += b.g[i].length; }
+  var tiles = cfmTile(T('rf.coins'), '<div class="cfr"><i class="ico cn" style="width:24px;height:16px"></i><b class="nm" style="font-size:17px">' + (pieces - gems) + '</b></div>', T('rf.same'), 'keep');
+  if(gems) tiles += cfmTile(T('rf.gem'), '<div class="cfr"><i class="ico gd" style="width:19px;height:22px"></i>' + (gems > 1 ? '<b class="nm" style="font-size:15px">×' + gems + '</b>' : '') + '</div>', T('rf.keep'), 'keep');
+  tiles += cfmTile(T('rf.meter'), miniMeter(st.meter / st.rainEvery), T('rf.hold'), 'keep');
+  tiles += cfmTile(T('rf.pot'), '<div class="cfr" style="gap:5px">' + burstN(st.pot) + '</div>', T('rf.hold'), 'keep');
+  return '<h3>' + T('rf.title') + '</h3><div class="cfr" style="gap:14px">' + miniBoard(b, 15) + ARW + miniBoard(b, 15, true) + '</div><div class="cft">' + tiles + '</div>'
+    + '<div class="cfq">' + CLK + '<span>' + T('rf.note', { n: st.refreshEvery }) + '</span></div>' + cfmButtons(T('rf.go'));
+}
+function denomHTML(pk){
+  var L = pk.lost, b = game.getBoard();
+  var top = '<div class="cfr" style="gap:12px"><div class="cfa"><i class="ico cn" style="width:24px;height:16px"></i><b>' + D.fmt(pk.fromAmount) + '</b></div>' + ARW
+    + '<div class="cfa to"><i class="ico cn" style="width:24px;height:16px"></i><b>' + D.fmt(pk.toAmount) + '</b></div></div>';
+  var tiles = cfmTile(T('dn.board'), '<div class="cfr" style="gap:6px">' + miniBoard(b, 8) + ARW.replace(/22/g, '16') + miniBoard(b, 8, true) + '</div>', T('dn.renew'), 'redo');
+  tiles += cfmTile(T('dn.meter'), miniMeter(L.meter / pk.meterMax) + ARD + miniMeter(0), T('dn.zero'), 'redo');
+  tiles += L.pot > 0 ? cfmTile(T('dn.pot'), '<div class="cfr" style="gap:5px">' + burstN(L.pot, false, true) + '</div>' + ARD + '<div class="cfr" style="gap:5px">' + burstN(0, true) + '</div>', T('dn.lose', { n: D.fmt(L.pot) }), 'lose')
+                     : cfmTile(T('dn.pot'), '<div class="cfr" style="gap:5px">' + burstN(0, true) + '</div>', T('dn.zero'), 'redo');
+  if(L.gems && L.gems.total > 0) tiles += cfmTile(T('dn.gem'), '<div class="cfr" style="position:relative"><i class="ico gd" style="width:30px;height:35px;opacity:.55"></i>'
+    + '<svg width="36" height="36" viewBox="0 0 24 24" style="position:absolute;left:50%;top:50%;margin:-18px 0 0 -18px" fill="none" stroke="#ff7a5a" stroke-width="3" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></div>', T('dn.gone'), 'redo');
+  return '<h3>' + T('dn.title') + '</h3>' + top + '<div class="cft">' + tiles + '</div>' + cfmButtons(T('dn.go', { n: D.fmt(pk.toAmount) }));
+}
+function buildConfirm(){
+  cfmEl = document.createElement('div'); cfmEl.className = 'cfm'; cfmEl.id = 'cfm';
+  cfmEl.innerHTML = '<div class="cfv"></div><div class="cfc"></div>';
+  cfmCard = cfmEl.lastChild;
+  $('app').appendChild(cfmEl);
+  cfmEl.firstChild.onclick = function(){ closeConfirm(); };
+  cfmCard.onclick = function(e){
+    var b = e.target.closest ? e.target.closest('button') : null, act = b && b.getAttribute('data-act');
+    if(act === 'no') closeConfirm();
+    else if(act === 'go'){ var fn = cfmGo; closeConfirm(); if(fn) fn(); }
+  };
+}
+function openConfirm(kind, html, go){
+  cfmKind = kind; cfmGo = go; cfmCard.innerHTML = html;
+  cfmEl.classList.add('show');
+  emit('confirm', { kind: kind, open: true });
+}
+function closeConfirm(){
+  if(!cfmKind) return;
+  var k = cfmKind;
+  cfmKind = ''; cfmGo = null; cfmEl.classList.remove('show');
+  emit('confirm', { kind: k, open: false });
+}
+function askDenom(di){                                     // 點金額鈕：先看核心說會放棄什麼，再開確認窗；回傳有沒有開窗
+  if(tapGuard && tapGuard('denom')) return false;
+  if(ctlLocked() || firstOn() || cfmKind || di === game.getDenomIndex()) return false;
+  var pk = game.peekDenomChange(di);
+  if(!pk || !pk.valid || !pk.can || !pk.changes) return false;
+  openConfirm('denom', denomHTML(pk), function(){ if(!game.setDenom(di)) Toast.show(T('dn.fail')); });
+  return true;
+}
+function askRefresh(){                                     // 點刷新鈕：冷卻中 toast 還要幾注；可刷時開確認窗
+  if(tapGuard && tapGuard('refresh')) return false;
+  if(ctlLocked() || firstOn() || cfmKind) return false;
+  var st = game.getState();
+  if(!st.canRefresh){ if(st.refreshLeft > 0) Toast.show(T('rf.cool', { n: st.refreshLeft })); return false; }
+  openConfirm('refresh', refreshHTML(st), function(){ if(!game.refresh()) Toast.show(T('rf.fail')); });
+  return true;
+}
+$('dnr').addEventListener('click', function(e){
+  var b = e.target.closest ? e.target.closest('.dn') : null;
+  if(b) askDenom(+b.getAttribute('data-di'));
 });
+$('rfBtn').addEventListener('click', function(){ askRefresh(); });
 
 function onReset(){
   disp = game.getBoard(); setBal(game.getWallet());
@@ -1208,7 +1467,7 @@ function onReset(){
   /* 重置後不再出現「只亮一格」（2026-11-26 用戶裁決：重置只是讓沒錢時能繼續測試）；firstSeen 維持原值 */
   hideBanner(); setAmt(0, null); setTrayGold(0, 0);
   setPot(game.getPot()); $('amtB').style.opacity = '0';     // 重置錢包不動獎池（clearSaved 才歸零，探針用）
-  renderAll(); updTabs(); updLegend(); updateFirst(); updHints();
+  renderAll(); updCtl(); updLegend(); updateFirst(); updHints();
 }
 function resetWallet(){
   if(busy){ Toast.show(T('log.noReset')); return false; }
@@ -1252,13 +1511,14 @@ game.on(function(type, d){
   if(type === 'wallet'){ if(!payoutPhase) setBal(d.wallet); }
   else if(type === 'result') onResult(d);
   else if(type === 'denom') onDenom(d);
+  else if(type === 'refresh') onRefresh(d);
+  else if(type === 'cooldown') updCtl();
   else if(type === 'reset') onReset(d);
-  else if(type === 'pot'){                                 // 導演台改了獎池：目前面額的數字直接換
-    if(d.denomIndex === game.getDenomIndex()){ setPot(d.pot); bump($('pot'), FX.now(), 0.12, 220); }
+  else if(type === 'pot'){                                 // 導演台改了獎池：數字直接換
+    setPot(d.pot); bump($('pot'), FX.now(), 0.12, 220);
   }
-  else if(type === 'meter'){                               // 導演台改了能量條：目前面額的條直接換，分頁小條跟著
-    if(d.denomIndex === game.getDenomIndex()){ mtr.tok++; mvMode(false, false); meterSet(d.meter); }
-    updTabs();
+  else if(type === 'meter'){                               // 導演台改了能量條：條直接換
+    mtr.tok++; mvMode(false, false); meterSet(d.meter);
   }
 });
 
@@ -1274,12 +1534,14 @@ window.addEventListener('resize', fitWorld);
  * 初始化
  * ========================================================================= */
 elWorld = $('world'); elFx = $('fx'); elStage = $('stage');
-buildStyles(); buildScene(); buildCols(); buildTray(); buildHud(); buildMeter();
+buildStyles(); buildScene(); buildCols(); buildTray(); buildHud(); buildMeter(); buildConfirm();
+FX.setSpeed(baseSpeed());                                  // 存檔是高速：還沒下注就換盤（刷新／換金額）也照高速
 meterSet(game.getMeter());
-renderAll(); updTabs(); updLegend(); updateFirst();
+renderAll(); updCtl(); updLegend(); updateFirst();
 setBal(game.getWallet()); setAmt(0, null); renderSpd(); renderHnt(); setPot(game.getPot()); fitWorld();
 fitText($('wal'), 112, 20, 12);
 updHints();
+new MutationObserver(function(){ updCtl(); }).observe($('abar'), { attributes: true, attributeFilter: ['class'] });   // 自動下注開始／結束：金額鈕與刷新鈕跟著變淡／恢復
 
 function snapshot(){
   var cells = [], i;
@@ -1291,23 +1553,25 @@ function snapshot(){
 
 D.ui = {
   on: on, off: off, play: play, busy: function(){ return busy; }, isBusy: function(){ return busy; },
-  setDenom: setDenom, getDenom: function(){ return game.getDenomIndex(); },
+  setDenom: setDenom, getDenom: function(){ return game.getDenomIndex(); },     // setDenom＝直接換、不確認（dev／shot 專用，預設網址由 dev.js 拿掉）；玩家手點走 askDenom
+  askDenom: askDenom, askRefresh: askRefresh, closeConfirm: closeConfirm, confirmKind: function(){ return cfmKind; },   // 確認視窗：開窗（回傳有沒有開）、關窗、目前開的是哪一種（'denom'｜'refresh'｜''）
+  isSwapping: function(){ return swapping; }, comboDom: comboDom,
   setFast: setFast, isFast: function(){ return hiSpeed; }, resetWallet: resetWallet,
   cellInfo: function(i){ return { h: +cols[i].el.getAttribute('data-h'), g: cols[i].el.getAttribute('data-g') || '' }; },
   snapshot: snapshot, stats: function(){ return { desync: STATS.desync, balFix: STATS.balFix, rounds: STATS.rounds }; },
   isFirstRun: function(){ return firstOn(); }, setTapGuard: function(fn){ tapGuard = fn; }, meterDom: meterDom,
   setHint: setHint, isHint: function(){ return hintOn; }, hintDom: hintDom, potDom: function(){ return { text: $('potN').textContent, zero: $('pot').classList.contains('z'), shown: shownPot }; },
-  timeline: function(){ return cur ? { wavesT: cur.wavesT.slice(), rwavesT: cur.rwavesT.slice(), rainT: cur.rainT ? { pre: cur.rainT.pre, fall: cur.rainT.fall, land: cur.rainT.land, end: cur.rainT.end } : null, press: PRESS, fly: FLY, F0: cur.F0, TL: cur.TL, ackT: cur.ackT, tier: cur.tier, items: cur.res.items.length, potT: cur.potT ? { charge: cur.potT.charge, fly: cur.potT.fly, land: cur.potT.land, pay: cur.potT.pay, paid: cur.potT.paid } : null } : null; },   // 演出時間表（虛擬毫秒，截圖與探針量長度用）
+  timeline: function(){ return cur ? { wavesT: cur.wavesT.slice(), rwavesT: cur.rwavesT.slice(), rainT: cur.rainT ? { pre: cur.rainT.pre, fall: cur.rainT.fall, land: cur.rainT.land, end: cur.rainT.end } : null, press: PRESS, fly: FLY, F0: cur.F0, TL: cur.TL, ackT: cur.ackT, tier: cur.tier, items: cur.res.items.length, comboT: { big: cur.cm.t.big, done: cur.cm.t.done }, potT: cur.potT ? { charge: cur.potT.charge, fly: cur.potT.fly, land: cur.potT.land, pay: cur.potT.pay, paid: cur.potT.paid } : null } : null; },   // 演出時間表（虛擬毫秒，截圖與探針量長度用）
   thaw: function(){ FX.thaw(); }, fx: FX
 };
 
 /* =========================================================================
  * ?shot= 截圖畫面（dev.js 的自動駕駛分派到這裡；這些畫面靠 ?shot 才有 setMeter／armNext，預設網址沒有）
  *   idle＝丟一枚沒爆的幣（盤面已不是起始）　first＝第一次進場　chain＝連爆停在第 3 波中途　win＝回本（這一注的第一下）
- *   big＝大連爆　huge＝全畫面　gem＝寶物在盤上　denom＝換面額後
+ *   big＝大連爆　huge＝全畫面　gem＝寶物在盤上
  *   meter-mid＝能量條約一半　meter-near＝快滿（金框脈動＋追光）　rain＝金幣雨第 1 波炸開中　rain-done＝金幣雨結束（超級連爆）
  *   另有 seq-1…seq-6：同一注（起始發光格）逐波中途的序列圖；seq-rain-1…6：金幣雨逐段（預告、落下中、第 1 波、中段、進槽、結束）
- *   v2.3：pot-idle／pot-win／hint-off／seq-pot-1…6（見檔尾）
+ *   v2.3：pot-idle／pot-win／hint-off／seq-pot-1…6（見檔尾）　v3：combo／combo8／combo-rain／refresh-confirm／refresh-cool／denom-confirm／denom-confirm-empty／after-refresh
  * ========================================================================= */
 var TURBO = 40;
 function wait(ms, fn){ setTimeout(fn, ms); }
@@ -1334,7 +1598,21 @@ D.shots.first = function(done){ wait(80, done); };
 D.shots.idle = function(done){ quiet(3).then(function(){ wait(120, done); }); };
 D.shots['gem-mid'] = function(done){ quiet(8, { kind: 'diamond' }).then(function(){ wait(150, done); }); };   // 寶物不在邊上（箭頭較長）
 D.shots.gem = function(done){ quiet(10, { kind: 'diamond' }).then(function(){ wait(150, done); }); };
-D.shots.denom = function(done){ quiet(3).then(function(){ setDenom(1); wait(600, done); }); };
+/* v3：Combo、確認視窗、刷新（denom 舊稿拿掉）。
+   combo＝連爆第 3 波（累計 4～7 格）徽章剛彈完　combo8＝數到 8 的大彈出　combo-rain＝金幣雨第 2 波的 Combo（藍金色、從 1 數）
+   refresh-confirm／denom-confirm／denom-confirm-empty（獎池 0、沒寶物）＝兩個確認視窗　refresh-cool＝刷新冷卻中（再 6 注）　after-refresh＝剛刷新完（冷卻 10 注、提示照新盤面算）
+   這些畫面要設獎池、冷卻、能量條，直接走核心的 setPot／setMeter／setRefreshLeft（不靠導演台） */
+D.shots.combo = function(done){ play(game.glowCell(), { freeze: { combo: 2 } }).then(function(){ done(); }); };
+D.shots.combo8 = function(done){ play(game.glowCell(), { freeze: { at: 'comboBig', add: BIG_POP + 90 } }).then(function(){ done(); }); };
+D.shots['combo-rain'] = function(done){
+  growBoard(function(){ game.setMeter(MAX - 1); play(rainCell(), { plan: { kind: 'coin' }, speed: 3, freeze: { rcombo: 1 } }).then(function(){ done(); }); });
+};
+function gemBoard(cb){ quiet(10, { kind: 'diamond' }).then(function(){ game.setPot(6 * game.getDenom()); game.setMeter(58); cb(); }); }   // 盤上有寶物、獎池 6 倍面額、能量條 58
+D.shots['refresh-confirm'] = function(done){ gemBoard(function(){ askRefresh(); wait(500, done); }); };
+D.shots['denom-confirm'] = function(done){ gemBoard(function(){ askDenom(1); wait(500, done); }); };
+D.shots['denom-confirm-empty'] = function(done){ quiet(3).then(function(){ game.setPot(0); askDenom(1); wait(500, done); }); };
+D.shots['refresh-cool'] = function(done){ quiet(3).then(function(){ game.setRefreshLeft(6); wait(300, done); }); };
+D.shots['after-refresh'] = function(done){ quiet(3).then(function(){ game.refresh(); wait(1000, done); }); };
 D.shots.chain = function(done){ play(game.glowCell(), { freeze: { wave: 2, frac: 0.5 } }).then(function(){ done(); }); };
 D.shots.win = function(done){ play(game.glowCell(), { freeze: { at: 'tier', add: 280 } }).then(function(){ done(); }); };
 D.shots.big = function(done){
