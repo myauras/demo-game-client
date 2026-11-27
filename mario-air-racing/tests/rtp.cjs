@@ -6,9 +6,9 @@ const html = fs.readFileSync(path.join(__dirname, '../dist/index.html'), 'utf8')
 const start = html.indexOf('const Fleet=');
 const end = html.indexOf('// Painted wooden forms', start);
 assert(start !== -1 && end !== -1, 'Missing race simulation in the game page');
-const { fleet, count, latest, seedAt, play, seat, newRace, stepRace, touchItem, chooseCoin, collectCoin, displayRate, tailContact, gustCollision, flightScale, flightYaw, raceLeader, payoutRate, sprint, extension, raceHz, secondsAtTick, ticksAtTime, finishPassTime, finishDuration, coinThrust } = new Function(html.slice(start, end) +
-  '\nreturn { fleet:Fleet, count:COURSE_COUNT, latest:RACE_VERSION, seedAt:courseSeed, play(seed,version){const r=newRace(seed,version);while(!r.done)stepRace(r);return r}, seat:craftFor,newRace,stepRace,touchItem,chooseCoin,collectCoin,displayRate,tailContact,gustCollision,flightScale,flightYaw,raceLeader,payoutRate,sprint:SPRINT_TICKS,extension:EXTEND_RATE,raceHz,secondsAtTick,ticksAtTime,finishPassTime,finishDuration,coinThrust };')();
-for (const version of [3,4,5,6,7,8,9,10,11,latest]) {
+const { fleet, count, latest, seedAt, play, seat, newRace, stepRace, addItem, touchItem, chooseCoin, collectCoin, displayRate, tailContact, gustCollision, flightScale, flightYaw, raceLeader, payoutRate, sprint, extension, raceHz, secondsAtTick, ticksAtTime, finishPassTime, finishDuration, coinThrust } = new Function(html.slice(start, end) +
+  '\nreturn { fleet:Fleet, count:COURSE_COUNT, latest:RACE_VERSION, seedAt:courseSeed, play(seed,version){const r=newRace(seed,version);while(!r.done)stepRace(r);return r}, seat:craftFor,newRace,stepRace,addItem,touchItem,chooseCoin,collectCoin,displayRate,tailContact,gustCollision,flightScale,flightYaw,raceLeader,payoutRate,sprint:SPRINT_TICKS,extension:EXTEND_RATE,raceHz,secondsAtTick,ticksAtTime,finishPassTime,finishDuration,coinThrust };')();
+for (const version of [3,4,5,6,7,8,9,10,11,12,latest]) {
   const seeds = new Set();
   const totals = Array(5).fill(0);
   const zeroAfterTenSeconds = Array(5).fill(0);
@@ -23,8 +23,8 @@ for (const version of [3,4,5,6,7,8,9,10,11,latest]) {
     const race = play(seed,version);
     assert(race.tick <= 1800);
     if(version === latest){
-      assert.equal(race.winnerId,raceLeader(race).id);
-      assert.equal(race.craft.filter(p=>p.id===race.winnerId).length,1);
+      assert.equal(race.winnerId,race.finishers[0]??null);
+      if(race.finishers.length)assert.equal(race.winnerId,raceLeader(race).id);
       if(race.finishTick===1800){extended++;if(race.tick>sprint)highFinishes++}
       else {assert.equal(race.finishTick,sprint);assert(race.tick<=sprint);if(race.tick===sprint)sprintFinishes++}
       if(race.craft.some(p=>p.mult>=extension))assert.equal(race.finishTick,1800);
@@ -47,7 +47,9 @@ for (const version of [3,4,5,6,7,8,9,10,11,latest]) {
         assert.equal(sources.length,1);
         const hit=sources[0],p=race.craft[crash.id];
         if(hit.hazard){
-          assert.match(hit.hazard.type,/^(rock|bird)$/);
+          assert.match(hit.hazard.type,/^(rock|bird|hail)$/);
+          if(hit.hazard.type==='bird')assert(hit.time%24<6.5||hit.time%24>=22.5);
+          if(hit.hazard.type==='hail')assert(hit.time%24>=6.5&&hit.time%24<14.5);
           assert.equal(p.hitTick,p.finalTick);assert(p.fatalImpact);
           assert(Math.abs(crash.x-hit.hazard.x)<20*flightScale(p)+.72*hit.hazard.rad);
           assert(Math.abs(crash.y-hit.hazard.y)<4*flightScale(p)+(hit.hazard.type==='rock'?.63:.42)*hit.hazard.rad);
@@ -71,7 +73,8 @@ for (const version of [3,4,5,6,7,8,9,10,11,latest]) {
         assert(craft.finalTick !== null && Number.isInteger(craft.mult));
         assert(craft.mult >= 0 && craft.mult <= 10000);
         const paid=payoutRate(race,craft);
-        assert.equal(paid,craft.mult*(version>=9&&craft.id===race.winnerId?2:1));
+        const bonus=version>=13?race.finishers[0]===craft.id:version>=9&&craft.id===race.winnerId;
+        assert.equal(paid,craft.mult*(bonus?2:1));
         totals[choice] += paid;
         if (paid === 0 && secondsAtTick(version,craft.finalTick) >= 10) zeroAfterTenSeconds[choice]++;
         minimum = Math.min(minimum, paid);
@@ -84,7 +87,7 @@ for (const version of [3,4,5,6,7,8,9,10,11,latest]) {
   assert.equal(maximum, version>=9?20000:10000);
   if (version === latest) {
     assert(coursesWithBumps>0&&sprintFinishes>0&&highFinishes>0&&extended<count/5);
-    assert.equal(finisherCounts[0],1262);
+    assert.equal(finisherCounts[0],1120);
     assert(finisherCounts.slice(1).every(n=>n>0));
     console.log('Finisher counts, from zero to five: '+finisherCounts.join(', '));
     console.log(extended+' courses qualify for extra time; '+highFinishes+' fly past the sprint limit.');
@@ -97,10 +100,10 @@ for (const version of [3,4,5,6,7,8,9,10,11,latest]) {
   }
 }
 // Keep the champion's shot and settle each runner-up on its own quick pass.
-assert.equal(finishPassTime(0),1.30);
-assert(finishPassTime(1)-finishPassTime(0)>=1.60);
+assert.equal(finishPassTime(0),.83);
+assert(finishPassTime(1)-finishPassTime(0)<1.1);
 for(let rank=2;rank<5;rank++)assert(finishPassTime(rank)-finishPassTime(rank-1)<=.60);
-assert.equal(finishDuration({finishers:[0]}),2.70);
+assert(Math.abs(finishDuration({finishers:[0]})-1.76)<.000001);
 assert(finishDuration({finishers:[0,1,2,3,4]})-finishPassTime(4)<=.65);
 
 // Extension must be earned during the flight, even on the original finish tick.
@@ -127,6 +130,20 @@ for(const tick of [1,400,1000,sprint,1800]){
 }
 assert(ticksAtTime(latest,5)<ticksAtTime(latest,10)-ticksAtTime(latest,5));
 assert(ticksAtTime(latest,15)-ticksAtTime(latest,10)<ticksAtTime(latest,20)-ticksAtTime(latest,15));
+// Every active hazard follows the same biome clock as the displayed stage.
+const weatherRun=newRace(11,latest);
+while(!weatherRun.done){
+  stepRace(weatherRun);
+  const phase=weatherRun.tick/60%24;
+  for(const o of weatherRun.items){
+    if(o.type==='bird')assert(phase<6.5||phase>=22.5);
+    if(o.type==='hail')assert(phase>=6.5&&phase<14.5);
+  }
+}
+const previousMeteor=newRace(19,12),currentMeteor=newRace(19,latest);
+for(const r of [previousMeteor,currentMeteor])addItem(r,'rock',16);
+assert(Math.abs(currentMeteor.items[0].vx/previousMeteor.items[0].vx-1.6)<1e-10);
+assert(Math.abs(currentMeteor.items[0].vy/previousMeteor.items[0].vy-1.6)<1e-10);
 // A gust alone, a near miss or two separating hulls must never cause a crash.
 for(const miss of ['no wind','different depth','vertical gap','horizontal gap','separating','slow','contact']){
   const r=newRace(8,latest),[a,b]=r.craft;r.tick=600;
@@ -305,4 +322,4 @@ for (const reverse of [false,true]) {
   assert.equal(r.craft[0].mult,10);
   assert.equal(r.events.filter(e=>e.type==='pickup'&&e.chasers===2&&e.id===1).length,1);
 }
-console.log('Versions 3–12: 2,048 courses × 5 seats per aircraft. Flight accrual, legacy payouts, pickups and collisions passed.');
+console.log('Versions 3–13: 2,048 courses × 5 seats per aircraft. Flight accrual, legacy payouts, pickups and collisions passed.');
