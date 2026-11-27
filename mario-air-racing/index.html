@@ -79,6 +79,10 @@ button{touch-action:manipulation}#stake{touch-action:manipulation}
 #finishCall{position:absolute;z-index:5;top:69%;left:max(18px,7%);margin:0;display:grid;gap:1px;pointer-events:none;color:#fff6da;text-shadow:0 2px 5px #382323,0 0 2px #462726}
 #finishPlace{font:750 clamp(14px,4.4cqw,20px)/1.2 system-ui;letter-spacing:.15em;color:#ffe294}
 #finishPilot{font:800 clamp(24px,7.5cqw,38px)/1.2 system-ui}
+#championAward{position:absolute;z-index:3;display:grid;justify-items:center;gap:1px;pointer-events:none;white-space:nowrap;transform-origin:center bottom;color:#fff7d9;text-shadow:0 2px 2px #573222,-1px 0 #714320,1px 0 #714320}
+#championAward b{font:900 13px/1.05 system-ui;letter-spacing:.15em}
+#championAward strong{font:900 16px/1.15 system-ui;color:#ffe27c}
+#championAward[hidden]{display:none}
 #leaderCrown svg{display:block;width:100%;height:100%}
 .clock.extended #clockLabel{color:#9a4b19;font-weight:700}
 @container(max-width:355px){#entry{gap:4px}#launch{min-width:80px;font-size:14px}.rateTag{font-size:13px;padding-inline:5px;gap:3px}}
@@ -89,7 +93,7 @@ body{align-items:start}#gameHolder{height:var(--flight-height,100dvh)}
 #lobby .flightRules{grid-column:1/-1;margin:5px 2px 0;color:#654f3e;font-size:13px;line-height:1.35}
 </style></head><body><main id="gameHolder">
   <div id="raceScene">
-  <div id="world" aria-hidden="true"></div><canvas id="traffic" aria-hidden="true"></canvas><div id="rateLayer" class="selecting" aria-hidden="true"><span class="flightReceipt" id="flightReceipt" hidden></span><span id="leaderCrown" hidden><svg viewBox="0 0 30 24" aria-hidden="true"><defs><linearGradient id="crownGold" x2="20%" y2="100%"><stop stop-color="#fff7a6"/><stop offset=".5" stop-color="#ffce47"/><stop offset="1" stop-color="#e9931f"/></linearGradient></defs><path d="M2 6l7 4.6L15 2l6 8.6L28 6l-3.6 14.4c-5.5 1.7-13.3 1.7-18.8 0Z" stroke="#653b24" stroke-width="1.8" stroke-linejoin="round" fill="url(#crownGold)"/><path d="M6.6 17q8.4 2.4 16.8 0" stroke="#fff4a2" stroke-width="1.4" fill="none"/><path d="m15 9.6 2.3 3-2.3 3.1-2.3-3.1Z" fill="#bd4930"/></svg></span></div>
+  <div id="world" aria-hidden="true"></div><canvas id="traffic" aria-hidden="true"></canvas><div id="rateLayer" class="selecting" aria-hidden="true"><span class="flightReceipt" id="flightReceipt" hidden></span><span id="championAward" hidden><b>冠軍</b><strong>加倍獎勵 ×2</strong></span><span id="leaderCrown" hidden><svg viewBox="0 0 30 24" aria-hidden="true"><defs><linearGradient id="crownGold" x2="20%" y2="100%"><stop stop-color="#fff7a6"/><stop offset=".5" stop-color="#ffce47"/><stop offset="1" stop-color="#e9931f"/></linearGradient></defs><path d="M2 6l7 4.6L15 2l6 8.6L28 6l-3.6 14.4c-5.5 1.7-13.3 1.7-18.8 0Z" stroke="#653b24" stroke-width="1.8" stroke-linejoin="round" fill="url(#crownGold)"/><path d="M6.6 17q8.4 2.4 16.8 0" stroke="#fff4a2" stroke-width="1.4" fill="none"/><path d="m15 9.6 2.3 3-2.3 3.1-2.3-3.1Z" fill="#bd4930"/></svg></span></div>
   </div>
   <div id="bumpLight" aria-hidden="true" hidden></div>
   <header id="mast"><div class="brand">mario-air-racing</div><div class="wallet"><i class="creditIcon" aria-hidden="true"></i><span>遊戲點數</span><b id="balance">1,000</b></div></header>
@@ -97,7 +101,7 @@ body{align-items:start}#gameHolder{height:var(--flight-height,100dvh)}
   <section id="lobby" class="console" aria-label="賽前下注" hidden>
     <div id="fleet" role="group" aria-label="參賽載具"></div>
     <form id="entry"><label for="stake">下注點數</label><div class="stepper"><button type="button" id="less" aria-label="減少下注額">−</button><input id="stake" type="number" min="1" step="1" value="50" required inputmode="numeric"><button type="button" id="more" aria-label="增加下注額">+</button></div><button id="launch" type="submit" class="primary">確認下注</button></form>
-    <p id="flightRules" class="flightRules" hidden>起飛 0.10×，飛行與金幣累積倍率。<span id="bumpRule" hidden>追撞成功可從前機取得 0.10×。</span>墜機或抵達終點時自動收分。<span id="crownRule" hidden>任一架達 1.50× 即延長賽程，冠軍獲得雙倍倍率。</span></p>
+    <p id="flightRules" class="flightRules" hidden>起飛 0.10×，飛行與金幣累積倍率。<span id="bumpRule" hidden>追撞成功可從前機取得 0.10×。</span>墜機或抵達終點時自動收分。<span id="crownRule" hidden>任一架達 1.50× 即延長賽程，第一架衝線才獲得雙倍倍率。</span></p>
     <p id="issue" role="status" hidden></p><button id="refill" type="button" hidden>補充練習點數</button>
   </section>
   <section id="raceHud" hidden><div id="ticket"><i class="swatch"></i><b id="betName"></b><span id="betSize"></span></div><div class="clock"><span id="clockLabel">剩餘</span> <b id="timer">16.1</b><small> 秒</small><div class="track"><i></i></div></div></section>
@@ -1703,7 +1707,7 @@ FlightWeather.prototype.draw=function(t,clock,w,storm,mesh,events,sceneryTime){
   const slip=reducedMotion.matches?0:.041*Math.max(0,raceAge-4)**2;
   this.passingClouds(travel,w,slip);
   if(snowWind<1)this.speedLines(travel,w,pass,1-snowWind);
-  if(mode!=='lobby')this.gulls(t,w.x,mesh);
+  if(mode!=='lobby'&&zoneAt(t)==='sea')this.gulls(t,smooth((w.x-.52)/.48),mesh);
   this.fx.clearRect(0,0,this.width,this.height);this.volcanicAir(t,w,mesh);this.blizzard(t,storm,events);
   if(snowWind>0)this.snowWind(t,events,snowWind);
   const fade=run?.done?1-smooth((t-clock)/.55):1;
@@ -1871,11 +1875,11 @@ Sea.prototype.drawWeather=function(events){this.atmosphere.draw(this.motion,this
 
 // Fixed-step race simulation. All random draws belong to the heat's seed.
 const Fleet=[
-  {name:'赤翼雙翼機',short:'赤翼',color:'#ff7761',paint:0xee5948},
-  {name:'翠羽直升機',short:'翠羽',color:'#64e1c9',paint:0x46a69b},
-  {name:'疾藍噴射機',short:'疾藍',color:'#83caff',paint:0x548eb2},
-  {name:'金燕水上機',short:'金燕',color:'#ffd16a',paint:0xe8ab51},
-  {name:'紫隼雙引擎機',short:'紫隼',color:'#c1a5ff',paint:0x987caa}
+  {name:'超級紅帽雙翼機',short:'紅帽',color:'#ff7761',paint:0xd73a30},
+  {name:'庫巴小丑飛行船',short:'小丑船',color:'#eca849',paint:0xeaae51},
+  {name:'桃花皇冠噴射機',short:'皇冠',color:'#f59bc1',paint:0xe582ae},
+  {name:'蘑菇傘翼水上機',short:'蘑菇',color:'#ffbd76',paint:0xe4ac68},
+  {name:'耀西蛋殼雙引擎機',short:'蛋殼',color:'#93d778',paint:0x74b35c}
 ];
 const INITIAL_RATE=100, RATE_ANIMATION_TICKS=24;
 const STEP=1/60,LIMIT=1800,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -1883,7 +1887,7 @@ const smooth=v=>{v=clamp(v,0,1);return v*v*(3-2*v)};
 const coinValues=[10,25,50,100,200,500,1000],coinRadii=[7,8.5,10,12,14,17,21];
 const classicCoinOdds=[.34,.57,.75,.88,.954,.988,1];
 const raceCoinOdds=[.72,.89,.966,.989,.997,.9995,1];
-const RACE_VERSION=12;
+const RACE_VERSION=13;
 const SPRINT_TICKS=1170, EXTEND_RATE=150;
 const raceHz=version=>version>=9?72:60;
 // Integrate a steadily increasing simulation rate; use its inverse for the HUD and replays.
@@ -1893,11 +1897,11 @@ function ticksAtTime(version,seconds){
 function secondsAtTick(version,tick){
   return version>=10?2*tick/(58+Math.sqrt(58*58+3.68*tick)):tick/raceHz(version);
 }
-function finishPassTime(rank){return rank===0?1.30:3.05+(rank-1)*.48}
+function finishPassTime(rank){return rank===0 ? .83 : 1.82+(rank-1)*.39}
 function finishDuration(r){
   const count=r.finishers?.length||0;
   if(!count)return .65;
-  return finishPassTime(count-1)+(count===1?1.40:.58);
+  return finishPassTime(count-1)+(count===1 ? .93 : .48);
 }
 // Multipliers are integer hundredths. The complete course table is checked in tests/rtp.cjs.
 const TAKEOFF_RATE=10, TICKS_PER_RATE_CENT=20;
@@ -1905,6 +1909,7 @@ const flightCoinValues=[2,6,17,25,70,125,1000];
 const passingCoinValues=[1,2,4,8,16,25,100];
 const sprintCoinValues=[3,6,12,24,47,80,160];
 const boostCoinValues=[3,7,14,26,50,80,160];
+const finishCoinValues=[4,8,16,28,52,82,160];
 const passingCourses=Object.freeze({141:3012,174:3844,262:3561,365:3334,458:2444,550:3760,677:3897,926:2823,1271:2593,1359:2913,1666:3416,1958:2711});
 const championshipCourses=Object.freeze({...passingCourses,
   36:4924,51:4230,113:4172,267:4861,359:4731,559:4299,584:4584,617:4875,735:4459,815:4245,823:4678,
@@ -1917,6 +1922,7 @@ const boostCourses=Object.freeze({...balloonCourses,
   69:9414,76:9015,189:8665,1179:8828,1383:9517,1600:9133,1961:9583
 });
 const contactCourses=Object.freeze({...boostCourses,3:10194});
+const finishCourses=Object.freeze({...contactCourses,37:215077,173:12069});
 const BUMP_RATE=10, BUMP_DEPTH=.055;
 const flybyCoinSpacing=0.535;
 const flybyCourses=Object.freeze({1:3138, 27:3769, 47:2329, 63:3602, 82:3074});
@@ -2076,7 +2082,7 @@ function windHit(r,t){
 }
 function addItem(r,type,t){
   const target=livePick(r);if(!target)return;
-  const rand=r.rand,coin=type==='coin',met=type==='rock',speed=(185+t*6.9)*r.scrollScale;
+  const rand=r.rand,coin=type==='coin',met=type==='rock',speed=(185+t*6.9)*r.scrollScale*(met&&r.version>=13?1.60:1);
   const severity=r.stormStrength>0?.08+(.15+.66*r.stormStrength)*smooth((t-3)/10):(t<6.5?.055:t<23?.25:.31);
   const heavy=!coin&&rand()<severity*(r.version>=12?1.52:1);
   const vx=-(speed*(coin?1:met?1.04:1.15))*(.91+rand()*.18);
@@ -2107,7 +2113,7 @@ function addItem(r,type,t){
     const roll=rand();
     const cutoffs=r.version>=3?raceCoinOdds:classicCoinOdds;
     const tier=r.richVein?coinValues.length-1:cutoffs.findIndex(c=>roll<c);
-    const values=r.version>=11?boostCoinValues:r.version===10?sprintCoinValues:r.version>=8?passingCoinValues:r.version===7?flightCoinValues:coinValues;
+    const values=r.version>=13?finishCoinValues:r.version>=11?boostCoinValues:r.version===10?sprintCoinValues:r.version>=8?passingCoinValues:r.version===7?flightCoinValues:coinValues;
     value=r.version>=8&&r.richVein?1000:values[tier];rad=coinRadii[tier];
   }
   r.items.push({key:++r.serial,type,x:sx,y:sy,vx,vy,baseY:sy,born:t,phase:rand()*6.28,rad,value,heavy,spent:false});
@@ -2138,7 +2144,7 @@ function touchItem(r,p,o,t){
     impact.x+=clamp((o.x??p.x)-p.x,-21,21)*.65;
     impact.y+=clamp(o.y-p.y,-13,13)*.65;
   }
-  if(o.heavy){crash(r,p,o.type==='rock'?'大型隕石':'大型海鳥');return}
+  if(o.heavy){crash(r,p,o.type==='rock'?'大型隕石':o.type==='hail'?'大型冰雹':'大型海鳥');return}
   const loss=r.version>=3?(o.type==='rock'?-165:-105):(o.type==='rock'?-65:-25);
   if(r.version<7)changeMult(r,p,loss);if(!p.racing)p.vy+=p.y>o.y?42:-42;
 }
@@ -2222,7 +2228,7 @@ function payoutRate(r,p){return p.mult*(r.version>=9&&r.winnerId===p.id?2:1)}
 function stepRace(r){
   if(r.done)return;r.tick++;const t=r.tick/60,dt=STEP,zone=zoneAt(t);
   if(t>=r.nextCoin){addItem(r,'coin',t);r.nextCoin=t+((r.version>=6?flybyCoinSpacing:r.version===5?coinSpacing:.32)+r.rand()*.25)*(1-.19*t/30)}
-  if(t>=r.nextHazard){if(zone!=='snow'||r.stormStrength>0)addItem(r,zone==='lava'?'rock':'bird',t);
+  if(t>=r.nextHazard){if(zone!=='snow'||r.stormStrength>0)addItem(r,zone==='lava'?'rock':zone==='snow'&&r.version>=13?'hail':'bird',t);
     const spacing=r.stormStrength>0?.92-(.12+.42*r.stormStrength)*smooth((t-3)/10):(t<7?1.0:t<21?.65:.55);
     r.nextHazard=t+spacing*(.78+r.rand()*.46)}
   if(zone==='snow'&&t>=r.nextGust){windHit(r,t);r.nextGust=t+.98+r.rand()*.56}
@@ -2322,8 +2328,10 @@ function stepRace(r){
     else {const sign=a.y>b.y?1:-1;a.vy+=sign*36;b.vy-=sign*36;a.until=b.until=t+.38}
   }
   for(const o of r.items){
+    if(r.version>=13&&((o.type==='bird'&&zone!=='sea')||(o.type==='hail'&&zone!=='snow'))){o.spent=true;continue}
     const fromX=o.x,fromY=o.y;
     o.x+=o.vx*dt;o.y=o.baseY+(t-o.born)*o.vy+(o.type==='bird'?7*Math.sin((t-o.born)*3.5+o.phase):0);
+    if(r.version>=13&&o.type==='bird')o.y-=520*smooth(((t%24)-5.78)/.70)*(t%24<6.5?1:0);
     if(r.version>=5&&o.type==='coin'){collectCoin(r,o,live,fromX,fromY,t);continue}
     for(const p of live){
       if(!p.alive||o.spent||p.x<9)continue;
@@ -2345,6 +2353,7 @@ function stepRace(r){
     if(r.version>=9)r.winnerId=raceLeader(r).id;
     if(r.version>=10)r.finishers=r.craft.filter(p=>p.alive)
       .sort((a,b)=>trackPosition(r,b)-trackPosition(r,a)||a.id-b.id).map(p=>p.id);
+    if(r.version>=13)r.winnerId=r.finishers[0]??null;
     r.done=true;for(const p of r.craft)if(p.alive){p.finalTick=r.tick;eventAt(r,'finish',p,p.mult,'通關')}
   }
 }
@@ -2358,7 +2367,7 @@ const adjustedCourses=Object.freeze({6:3769, 17:2109, 137:2729, 213:3655, 228:26
 const chaseCourses=Object.freeze({2:3675, 25:3450, 27:4272, 28:3014, 44:3255, 47:4849, 53:5076, 100:4416, 162:3844, 195:4933, 438:2109, 515:3096, 572:4891, 709:2379, 1430:3769, 1895:3839});
 const coinCourses=Object.freeze({2:2474, 42:2346, 52:2593, 58:3025, 79:3448, 93:2778, 198:2182, 235:3810, 266:3280, 449:2119, 465:2553, 632:3494});
 function courseSeed(index,version=RACE_VERSION){
-  const seed=index+1,table=version>=12?contactCourses:version===11?boostCourses:version===10?balloonCourses:version===9?championshipCourses:version===8?passingCourses:version>=6?flybyCourses:version===5?coinCourses:version===4?chaseCourses:adjustedCourses;
+  const seed=index+1,table=version>=13?finishCourses:version===12?contactCourses:version===11?boostCourses:version===10?balloonCourses:version===9?championshipCourses:version===8?passingCourses:version>=6?flybyCourses:version===5?coinCourses:version===4?chaseCourses:adjustedCourses;
   return table[seed]||seed;
 }
 function drawCourse(version){
@@ -2409,7 +2418,7 @@ function pilotCabin(parent,color,a,b,height,width){
   }
   shape.computeFaceNormals();piece(parent,shape,color);
 }
-const pilotNames=['瑪利歐','路易吉','碧姬公主','奇諾比奧','耀西'];
+const pilotNames=['瑪利歐','庫巴','碧姬公主','奇諾比奧','耀西'];
 function pilotFigure(id){
   const seat=new THREE.Group(),head=new THREE.Group(),hat=new THREE.Group();
   const skin=0xffbd91,white=0xfff5dc,ink=0x352b32,gold=0xffca45;
@@ -2424,15 +2433,15 @@ function pilotFigure(id){
       oval(head,ink,x+.40,y+.03,s*(spread+.53),.24,ry*.64,.14);
     }
   }
-  if(id<2){
-    const luigi=id===1,shirt=luigi?0x288747:0xd9312a,brown=0x623727,slim=luigi?.90:1;
+  if(id===0){
+    const shirt=0xd9312a,brown=0x623727;
     oval(seat,shirt,-.25,-.65,0,3.6,3.4,3.7);
     for(const s of [-1,1]){
       block(seat,0x2d5b96,1.1,-.80,s*2.90,3.2,3.0,1.15);
       dot(seat,gold,2.2,.0,s*3.43,.49);
     }
     oval(head,brown,-1.2,.1,0,2.8,2.9,2.95);
-    oval(head,skin,.38,0,0,3.25,luigi?3.65:3.16,3.05);
+    oval(head,skin,.38,0,0,3.25,3.16,3.05);
     for(const s of [-1,1]){
       oval(head,skin,-.94,-.04,s*2.86,1.10,1.24,.75);
       oval(head,brown,-.18,.33,s*2.96,.60,.95,.34);
@@ -2448,9 +2457,30 @@ function pilotFigure(id){
     // The cap emblem sits on the near quarter of the crown so it reads in profile.
     oval(hat,white,1.04,3.32,2.96,1.23,1.10,.34);
     const stamp=(x,y,h,tilt=0)=>{block(hat,shirt,x,y,3.29,.27,h,.20).rotation.z=tilt};
-    if(luigi){stamp(.73,3.35,1.19);block(hat,shirt,1.05,2.86,3.29,.91,.27,.2)}
-    else{stamp(.38,3.31,1.12);stamp(1.69,3.31,1.12);stamp(.82,3.45,.80,.62);stamp(1.24,3.45,.80,-.62)}
-    seat.scale.set(slim,luigi?1.07:1,slim);
+    stamp(.38,3.31,1.12);stamp(1.69,3.31,1.12);stamp(.82,3.45,.80,.62);stamp(1.24,3.45,.80,-.62);
+  }else if(id===1){
+    const hide=0xe4a039,shell=0x397858,mane=0xd84d24,bone=0xffedba;
+    oval(seat,hide,0,-.2,0,4.1,3.8,4.0);
+    oval(seat,bone,-2.8,1.15,0,3.2,4.8,4.2);oval(seat,shell,-3.3,1.4,0,3.1,4.4,3.9);
+    oval(head,0x538745,-.35,.65,0,3.85,3.35,3.5);
+    oval(head,0xf3c36d,2.55,-.55,0,3.45,2.10,3.12);
+    oval(head,0x85482f,2.6,-1.9,0,2.45,.70,2.65);
+    oval(head,0xffcf80,2.4,-2.46,0,2.55,.78,2.58);
+    eyes(1.52,1.65,2.18,1.04,0xb33223);
+    for(const s of [-1,1]){
+      oval(head,mane,1.45,2.70,s*2.57,1.76,.52,.70).rotation.z=-.26;
+      const horn=piece(head,new THREE.CylinderGeometry(.10,1.05,3.75,7),bone,-1.50,3.65,s*2.60);
+      horn.rotation.x=s*.60;horn.rotation.z=.35;
+      piece(head,new THREE.CylinderGeometry(.55,.06,1.25,6),bone,3.76,-1.58,s*2.31);
+      dot(head,0x895631,4.73,.31,s*1.37,.32);
+      oval(seat,hide,1.0,.45,s*3.30,2.28,1.40,1.30);
+      oval(seat,0x3c3936,1.25,.53,s*3.65,.72,1.48,1.18);
+    }
+    for(let j=0;j<4;j++){
+      const crest=piece(hat,new THREE.CylinderGeometry(0,1.42,3.5,6),mane,-2.9+j*.83,2.8+j*.32,0);
+      crest.rotation.z=.58;
+    }
+    seat.scale.setScalar(1.30);
   }else if(id===2){
     const blonde=0xffce50,pink=0xec68a0;
     oval(seat,pink,-.2,-.65,0,3.4,3.2,3.35);
@@ -2503,6 +2533,9 @@ function pilotFigure(id){
 function aircraft(id,broken=false){
   const root=new THREE.Group(),parts=new THREE.Group(),rotors=[];root.add(parts);
   const col=Fleet[id].paint;
+  function lens(color,x,y,z,rx,ry,rz){
+    const m=piece(parts,new THREE.SphereGeometry(1,14,9),color,x,y,z);m.scale.set(rx,ry,rz);return m;
+  }
   function box(c,x,y,z,a,b,d){return block(parts,c,x,y,z,a,b,d)}
   function wing(x,y,reach,chord,tip,sweep,col,dy=.70){
     if(!broken&&reach>(root.userData.wakeTip?.z||0))root.userData.wakeTip=new THREE.Vector3(x-tip*.5-sweep,y+dy,reach);
@@ -2531,17 +2564,33 @@ function aircraft(id,broken=false){
     box(col,-23,6.4,0,7.2,9.4,2.5);wing(-18.8,3.5,9.4,6.5,5.9,.2,col);
     wing(1,4.3,22.5,10.9,10.1,.4,col,.12);wing(1,-2.7,16.6,8.6,7.8,.4,col,.1);
     for(const s of [-1,1]){box(col,4.0,-8.1,s*5.8,8.2,4.1,3.7);box(walnut,4.0,-10.5,s*5.8,5.6,4.9,3.1);box(walnut,1,.8,s*14.7,.88,6.2,.95)}
+    for(const s of [-1,1]){
+      lens(0xfff4cd,4,.6,s*8.12,4.8,4.4,.38);
+      for(const [x,angle] of [[1.65,0],[3.3,.55],[4.9,-.55],[6.5,0]])
+        box(col,x,.65,s*8.54,1.15,angle?2.8:4.65,.44).rotation.z=angle;
+      box(0xfbd290,1.0,5.34,s*18,9.2,.55,1.8);
+      box(0x335987,-6,-4.5,s*7.3,16,2.4,1.05);
+    }
     box(walnut,-21,.2,0,3.3,3.8,2);cockpit(-7.0,7.7);
   }else if(id===1){
-    pilotCabin(parts,col,-15.3,12,7.5,7.4);
-    facetBody(parts,[[11.9,-.08,7.42,7.38,linen],[17.4,-.15,7.25,7.2,linen],[20.7,-.95,5,5.8,linen]]);
-    facetBody(parts,[[-30.2,7.4,.9,1.15,col],[-23,6.4,1.7,1.7,col],[-9,2.8,3.0,3.1,col]]);
-    fin(-26,6,0,6);box(walnut,-8.6,12.7,0,2.2,16.4,2.4);rotor(-8.6,21.5,0,28.7,'y',2);rotor(-28,7,2.1,5.9,'z',2);
-    for(const s of [-1,1]){box(walnut,-6,-7.2,s*4.5,1.8,6.2,1.7);box(walnut,9,-7.7,s*4.5,1.8,6,1.7);box(linen,1,-10.5,s*5.0,27,2.1,2.6)}
-    cockpit(4.1,7.1);
+    // A lacquered clown bowl with its lifting propeller below the gondola.
+    lens(0xf9e6bd,-1,-1,0,21,11.9,13.0);lens(0x4d9760,-1,5.4,0,21.3,5.5,13.5);
+    lens(0x386f4e,-1,7.65,0,19.1,2.7,11.8);lens(0x73513d,-1,8.7,0,15.4,1.75,9.1);
+    for(const s of [-1,1]){
+      lens(0xfff8d6,7.5,1.70,s*10.85,2.65,3.4,.84);
+      lens(0x493833,8.4,1.75,s*11.39,1.25,2.12,.69);
+      lens(0xd97857,1.7,-3.6,s*12.40,3.00,1.80,.55);
+      for(const [x,y,angle] of [[9,-4.8,-.25],[12,-4.8,.21],[14.2,-3.8,.55]]){
+        const z=12.2*Math.sqrt(Math.max(.10,1-((x+1)/21)**2));
+        lens(0xb95246,x,y,s*z,2.1,.60,.58).rotation.z=angle;
+      }
+      const spike=piece(parts,new THREE.CylinderGeometry(.1,1.75,4.5,7),0xffedbc,-14,7.0,s*7.2);
+      spike.rotation.x=s*.52;
+    }
+    box(0xa7834d,-1,-13.2,0,5,3.8,4);rotor(-1,-15.1,0,19,'y',2);cockpit(-1,8.3);
   }else if(id===2){
     // A swept-wing sports jet with a midnight-blue belly and twin lateral intakes.
-    const navy=0x334f6d,blue=0x408ca8,trim=0xf1c46b;
+    const navy=0x993e69,blue=0xf5adc9,trim=0xedbc5d;
     facetBody(parts,[[-26.6,1.4,2.4,2.9,navy],[-20.3,1.4,4.3,4.8,blue],[-9,.8,6.0,6.1,col],[7,.5,5.5,5.6,blue],[20,.4,3.3,3.5,linen],[29,1.1,.65,.75,linen]]);
     wing(-2,0,27,20.6,5,13.5,navy,3.4);wing(-20,2.6,12.8,8.5,3.2,5.8,blue,2.2);
     for(const side of [-1,1]){
@@ -2552,10 +2601,16 @@ function aircraft(id,broken=false){
       sheet(parts,[[-24,3,side*2.8],[-24,13.4,side*5.0],[-20,13,side*4.8],[-13,3.1,side*2.8]],navy,1.25,true);
       sheet(parts,[[-24.1,10.8,side*4.9],[-24.1,13.9,side*5.15],[-20,13.4,side*5.0],[-18.6,11.15,side*4.8]],trim,1.42,true);
     }
+    for(const s of [-1,1]){
+      for(const [x,y] of [[-22,13.5],[-19.8,12.6],[-17.7,11.7]])
+        piece(parts,new THREE.CylinderGeometry(.14,.88,2.1,6),trim,x,y,s*5);
+      lens(trim,4,.4,s*5.9,3.1,2.9,.47);
+      lens(0x54bac8,4,.4,s*6.25,2.15,2.12,.48);
+    }
     cockpit(1,5.3);
   }else if(id===3){
     // A bay flyer: boat-shaped hull, parasol wing and an engine above the bow.
-    const teal=0x428f90,honey=0xe9a54f;
+    const teal=0x396f9b,honey=0xd94b43;
     facetBody(parts,[[-26,3,.75,1.15,teal],[-19,1.9,2.5,2.75,honey],[-6,-.20,5.7,5.7,linen],[9,-.45,6.1,6.2,linen],[19,.06,3.8,4.6,linen],[23.3,1.1,1,2.0,teal]]);
     facetBody(parts,[[-16,-1.0,.70,2.2,teal],[-6,-4.7,2.0,4.9,teal],[10.1,-5.5,1.6,5.3,teal],[19,-2.5,.65,3.1,teal]]);
     wing(3.9,8.6,26.1,9.5,7.4,1.8,honey,1.05);wing(-20,4.2,10.8,6.0,4.4,1.6,honey);
@@ -2569,10 +2624,15 @@ function aircraft(id,broken=false){
       sheet(parts,[[-4.1,9.8,side*19.8],[5.7,9.8,side*19.8],[4.9,10,side*22.4],[-4.5,10,side*22.4]],linen,.38);
     }
     facetBody(parts,[[.3,10.5,1.6,2.3,honey],[4,11.3,3,3.1,honey],[10,11.3,3.0,3.15,teal],[12,11.15,2.5,2.65,linen]]);
+    for(const s of [-1,1]){
+      lens(honey,2.8,9.4,s*13,5.5,2.1,12.2);
+      for(const [x,z,rad] of [[1.9,9.4,2.75],[3.7,18.5,2.45]])
+        lens(0xfff4dc,x,11.40,s*z,rad,.38,rad*1.12);
+    }
     rotor(13.3,11.2,0,9.0,'x',2);cockpit(-8.5,5.3);
   }else{
     // A plum-and-ivory twin with radial nacelles and a joined twin-fin tail.
-    const plum=0x705384,light=0xaf8cb7,copper=0xdca26c;
+    const plum=0x387446,light=0x90cc70,copper=0xe28a45;
     facetBody(parts,[[-23,2.8,.85,1.35,plum],[-14,1.9,3.5,3.4,plum],[-2,.3,6.4,6.25,col],[11,.5,6.0,5.95,col],[18.8,.9,4.4,4.4,linen],[23.4,1.7,1.35,1.5,linen]]);
     wing(-1,-.9,28,14.2,5,4.0,light,1.4);wing(-21,4.1,13,7.8,4.6,2.2,plum,1.1);
     for(const side of [-1,1]){
@@ -2583,6 +2643,13 @@ function aircraft(id,broken=false){
       sheet(parts,[[-24.2,9.6,side*11.0],[-24,11.9,side*11.1],[-20.9,13,side*11.1],[-19.5,10.2,side*11.0]],linen,1.63,true);
       sheet(parts,[[-3,-.3,side*20],[3.8,.3,side*21.1],[3.1,.6,side*24.1],[-5.6,.4,side*24.1]],linen,.9);
     }
+    for(const s of [-1,1]){
+      lens(0xfff5d7,-2.0,1.8,s*13.1,9.7,4.4,4.25);
+      lens(0x67ac50,-4.4,2.2,s*17.06,2.4,1.95,.55);
+      lens(0x67ac50,1.8,4.8,s*15.6,1.55,1.05,1.4);
+    }
+    for(const [x,y] of [[-22,5.8],[-18,6.8],[-14,7.2]])
+      piece(parts,new THREE.CylinderGeometry(0,1.85,3.9,6),0xe27738,x,y,0).rotation.z=.30;
     cockpit(-2.3,5.8);
   }
 
@@ -2713,13 +2780,22 @@ function fireStone(){
   root.add(tail);root.add(stone);root.userData.stone=stone;root.userData.tail=tail;return root;
 }
 
-const hazardPool={rock:[],bird:[]};
+function hailstone(){
+  const root=new THREE.Group(),core=piece(root,new THREE.IcosahedronGeometry(.86,0),0xa6e2f0);
+  core.scale.set(1.1,.92,.93);
+  const shard=piece(root,new THREE.OctahedronGeometry(.49,0),0xdff9ff,.26,.31,.22);
+  shard.rotation.z=.35;
+  piece(root,new THREE.OctahedronGeometry(.34,0),0x78a9d0,-.45,-.19,-.20);
+  return root;
+}
+const hazardPool={rock:[],bird:[],hail:[]};
 function trafficModels(r,t){
-  const used={rock:0,bird:0},{w,h}=view;
+  const used={rock:0,bird:0,hail:0},{w,h}=view;
   function placeHazard(item,age=0){
+    if(r.version>=13&&item.type==='bird'&&zoneAt(t)!=='sea')return;
     const contact=item.z!=null;
     const queue=hazardPool[item.type],index=used[item.type]++;
-    if(!queue[index]){queue[index]=item.type==='rock'?fireStone():seaBird();airScene.add(queue[index])}
+    if(!queue[index]){queue[index]=item.type==='rock'?fireStone():item.type==='hail'?hailstone():seaBird();airScene.add(queue[index])}
     const model=queue[index];model.visible=true;
     // Keep the object visible through impact and let it glance away from the hull.
     const drift=contact ? .17*(1-Math.exp(-age*6)) : 0;
@@ -2731,6 +2807,8 @@ function trafficModels(r,t){
       model.rotation.set(0,0,Math.atan2(item.vy*chase.vertical,-item.vx*w*chase.stretch/1000));
       model.userData.stone.rotation.set(t*.97+item.phase,t*1.29,t*.66+item.phase);
       model.userData.tail.material.uniforms.flow.value=t*5.7+item.phase;
+    }else if(item.type==='hail'){
+      model.rotation.set(t*.9+item.phase,t*1.7,t*.68);
     }else{
       model.rotation.set(.49,-.49,.05*Math.sin(t*2.5+item.phase));
       const flap=.09+.71*Math.sin(t*5.4+item.phase);
@@ -2744,7 +2822,7 @@ function trafficModels(r,t){
       if(e.hazard&&age>=0)placeHazard(e.hazard,age);
     }
   }
-  for(const type of ['rock','bird'])for(let i=used[type];i<hazardPool[type].length;i++)hazardPool[type][i].visible=false;
+  for(const type of ['rock','bird','hail'])for(let i=used[type];i<hazardPool[type].length;i++)hazardPool[type][i].visible=false;
 }
 function coinSize(radius,scale){
   return Math.max(14.2,7*scale*1.35+3)+(radius-7)*Math.max(.85,scale)*1.30;
@@ -2799,8 +2877,8 @@ function metallicCoin(g,x,y,r,t,phase,contested=false){
   }
   g.restore();
 }
-function drawCoinBurst(g,e,age){
-  const life=.90;
+function drawCoinBurst(g,e,age,target){
+  const life=.59;
   if(age<0||age>=life)return;
   const u=age/life,out=1-(1-u)**3;
   const scale=clamp(raceObjectScale()*(.95+.015*e.rad),.72,1.8);
@@ -2808,7 +2886,7 @@ function drawCoinBurst(g,e,age){
   const radius=9+out*36,glow=g.createRadialGradient(0,0,0,0,0,radius);
   glow.addColorStop(0,'#ffffe8');glow.addColorStop(.28,'#ffdc56');glow.addColorStop(1,'rgba(255,158,17,0)');
   g.globalAlpha=(1-u)**1.5;g.fillStyle=glow;g.fillRect(-radius,-radius,2*radius,2*radius);
-  const core=1-smooth(age/.28);
+  const core=1-smooth(age/.19);
   if(core>0){
     g.globalAlpha=core;g.fillStyle='#ed931d';coinSpark(g,0,0,8+out*28);
     g.fillStyle='#fffce2';coinSpark(g,0,0,6+out*21);
@@ -2832,6 +2910,20 @@ function drawCoinBurst(g,e,age){
     g.fillStyle='#fff4b3';g.fillRect(-length*.7,-.75,length*.7,1.5);g.restore();
   }
   g.restore();
+  if(!target||age>.44)return;
+  // A small shower of spinning gold chips links the world-space hit to the flown rate.
+  const sx=chaseX(e.x),sy=chaseY(e.y);
+  for(let i=0;i<3;i++){
+    const u=(age-.025*i)/.34;if(u<=0||u>=1)continue;
+    const bow=Math.sin(Math.PI*u),v=u*u*(3-2*u);
+    const x=sx+(target.x-sx)*v+(i-1)*15*scale*bow;
+    const y=sy+(target.y-sy)*v-(19+6*i)*scale*bow;
+    const size=(2.8+i*.48)*scale;
+    g.save();g.translate(x,y);g.rotate(-.45+.9*u);g.globalAlpha=Math.min(1,u*9,(1-u)*7);
+    g.fillStyle='#b36d16';g.beginPath();g.ellipse(0,0,size*(.30+.70*Math.abs(Math.cos(u*6+i))),size,0,0,Math.PI*2);g.fill();
+    g.fillStyle='#ffdf69';g.fillRect(-size*.27,-size*.77,size*.54,size*1.4);
+    g.fillStyle='#fffbe1';coinSpark(g,size*.48,-size*.69,size*.52);g.restore();
+  }
 }
 // Two tapered strips per aircraft share a single transparent draw call. Their
 // roots use the model's wing geometry (the rotor disc on the helicopter).
@@ -2917,7 +3009,7 @@ function drawCoinExhaust(g,model,id,strength,t){
   g.restore();
 }
 function impactParticles(g,e,age){
-  const bird=e.reason==='bird',ice=e.reason==='ice',life=bird?.59:.41;
+  const bird=e.reason==='bird',ice=e.reason==='ice'||e.reason==='hail',life=bird?.59:.41;
   if(age<0||age>=life)return;
   const size=clamp(raceObjectScale(),.87,1.75),u=age/life;
   const point=airCameraPoint(chaseX(e.x),chaseY(e.y));
@@ -3109,7 +3201,7 @@ function drawFinishGate(g,r,shot){
   const size=clamp(Math.min(w*.044,h*.036),8,27);
   g.save();g.translate(w*.5,h*.5);g.scale(zoom,zoom);
   g.translate(-w*.5-airCamera.position.x,-h*.5+airCamera.position.y);
-  g.save();g.translate((1-smooth(age/.85))*w*.70,0);
+  g.save();g.translate((1-smooth(age/.47))*w*.70,0);
   drawBalloonGroup(g,w*ribbonX(.31),h*.31,size*.68,false,age);
   finishRibbon(g,w,h,age,split);
   drawBalloonGroup(g,w*ribbonX(.66),h*.66,size,true,age);g.restore();
@@ -3121,7 +3213,9 @@ function drawFinishGate(g,r,shot){
 }
 const crownAnchor=new THREE.Vector3();
 function updateCrown(r,preview,at){
-  const badge=el('leaderCrown');
+  const badge=el('leaderCrown'),award=el('championAward');
+  const awardAge=finishView?finishView.age-finishPassTime(0):-1;
+  award.hidden=preview||mode!=='race'||!finishView||awardAge<0||awardAge>.72;
   if(preview||r.version<9){badge.hidden=true;return null}
   let leader=r.winnerId===null?raceLeader(r):r.craft[r.winnerId];
   if(rollingStart&&!r.done){
@@ -3140,7 +3234,13 @@ function updateCrown(r,preview,at){
     badge.title=pilotNames[id]+(r.done?' 冠軍':' 領先');
     badge.style.left=x+'px';badge.style.top=(y-3-1.4*Math.sin(at*5))+'px';
     badge.style.transform='translate(-50%,-100%) scale('+scale+')';
-  }
+    if(!award.hidden){
+      const rise=smooth(awardAge/.16),pop=reducedMotion.matches?0:Math.sin(rise*Math.PI)*.18;
+      award.style.left=clamp(x,62,view.w-62)+'px';award.style.top=Math.max(42,y-24-9*rise)+'px';
+      award.style.transform='translate(-50%,-100%) scale('+(1+pop)+')';
+      award.style.opacity=String(1-smooth((awardAge-.52)/.20));
+    }
+  }else award.hidden=true;
   return id;
 }
 function selectedPennant(g,x,y,k){
@@ -3197,16 +3297,27 @@ function drawTraffic(r,at,view,preview=false){
     const champion=r.done&&r.winnerId===p.id&&(!finishView||finishView.rank>=0);
     const caption=mine?(preview?(record?.pick===id?'已下注 · ':'✓ ')+pilotNames[id]:'你押的'):'';
     setText(label.caption,champion?(mine?'你押的 · 冠軍':'冠軍'):caption);
-    setText(label.value,preview?'':rate(champion?payoutRate(r,p):Math.round(displayRate(p,r.tick))));
-    const bumpAge=r.tick-p.bumpTick;
+    const prizeAge=champion&&finishView?finishView.age-finishPassTime(0):-1;
+    const coinAge=p.coinTick===p.rateTick?(at*60-p.coinTick)/60:Infinity;
+    let shown=displayRate(p,r.tick);
+    if(coinAge>=0&&coinAge<.4)shown=p.mult-(p.mult-p.rateFrom)*(1-clamp(coinAge/.10,0,1))**3;
+    if(champion)shown=prizeAge<0?payoutRate(r,p):p.mult+(payoutRate(r,p)-p.mult)*(1-(1-clamp(prizeAge/.30,0,1))**3);
+    setText(label.value,preview?'':rate(Math.round(shown)));
+    const bumpAge=at*60-p.bumpTick;
     const showBump=r.version>=8&&bumpAge<42&&(bumpAge<18||p.bumpTick>=p.rateTick);
-    const rateAge=showBump?bumpAge:r.tick-p.rateTick;
+    const rateAge=showBump?bumpAge:at*60-p.rateTick;
     const accent=!preview&&(showBump||p.rateTick>=0)&&rateAge<42;
     const loss=showBump?p.bumpDelta<0:p.rateDown;
     label.value.classList.toggle('rateUp',champion||accent&&!loss);
     label.value.classList.toggle('rateDown',!champion&&accent&&loss);
     const pop=accent&&rateAge<22?Math.sin(Math.PI*rateAge/22):0;
-    label.value.style.transform=pop?`translateY(${(loss?1.5:-2)*pop}px) scale(${1+(loss?-.035:.045)*pop})`:'';
+    const springAge=prizeAge>=0?prizeAge:coinAge;
+    if(!preview&&springAge>=0&&springAge<.40){
+      const amplitude=reducedMotion.matches ? .08 : champion ? .58 : .38;
+      const rebound=amplitude*Math.exp(-springAge*13)*Math.cos(springAge*28);
+      const widthScale=Math.min(1+rebound,7.2/label.value.textContent.length);
+      label.value.style.transform='translateY('+(-2.0*Math.max(0,rebound))+'px) scale('+widthScale+','+(1+rebound)+')';
+    }else label.value.style.transform=pop?'translateY('+((loss?1.5:-2)*pop)+'px) scale('+(1+(loss?-.035:.045)*pop)+')':'';
     label.node.classList.toggle('mine',mine);
   }
   // Read the native glyph layout in one pass; moving a tag never scales its text.
@@ -3235,12 +3346,16 @@ function drawTraffic(r,at,view,preview=false){
       g.lineTo(x+width*.5,bestY+(bestY<base?height:0));g.stroke();
     }
     placed.push({x,y:bestY,w:width,h:height});placeLabel(label.node,x,bestY);
+    t.coinTarget={x:x+width*.67,y:bestY+height*.46};
   }
   const leader=updateCrown(r,preview,at);
   if(!finishView&&bet&&bet.alive&&pick!==leader){const p=screenAircraft(craftModels[pick]);selectedPennant(g,p.x,p.y,p.scale)}
   for(let i=r.events.length-1;i>=0;i--){
     const e=r.events[i],age=at-e.time;if(age>1.42)break;
-    if(!preview&&!finishView&&e.type==='pickup')drawCoinBurst(g,e,age);
+    if(!preview&&!finishView&&e.type==='pickup'){
+      const pilot=tags.find(t=>t.p.id===e.id);
+      drawCoinBurst(g,e,age,pilot?.coinTarget);
+    }
     if(e.type==='impact'){
       impactParticles(g,e,age);
       if(r.version>=12&&e.value===2){
@@ -3353,6 +3468,7 @@ function lobby(s){
   el('flightRules').hidden=(record.version||1)<7;
   el('bumpRule').hidden=(record.version||1)<8;
   el('crownRule').hidden=(record.version||1)<9;
+  setText(el('crownRule'),record.version>=13?'任一架達 1.50× 即延長賽程，第一架衝線才獲得雙倍倍率。':'任一架達 1.50× 即延長賽程，冠軍獲得雙倍倍率。');
   el('gameHolder').classList.remove('inRace','night');el('lobby').hidden=false;el('preflight').hidden=false;
   el('raceHud').hidden=true;el('result').hidden=true;el('roundEnded').hidden=true;el('awarded').hidden=true;
   const max=Math.floor(s.balance/100);
@@ -3704,7 +3820,7 @@ function ribbonX(y){
 }
 function flyThrough(r,rank,age){
   const p=r.craft[r.finishers[rank]],y=finishLane(p),delta=age-finishPassTime(rank);
-  const distance=delta<0?-.77*(1-Math.exp(delta*.96)):.32*delta;
+  const distance=delta<0?-.94*(1-Math.exp(delta*1.16)):1.09*delta;
   const nose=23/59*(.165+.035*p.z);
   return {x:ribbonX(y)-nose+distance,y:y-.015*Math.max(0,delta)};
 }
@@ -3712,21 +3828,22 @@ function directFinish(r,age){
   let rank=-1;
   while(rank+1<r.finishers.length&&age>=finishPassTime(rank+1))rank++;
   const shot={age,rank};
-  if(rank>=0){
-    const pilot=flyThrough(r,0,age),since=age-finishPassTime(0);
-    // Hold the champion's close-up, then frame the remaining passes in one wide shot.
-    const release=r.finishers.length===1?1:1-smooth((since-.99)/.64);
-    const focus=smooth(since/.38)*release;
-    airCamera.zoom=1+1.16*focus;
-    airCamera.position.x=(pilot.x-.50)*view.w*focus;
-    airCamera.position.y=(.47-pilot.y)*view.h*focus;
-    airCamera.updateProjectionMatrix();
-  }
+  const pass=finishPassTime(0),since=age-pass,gate=flyThrough(r,0,pass);
+  // Frame the line before contact. Pan with only part of the passing speed
+  // so the winning aircraft always advances on screen, even during the close-up.
+  const focus=smooth((since+.30)/.27)*(1-smooth((since-.43)/.40));
+  const follow=Math.max(0,since)*.62;
+  airCamera.zoom=1+.32*focus;
+  airCamera.position.x=((gate.x-.50)*.58+follow)*view.w*focus;
+  airCamera.position.y=(.47-gate.y)*view.h*focus;
+  airCamera.updateProjectionMatrix();
   return shot;
 }
+const flightClimate=new THREE.Vector3();
 function aircraftFrame(now){
   const {w,h,k}=view,picking=mode==='lobby',field=picking?practice:run;
   if(!field)return;
+  const storm=!picking&&!field.done?sampleClimate(field.tick/60,flightClimate):0;
   // The rolling start joins the live pack before the first possible contact.
   const bridge=rollingStart&&!picking?1-smooth((now-.18)/1.55):0;
   if(!bridge&&!picking)rollingStart=null;
@@ -3769,6 +3886,13 @@ function aircraftFrame(now){
         pitch+=(ahead?.09:-.15)*surge;
       }
     }
+    if(storm>.01&&p.alive){
+      const strength=storm*(reducedMotion.matches ? .35 : 1)*(p.gustUntil>pose?1.30:1);
+      const roll=Math.sin(pose*6.1+p.phase)+.44*Math.sin(pose*11.7+p.phase2);
+      const bob=Math.sin(pose*7.3+p.phase2)+.35*Math.sin(pose*13.2+p.phase);
+      bank+=.25*strength*roll;pitch+=.102*strength*bob;yaw+=.085*strength*Math.sin(pose*5.8+p.phase);
+      y+=clamp(k,.65,1.4)*2.3*strength*bob/h;
+    }
     if(bridge){
       const a=rollingStart[i],coast=.48*(1-Math.exp(-now/.48));
       x+=(a.x+a.dx*coast-x)*bridge;y+=(a.y+a.dy*coast-y)*bridge;
@@ -3776,7 +3900,7 @@ function aircraftFrame(now){
     }
     if(finishView&&p.alive){
       const rank=field.finishers.indexOf(p.id),age=finishView.age;
-      const dest=flyThrough(field,rank,age),blend=smooth(age/.84);
+      const dest=flyThrough(field,rank,age),blend=smooth(age/.55);
       x+=(dest.x-x)*blend;y+=(dest.y-y)*blend;
       const size=w/59*(.165+.035*p.z);
       sz+=(size/k-sz)*blend;
