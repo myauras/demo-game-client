@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#071523">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>金庫行動｜Operation Vault</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="game" aria-label="金庫行動遊戲">
+    <div class="ambient ambient--one"></div>
+    <div class="ambient ambient--two"></div>
+
+    <header class="hud">
+      <button class="balance" id="balanceButton" type="button" aria-label="目前餘額，點擊補充測試金額">
+        <strong id="balance">$ 3,000.00</strong>
+        <span class="balance__plus">＋</span>
+      </button>
+
+      <section class="mission" aria-label="射擊進度">
+        <div class="shot-track" id="shotTrack" aria-label="十發彈匣"></div>
+        <div class="stage-line">
+          <span id="stage">1/3</span>
+          <span class="crosshair" aria-hidden="true"><i></i></span>
+        </div>
+      </section>
+    </header>
+
+    <section class="range" aria-label="射擊靶場">
+      <div class="target-wrap" id="targetWrap">
+        <div class="target-shadow"></div>
+        <div class="target" id="target">
+          <div class="target__hardware" aria-hidden="true"></div>
+          <div class="target__rings">
+            <div class="target__scratches"></div>
+            <div class="target-bullets" id="targetBullets" aria-hidden="true"></div>
+          </div>
+          <div class="target__center">
+            <span id="targetMultiplier">x1.00</span>
+          </div>
+          <div class="coin-burst" id="coinBurst" aria-hidden="true"></div>
+          <div class="impact" id="impact" aria-hidden="true"></div>
+          <div class="failure-fx" id="failureFx" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <div class="cartridge" id="cartridge" aria-hidden="true">
+        <span class="cartridge__tip"></span>
+        <span class="cartridge__body"></span>
+      </div>
+
+      <div class="result-toast" id="resultToast" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="ammo-panel" aria-label="倍率進度列">
+      <div class="ammo-list" id="ammoList"></div>
+    </section>
+
+    <button class="auto-float" id="autoButton" type="button">自動</button>
+
+    <section class="controls" aria-label="下注控制">
+      <div class="bet-box">
+        <div class="bet-input-wrap">
+          <input id="betInput" inputmode="decimal" value="10" aria-label="下注金額">
+        </div>
+        <div class="quick-bets" id="quickBets">
+          <button type="button" data-bet="10">10</button>
+          <button type="button" data-bet="50">50</button>
+          <button type="button" data-bet="100">100</button>
+          <button type="button" data-bet="3000">3000</button>
+        </div>
+      </div>
+
+      <button class="fire-button" id="fireButton" type="button">
+        <span class="fire-button__inner">投注</span>
+      </button>
+
+      <div class="mode-box">
+        <button class="mode-button is-active" id="difficultyButton" type="button">簡單 <span>▾</span></button>
+        <button class="mode-button" id="cashoutButton" type="button" disabled>提現</button>
+      </div>
+    </section>
+
+    <div class="difficulty-menu" id="difficultyMenu" hidden>
+      <button type="button" data-difficulty="easy">簡單</button>
+      <button type="button" data-difficulty="medium">普通</button>
+      <button type="button" data-difficulty="hard">困難</button>
+      <button type="button" data-difficulty="hardcore">地獄</button>
+    </div>
+
+    <div class="modal" id="autoModal" hidden>
+      <div class="modal__card">
+        <button class="modal__close" id="closeAuto" type="button" aria-label="關閉">×</button>
+        <h2>自動設定</h2>
+        <p>累計成功鑰匙達指定次數時自動提現</p>
+        <div class="option-grid" id="cashoutOptions"></div>
+        <h3>遊戲局數</h3>
+        <div class="option-grid option-grid--rounds" id="roundOptions"></div>
+        <button class="modal__start" id="startAuto" type="button">開始（10）</button>
+      </div>
+    </div>
+
+    <div class="modal settlement" id="settlement" hidden>
+      <div class="modal__card settlement__card">
+        <h2 id="settlementTitle">贏得</h2>
+        <strong id="settlementPrize">$ 0.00</strong>
+        <div class="settlement__multiplier" id="settlementMultiplier">x1.00</div>
+      </div>
+    </div>
+
+    <div class="help" id="help" hidden>
+      <div class="help__card">
+        <button id="closeHelp" type="button" aria-label="關閉說明">×</button>
+        <h2>射擊規則</h2>
+        <p>每局依序挑戰三個旋轉標靶。每次射擊成功會把子彈留在靶上並提升累積倍率；若撞到既有子彈，該局立即失敗。</p>
+        <p>成功一發後可隨時提現，獎金為下注額乘以目前倍率。完成第三個標靶會自動結算。</p>
+      </div>
+    </div>
+  </main>
+  <script src="game-spec.js"></script>
+</body>
+</html>
